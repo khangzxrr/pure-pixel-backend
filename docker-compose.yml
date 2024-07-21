@@ -2,7 +2,15 @@
 version: '3.9'
 
 services:
-
+  supertokens:
+    image: registry.supertokens.io/supertokens/supertokens-postgresql
+    ports:
+       - 3567:3567
+    environment:
+      POSTGRESQL_CONNECTION_URI: ${DATABASE_URL_CONTAINER}
+      API_KEYS: ${SUPERTOKENS_API_KEYS}
+    depends_on:
+      - db
   db:
     image: postgres
     restart: always
