@@ -12,7 +12,7 @@ import { AuthModule } from './auth/auth.module';
     CacheModule.register(),
     AuthModule.forRoot({
       // https://try.supertokens.com is for demo purposes. Replace this with the address of your core instance (sign up on supertokens.com), or self host a core.
-      connectionURI: "https://try.supertokens.com",
+      connectionURI: "http://localhost:3567",
       apiKey: process.env.SUPERTOKENS_API_KEYS,
       appInfo: {
         // Learn more about this on https://supertokens.com/docs/passwordless/appinfo
