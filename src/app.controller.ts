@@ -2,14 +2,12 @@ import { Controller, Get, UseGuards, UseInterceptors, Request, Session } from '@
 import { AppService } from './app.service';
 import { User } from '@prisma/client';
 import { UserService } from './services/user.service';
-import { CacheInterceptor } from '@nestjs/cache-manager';
 import { SessionContainer } from 'supertokens-node/recipe/session';
 import { AuthGuard } from './auth/auth.guard';
 import { Record } from '@prisma/client/runtime/library';
 import { SessionRequest } from 'supertokens-node/framework/express';
 import supertokens from "supertokens-node";
 @Controller()
-@UseInterceptors(CacheInterceptor)
 export class AppController {
   constructor(
     private readonly appService: AppService,
