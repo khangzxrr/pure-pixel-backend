@@ -17,6 +17,34 @@ export class SupertokensService {
         [
           EmailPassword.init(),
           ThirdParty.init({
+
+            override: {
+              functions: (originalImpl) => {
+                return {
+                  ...originalImpl,
+
+                  //TODO: sign up to our database
+                  signInUp: async function (input) {
+                    const response = await originalImpl.signInUp(input);
+
+
+                    if (response.status === 'OK') {
+
+                      if (input.session === undefined) {
+                        if (response.createdNewRecipeUser && response.user.loginMethods.length === 1) {
+                          console.log('sign up to our postgres database');
+                        }
+                      }
+
+                    }
+
+
+
+                    return response;
+                  }
+                }
+              }
+            },
             // We have provided you with development keys which you can use for testing.
             // IMPORTANT: Please replace them with your own OAuth keys for production use.
             signInAndUpFeature: {
