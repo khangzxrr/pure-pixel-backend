@@ -5,6 +5,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { PrismaService } from './prisma.service';
 import { UserService } from './services/user.service';
 import { AuthModule } from './auth/auth.module';
+import { StorageModule } from './storage/storage.module';
 
 
 @Module({
@@ -23,6 +24,7 @@ import { AuthModule } from './auth/auth.module';
         websiteBasePath: "/auth"
       },
     }),
+    StorageModule,
   ],
   controllers: [AppController],
   providers: [UserService, AppService, PrismaService]
