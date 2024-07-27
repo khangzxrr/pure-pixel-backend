@@ -7,10 +7,16 @@ import { UserService } from './services/user.service';
 import { AuthModule } from './auth/auth.module';
 import { StorageModule } from './storage/storage.module';
 
+import { ConfigModule } from '@nestjs/config';
+import { redisStore } from 'cache-manager-redis-yet';
 
 @Module({
   imports: [
-    CacheModule.register(),
+    ConfigModule.forRoot(),
+    CacheModule.register({
+      store: redisStore,
+      url: process.env.REDIS_URL,
+    }),
     AuthModule.forRoot({
       // https://try.supertokens.com is for demo purposes. Replace this with the address of your core instance (sign up on supertokens.com), or self host a core.
       connectionURI: "http://localhost:3567",

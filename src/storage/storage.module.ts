@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common';
 import { S3Module } from 'nestjs-s3';
 import { StorageController } from './storage.controller';
+import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
   imports: [
+    CacheModule.register(),
     S3Module.forRootAsync({
       useFactory: () => ({
         config: {
