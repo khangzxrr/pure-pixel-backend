@@ -25,8 +25,6 @@ import { redisStore } from 'cache-manager-redis-yet';
       })
     })
   ],
-  providers: [
-  ],
   exports: [],
   controllers: [StorageController],
 })
