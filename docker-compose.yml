@@ -45,6 +45,21 @@ services:
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
 
+  supertokens_db:
+    image: postgres
+    restart: always
+    # set shared memory limit when using docker-compose
+    shm_size: 128mb
+    # or set shared memory limit when deploy via swarm stack
+    volumes:
+      - supertokens_data:/var/lib/postgresql/data
+    ports:
+      - 5433:5432
+    environment:
+      POSTGRES_DB: ${SUPERTOKENS_DATABASE}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+
   adminer:
     image: adminer
     restart: always
@@ -54,3 +69,4 @@ services:
 volumes:
   data: {}
   minio: {}
+  supertokens_data: {}
