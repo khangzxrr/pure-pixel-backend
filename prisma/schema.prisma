@@ -13,19 +13,44 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
 model User {
-  id    Int     @default(autoincrement()) @id
-  email String  @unique
-  name  String?
-  posts Post[]
+  id        String   @id @unique
+  email     String   @unique
+  nickname  String
+  location  String
+  title     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  photos Photo[]
 }
 
-model Post {
-  id        Int      @default(autoincrement()) @id
-  title     String
-  content   String?
-  published Boolean? @default(false)
-  author    User?    @relation(fields: [authorId], references: [id])
-  authorId  Int?
+model Category {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  photos Photo[]
+}
+
+enum PhotoType {
+  RAW
+  EDITED
+}
+
+model Photo {
+  id String @id @default(uuid())
+
+  author   User   @relation(fields: [authorId], references: [id])
+  authorId String
+
+  category   Category @relation(fields: [categoryId], references: [id])
+  categoryId String
+
+  metaData Json
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
