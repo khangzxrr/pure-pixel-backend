@@ -8,30 +8,42 @@ services:
     restart: always
     environment:
       REDIS_PORT: 6379
+
   minio:
-    image: quay.io/minio/minio
+    image: quay.io/minio/minio:latest
     ports:
       - 9000:9000
       - 9001:9001
+      - 8021:8021
     restart: always
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     volumes:
       - minio:/data
-    command:
-      server --console-address ":9001" /data
+    command: server --console-address ":9001" /data
 
-  supertokens:
-    image: registry.supertokens.io/supertokens/supertokens-postgresql
-    ports:
-       - 3567:3567
+  stfpgo:
+    image: custom_sftpgo
     restart: always
+    ports:
+      - 8080:8080
+      - 2022:2022
+      - 2121:2121
     environment:
-      POSTGRESQL_CONNECTION_URI: ${SUPERTOKENS_DATABASE_URL_CONTAINER}
-      API_KEYS: ${SUPERTOKENS_API_KEYS}
-    depends_on:
-      - db
+      SFTPGO_FTPD__BINDINGS__0__PORT: ${SFTPGO_FTP_PORT}
+      #      SFTPGO_FTPD_BINDINGS__0__PORT: ${SFTPGO_FTP_PORT}
+      SFTPGO_DATA_PROVIDER__DRIVER: ${SFTPGO_DRIVER}
+      SFTPGO_DATA_PROVIDER__NAME: ${SFTPGO_DATABASE}
+      SFTPGO_DATA_PROVIDER__HOST: ${SFTPGO_HOST}
+      SFTPGO_DATA_PROVIDER__PORT: ${SFTPGO_DATABASE_PORT}
+      SFTPGO_DATA_PROVIDER__USERNAME: ${SFTPGO_DATABASE_USERNAME}
+      SFTPGO_DATA_PROVIDER__PASSWORD: ${SFTPGO_DATABASE_PASSWORD}
+    volumes:
+      - ./sftpgo:/temp/sftpgo
+      - '/etc/timezone:/etc/timezone:ro'
+      - '/etc/localtime:/etc/localtime:ro'
+
   db:
     image: postgres
     restart: always
@@ -45,12 +57,34 @@ services:
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
 
-  adminer:
-    image: adminer
-    restart: always
+  keycloak:
+    image: quay.io/keycloak/keycloak:25.0.4
+    restart: unless-stopped
     ports:
-      - 8080:8080
+      - 8081:8080
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KC_DB: ${KC_DB}
+      KC_DB_USERNAME: ${KC_DB_USERNAME}
+      KC_DB_PASSWORD: ${KC_DB_PASSWORD}
+      KC_DB_SCHEMA: ${KC_DB_SCHEMA}
+      KC_DB_URL: ${KC_DB_URL}
+    command: ['start-dev']
+
+  pgadmin:
+    image: dpage/pgadmin4
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin4@pgadmin.org}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - 5050:80
+    restart: unless-stopped
 
 volumes:
   data: {}
   minio: {}
+  pgadmin: {}
