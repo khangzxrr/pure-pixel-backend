@@ -1,48 +1,40 @@
-import { Bucket } from '@aws-sdk/client-s3';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Controller, Get, Inject } from '@nestjs/common';
-import { Cache } from 'cache-manager';
-import { InjectS3, S3 } from 'nestjs-s3';
+import { Public } from 'nest-keycloak-connect';
+import { MINIO_CONNECTION } from 'nestjs-minio';
+import { Client } from 'minio';
 
 @Controller('storage')
 export class StorageController {
-
-  constructor(
-    @InjectS3() private readonly s3: S3,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache,
-  ) { }
-
+  constructor(@Inject(MINIO_CONNECTION) private readonly minioClient: Client) {}
   @Get()
   getStorage(): string {
     return 'hello storage';
   }
 
-  @Get('/redis')
-  async getRedis(): Promise<string> {
-
-    const value = await this.cacheManager.get<string>('test');
-
-    if (value == undefined) {
-      await this.cacheManager.set('test', 'value');
-
-      console.log('put in cache');
-    }
-    console.log(value);
-
-    return value;
-  }
-
-  @Get('/buckets')
-  async getBuckets(): Promise<Bucket[]> {
+  @Get('/presignedPutObject')
+  @Public()
+  async getPutObjectPresignedUrl(): Promise<string> {
     try {
-      const list = await this.s3.listBuckets({});
+      const presignedUrl = await this.minioClient.presignedPutObject(
+        'upload',
+        'abc.test',
+      );
 
-      return list.Buckets
+      return presignedUrl;
     } catch (e) {
       console.log(e);
     }
-
   }
 
+  @Get('/buckets')
+  @Public()
+  async getBuckets() {
+    try {
+      const buckets = await this.minioClient.listBuckets();
 
+      return buckets;
+    } catch (e) {
+      console.log(e);
+    }
+  }
 }

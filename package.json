@@ -20,7 +20,6 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.620.0",
     "@nestjs/cache-manager": "^2.2.2",
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^3.2.3",
@@ -34,11 +33,10 @@
     "class-validator": "^0.14.1",
     "keycloak-connect": "^25.0.4",
     "nest-keycloak-connect": "^1.10.1",
-    "nestjs-s3": "^2.0.1",
+    "nestjs-minio": "^2.6.2",
     "oxide.ts": "^1.1.0",
     "reflect-metadata": "^0.2.0",
-    "rxjs": "^7.8.1",
-    "supertokens-node": "^19.0.1"
+    "rxjs": "^7.8.1"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",

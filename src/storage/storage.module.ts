@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
-import { S3Module } from 'nestjs-s3';
 import { StorageController } from './storage.controller';
 import { CacheModule } from '@nestjs/cache-manager';
 import { redisStore } from 'cache-manager-redis-yet';
+import { NestMinioModule } from 'nestjs-minio';
 
 @Module({
   imports: [
@@ -10,22 +10,16 @@ import { redisStore } from 'cache-manager-redis-yet';
       store: redisStore,
       url: process.env.REDIS_URL,
     }),
-    S3Module.forRootAsync({
-      useFactory: () => ({
-        config: {
-          credentials: {
-            accessKeyId: process.env.MINIO_ACCESS_KEY,
-            secretAccessKey: process.env.MINIO_SECRET_KEY,
-          },
-          region: 'us-east-1',
-          endpoint: process.env.MINIO_URL,
-          forcePathStyle: true,
-
-        },
-      })
-    })
+    NestMinioModule.register({
+      endPoint: process.env.MINIO_URL,
+      port: parseInt(process.env.MINIO_PORT),
+      useSSL: process.env.MINIO_USE_SSL === 'true',
+      accessKey: process.env.MINIO_ACCESS_KEY,
+      secretKey: process.env.MINIO_SECRET_KEY,
+      isGlobal: true,
+    }),
   ],
   exports: [],
   controllers: [StorageController],
 })
-export class StorageModule { }
+export class StorageModule {}
