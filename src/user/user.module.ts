@@ -1,14 +1,9 @@
-import { Module, Provider } from '@nestjs/common';
-import { FindUsersController } from './queries/find-users/find-users.controller';
-import { CqrsModule } from '@nestjs/cqrs';
-import { FindUsersQueryHandler } from './queries/find-users/find-users.query-handler';
-import { PrismaService } from 'src/prisma.service';
-
-const queryHandlers: Provider[] = [FindUsersQueryHandler];
+import { Module } from '@nestjs/common';
+import { UserService } from './user.service';
+import { UserController } from './user.controller';
 
 @Module({
-  imports: [CqrsModule],
-  providers: [...queryHandlers],
-  controllers: [FindUsersController]
+  controllers: [UserController],
+  providers: [UserService],
 })
-export class UserModule { }
+export class UserModule {}
