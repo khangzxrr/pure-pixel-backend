@@ -1,33 +1,47 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { PrismaService } from './prisma.service';
-import { AuthModule } from './auth/auth.module';
 import { StorageModule } from './storage/storage.module';
 
 import { ConfigModule } from '@nestjs/config';
 import { UserModule } from './user/user.module';
+import { AuthenModule } from './authen/authen.module';
+import {
+  AuthGuard,
+  KeycloakConnectModule,
+  ResourceGuard,
+  RoleGuard,
+} from 'nest-keycloak-connect';
+import { KeycloakConfigService } from './authen/services/keycloak-config.service';
+import { APP_GUARD } from '@nestjs/core';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [
-    ConfigModule.forRoot(),
-    AuthModule.forRoot({
-      // https://try.supertokens.com is for demo purposes. Replace this with the address of your core instance (sign up on supertokens.com), or self host a core.
-      connectionURI: "http://localhost:3567",
-      apiKey: process.env.SUPERTOKENS_API_KEYS,
-      appInfo: {
-        // Learn more about this on https://supertokens.com/docs/passwordless/appinfo
-        appName: "PurePixel",
-        apiDomain: "http://localhost:3000",
-        websiteDomain: "http://localhost:3006",
-        apiBasePath: "/auth",
-        websiteBasePath: "/auth"
-      },
+    KeycloakConnectModule.registerAsync({
+      useExisting: KeycloakConfigService,
+      imports: [AuthenModule],
+    }),
+    ConfigModule.forRoot({
+      isGlobal: true,
     }),
     StorageModule,
     UserModule,
   ],
-  controllers: [], 
-  providers: [PrismaService]
+  controllers: [AppController],
+  providers: [
+    PrismaService,
+    {
+      provide: APP_GUARD,
+      useClass: AuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RoleGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ResourceGuard,
+    },
+  ],
 })
-export class AppModule { }
+export class AppModule {}
