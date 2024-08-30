@@ -1,11 +1,17 @@
-import { User as PrismaUser } from '@prisma/client';
+import { Prisma, User as PrismaUser } from '@prisma/client';
+import { Decimal } from '@prisma/client/runtime/library';
 
 export class User implements PrismaUser {
+  diskQuota: Decimal;
+  diskUsage: Decimal;
+
   id: string;
-  email: string;
-  nickname: string;
-  location: string;
-  title: string;
   createdAt: Date;
   updatedAt: Date;
+
+  constructor(userId: string) {
+    this.id = userId;
+    this.diskQuota = new Prisma.Decimal(0.0);
+    this.diskUsage = new Prisma.Decimal(0.0);
+  }
 }
