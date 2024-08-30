@@ -1,17 +1,12 @@
 import { Controller, Get, Inject } from '@nestjs/common';
 import { Public } from 'nest-keycloak-connect';
-import { MINIO_CONNECTION } from 'nestjs-minio';
-import { Client } from 'minio';
 import { StorageService } from './services/storage.service';
 import { ListBucketsCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 @Controller('storage')
 export class StorageController {
-  constructor(
-    @Inject(MINIO_CONNECTION) private readonly minioClient: Client,
-    @Inject() private readonly storageService: StorageService,
-  ) {}
+  constructor(@Inject() private readonly storageService: StorageService) {}
 
   @Get()
   @Public()
