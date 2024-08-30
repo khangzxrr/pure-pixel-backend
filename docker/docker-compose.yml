@@ -9,20 +9,6 @@ services:
     environment:
       REDIS_PORT: 6379
 
-  minio:
-    image: quay.io/minio/minio:latest
-    ports:
-      - 9000:9000
-      - 9001:9001
-      - 8021:8021
-    restart: always
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-    volumes:
-      - minio:/data
-    command: server --console-address ":9001" /data
-
   stfpgo:
     image: custom_sftpgo
     restart: always
@@ -52,10 +38,12 @@ services:
     # or set shared memory limit when deploy via swarm stack
     volumes:
       - data:/var/lib/postgresql/data
+      - create-multiple-postgresql-databases:/docker-entrypoint-initdb.d
     ports:
       - 5432:5432
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_MULTIPLE_DATABASES: ${POSTGRES_MULTIPLE_DATABASES}
 
   keycloak:
     image: quay.io/keycloak/keycloak:25.0.4
