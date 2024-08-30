@@ -21,6 +21,10 @@ model User {
   diskQuota Decimal @default(0)
   diskUsage Decimal @default(0)
 
+  ftpUsername String @default("")
+  ftpPassword String @default("")
+  ftpEndpoint String @default("")
+
   photos Photo[]
 }
 
@@ -39,17 +43,38 @@ enum PhotoType {
   EDITED
 }
 
+enum PhotoVisibility {
+    PUBLIC
+    PRIVATE
+    SHARE_LINK
+}
 model Photo {
   id String @id @default(uuid())
 
-  author   User   @relation(fields: [authorId], references: [id])
-  authorId String
+  photographer   User   @relation(fields: [photographerId], references: [id])
+  photographerId String
 
   category   Category @relation(fields: [categoryId], references: [id])
   categoryId String
 
-  metaData Json
+  cameraSetting Json
+  colorGrading Json
+
+  location String
+  captureTime DateTime
+
+  description String
+
+  originalPhotoUrl String
+  thumbnailPhotoUrl String
+
+  photoType PhotoType
+
+  visibility PhotoVisibility 
+
+  photoTags String[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
