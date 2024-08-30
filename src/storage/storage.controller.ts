@@ -2,22 +2,35 @@ import { Controller, Get, Inject } from '@nestjs/common';
 import { Public } from 'nest-keycloak-connect';
 import { MINIO_CONNECTION } from 'nestjs-minio';
 import { Client } from 'minio';
+import { StorageService } from './services/storage.service';
+import { ListBucketsCommand, PutObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 @Controller('storage')
 export class StorageController {
-  constructor(@Inject(MINIO_CONNECTION) private readonly minioClient: Client) {}
+  constructor(
+    @Inject(MINIO_CONNECTION) private readonly minioClient: Client,
+    @Inject() private readonly storageService: StorageService,
+  ) {}
+
   @Get()
-  getStorage(): string {
-    return 'hello storage';
+  @Public()
+  getStorage() {
+    return this.storageService.getS3();
   }
 
   @Get('/presignedPutObject')
   @Public()
   async getPutObjectPresignedUrl(): Promise<string> {
     try {
-      const presignedUrl = await this.minioClient.presignedPutObject(
-        'upload',
-        'abc.test',
+      const command = new PutObjectCommand({
+        Key: 'test.txt',
+        Bucket: 'sftpgo',
+      });
+
+      const presignedUrl = await getSignedUrl(
+        this.storageService.getS3(),
+        command,
       );
 
       return presignedUrl;
@@ -30,7 +43,11 @@ export class StorageController {
   @Public()
   async getBuckets() {
     try {
-      const buckets = await this.minioClient.listBuckets();
+      //     const buckets = await this.minioClient.listBuckets();
+
+      const buckets = await this.storageService
+        .getS3()
+        .send(new ListBucketsCommand());
 
       return buckets;
     } catch (e) {

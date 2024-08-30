@@ -3,6 +3,7 @@ import { StorageController } from './storage.controller';
 import { CacheModule } from '@nestjs/cache-manager';
 import { redisStore } from 'cache-manager-redis-yet';
 import { NestMinioModule } from 'nestjs-minio';
+import { StorageService } from './services/storage.service';
 
 @Module({
   imports: [
@@ -21,5 +22,6 @@ import { NestMinioModule } from 'nestjs-minio';
   ],
   exports: [],
   controllers: [StorageController],
+  providers: [StorageService],
 })
 export class StorageModule {}
