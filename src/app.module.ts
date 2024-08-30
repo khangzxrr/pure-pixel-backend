@@ -9,6 +9,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { KeycloakRoleGuard } from './authen/guards/KeycloakRoleGuard.guard';
 import { AuthenModule } from './authen/authen.module';
 import { AuthGuard } from 'nest-keycloak-connect';
+import { DatabaseModule } from './database/database.module';
 @Module({
   providers: [
     //must register AuthGuard, customRoleGuard sequence in order to get it to work
@@ -29,6 +30,7 @@ import { AuthGuard } from 'nest-keycloak-connect';
     AuthenModule,
     UserModule,
     PhotographerModule,
+    DatabaseModule,
   ],
   controllers: [AppController],
 })

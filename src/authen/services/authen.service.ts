@@ -7,7 +7,6 @@ export class AuthenService {
   private readonly logger = new Logger(AuthenService.name);
 
   constructor(@Inject() private userRepository: UserRepository) {}
-
   async createUserIfNotExist(userId: string) {
     let user = await this.userRepository.getById(userId);
 
@@ -19,6 +18,6 @@ export class AuthenService {
     user = new User(userId);
     await this.userRepository.create(user);
 
-    this.logger.log(`create new user to database with user id: ${userId}`);
+    this.logger.log(`create new user to database,`);
   }
 }

@@ -17,6 +17,7 @@ import { Reflector } from '@nestjs/core';
 import KeycloakConnect from 'keycloak-connect';
 import { KeycloakConnectConfig } from 'nest-keycloak-connect';
 import { AuthenService } from '../services/authen.service';
+import { UserRepository } from 'src/database/repositories/user.repository';
 
 @Injectable()
 export class KeycloakRoleGuard extends RoleGuard implements CanActivate {
@@ -31,6 +32,11 @@ export class KeycloakRoleGuard extends RoleGuard implements CanActivate {
     @Inject(KEYCLOAK_MULTITENANT_SERVICE)
     multiTenant: KeycloakMultiTenantService,
     reflector: Reflector,
+    private userRepository: UserRepository,
+
+    //App Module init guard <-- Authen Module init guard
+    //cannot use dependency like this when authenService is inside authen module
+    //private testAuthenService: AuthenService,
   ) {
     super(singleTenant, keycloakOpts, logger, multiTenant, reflector);
   }
@@ -43,12 +49,15 @@ export class KeycloakRoleGuard extends RoleGuard implements CanActivate {
       const request = context.switchToHttp().getRequest();
 
       const user = request.user as any;
+
+      //workaround for cirular dependency when using the same service in authenModule
+      const authenService = new AuthenService(this.userRepository);
+
       //if we dont register authguard as sequence in app.module,
       //it will allow unauthenticate user to passthough cause user to be undefined
       //this method will throw exception
       //      console.log(JSON.stringify(user));
-      //  console.log(this.authenService);
-      //this.authenService.createUserIfNotExist(user.sub);
+      authenService.createUserIfNotExist(user.sub);
     }
 
     return grant;
