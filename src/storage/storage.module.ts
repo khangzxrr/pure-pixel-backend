@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { StorageController } from './storage.controller';
+import { StorageController } from './controllers/storage.controller';
 import { CacheModule } from '@nestjs/cache-manager';
 import { redisStore } from 'cache-manager-redis-yet';
 import { StorageService } from './services/storage.service';
@@ -11,7 +11,7 @@ import { StorageService } from './services/storage.service';
       url: process.env.REDIS_URL,
     }),
   ],
-  exports: [],
+  exports: [StorageService],
   controllers: [StorageController],
   providers: [StorageService],
 })

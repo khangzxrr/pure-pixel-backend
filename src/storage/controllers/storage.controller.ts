@@ -1,6 +1,6 @@
-import { Controller, Get, Inject } from '@nestjs/common';
+import { Controller, Get, Inject, Param } from '@nestjs/common';
 import { Public } from 'nest-keycloak-connect';
-import { StorageService } from './services/storage.service';
+import { StorageService } from '../services/storage.service';
 import { ListBucketsCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
@@ -12,6 +12,18 @@ export class StorageController {
   @Public()
   getStorage() {
     return this.storageService.getS3();
+  }
+
+  @Get('/object/:key/grant-public')
+  @Public()
+  async grantPublicAccess(@Param('key') key: string) {
+    return await this.storageService.grantObjectPublicAccess(key);
+  }
+
+  @Get('/object/:key/acl')
+  @Public()
+  async getObjectAcl(@Param('key') key: string) {
+    return await this.storageService.getObjectAcl(key);
   }
 
   @Get('/presignedPutObject')
