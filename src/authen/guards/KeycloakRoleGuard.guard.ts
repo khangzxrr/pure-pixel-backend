@@ -50,6 +50,9 @@ export class KeycloakRoleGuard extends RoleGuard implements CanActivate {
 
       const user = request.user as any;
 
+      if (!user) {
+        return;
+      }
       //workaround for cirular dependency when using the same service in authenModule
       const authenService = new AuthenService(this.userRepository);
 
