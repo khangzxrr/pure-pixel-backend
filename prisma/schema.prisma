@@ -48,6 +48,12 @@ enum PhotoVisibility {
     PRIVATE
     SHARE_LINK
 }
+
+enum PhotoStatus {
+    PARSED
+    PENDING
+}
+
 model Photo {
   id String @id @default(uuid())
 
@@ -71,6 +77,8 @@ model Photo {
   photoType PhotoType
 
   visibility PhotoVisibility 
+
+  status PhotoStatus @default(PENDING) 
 
   photoTags String[]
 

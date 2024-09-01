@@ -1,4 +1,9 @@
-import { PhotoType, PhotoVisibility, PrismaClient } from '@prisma/client';
+import {
+  PhotoStatus,
+  PhotoType,
+  PhotoVisibility,
+  PrismaClient,
+} from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -40,6 +45,7 @@ async function main() {
             description: 'lorem',
             location: 'Vietnam',
             photoType: PhotoType.RAW,
+            status: PhotoStatus.PENDING,
             visibility: PhotoVisibility.PUBLIC,
             photoTags: ['da lat'],
             captureTime: new Date(),
