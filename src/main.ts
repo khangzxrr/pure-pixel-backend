@@ -9,8 +9,8 @@ async function bootstrap() {
   });
 
   app.enableCors({
-    origin: ['http://localhost:3006'],
-    allowedHeaders: ['content-type'],
+    origin: ['http://localhost:3000'],
+    allowedHeaders: ['content-type', 'Authorization'],
     credentials: true,
   });
 
@@ -25,6 +25,6 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, configSwagger);
   SwaggerModule.setup('api', app, document);
 
-  await app.listen(3000);
+  await app.listen(3001);
 }
 bootstrap();
