@@ -8,6 +8,7 @@ import { PhotographerModule } from './photographer/photographer.module';
 import { AuthenModule } from './authen/authen.module';
 import { DatabaseModule } from './database/database.module';
 import { PhotoModule } from './photo/photo.module';
+import { NotificationModule } from './notification/notification.module';
 @Module({
   providers: [
     //must register AuthGuard, customRoleGuard sequence in order to get it to work
@@ -22,6 +23,7 @@ import { PhotoModule } from './photo/photo.module';
     PhotographerModule,
     DatabaseModule,
     PhotoModule,
+    NotificationModule,
   ],
   controllers: [AppController],
 })
