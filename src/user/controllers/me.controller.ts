@@ -1,22 +1,19 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
-import {
-  AuthenticatedUser,
-  AuthGuard,
-  RoleMatchingMode,
-  Roles,
-} from 'nest-keycloak-connect';
+import { Controller, Get, Inject, UseGuards } from '@nestjs/common';
+import { AuthenticatedUser, AuthGuard } from 'nest-keycloak-connect';
 import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
+import { UserService } from '../services/user.service';
 
 @Controller('me')
 export class MeController {
+  constructor(@Inject() private readonly userService: UserService) {}
   @Get()
+
   //because we registed guard as global, so we can also use @role only to check, authguard is default check
   @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: ['photographer'], mode: RoleMatchingMode.ALL })
-  getMeInfo(
+  async getMeInfo(
     @AuthenticatedUser()
     user: any,
   ) {
-    return `hello world ${user.preferred_username}`;
+    return await this.userService.getByUserId(user.sub);
   }
 }
