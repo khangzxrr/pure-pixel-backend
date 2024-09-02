@@ -18,6 +18,8 @@ import KeycloakConnect from 'keycloak-connect';
 import { KeycloakConnectConfig } from 'nest-keycloak-connect';
 import { AuthenService } from '../services/authen.service';
 import { UserRepository } from 'src/database/repositories/user.repository';
+import { SftpService } from 'src/storage/services/sftp.service';
+import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
 export class KeycloakRoleGuard extends RoleGuard implements CanActivate {
@@ -33,6 +35,8 @@ export class KeycloakRoleGuard extends RoleGuard implements CanActivate {
     multiTenant: KeycloakMultiTenantService,
     reflector: Reflector,
     private userRepository: UserRepository,
+    private sftpService: SftpService,
+    private prisma: PrismaService,
 
     //App Module init guard <-- Authen Module init guard
     //cannot use dependency like this when authenService is inside authen module
@@ -43,7 +47,6 @@ export class KeycloakRoleGuard extends RoleGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const grant = await super.canActivate(context);
-    console.log('calling canActivate custom roleGuard');
 
     if (grant) {
       const request = context.switchToHttp().getRequest();
@@ -51,16 +54,25 @@ export class KeycloakRoleGuard extends RoleGuard implements CanActivate {
       const user = request.user as any;
 
       if (!user) {
-        return;
+        return grant;
       }
+
       //workaround for cirular dependency when using the same service in authenModule
-      const authenService = new AuthenService(this.userRepository);
+      const authenService = new AuthenService(
+        this.userRepository,
+        this.sftpService,
+        this.prisma,
+      );
 
       //if we dont register authguard as sequence in app.module,
       //it will allow unauthenticate user to passthough cause user to be undefined
       //this method will throw exception
       //      console.log(JSON.stringify(user));
-      authenService.createUserIfNotExist(user.sub);
+      await authenService.createUserIfNotExist(
+        user.sub,
+        user.preferred_username,
+        user.email,
+      );
     }
 
     return grant;

@@ -6,6 +6,13 @@ import { PrismaService } from 'src/prisma.service';
 export class PhotoRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  async getPhotoById(id: string) {
+    return this.prisma.photo.findUnique({
+      where: {
+        id,
+      },
+    });
+  }
   async getAllByVisibility(visibilityStr: string) {
     let visibility: PhotoVisibility = PhotoVisibility.PUBLIC;
 

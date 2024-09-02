@@ -13,9 +13,9 @@ export class User implements PrismaUser {
     this.id = userId;
     this.diskQuota = new Prisma.Decimal(0.0);
     this.diskUsage = new Prisma.Decimal(0.0);
-    this.ftpUsername = '';
-    this.ftpEndpoint = '';
-    this.ftpPassword = '';
+    this.ftpUsername = undefined;
+    this.ftpEndpoint = undefined;
+    this.ftpPassword = undefined;
   }
   ftpUsername: string;
   ftpPassword: string;
