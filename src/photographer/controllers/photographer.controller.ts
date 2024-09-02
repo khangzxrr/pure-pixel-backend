@@ -9,15 +9,6 @@ export class PhotographerController {
     @Inject() private readonly photographerService: PhotographerService,
   ) {}
 
-  @Get('/me')
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: ['photographer'] })
-  async getInfo(@AuthenticatedUser() user) {
-    const info = await this.photographerService.getInfo(user.sub);
-
-    return info;
-  }
-
   @Get('/me/upload/:objectName')
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: ['photographer'] })
