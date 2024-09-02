@@ -1,12 +1,15 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     snapshot: true,
     abortOnError: true,
   });
+
+  app.useGlobalPipes(new ValidationPipe());
 
   app.enableCors({
     origin: ['http://localhost:3000'],
@@ -15,6 +18,8 @@ async function bootstrap() {
   });
 
   const configSwagger = new DocumentBuilder()
+    .addBearerAuth()
+    .addSecurityRequirements('bearer')
     .setTitle('PurePixel')
     .setDescription(
       'FPT Univeristy capstone project - purepixel, backend supported by Vo Ngoc Khang (khangzxrr@gmail.com)',

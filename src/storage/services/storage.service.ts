@@ -27,12 +27,12 @@ export class StorageService {
 
   async getPresignedUploadUrl(key: string) {
     const command = new PutObjectCommand({
-      Key: key,
+      Key: key + '/${filename}',
       Bucket: process.env.S3_BUCKET,
       ACL: 'private',
     });
 
-    const signedUrl = await getSignedUrl(this.getS3(), command);
+    const signedUrl = await getSignedUrl(this.getS3(), command, {});
 
     return signedUrl;
   }

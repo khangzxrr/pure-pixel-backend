@@ -16,8 +16,4 @@ export class PhotographerService {
       },
     });
   }
-
-  async getPresignedUploadUrl(userId: string, objectName: string) {
-    return this.storageService.getPresignedUploadUrl(`${userId}/${objectName}`);
-  }
 }
