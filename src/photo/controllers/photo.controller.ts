@@ -3,7 +3,6 @@ import {
   Controller,
   Get,
   Inject,
-  NotImplementedException,
   Param,
   Post,
   Query,
@@ -22,7 +21,7 @@ import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { HttpStatusCode } from 'axios';
 import { PresignedUploadUrlRequest } from '../dtos/presigned-upload-url.request';
 import { PresignedUploadUrlResponse } from '../dtos/presigned-upload-url.response.dto';
-import { Console } from 'console';
+import { ProcessImagesRequest } from '../dtos/process-images.request.dto';
 
 @Controller('photo')
 export class PhotoController {
@@ -41,33 +40,6 @@ export class PhotoController {
     return await this.photoService.getPhotoById(user ? user.sub : '', id);
   }
 
-  @Post('/:key/parse-exif')
-  @ApiOperation({ summary: 'parse exif from photo' })
-  @ApiResponse({
-    status: HttpStatusCode.Accepted,
-    description: 'accepted photo, put it in queue to be processed later',
-  })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
-  async parseExif() {
-    throw new NotImplementedException();
-  }
-
-  @Post('/:key/watermark')
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
-  async watermark() {
-    throw new NotImplementedException();
-  }
-
-  //idk, why we cant use '-' in path
-  //it will cause keycloak return 401
-  @Get('/webhook/exif')
-  @ApiOperation({ summary: 'parse exif from photo for webhook API' })
-  @ApiResponse({
-    status: HttpStatusCode.Ok,
-    description: 'parsed exif',
-  })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Public(false)
   async parseExifviaWebhook(@Query() query) {
@@ -75,6 +47,24 @@ export class PhotoController {
     console.log('call from webhook');
 
     return 'cool';
+  }
+
+  @Post('/process')
+  @ApiOperation({ summary: 'process EXIF or watermark after upload ' })
+  @ApiResponse({
+    status: HttpStatusCode.Ok,
+    description: 'processed successfully',
+  })
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
+  async processPhotos(
+    @AuthenticatedUser() user,
+    @Body() processImagesRequest: ProcessImagesRequest,
+  ) {
+    return await this.photoService.processImages(
+      user.sub,
+      processImagesRequest,
+    );
   }
 
   @Post('/upload')

@@ -45,7 +45,8 @@
     "nest-keycloak-connect": "^1.10.1",
     "nestjs-minio": "^2.6.2",
     "oxide.ts": "^1.1.0",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "uuid": "^10.0.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",
