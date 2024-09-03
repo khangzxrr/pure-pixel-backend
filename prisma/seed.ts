@@ -50,8 +50,15 @@ async function main() {
             photoTags: ['da lat'],
             captureTime: new Date(),
             colorGrading: {},
-            cameraSetting: {},
+            exif: {},
+            showExif: false,
+            watermark: false,
             originalPhotoUrl:
+              'https://s3-hcm-r1.s3cloud.vn/sftpgo/d2020c98-60f5-45c2-879f-00a5df97e9cd/dalat.jpg',
+            watermarkPhotoUrl:
+              'https://s3-hcm-r1.s3cloud.vn/sftpgo/d2020c98-60f5-45c2-879f-00a5df97e9cd/dalat.jpg',
+
+            watermarkThumbnailPhotoUrl:
               'https://s3-hcm-r1.s3cloud.vn/sftpgo/d2020c98-60f5-45c2-879f-00a5df97e9cd/dalat.jpg',
             thumbnailPhotoUrl:
               'https://s3-hcm-r1.s3cloud.vn/sftpgo/d2020c98-60f5-45c2-879f-00a5df97e9cd/dalat.jpg',

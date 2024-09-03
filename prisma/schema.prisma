@@ -63,7 +63,10 @@ model Photo {
   category   Category @relation(fields: [categoryId], references: [id])
   categoryId String
 
-  cameraSetting Json
+  watermark Boolean @default(false)
+  showExif Boolean @default(false)
+
+  exif Json
   colorGrading Json
 
   location String
@@ -72,11 +75,14 @@ model Photo {
   description String
 
   originalPhotoUrl String
+  watermarkPhotoUrl String
+
   thumbnailPhotoUrl String
+  watermarkThumbnailPhotoUrl String
 
   photoType PhotoType
 
-  visibility PhotoVisibility 
+  visibility PhotoVisibility @default(PUBLIC) 
 
   status PhotoStatus @default(PENDING) 
 
