@@ -9,11 +9,14 @@ import { AuthenModule } from './authen/authen.module';
 import { DatabaseModule } from './database/database.module';
 import { PhotoModule } from './photo/photo.module';
 import { NotificationModule } from './notification/notification.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { QueueModule } from './queue/queue.module';
+
 @Module({
-  providers: [
-    //must register AuthGuard, customRoleGuard sequence in order to get it to work
-  ],
+  providers: [],
+  exports: [],
   imports: [
+    ScheduleModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
     }),
@@ -24,6 +27,7 @@ import { NotificationModule } from './notification/notification.module';
     DatabaseModule,
     PhotoModule,
     NotificationModule,
+    QueueModule,
   ],
   controllers: [AppController],
 })

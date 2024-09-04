@@ -1,5 +1,6 @@
 import {
   GetObjectAclCommand,
+  GetObjectCommand,
   PutObjectAclCommand,
   PutObjectCommand,
   S3Client,
@@ -25,9 +26,20 @@ export class StorageService {
     return this.getS3().send(command);
   }
 
+  async getSignedGetUrl(key: string) {
+    const command = new GetObjectCommand({
+      Key: key,
+      Bucket: process.env.S3_BUCKET,
+    });
+
+    const signedUrl = await getSignedUrl(this.getS3(), command, {});
+
+    return signedUrl;
+  }
+
   async getPresignedUploadUrl(key: string) {
     const command = new PutObjectCommand({
-      Key: key + '/${filename}',
+      Key: key,
       Bucket: process.env.S3_BUCKET,
       ACL: 'private',
     });
@@ -35,6 +47,19 @@ export class StorageService {
     const signedUrl = await getSignedUrl(this.getS3(), command, {});
 
     return signedUrl;
+  }
+
+  async uploadFromBytes(key: string, bytes) {
+    const command = new PutObjectCommand({
+      Key: key,
+      Bucket: process.env.S3_BUCKET,
+      ACL: 'private',
+      Body: bytes,
+    });
+
+    const result = await this.sendCommand(command);
+
+    return result;
   }
 
   async grantObjectPublicAccess(key: string) {

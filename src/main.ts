@@ -17,18 +17,34 @@ async function bootstrap() {
     credentials: true,
   });
 
+  //remember access api
+  //http://localhost:3001/api/
+  //add / at the end
   const configSwagger = new DocumentBuilder()
-    .addBearerAuth()
-    .addSecurityRequirements('bearer')
     .setTitle('PurePixel')
     .setDescription(
       'FPT Univeristy capstone project - purepixel, backend supported by Vo Ngoc Khang (khangzxrr@gmail.com)',
     )
     .setVersion('1.0')
+    .addSecurity('openid', {
+      type: 'openIdConnect',
+      openIdConnectUrl: process.env.KEYCLOAK_OPENID_URL,
+    })
+    .addSecurityRequirements('openid')
     .build();
 
   const document = SwaggerModule.createDocument(app, configSwagger);
-  SwaggerModule.setup('api', app, document);
+  SwaggerModule.setup('api', app, document, {
+    swaggerOptions: {
+      initOAuth: {
+        clientId: process.env.KEYCLOAK_CLIENT_ID,
+        realm: process.env.KEYCLOAK_REALM,
+        appName: 'purepixel',
+        clientSecret: process.env.KEYCLOAK_SECRET_KEY,
+        scopes: ['offline_access', 'openid', 'profile', 'roles', 'email'],
+      },
+    },
+  });
 
   await app.listen(3001);
 }

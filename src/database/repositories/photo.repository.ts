@@ -8,6 +8,45 @@ import { PrismaService } from 'src/prisma.service';
 export class PhotoRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  async patchUpdates(photos: Photo[]) {
+    const queries = photos.map((p) => {
+      return this.prisma.photo.update({
+        where: {
+          id: p.id,
+        },
+        data: p,
+      });
+    });
+
+    return this.prisma.$transaction(queries);
+  }
+
+  async getPhotoByIds(ids: string[], userId?: string): Promise<Photo[]> {
+    return this.prisma.photo.findMany({
+      where: {
+        id: {
+          in: ids,
+        },
+        photographerId: userId,
+      },
+    });
+  }
+  async deleteByExpiredUploadDate(date: Date, dayPassed: number) {
+    const offset = dayPassed * 12 * 60 * 60 * 1000;
+    const lastDay = date.getTime() - offset;
+    //subtract days
+    const newDate = new Date(lastDay);
+
+    return this.prisma.photo.deleteMany({
+      where: {
+        status: 'PENDING',
+        createdAt: {
+          lte: newDate,
+        },
+      },
+    });
+  }
+
   async createTemporaryPhotos(userId: string, signedUploads: SignedUpload[]) {
     //TODO: catch exception when category is not found
     const category = await this.prisma.category.findFirst({
