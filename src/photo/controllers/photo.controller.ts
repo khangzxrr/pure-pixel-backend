@@ -2,10 +2,12 @@ import {
   Body,
   Controller,
   Get,
+  HttpStatus,
   Inject,
   Param,
   Post,
   Query,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import { PhotoService } from '../services/photo.service';
@@ -22,6 +24,7 @@ import { HttpStatusCode } from 'axios';
 import { PresignedUploadUrlRequest } from '../dtos/presigned-upload-url.request';
 import { PresignedUploadUrlResponse } from '../dtos/presigned-upload-url.response.dto';
 import { ProcessImagesRequest } from '../dtos/process-images.request.dto';
+import { Response } from 'express';
 
 @Controller('photo')
 export class PhotoController {
@@ -50,7 +53,7 @@ export class PhotoController {
   }
 
   @Post('/process')
-  @ApiOperation({ summary: 'process EXIF or watermark after upload ' })
+  @ApiOperation({ summary: 'generate watermark images after upload' })
   @ApiResponse({
     status: HttpStatusCode.Ok,
     description: 'processed successfully',
@@ -60,11 +63,11 @@ export class PhotoController {
   async processPhotos(
     @AuthenticatedUser() user,
     @Body() processImagesRequest: ProcessImagesRequest,
+    @Res() res: Response,
   ) {
-    return await this.photoService.processImages(
-      user.sub,
-      processImagesRequest,
-    );
+    await this.photoService.processImages(user.sub, processImagesRequest);
+
+    res.status(HttpStatus.OK).send();
   }
 
   @Post('/upload')

@@ -21,12 +21,17 @@ export class PhotoRepository {
     return this.prisma.$transaction(queries);
   }
 
-  async getPhotoByIds(ids: string[], userId?: string): Promise<Photo[]> {
+  async getPhotoByIdsAndStatus(
+    ids: string[],
+    status: string,
+    userId?: string,
+  ): Promise<Photo[]> {
     return this.prisma.photo.findMany({
       where: {
         id: {
           in: ids,
         },
+        status: status == 'PENDING' ? 'PENDING' : 'PARSED',
         photographerId: userId,
       },
     });

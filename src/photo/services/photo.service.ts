@@ -31,7 +31,11 @@ export class PhotoService {
   ) {
     const photoIds = processImagesRequest.signedUploads.map((su) => su.photoId);
 
-    const photos = await this.photoRepository.getPhotoByIds(photoIds, userId);
+    const photos = await this.photoRepository.getPhotoByIdsAndStatus(
+      photoIds,
+      'PENDING',
+      userId,
+    );
 
     const updatePhotoPromises = photos.map(async (p) => {
       const thumbnailKey = await this.photoProcessService.thumbnail(
