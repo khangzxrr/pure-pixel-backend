@@ -42,6 +42,7 @@ export class PhotoService {
         p.originalPhotoUrl,
       );
       p.thumbnailPhotoUrl = thumbnailKey;
+      console.log(thumbnailKey);
 
       const watermarkThumbnailKey =
         await this.photoProcessService.watermark(thumbnailKey);
@@ -51,6 +52,17 @@ export class PhotoService {
         p.originalPhotoUrl,
       );
       p.watermarkPhotoUrl = watermarkImageKey;
+
+      //this is not optimized because we have to get original image from url
+      //each time we call different process method
+      //wasting bandwidth!
+      //please fix this if we have time
+      const exifs = await this.photoProcessService.parseExif(
+        p.originalPhotoUrl,
+      );
+      p.exif = exifs;
+
+      console.log(exifs);
 
       p.status = 'PARSED';
 

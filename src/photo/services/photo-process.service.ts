@@ -3,7 +3,8 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { lastValueFrom } from 'rxjs';
 import { StorageService } from 'src/storage/services/storage.service';
 import { FailedToGenerateThumbnailException } from '../exceptions/failed-to-generate-thumbnail.exception';
-import { FailedToUploadFileException } from '../exceptions/failed-to-upload-file.exception';
+
+import exifr from 'exifr';
 
 @Injectable()
 export class PhotoProcessService {
@@ -23,34 +24,42 @@ export class PhotoProcessService {
     return encodedImageUrl;
   }
 
-  async watermark(originalImageKey: string) {
-    const encodedImageUrl =
-      await this.getEncodedSignedGetObjectUrl(originalImageKey);
-
+  async getBufferImageFromUrl(url: string) {
     const response = await lastValueFrom(
-      this.httpService.get(
-        `${process.env.IMAGINARY_ENDPOINT}/watermark?text=purepixel&textwidth=120&url=${encodedImageUrl}`,
-        {
-          responseType: 'arraybuffer',
-        },
-      ),
+      this.httpService.get(url, {
+        responseType: 'arraybuffer',
+      }),
     );
 
     if (response.status != 200) {
       throw new FailedToGenerateThumbnailException();
     }
 
-    const watermarkImageBytes = response.data;
-    const watermarkImageKey = `watermark/${originalImageKey}`;
+    return response.data;
+  }
 
-    const uploadResult = await this.storageService.uploadFromBytes(
-      watermarkImageKey,
-      watermarkImageBytes,
+  async parseExif(originalImageKey: string) {
+    const imagePublicUrl =
+      await this.storageService.getSignedGetUrl(originalImageKey);
+
+    console.log(imagePublicUrl);
+
+    const exifs = await exifr.parse(imagePublicUrl);
+
+    return exifs;
+  }
+
+  async watermark(originalImageKey: string) {
+    const encodedImageUrl =
+      await this.getEncodedSignedGetObjectUrl(originalImageKey);
+
+    const buffers = await this.getBufferImageFromUrl(
+      `${process.env.IMAGINARY_ENDPOINT}/watermark?text=purepixel&textwidth=120&url=${encodedImageUrl}`,
     );
 
-    if (uploadResult.$metadata.httpStatusCode != 200) {
-      throw new FailedToUploadFileException();
-    }
+    const watermarkImageKey = `watermark/${originalImageKey}`;
+
+    await this.storageService.uploadFromBytes(watermarkImageKey, buffers);
 
     this.logger.log(`created watermark for key ${originalImageKey}`);
 
@@ -62,30 +71,17 @@ export class PhotoProcessService {
       await this.getEncodedSignedGetObjectUrl(originalImageKey);
 
     const width = '400';
-    const response = await lastValueFrom(
-      this.httpService.get(
-        `${process.env.IMAGINARY_ENDPOINT}/thumbnail?width=${width}&url=${encodedImageUrl}`,
-        {
-          responseType: 'arraybuffer',
-        },
-      ),
+
+    this.logger.debug(`get image from ${encodedImageUrl}`);
+    const buffers = await this.getBufferImageFromUrl(
+      `${process.env.IMAGINARY_ENDPOINT}/thumbnail?width=${width}&url=${encodedImageUrl}`,
     );
 
-    if (response.status != 200) {
-      throw new FailedToGenerateThumbnailException();
-    }
-
-    const thumbnailImageBytes = response.data;
     const thumbnailKey = `thumbnail/${originalImageKey}`;
 
-    const uploadResult = await this.storageService.uploadFromBytes(
-      thumbnailKey,
-      thumbnailImageBytes,
-    );
+    this.logger.debug(`upload image `);
 
-    if (uploadResult.$metadata.httpStatusCode != 200) {
-      throw new FailedToUploadFileException();
-    }
+    await this.storageService.uploadFromBytes(thumbnailKey, buffers);
 
     this.logger.log(`created thumbnail for key ${originalImageKey}`);
 

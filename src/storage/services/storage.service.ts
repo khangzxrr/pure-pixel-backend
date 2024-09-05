@@ -7,6 +7,7 @@ import {
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Injectable, Logger } from '@nestjs/common';
+import { FailedToUploadFileException } from 'src/photo/exceptions/failed-to-upload-file.exception';
 @Injectable()
 export class StorageService {
   private logger: Logger = new Logger(StorageService.name);
@@ -58,6 +59,10 @@ export class StorageService {
     });
 
     const result = await this.sendCommand(command);
+
+    if (result.$metadata.httpStatusCode != 200) {
+      throw new FailedToUploadFileException();
+    }
 
     return result;
   }
