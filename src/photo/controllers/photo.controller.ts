@@ -19,7 +19,7 @@ import {
 } from 'nest-keycloak-connect';
 import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { HttpStatusCode } from 'axios';
 import { PresignedUploadUrlRequest } from '../dtos/presigned-upload-url.request';
 import { PresignedUploadUrlResponse } from '../dtos/presigned-upload-url.response.dto';
@@ -27,6 +27,7 @@ import { ProcessImagesRequest } from '../dtos/process-images.request.dto';
 import { Response } from 'express';
 
 @Controller('photo')
+@ApiTags('photo')
 export class PhotoController {
   constructor(@Inject() private readonly photoService: PhotoService) {}
 
@@ -53,7 +54,9 @@ export class PhotoController {
   }
 
   @Post('/process')
-  @ApiOperation({ summary: 'generate watermark images after upload' })
+  @ApiOperation({
+    summary: 'generate watermark, thumbnail, exif images after upload',
+  })
   @ApiResponse({
     status: HttpStatusCode.Ok,
     description: 'processed successfully',

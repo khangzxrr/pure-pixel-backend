@@ -1,8 +1,10 @@
 import { Controller, Get, Inject } from '@nestjs/common';
 import { NotificationService } from '../services/notification.service';
 import { Public } from 'nest-keycloak-connect';
+import { ApiTags } from '@nestjs/swagger';
 
 @Controller('notification')
+@ApiTags('notification')
 export class NotificationController {
   constructor(
     @Inject() private readonly notificationService: NotificationService,

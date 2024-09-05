@@ -3,8 +3,10 @@ import { Public } from 'nest-keycloak-connect';
 import { StorageService } from '../services/storage.service';
 import { ListBucketsCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { ApiTags } from '@nestjs/swagger';
 
 @Controller('storage')
+@ApiTags('storage')
 export class StorageController {
   constructor(@Inject() private readonly storageService: StorageService) {}
 

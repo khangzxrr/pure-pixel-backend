@@ -2,8 +2,10 @@ import { Controller, Get, Inject, UseGuards } from '@nestjs/common';
 import { AuthenticatedUser, AuthGuard } from 'nest-keycloak-connect';
 import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { UserService } from '../services/user.service';
+import { ApiTags } from '@nestjs/swagger';
 
 @Controller('me')
+@ApiTags('user')
 export class MeController {
   constructor(@Inject() private readonly userService: UserService) {}
   @Get()
