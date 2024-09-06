@@ -8,6 +8,7 @@ import { PhotoCleanUpCronService } from './services/photo-clean-up.cron.service'
 import { QueueModule } from 'src/queue/queue.module';
 import { PhotoProcessService } from './services/photo-process.service';
 import { HttpModule } from '@nestjs/axios';
+import { CachingModule } from 'src/caching/caching.module';
 
 @Module({
   providers: [PhotoService, PhotoCleanUpCronService, PhotoProcessService],
@@ -18,6 +19,7 @@ import { HttpModule } from '@nestjs/axios';
     DatabaseModule,
     StorageModule,
     QueueModule,
+    CachingModule,
   ],
 })
 export class PhotoModule {}

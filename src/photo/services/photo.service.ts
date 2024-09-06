@@ -13,6 +13,9 @@ import { FileIsNotValidException } from '../exceptions/file-is-not-valid.excepti
 import { v4 } from 'uuid';
 import { ProcessImagesRequest } from '../dtos/process-images.request.dto';
 import { PhotoProcessService } from './photo-process.service';
+import { PhotoDto } from '../dtos/photo.dto';
+import { Photo } from '../entities/photo.entity';
+import { NotBelongPhotoException } from '../exceptions/not-belong-photo.exception';
 
 @Injectable()
 export class PhotoService {
@@ -24,11 +27,32 @@ export class PhotoService {
     @Inject() private readonly photoProcessService: PhotoProcessService,
   ) {}
 
+  async updatePhotos(
+    userId: string,
+    photoDtos: PhotoDto[],
+  ): Promise<PhotoDto[]> {
+    const photos = photoDtos.map((dto) => {
+      if (dto.photographerId != userId) {
+        throw new NotBelongPhotoException();
+      }
+
+      dto.photographerId = undefined; //not allow to update photographerId
+      dto.updatedAt = undefined;
+      dto.createdAt = undefined;
+
+      return dto as Photo;
+    });
+
+    const updateResults = await this.photoRepository.batchUpdate(photos);
+
+    return updateResults.map((p) => p as PhotoDto);
+  }
+
   //TODO: async process using bullmq
   async processImages(
     userId: string,
     processImagesRequest: ProcessImagesRequest,
-  ) {
+  ): Promise<PhotoDto[]> {
     const photoIds = processImagesRequest.signedUploads.map((su) => su.photoId);
 
     const photos = await this.photoRepository.getPhotoByIdsAndStatus(
@@ -42,7 +66,6 @@ export class PhotoService {
         p.originalPhotoUrl,
       );
       p.thumbnailPhotoUrl = thumbnailKey;
-      console.log(thumbnailKey);
 
       const watermarkThumbnailKey =
         await this.photoProcessService.watermark(thumbnailKey);
@@ -62,8 +85,6 @@ export class PhotoService {
       );
       p.exif = exifs;
 
-      console.log(exifs);
-
       p.status = 'PARSED';
 
       this.logger.log(`generated thumbnail: ${thumbnailKey}`);
@@ -77,7 +98,9 @@ export class PhotoService {
 
     const updatePhotos = await Promise.all(updatePhotoPromises);
 
-    await this.photoRepository.patchUpdates(updatePhotos);
+    const updateResults = await this.photoRepository.batchUpdate(updatePhotos);
+
+    return updateResults.map((r) => r as PhotoDto);
   }
 
   async findAllByVisibility(visibilityStr: string) {

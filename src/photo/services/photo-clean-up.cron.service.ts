@@ -8,7 +8,7 @@ export class PhotoCleanUpCronService {
   constructor(@Inject() private readonly photoRepository: PhotoRepository) {}
 
   //clean up pending upload
-  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  @Cron(CronExpression.EVERY_30_SECONDS)
   async handleCron() {
     try {
       //delete by one day passed

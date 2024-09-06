@@ -1,32 +1,65 @@
+import { ApiProperty } from '@nestjs/swagger';
+import { IsOptional } from 'class-validator';
+
 export class PhotoDto {
+  @ApiProperty()
   id: string;
+
+  @ApiProperty()
+  @IsOptional()
   categoryId: string;
+
+  @ApiProperty()
   photographerId: string;
 
-  watermark: boolean;
-  showExif: boolean;
+  @ApiProperty()
+  watermark?: boolean;
 
-  exif: string;
-  colorGrading: string;
+  @ApiProperty()
+  showExif?: boolean;
 
-  location: string;
-  captureTime: string;
+  @ApiProperty()
+  exif?: string;
 
-  description: string;
+  @ApiProperty()
+  colorGrading?: string;
 
+  @ApiProperty()
+  location?: string;
+
+  @ApiProperty()
+  captureTime?: Date;
+
+  @ApiProperty()
+  description?: string;
+
+  @ApiProperty()
   originalPhotoUrl: string;
+
+  @ApiProperty()
   watermarkPhotoUrl: string;
 
+  @ApiProperty()
   thumbnailPhotoUrl: string;
+
+  @ApiProperty()
   watermarkThumbnailPhotoUrl: string;
 
-  photoType: string;
-  visibility: string;
+  @ApiProperty()
+  photoType?: string;
 
+  @ApiProperty()
+  visibility?: string;
+
+  @ApiProperty()
   status: string;
 
-  photoTags: string[];
+  @ApiProperty()
+  photoTags?: string[];
 
-  createdAt: string;
-  updatedAt: string;
+  @ApiProperty()
+  createdAt: Date;
+
+  @ApiProperty()
+  updatedAt: Date;
 }

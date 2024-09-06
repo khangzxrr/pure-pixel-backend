@@ -2,12 +2,11 @@ import {
   Body,
   Controller,
   Get,
-  HttpStatus,
   Inject,
   Param,
+  Patch,
   Post,
   Query,
-  Res,
   UseGuards,
 } from '@nestjs/common';
 import { PhotoService } from '../services/photo.service';
@@ -24,7 +23,8 @@ import { HttpStatusCode } from 'axios';
 import { PresignedUploadUrlRequest } from '../dtos/presigned-upload-url.request';
 import { PresignedUploadUrlResponse } from '../dtos/presigned-upload-url.response.dto';
 import { ProcessImagesRequest } from '../dtos/process-images.request.dto';
-import { Response } from 'express';
+import { PhotoDto } from '../dtos/photo.dto';
+import { PhotoUpdateRequest } from '../dtos/photo-update.request.dto';
 
 @Controller('photo')
 @ApiTags('photo')
@@ -60,17 +60,37 @@ export class PhotoController {
   @ApiResponse({
     status: HttpStatusCode.Ok,
     description: 'processed successfully',
+    isArray: true,
+    type: PhotoDto,
   })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   async processPhotos(
     @AuthenticatedUser() user,
     @Body() processImagesRequest: ProcessImagesRequest,
-    @Res() res: Response,
   ) {
-    await this.photoService.processImages(user.sub, processImagesRequest);
+    return await this.photoService.processImages(
+      user.sub,
+      processImagesRequest,
+    );
+  }
 
-    res.status(HttpStatus.OK).send();
+  @Patch('/update')
+  @ApiOperation({
+    summary: 'update one or more fields of photos',
+  })
+  @ApiResponse({
+    status: HttpStatusCode.Ok,
+    isArray: true,
+    type: PhotoDto,
+  })
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
+  async updatePhotos(
+    @AuthenticatedUser() user,
+    @Body() body: PhotoUpdateRequest,
+  ) {
+    return this.photoService.updatePhotos(user.sub, body.photos);
   }
 
   @Post('/upload')

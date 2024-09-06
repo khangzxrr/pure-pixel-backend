@@ -11,6 +11,7 @@ import { PhotoModule } from './photo/photo.module';
 import { NotificationModule } from './notification/notification.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { QueueModule } from './queue/queue.module';
+import { CachingModule } from './caching/caching.module';
 
 @Module({
   providers: [],
@@ -28,6 +29,7 @@ import { QueueModule } from './queue/queue.module';
     PhotoModule,
     NotificationModule,
     QueueModule,
+    CachingModule,
   ],
   controllers: [AppController],
 })

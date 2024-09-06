@@ -8,7 +8,7 @@ import { PrismaService } from 'src/prisma.service';
 export class PhotoRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async patchUpdates(photos: Photo[]) {
+  async batchUpdate(photos: Photo[]) {
     const queries = photos.map((p) => {
       return this.prisma.photo.update({
         where: {
