@@ -9,6 +9,8 @@ async function bootstrap() {
     abortOnError: true,
   });
 
+  app.setGlobalPrefix('backend');
+
   app.useGlobalPipes(new ValidationPipe());
 
   app.enableCors({
@@ -34,7 +36,7 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, configSwagger);
-  SwaggerModule.setup('api', app, document, {
+  SwaggerModule.setup('backend/api', app, document, {
     swaggerOptions: {
       initOAuth: {
         clientId: process.env.KEYCLOAK_CLIENT_ID,
