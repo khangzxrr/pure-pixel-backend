@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -9,15 +10,19 @@ async function bootstrap() {
     abortOnError: true,
   });
 
-  app.setGlobalPrefix('backend');
+  const config = app.get(ConfigService);
+
+  // app.setGlobalPrefix('backend');
 
   app.useGlobalPipes(new ValidationPipe());
 
   app.enableCors({
-    origin: ['http://localhost:3000'],
+    origin: ['http://localhost:3000', '*'],
     allowedHeaders: ['content-type', 'Authorization'],
     credentials: true,
   });
+
+  console.log(config.get('KEYCLOAK_OPENID_URL'));
 
   //remember access api
   //http://localhost:3001/api/
@@ -30,19 +35,19 @@ async function bootstrap() {
     .setVersion('1.0')
     .addSecurity('openid', {
       type: 'openIdConnect',
-      openIdConnectUrl: process.env.KEYCLOAK_OPENID_URL,
+      openIdConnectUrl: config.get<string>('KEYCLOAK_OPENID_URL'),
     })
     .addSecurityRequirements('openid')
     .build();
 
   const document = SwaggerModule.createDocument(app, configSwagger);
-  SwaggerModule.setup('backend/api', app, document, {
+  SwaggerModule.setup('api', app, document, {
     swaggerOptions: {
       initOAuth: {
-        clientId: process.env.KEYCLOAK_CLIENT_ID,
-        realm: process.env.KEYCLOAK_REALM,
+        clientId: config.get<string>('KEYCLOAK_CLIENT_ID'),
+        realm: config.get<string>('KEYCLOAK_REALM'),
         appName: 'purepixel',
-        clientSecret: process.env.KEYCLOAK_SECRET_KEY,
+        clientSecret: config.get<string>('KEYCLOAK_SECRET_KEY'),
         scopes: ['offline_access', 'openid', 'profile', 'roles', 'email'],
       },
     },
