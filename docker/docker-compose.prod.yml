@@ -1,18 +1,26 @@
 # Use postgres/example user/password credentials
 
 services:
-  imaginary:
-    image: h2non/imaginary:latest
-    restart: always
-    # optionally mount a volume as local image source
-    volumes:
-      - ./images:/mnt/data
-    environment:
-      PORT: 9000
-      KEY: ${IMAGINARY_API_KEY}
-    command: -enable-url-source -mount /mnt/data -http-cache-ttl 86400
+  purepixel:
+    image: khangzxrr/purepixel:latest
     ports:
-      - '9000:9000'
+      - 3001:3001
+    restart: always
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY}
+      S3_URL: ${S3_URL}
+      S3_REGION: ${S3_REGION}
+      S3_BUCKET: ${S3_BUCKET}
+      SFTPGO_ENDPOINT: ${SFTPGO_ENDPOINT}
+      SFTPGO_SFTP_ENDPOINT: ${SFTPGO_SFTP_ENDPOINT}
+      SFTPGO_API_KEY: ${SFTPGO_API_KEY}
+      REDIS_URL: ${REDIS_URL}
+      KEYCLOAK_AUTH_URL: ${KEYCLOAK_AUTH_URL}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID}
+      KEYCLOAK_SECRET_KEY: ${KEYCLOAK_SECRET_KEY}
 
   redis:
     image: redis
