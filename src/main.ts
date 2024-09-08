@@ -12,8 +12,6 @@ async function bootstrap() {
 
   const config = app.get(ConfigService);
 
-  // app.setGlobalPrefix('backend');
-
   app.useGlobalPipes(new ValidationPipe());
 
   app.enableCors({
@@ -21,8 +19,6 @@ async function bootstrap() {
     allowedHeaders: ['content-type', 'Authorization'],
     credentials: true,
   });
-
-  console.log(config.get('KEYCLOAK_OPENID_URL'));
 
   //remember access api
   //http://localhost:3001/api/
