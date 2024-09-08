@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { PhotoVisibility } from '@prisma/client';
+import { PhotoStatus, PhotoVisibility } from '@prisma/client';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoIsPrivatedException } from '../exceptions/photo-is-private.exception';
 import { StorageService } from 'src/storage/services/storage.service';
@@ -148,6 +148,7 @@ export class PhotoService {
   async findPublicPhotos() {
     const filter = new PhotoFindAllFilterDto();
     filter.visibility = PhotoVisibility.PUBLIC;
+    filter.status = PhotoStatus.PARSED;
 
     const photos = await this.photoRepository.findAll(filter);
 
