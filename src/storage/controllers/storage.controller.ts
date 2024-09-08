@@ -16,6 +16,17 @@ export class StorageController {
     return this.storageService.getS3();
   }
 
+  @Get('/cors')
+  @Public()
+  async getBucketCors() {
+    return await this.storageService.getBucketCors();
+  }
+
+  @Get('/cors/set')
+  @Public()
+  async setBucketCors() {
+    return await this.storageService.setBucketCors();
+  }
   @Get('/object/:key/grant-public')
   @Public()
   async grantPublicAccess(@Param('key') key: string) {

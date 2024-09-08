@@ -1,13 +1,16 @@
 import {
+  GetBucketCorsCommand,
   GetObjectAclCommand,
   GetObjectCommand,
+  PutBucketCorsCommand,
   PutObjectAclCommand,
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Injectable, Logger } from '@nestjs/common';
-import { FailedToUploadFileException } from 'src/photo/exceptions/failed-to-upload-file.exception';
+import { S3FailedUploadException } from '../exceptions/s3-failed-upload.exception';
+
 @Injectable()
 export class StorageService {
   private logger: Logger = new Logger(StorageService.name);
@@ -38,6 +41,33 @@ export class StorageService {
     return signedUrl;
   }
 
+  async getBucketCors() {
+    const command = new GetBucketCorsCommand({
+      Bucket: process.env.S3_BUCKET,
+    });
+
+    return await this.sendCommand(command);
+  }
+
+  async setBucketCors() {
+    const command = new PutBucketCorsCommand({
+      Bucket: process.env.S3_BUCKET,
+      CORSConfiguration: {
+        CORSRules: [
+          {
+            AllowedHeaders: ['*'],
+            AllowedMethods: ['GET', 'POST', 'PUT', 'DELETE', 'HEAD'],
+            AllowedOrigins: ['*'],
+            ExposeHeaders: ['Access-Control-Allow-Origin'],
+            MaxAgeSeconds: 3000,
+          },
+        ],
+      },
+    });
+
+    return await this.sendCommand(command);
+  }
+
   async getPresignedUploadUrl(key: string) {
     const command = new PutObjectCommand({
       Key: key,
@@ -61,7 +91,7 @@ export class StorageService {
     const result = await this.sendCommand(command);
 
     if (result.$metadata.httpStatusCode != 200) {
-      throw new FailedToUploadFileException();
+      throw new S3FailedUploadException();
     }
 
     return result;
