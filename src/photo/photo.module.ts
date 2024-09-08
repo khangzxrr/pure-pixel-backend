@@ -10,6 +10,7 @@ import { HttpModule } from '@nestjs/axios';
 
 @Module({
   providers: [PhotoService, PhotoCleanUpCronService, PhotoProcessService],
+  exports: [PhotoService],
   controllers: [PhotoController],
   imports: [HttpModule, AuthenModule, DatabaseModule, StorageModule],
 })

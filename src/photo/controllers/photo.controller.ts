@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Inject,
+  NotImplementedException,
   Param,
   Patch,
   Post,
@@ -23,8 +24,9 @@ import { HttpStatusCode } from 'axios';
 import { PresignedUploadUrlRequest } from '../dtos/presigned-upload-url.request';
 import { PresignedUploadUrlResponse } from '../dtos/presigned-upload-url.response.dto';
 import { ProcessImagesRequest } from '../dtos/process-images.request.dto';
-import { PhotoDto } from '../dtos/photo.dto';
+import { PhotoDto, SignedPhotoDto } from '../dtos/photo.dto';
 import { PhotoUpdateRequest } from '../dtos/photo-update.request.dto';
+import { SignUrlsRequest } from '../dtos/sign-urls.request.dto';
 
 @Controller('photo')
 @ApiTags('photo')
@@ -32,15 +34,49 @@ export class PhotoController {
   constructor(@Inject() private readonly photoService: PhotoService) {}
 
   @Get('/public')
+  @ApiOperation({
+    summary: 'get public photos',
+  })
+  @ApiResponse({
+    status: HttpStatusCode.Ok,
+    description: 'array of photos',
+    type: PhotoDto,
+    isArray: true,
+  })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Public(false)
   async getAllPublicPhoto() {
-    return await this.photoService.findAllByVisibility('PUBLIC');
+    return await this.photoService.findPublicPhotos();
   }
 
-  @Get('/:key')
+  //TODO: immplement sign url
+  @Post('sign')
+  @ApiOperation({
+    summary: 'sign url from s3 object url',
+  })
+  @ApiResponse({
+    status: HttpStatusCode.Ok,
+    description: 'signed url',
+  })
+  @Public(false)
+  async getSignedUrl(
+    @AuthenticatedUser() user,
+    @Body() signUrlsRequest: SignUrlsRequest,
+  ) {
+    throw new NotImplementedException();
+  }
+
+  @Get('/:id')
+  @ApiOperation({
+    summary: 'get photo by id',
+  })
+  @ApiResponse({
+    status: HttpStatusCode.Ok,
+    description: 'return image',
+    type: SignedPhotoDto,
+  })
   @Public()
-  async getPhoto(@AuthenticatedUser() user, @Param('key') id: string) {
+  async getPhoto(@AuthenticatedUser() user, @Param('id') id: string) {
     return await this.photoService.getPhotoById(user ? user.sub : '', id);
   }
 
@@ -61,7 +97,7 @@ export class PhotoController {
     status: HttpStatusCode.Ok,
     description: 'processed successfully',
     isArray: true,
-    type: PhotoDto,
+    type: SignedPhotoDto,
   })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })

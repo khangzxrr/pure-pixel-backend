@@ -13,9 +13,12 @@ import { FileIsNotValidException } from '../exceptions/file-is-not-valid.excepti
 import { v4 } from 'uuid';
 import { ProcessImagesRequest } from '../dtos/process-images.request.dto';
 import { PhotoProcessService } from './photo-process.service';
-import { PhotoDto } from '../dtos/photo.dto';
+import { PhotoDto, SignedPhotoDto } from '../dtos/photo.dto';
 import { Photo } from '../entities/photo.entity';
 import { NotBelongPhotoException } from '../exceptions/not-belong-photo.exception';
+import { PhotoIsPendingStateException } from '../exceptions/photo-is-pending-state.exception';
+import { SignedUrl } from '../dtos/photo-signed-url.dto';
+import { PhotoFindAllFilterDto } from '../dtos/find-all.filter.dto';
 
 @Injectable()
 export class PhotoService {
@@ -27,6 +30,26 @@ export class PhotoService {
     @Inject() private readonly photoProcessService: PhotoProcessService,
   ) {}
 
+  async signUrlFromPhotos(photo: Photo) {
+    if (photo.status == 'PENDING') {
+      throw new PhotoIsPendingStateException();
+    }
+
+    const url = photo.watermark
+      ? photo.watermarkPhotoUrl
+      : photo.originalPhotoUrl;
+
+    const thumbnail = photo.watermark
+      ? photo.watermarkThumbnailPhotoUrl
+      : photo.thumbnailPhotoUrl;
+
+    const signedUrl = await this.storageService.getSignedGetUrl(url);
+    const signedThumbnail =
+      await this.storageService.getSignedGetUrl(thumbnail);
+
+    return new SignedUrl(signedUrl, signedThumbnail);
+  }
+
   async updatePhotos(
     userId: string,
     photoDtos: PhotoDto[],
@@ -36,12 +59,21 @@ export class PhotoService {
         throw new NotBelongPhotoException();
       }
 
-      dto.photographerId = undefined; //not allow to update photographerId
+      //set undefined to prevent update what user shouldn't
+      dto.photographerId = undefined;
+      dto.thumbnailPhotoUrl = undefined;
+      dto.originalPhotoUrl = undefined;
+      dto.watermarkPhotoUrl = undefined;
+      dto.watermarkThumbnailPhotoUrl = undefined;
       dto.updatedAt = undefined;
       dto.createdAt = undefined;
 
-      return dto as Photo;
+      dto.categoryId = undefined;
+
+      return Photo.fromDto(dto);
     });
+
+    console.log(photos);
 
     const updateResults = await this.photoRepository.batchUpdate(photos);
 
@@ -52,7 +84,7 @@ export class PhotoService {
   async processImages(
     userId: string,
     processImagesRequest: ProcessImagesRequest,
-  ): Promise<PhotoDto[]> {
+  ): Promise<SignedPhotoDto[]> {
     const photoIds = processImagesRequest.signedUploads.map((su) => su.photoId);
 
     const photos = await this.photoRepository.getPhotoByIdsAndStatus(
@@ -98,13 +130,54 @@ export class PhotoService {
 
     const updatePhotos = await Promise.all(updatePhotoPromises);
 
-    const updateResults = await this.photoRepository.batchUpdate(updatePhotos);
+    const updatedPhotos = await this.photoRepository.batchUpdate(updatePhotos);
 
-    return updateResults.map((r) => r as PhotoDto);
+    const signedPhotoDtoPromises = updatedPhotos.map(async (p) => {
+      const signedPhotoDto = p as SignedPhotoDto;
+
+      const signedUrls = await this.signUrlFromPhotos(p);
+
+      signedPhotoDto.signedUrl = signedUrls;
+
+      return signedPhotoDto;
+    });
+
+    return await Promise.all(signedPhotoDtoPromises);
   }
 
-  async findAllByVisibility(visibilityStr: string) {
-    return await this.photoRepository.getAllByVisibility(visibilityStr);
+  async findPublicPhotos() {
+    const filter = new PhotoFindAllFilterDto();
+    filter.visibility = PhotoVisibility.PUBLIC;
+
+    const photos = await this.photoRepository.findAll(filter);
+
+    const signedPhotoDtoPromises = photos.map(async (p) => {
+      const signedPhotoDto = p as SignedPhotoDto;
+
+      const signedUrls = await this.signUrlFromPhotos(p);
+
+      signedPhotoDto.signedUrl = signedUrls;
+
+      return signedPhotoDto;
+    });
+
+    return await Promise.all(signedPhotoDtoPromises);
+  }
+
+  async findAll(filter: PhotoFindAllFilterDto) {
+    const photos = await this.photoRepository.findAll(filter);
+
+    const signedPhotoDtoPromises = photos.map(async (p) => {
+      const signedPhotoDto = p as SignedPhotoDto;
+
+      const signedUrls = await this.signUrlFromPhotos(p);
+
+      signedPhotoDto.signedUrl = signedUrls;
+
+      return signedPhotoDto;
+    });
+
+    return await Promise.all(signedPhotoDtoPromises);
   }
 
   async getPhotoById(userId: string, id: string) {
@@ -117,7 +190,9 @@ export class PhotoService {
       throw new PhotoIsPrivatedException();
     }
 
-    return photo;
+    const signedPhotoDto = await this.signUrlFromPhotos(photo);
+
+    return signedPhotoDto;
   }
 
   async getPresignedUploadUrl(
@@ -157,8 +232,6 @@ export class PhotoService {
 
       return result;
     }, signedUploadMap);
-
-    console.log(signedUploadMap[signedUploads[0].storageObject]);
 
     const photos = await this.photoRepository.createTemporaryPhotos(
       userId,

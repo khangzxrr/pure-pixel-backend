@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PhotoVisibility } from '@prisma/client';
+import { PhotoFindAllFilterDto } from 'src/photo/dtos/find-all.filter.dto';
 import { SignedUpload } from 'src/photo/dtos/presigned-upload-url.response.dto';
 import { Photo } from 'src/photo/entities/photo.entity';
 import { PrismaService } from 'src/prisma.service';
@@ -78,6 +79,7 @@ export class PhotoRepository {
       photo.watermark = false;
       photo.visibility = 'PRIVATE';
       photo.status = 'PENDING';
+      photo.title = '';
       photo.photoTags = [];
 
       return photo;
@@ -100,7 +102,13 @@ export class PhotoRepository {
       },
     });
   }
-  async getAllByVisibility(visibilityStr: string) {
+
+  async findAll(filter: PhotoFindAllFilterDto) {
+    return this.prisma.photo.findMany({
+      where: filter,
+    });
+  }
+  async findAllByVisibility(visibilityStr: string) {
     let visibility: PhotoVisibility = PhotoVisibility.PUBLIC;
 
     if (visibilityStr == PhotoVisibility.PRIVATE) {

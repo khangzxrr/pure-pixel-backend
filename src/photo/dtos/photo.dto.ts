@@ -1,16 +1,18 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional } from 'class-validator';
+import { SignUrl } from './sign-urls.request.dto';
 
 export class PhotoDto {
   @ApiProperty()
   id: string;
 
   @ApiProperty()
-  @IsOptional()
   categoryId: string;
 
   @ApiProperty()
   photographerId: string;
+
+  @ApiProperty()
+  title?: string;
 
   @ApiProperty()
   watermark?: boolean;
@@ -62,4 +64,9 @@ export class PhotoDto {
 
   @ApiProperty()
   updatedAt: Date;
+}
+
+export class SignedPhotoDto extends PhotoDto {
+  @ApiProperty()
+  signedUrl: SignUrl;
 }
