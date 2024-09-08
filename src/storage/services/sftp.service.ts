@@ -87,7 +87,7 @@ export class SftpService {
             return response.data;
           }),
           catchError((e) => {
-            this.logger.error(e.response.data);
+            console.log(e);
             throw new SftpFailedCreateUser(e.response.data);
           }),
         ),
