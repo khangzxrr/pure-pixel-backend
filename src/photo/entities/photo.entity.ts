@@ -4,6 +4,7 @@ export class Photo implements PrismaPhotoEntity {
   id: string;
   photographerId: string;
   categoryId: string;
+  title: string;
   watermark: boolean;
   showExif: boolean;
   exif: Prisma.JsonValue;

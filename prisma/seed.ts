@@ -42,6 +42,7 @@ async function main() {
         create: [
           {
             categoryId: category.id,
+            title: 'image title',
             description: 'lorem',
             location: 'Vietnam',
             photoType: PhotoType.RAW,
