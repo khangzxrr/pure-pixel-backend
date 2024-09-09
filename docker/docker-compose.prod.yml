@@ -1,0 +1,126 @@
+# Use postgres/example user/password credentials
+
+services:
+  imaginary:
+    image: h2non/imaginary:latest
+    restart: always
+    # optionally mount a volume as local image source
+    volumes:
+      - ./images:/mnt/data
+    environment:
+      PORT: 9000
+      KEY: ${IMAGINARY_API_KEY}
+    command: -enable-url-source -mount /mnt/data -http-cache-ttl 86400
+    ports:
+      - '9000:9000'
+
+  purepixel:
+    image: khangzxrr/purepixel:latest
+    ports:
+      - 3001:3001
+    restart: always
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY}
+      S3_URL: ${S3_URL}
+      S3_REGION: ${S3_REGION}
+      S3_BUCKET: ${S3_BUCKET}
+      SFTPGO_ENDPOINT: ${SFTPGO_ENDPOINT}
+      SFTPGO_SFTP_ENDPOINT: ${SFTPGO_SFTP_ENDPOINT}
+      SFTPGO_API_KEY: ${SFTPGO_API_KEY}
+      REDIS_URL: ${REDIS_URL}
+      KEYCLOAK_AUTH_URL: ${KEYCLOAK_AUTH_URL}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID}
+      KEYCLOAK_SECRET_KEY: ${KEYCLOAK_SECRET_KEY}
+
+  redis:
+    image: redis
+    ports:
+      - 6379:6379
+    restart: always
+    environment:
+      REDIS_PORT: 6379
+
+  stfpgo:
+    image: custom_sftpgo
+    restart: always
+    ports:
+      - 8080:8080
+      - 2022:2022
+      - 2121:2121
+    environment:
+      SFTPGO_FTPD__BINDINGS__0__PORT: ${SFTPGO_FTP_PORT}
+      #      SFTPGO_FTPD_BINDINGS__0__PORT: ${SFTPGO_FTP_PORT}
+      SFTPGO_DATA_PROVIDER__DRIVER: ${SFTPGO_DRIVER}
+      SFTPGO_DATA_PROVIDER__NAME: ${SFTPGO_DATABASE}
+      SFTPGO_DATA_PROVIDER__HOST: ${SFTPGO_HOST}
+      SFTPGO_DATA_PROVIDER__PORT: ${SFTPGO_DATABASE_PORT}
+      SFTPGO_DATA_PROVIDER__USERNAME: ${SFTPGO_DATABASE_USERNAME}
+      SFTPGO_DATA_PROVIDER__PASSWORD: ${SFTPGO_DATABASE_PASSWORD}
+    volumes:
+      - ./sftpgo:/temp/sftpgo
+      - '/etc/timezone:/etc/timezone:ro'
+      - '/etc/localtime:/etc/localtime:ro'
+
+  db:
+    image: postgres
+    restart: always
+    # set shared memory limit when using docker-compose
+    shm_size: 128mb
+    # or set shared memory limit when deploy via swarm stack
+    volumes:
+      - data:/var/lib/postgresql/data
+      - ./create-multiple-postgresql-databases:/docker-entrypoint-initdb.d
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_MULTIPLE_DATABASES: ${POSTGRES_MULTIPLE_DATABASES}
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:25.0.4
+    restart: unless-stopped
+    ports:
+      - 8081:8080
+    volumes:
+      - ./realm.json:/opt/keycloak/data/import/realm.json:ro
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KC_DB: ${KC_DB}
+      KC_DB_USERNAME: ${KC_DB_USERNAME}
+      KC_DB_PASSWORD: ${KC_DB_PASSWORD}
+      KC_DB_SCHEMA: ${KC_DB_SCHEMA}
+      KC_DB_URL: ${KC_DB_URL}
+      KC_HTTP_RELATIVE_PATH: ${KC_HTTP_RELATIVE_PATH}
+      PROXY_ADDRESS_FORWARDING: true
+    command: ['start-dev', '--import-realm']
+
+  pgadmin:
+    image: dpage/pgadmin4
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin4@pgadmin.org}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - 5050:80
+    restart: unless-stopped
+
+  web:
+    image: nginx:stable-perl
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - '80:80'
+    environment:
+      - NGINX_HOST=foobar.com
+      - NGINX_PORT=80
+
+volumes:
+  data: {}
+  minio: {}
+  pgadmin: {}

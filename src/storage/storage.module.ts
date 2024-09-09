@@ -1,31 +1,24 @@
 import { Module } from '@nestjs/common';
-import { S3Module } from 'nestjs-s3';
-import { StorageController } from './storage.controller';
+import { StorageController } from './controllers/storage.controller';
 import { CacheModule } from '@nestjs/cache-manager';
 import { redisStore } from 'cache-manager-redis-yet';
+import { StorageService } from './services/storage.service';
+import { HttpModule } from '@nestjs/axios';
+import { SftpService } from './services/sftp.service';
 
 @Module({
   imports: [
+    HttpModule.register({
+      timeout: 5000,
+      maxRedirects: 5,
+    }),
     CacheModule.register({
       store: redisStore,
       url: process.env.REDIS_URL,
     }),
-    S3Module.forRootAsync({
-      useFactory: () => ({
-        config: {
-          credentials: {
-            accessKeyId: process.env.MINIO_ACCESS_KEY,
-            secretAccessKey: process.env.MINIO_SECRET_KEY,
-          },
-          region: 'us-east-1',
-          endpoint: process.env.MINIO_URL,
-          forcePathStyle: true,
-
-        },
-      })
-    })
   ],
-  exports: [],
+  exports: [StorageService, SftpService],
   controllers: [StorageController],
+  providers: [StorageService, SftpService],
 })
-export class StorageModule { }
+export class StorageModule {}

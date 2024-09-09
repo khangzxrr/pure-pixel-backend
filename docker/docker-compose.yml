@@ -1,6 +1,19 @@
 # Use postgres/example user/password credentials
 
 services:
+  imaginary:
+    image: h2non/imaginary:latest
+    restart: always
+    # optionally mount a volume as local image source
+    volumes:
+      - ./images:/mnt/data
+    environment:
+      PORT: 9000
+      KEY: ${IMAGINARY_API_KEY}
+    command: -enable-url-source -mount /mnt/data -http-cache-ttl 86400
+    ports:
+      - '9000:9000'
+
   redis:
     image: redis
     ports:
@@ -8,20 +21,6 @@ services:
     restart: always
     environment:
       REDIS_PORT: 6379
-
-  minio:
-    image: quay.io/minio/minio:latest
-    ports:
-      - 9000:9000
-      - 9001:9001
-      - 8021:8021
-    restart: always
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-    volumes:
-      - minio:/data
-    command: server --console-address ":9001" /data
 
   stfpgo:
     image: custom_sftpgo
@@ -52,16 +51,20 @@ services:
     # or set shared memory limit when deploy via swarm stack
     volumes:
       - data:/var/lib/postgresql/data
+      - ./create-multiple-postgresql-databases:/docker-entrypoint-initdb.d
     ports:
       - 5432:5432
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_MULTIPLE_DATABASES: ${POSTGRES_MULTIPLE_DATABASES}
 
   keycloak:
     image: quay.io/keycloak/keycloak:25.0.4
     restart: unless-stopped
     ports:
       - 8081:8080
+    volumes:
+      - ./realm.json:/opt/keycloak/data/import/realm.json:ro
     environment:
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
@@ -70,7 +73,9 @@ services:
       KC_DB_PASSWORD: ${KC_DB_PASSWORD}
       KC_DB_SCHEMA: ${KC_DB_SCHEMA}
       KC_DB_URL: ${KC_DB_URL}
-    command: ['start-dev']
+      KC_HTTP_RELATIVE_PATH: ${KC_HTTP_RELATIVE_PATH}
+      PROXY_ADDRESS_FORWARDING: true
+    command: ['start-dev', '--import-realm']
 
   pgadmin:
     image: dpage/pgadmin4
@@ -83,6 +88,16 @@ services:
     ports:
       - 5050:80
     restart: unless-stopped
+
+  web:
+    image: nginx:stable-perl
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - '80:80'
+    environment:
+      - NGINX_HOST=foobar.com
+      - NGINX_PORT=80
 
 volumes:
   data: {}
