@@ -91,7 +91,7 @@ model UpgradePackage {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  name        String
+  name        String @unique
   price       Decimal
   description Json
 

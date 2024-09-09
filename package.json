@@ -36,7 +36,7 @@
     "@nestjs/schedule": "^4.1.0",
     "@nestjs/swagger": "^7.4.0",
     "@onesignal/node-onesignal": "^5.0.0-alpha-01",
-    "@prisma/client": "^5.17.0",
+    "@prisma/client": "^5.19.0",
     "aws-sdk": "^2.1686.0",
     "axios": "^1.7.7",
     "bullmq": "^5.12.13",
@@ -98,4 +98,3 @@
     "testEnvironment": "node"
   }
 }
-

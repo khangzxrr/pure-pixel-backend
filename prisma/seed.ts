@@ -3,6 +3,7 @@ import {
   PhotoType,
   PhotoVisibility,
   PrismaClient,
+  UpgradePackageStatus,
 } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -12,6 +13,33 @@ async function main() {
 
   const categoryName = 'landscape';
   const categoryDescription = 'trees! I love trees!';
+
+  const basicUpgradePackage = {
+    name: 'basic',
+    description: {},
+    price: 100000,
+    quotaSize: 1024 * 5,
+    bookingQuotaSize: 1024 * 5,
+    status: UpgradePackageStatus.ENABLED,
+  };
+
+  const premiumUpgradePackage = {
+    name: 'premium',
+    description: {},
+    price: 200000,
+    quotaSize: 1024 * 10,
+    bookingQuotaSize: 1024 * 10,
+    status: UpgradePackageStatus.ENABLED,
+  };
+
+  const signatureUpgradePackage = {
+    name: 'signaure',
+    description: {},
+    price: 300000,
+    quotaSize: 1024 * 15,
+    bookingQuotaSize: 1024 * 15,
+    status: UpgradePackageStatus.ENABLED,
+  };
 
   const category = await prisma.category.upsert({
     where: {
@@ -25,7 +53,30 @@ async function main() {
     },
   });
 
-  const user1 = await prisma.user.upsert({
+  //insert signaure package
+  await prisma.upgradePackage.upsert({
+    where: {
+      name: signatureUpgradePackage.name,
+    },
+    update: {},
+    create: signatureUpgradePackage,
+  });
+  await prisma.upgradePackage.upsert({
+    where: {
+      name: premiumUpgradePackage.name,
+    },
+    update: {},
+    create: premiumUpgradePackage,
+  });
+  await prisma.upgradePackage.upsert({
+    where: {
+      name: basicUpgradePackage.name,
+    },
+    update: {},
+    create: basicUpgradePackage,
+  });
+
+  await prisma.user.upsert({
     where: {
       id: user1Id,
     },
@@ -34,7 +85,6 @@ async function main() {
       id: user1Id,
       diskQuota: 1024 * 5,
       diskUsage: 0,
-      ftpEndpoint: user1Id,
       ftpUsername: 'user1',
       ftpPassword: 'user1',
 
@@ -68,8 +118,6 @@ async function main() {
       },
     },
   });
-
-  console.log({ category, user1 });
 }
 
 main()
