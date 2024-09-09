@@ -75,7 +75,8 @@ export class PhotoController {
     description: 'return image',
     type: SignedPhotoDto,
   })
-  @Public()
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Public(false)
   async getPhoto(@AuthenticatedUser() user, @Param('id') id: string) {
     return await this.photoService.getPhotoById(user ? user.sub : '', id);
   }

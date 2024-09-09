@@ -7,11 +7,18 @@ import { AuthenModule } from 'src/authen/authen.module';
 import { PhotoCleanUpCronService } from './services/photo-clean-up.cron.service';
 import { PhotoProcessService } from './services/photo-process.service';
 import { HttpModule } from '@nestjs/axios';
+import { PhotoCategoryService } from './services/photo-category.service';
+import { PhotoCategoryController } from './controllers/photo-category.controller';
 
 @Module({
-  providers: [PhotoService, PhotoCleanUpCronService, PhotoProcessService],
-  exports: [PhotoService],
-  controllers: [PhotoController],
+  providers: [
+    PhotoService,
+    PhotoCleanUpCronService,
+    PhotoProcessService,
+    PhotoCategoryService,
+  ],
+  exports: [PhotoService, PhotoCategoryService],
+  controllers: [PhotoController, PhotoCategoryController],
   imports: [HttpModule, AuthenModule, DatabaseModule, StorageModule],
 })
 export class PhotoModule {}

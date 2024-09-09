@@ -191,7 +191,11 @@ export class PhotoService {
       throw new PhotoIsPrivatedException();
     }
 
-    const signedPhotoDto = await this.signUrlFromPhotos(photo);
+    const signedPhotoDto = photo as SignedPhotoDto;
+
+    const signedUrls = await this.signUrlFromPhotos(photo);
+
+    signedPhotoDto.signedUrl = signedUrls;
 
     return signedPhotoDto;
   }
