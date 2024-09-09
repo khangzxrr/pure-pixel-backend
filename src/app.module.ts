@@ -10,6 +10,7 @@ import { DatabaseModule } from './database/database.module';
 import { PhotoModule } from './photo/photo.module';
 import { NotificationModule } from './notification/notification.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { UpgradeModule } from './upgrade/upgrade.module';
 
 @Module({
   providers: [],
@@ -27,6 +28,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     DatabaseModule,
     PhotoModule,
     NotificationModule,
+    UpgradeModule,
   ],
   controllers: [AppController],
 })
