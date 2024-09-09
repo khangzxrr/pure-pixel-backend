@@ -3,7 +3,6 @@ import {
   Controller,
   Get,
   Inject,
-  NotImplementedException,
   Param,
   Patch,
   Post,
@@ -26,7 +25,6 @@ import { PresignedUploadUrlResponse } from '../dtos/presigned-upload-url.respons
 import { ProcessImagesRequest } from '../dtos/process-images.request.dto';
 import { PhotoDto, SignedPhotoDto } from '../dtos/photo.dto';
 import { PhotoUpdateRequest } from '../dtos/photo-update.request.dto';
-import { SignUrlsRequest } from '../dtos/sign-urls.request.dto';
 
 @Controller('photo')
 @ApiTags('photo')
@@ -47,23 +45,6 @@ export class PhotoController {
   @Public(false)
   async getAllPublicPhoto() {
     return await this.photoService.findPublicPhotos();
-  }
-
-  //TODO: immplement sign url
-  @Post('sign')
-  @ApiOperation({
-    summary: 'sign url from s3 object url',
-  })
-  @ApiResponse({
-    status: HttpStatusCode.Ok,
-    description: 'signed url',
-  })
-  @Public(false)
-  async getSignedUrl(
-    @AuthenticatedUser() user,
-    @Body() signUrlsRequest: SignUrlsRequest,
-  ) {
-    throw new NotImplementedException();
   }
 
   @Get('/:id')
