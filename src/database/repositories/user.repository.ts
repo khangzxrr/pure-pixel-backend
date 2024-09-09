@@ -26,7 +26,6 @@ export class UserRepository {
         update: {
           ftpUsername: user.ftpUsername,
           ftpPassword: user.ftpPassword,
-          ftpEndpoint: user.ftpEndpoint,
         },
         create: user,
       });

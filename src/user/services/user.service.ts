@@ -8,8 +8,6 @@ export class UserService {
   async getByUserId(userid: string) {
     const user = await this.userRepository.getById(userid);
 
-    user.ftpEndpoint = process.env.SFTPGO_SFTP_ENDPOINT;
-
     return user;
   }
 }

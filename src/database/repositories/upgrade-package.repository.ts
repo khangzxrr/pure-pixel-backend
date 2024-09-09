@@ -6,6 +6,10 @@ export class UpgradePackageRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll() {
-    return this.prisma.upgradePackage.findMany();
+    return this.prisma.upgradePackage.findMany({
+      orderBy: {
+        price: 'asc',
+      },
+    });
   }
 }
