@@ -7,6 +7,9 @@ export class UpgradePackageRepository {
 
   async findAll() {
     return this.prisma.upgradePackage.findMany({
+      where: {
+        status: 'ENABLED',
+      },
       orderBy: {
         price: 'asc',
       },
