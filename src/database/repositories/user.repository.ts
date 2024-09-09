@@ -3,16 +3,23 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 import { User } from 'src/user/entities/user.entity';
 import { DuplicatedUserIdException } from '../exceptions/duplicatedUserId.exception';
+import { UserFilterDto } from 'src/user/dto/user-filter.dto';
 
 @Injectable()
 export class UserRepository {
   private logger = new Logger(UserRepository.name);
 
   constructor(private readonly prisma: PrismaService) {}
-  async getById(id: string) {
-    return this.prisma.user.findFirst({
+
+  async findOne(userFilterDto: UserFilterDto) {
+    console.log(userFilterDto);
+    return this.prisma.user.findUnique({
       where: {
-        id,
+        id: userFilterDto.id,
+      },
+      include: {
+        transactions: userFilterDto.transactions,
+        upgradeOrders: userFilterDto.upgradeOrders,
       },
     });
   }

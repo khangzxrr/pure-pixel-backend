@@ -1,8 +1,9 @@
-import { Controller, Get, Inject, UseGuards } from '@nestjs/common';
+import { Controller, Get, Inject, Query, UseGuards } from '@nestjs/common';
 import { AuthenticatedUser, AuthGuard } from 'nest-keycloak-connect';
 import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { UserService } from '../services/user.service';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { UserFilterDto } from '../dto/user-filter.dto';
 
 @Controller('me')
 @ApiTags('user')
@@ -10,14 +11,19 @@ export class MeController {
   constructor(@Inject() private readonly userService: UserService) {}
 
   @ApiOperation({
-    summary: 'get customer info',
+    summary: 'get user info',
   })
   @Get()
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   async getMeInfo(
     @AuthenticatedUser()
     user: any,
+    @Query() userFilterDto: UserFilterDto,
   ) {
-    return await this.userService.getByUserId(user.sub);
+    console.log(userFilterDto);
+
+    userFilterDto.id = user.sub;
+
+    return await this.userService.findOne(userFilterDto);
   }
 }
