@@ -1,47 +1,33 @@
 import { Module } from '@nestjs/common';
-import { PrismaService } from './prisma.service';
 import { StorageModule } from './storage/storage.module';
 
 import { ConfigModule } from '@nestjs/config';
 import { UserModule } from './user/user.module';
-import { AuthenModule } from './authen/authen.module';
-import {
-  AuthGuard,
-  KeycloakConnectModule,
-  ResourceGuard,
-  RoleGuard,
-} from 'nest-keycloak-connect';
-import { KeycloakConfigService } from './authen/services/keycloak-config.service';
-import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
+import { PhotographerModule } from './photographer/photographer.module';
+import { AuthenModule } from './authen/authen.module';
+import { DatabaseModule } from './database/database.module';
+import { PhotoModule } from './photo/photo.module';
+import { NotificationModule } from './notification/notification.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
+  providers: [],
+  exports: [],
   imports: [
-    KeycloakConnectModule.registerAsync({
-      useExisting: KeycloakConfigService,
-      imports: [AuthenModule],
-    }),
+    ScheduleModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: '.env',
     }),
     StorageModule,
+    AuthenModule,
     UserModule,
+    PhotographerModule,
+    DatabaseModule,
+    PhotoModule,
+    NotificationModule,
   ],
   controllers: [AppController],
-  providers: [
-    PrismaService,
-    {
-      provide: APP_GUARD,
-      useClass: AuthGuard,
-    },
-    {
-      provide: APP_GUARD,
-      useClass: RoleGuard,
-    },
-    {
-      provide: APP_GUARD,
-      useClass: ResourceGuard,
-    },
-  ],
 })
 export class AppModule {}

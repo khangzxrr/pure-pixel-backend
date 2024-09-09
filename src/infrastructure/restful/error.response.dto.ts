@@ -1,4 +1,4 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty } from '@nestjs/swagger';
 
 export class ErrorResponseDto {
   @ApiProperty({ example: 400 })
@@ -20,5 +20,4 @@ export class ErrorResponseDto {
     required: false,
   })
   readonly subErrors?: string[];
-
 }
