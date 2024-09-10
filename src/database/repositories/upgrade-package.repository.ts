@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { UpgradePackageStatus } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
@@ -12,6 +13,15 @@ export class UpgradePackageRepository {
       },
       orderBy: {
         price: 'asc',
+      },
+    });
+  }
+
+  async findById(id: string, status?: UpgradePackageStatus) {
+    return this.prisma.upgradePackage.findFirst({
+      where: {
+        id,
+        status,
       },
     });
   }
