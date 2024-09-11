@@ -6,6 +6,32 @@ import { PrismaService } from 'src/prisma.service';
 export class UpgradePackageOrderRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  async findManyActivateAndExpired(date: Date) {
+    return this.prisma.upgradeOrder.findMany({
+      where: {
+        expiredAt: {
+          lte: date,
+        },
+        status: 'ACTIVE',
+      },
+    });
+  }
+
+  async deactivateActivatedAndExpired(date: Date) {
+    return this.prisma.upgradeOrder.updateMany({
+      where: {
+        expiredAt: {
+          lte: date,
+        },
+        status: 'ACTIVE',
+      },
+
+      data: {
+        status: 'EXPIRE',
+      },
+    });
+  }
+
   async cancelOrderAndTransaction(id: string, tx: Prisma.TransactionClient) {
     return tx.upgradeOrder.update({
       where: {
