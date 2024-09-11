@@ -54,10 +54,12 @@ export class UpgradePackageOrderRepository {
   async createUpgradeOrder(
     userId: string,
     upgradePackage: UpgradePackage,
+    expiredAt: Date,
     tx: Prisma.TransactionClient,
   ) {
     return tx.upgradeOrder.create({
       data: {
+        expiredAt,
         description: upgradePackage.description,
         bookingQuotaSize: upgradePackage.bookingQuotaSize,
         quotaSize: upgradePackage.quotaSize,

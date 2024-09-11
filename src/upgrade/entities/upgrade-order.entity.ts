@@ -2,6 +2,7 @@ import { $Enums, UpgradeOrder as PrismaUpgradeOrder } from '@prisma/client';
 import { Decimal, JsonValue } from '@prisma/client/runtime/library';
 
 export class UpgradeOrder implements PrismaUpgradeOrder {
+  expiredAt: Date;
   status: $Enums.UpgradeOrderStatus;
   id: string;
   createdAt: Date;

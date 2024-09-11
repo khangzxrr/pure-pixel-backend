@@ -75,6 +75,8 @@ model UpgradeOrder {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  expiredAt DateTime
+
   originalUpgradePackage   UpgradePackage @relation(fields: [originalUpgradePackageId], references: [id])
   originalUpgradePackageId String
 

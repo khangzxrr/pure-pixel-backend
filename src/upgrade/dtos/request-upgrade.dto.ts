@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsString } from 'class-validator';
+import { IsBoolean, IsNumber, IsString, Max, Min } from 'class-validator';
 import { ToBoolean } from 'src/infrastructure/transforms/to-boolean';
 
 export class RequestUpgradeDto {
@@ -24,4 +24,12 @@ export class RequestUpgradeDto {
   })
   @IsString()
   upgradePackageId: string;
+
+  @ApiProperty({
+    description: 'number of month this order expired',
+  })
+  @IsNumber()
+  @Min(1)
+  @Max(12)
+  totalMonths: number;
 }

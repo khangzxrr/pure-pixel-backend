@@ -80,7 +80,6 @@ export class PhotoService {
     return updateResults.map((p) => p as PhotoDto);
   }
 
-  //TODO: async process using bullmq
   async processImages(
     userId: string,
     processImagesRequest: ProcessImagesRequest,

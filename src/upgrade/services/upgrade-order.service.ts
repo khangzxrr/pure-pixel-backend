@@ -9,6 +9,7 @@ import { UpgradePackageNotFoundException } from '../exceptions/upgrade-package-n
 import { UpgradePackageRepository } from 'src/database/repositories/upgrade-package.repository';
 import { PrismaService } from 'src/prisma.service';
 import { ExistPendingOrderException as ExistPendingUpgradeOrderException } from '../exceptions/exist-pending-order-exception';
+import { NotValidExpireDateException } from '../exceptions/not-valid-expired-date.exception';
 
 @Injectable()
 export class UpgradeOrderService {
@@ -19,6 +20,8 @@ export class UpgradeOrderService {
     private readonly upgradePackageRepository: UpgradePackageRepository,
     private readonly prisma: PrismaService,
   ) {}
+
+  //TODO: cron job check expire time of upgrade package
 
   async findActiveUpgradePackageOrderByUserId(userId: string) {
     try {
@@ -77,6 +80,16 @@ export class UpgradeOrderService {
       throw new ExistPendingUpgradeOrderException();
     }
 
+    const currentDate = new Date();
+    const expiredDate = new Date(
+      currentDate.setMonth(currentDate.getMonth() + requestUpgrade.totalMonths),
+    );
+
+    //should we believe in class-validator?
+    //absolutely not
+    if (expiredDate < currentDate) {
+      throw new NotValidExpireDateException();
+    }
     const upgradeOrder = await this.prisma.$transaction(
       async (tx: Prisma.TransactionClient) => {
         const cancelOrderPromises = pendingOrders.map((po) =>
@@ -97,6 +110,7 @@ export class UpgradeOrderService {
           await this.upgradePackageOrderRepository.createUpgradeOrder(
             userId,
             upgradePackage,
+            expiredDate,
             tx,
           );
 
