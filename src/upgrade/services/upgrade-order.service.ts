@@ -21,8 +21,6 @@ export class UpgradeOrderService {
     private readonly prisma: PrismaService,
   ) {}
 
-  //TODO: cron job check expire time of upgrade package
-
   async findActiveUpgradePackageOrderByUserId(userId: string) {
     try {
       return await this.upgradePackageOrderRepository.findCurrentUpgradePackageByUserIdOrThrow(
