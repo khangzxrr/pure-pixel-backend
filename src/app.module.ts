@@ -12,6 +12,7 @@ import { NotificationModule } from './notification/notification.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { UpgradeModule } from './upgrade/upgrade.module';
 import { PaymentModule } from './payment/payment.module';
+import { QueueModule } from './queue/queue.module';
 
 @Module({
   providers: [],
@@ -31,6 +32,7 @@ import { PaymentModule } from './payment/payment.module';
     NotificationModule,
     UpgradeModule,
     PaymentModule,
+    QueueModule,
   ],
   controllers: [AppController],
 })
