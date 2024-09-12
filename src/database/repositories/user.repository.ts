@@ -24,6 +24,21 @@ export class UserRepository {
     });
   }
 
+  async findOneTransaction(
+    userFilterDto: UserFilterDto,
+    tx: Prisma.TransactionClient,
+  ) {
+    return tx.user.findUnique({
+      where: {
+        id: userFilterDto.id,
+      },
+      include: {
+        transactions: userFilterDto.transactions,
+        upgradeOrders: userFilterDto.upgradeOrders,
+      },
+    });
+  }
+
   async createIfNotExistTransaction(user: User, tx: Prisma.TransactionClient) {
     try {
       return tx.user.upsert({
