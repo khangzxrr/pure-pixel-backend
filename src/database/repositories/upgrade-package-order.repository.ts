@@ -6,6 +6,14 @@ import { PrismaService } from 'src/prisma.service';
 export class UpgradePackageOrderRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  async findManyActivateOrder() {
+    return this.prisma.upgradeOrder.findMany({
+      where: {
+        status: 'ACTIVE',
+      },
+    });
+  }
+
   async findManyActivateAndExpired(date: Date) {
     return this.prisma.upgradeOrder.findMany({
       where: {
