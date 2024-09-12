@@ -54,18 +54,11 @@ export class PhotoRepository {
   }
 
   async createTemporaryPhotos(userId: string, signedUploads: SignedUpload[]) {
-    //TODO: catch exception when category is not found
-    const category = await this.prisma.category.findFirst({
-      select: {
-        id: true,
-      },
-    });
-
+    //category can be null
     const photos = signedUploads.map((u) => {
       const photo = new Photo();
       photo.photographerId = userId;
       photo.originalPhotoUrl = u.storageObject;
-      photo.categoryId = category.id;
       photo.location = '';
       photo.photoType = 'RAW';
       photo.watermarkThumbnailPhotoUrl = '';
