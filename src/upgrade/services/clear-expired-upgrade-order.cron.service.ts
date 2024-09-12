@@ -13,8 +13,7 @@ export class ClearExpiredUpgradeOrder {
     @InjectQueue(UpgradeConstant.UPGRADE_QUEUE) private upgradeQueue: Queue,
   ) {}
 
-  // @Cron(CronExpression.EVERY_DAY_AT_9AM)
-  @Cron(CronExpression.EVERY_30_SECONDS)
+  @Cron(CronExpression.EVERY_DAY_AT_9AM)
   async notifyToPhotographerTheirUpgradePackageWillExpiredSoon() {
     const currentDate = new Date();
     const oneWeekLaterDate = new Date(
@@ -31,7 +30,7 @@ export class ClearExpiredUpgradeOrder {
     });
   }
 
-  @Cron(CronExpression.EVERY_30_SECONDS)
+  @Cron(CronExpression.EVERY_DAY_AT_6PM)
   async clearExpired() {
     const currentDate = new Date();
     //find using current date
