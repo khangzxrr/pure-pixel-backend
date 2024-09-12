@@ -45,8 +45,6 @@ export class AuthenService {
 
         await this.userRepository.createIfNotExistTransaction(newUser, tx);
 
-        //update sftp profile to database
-
         this.logger.log(`create new user to database,`);
       },
       {
