@@ -124,12 +124,13 @@ export class UpgradePackageOrderRepository {
     userId: string,
     tx: Prisma.TransactionClient,
   ): PrismaPromise<Prisma.BatchPayload> {
-    //TODO: determine should updateMany is a correct workaround for update one order
-
+    //should using updateMany to deactivate all current active upgradePackage
+    //but we only allow one package at a time?
+    //maybe we will change that later, this method will also perform correctly
     return tx.upgradeOrder.updateMany({
       where: {
         userId,
-        status: 'EXPIRE',
+        status: 'ACTIVE',
       },
 
       data: {
