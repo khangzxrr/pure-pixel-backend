@@ -39,14 +39,10 @@ export class NotificationService {
     return notification;
   }
 
-  async sendToSpecificUserByUserId(userid: string) {
-    const notification = this.createTextNotification(
-      'test',
-      'english title',
-      'vietnamese title',
-      'en content',
-      'vi content',
-    );
+  async sendToSpecificUserByUserId(
+    userid: string,
+    notification: OneSignal.Notification,
+  ) {
     notification.include_aliases = {
       external_id: [userid],
     };

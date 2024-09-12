@@ -1,5 +1,6 @@
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
+import { UpgradeConstant } from 'src/upgrade/constants/upgrade.constant';
 
 @Module({
   exports: [BullModule],
@@ -11,7 +12,7 @@ import { Module } from '@nestjs/common';
       },
     }),
     BullModule.registerQueue({
-      name: 'smtp',
+      name: UpgradeConstant.UPGRADE_QUEUE,
     }),
   ],
 })

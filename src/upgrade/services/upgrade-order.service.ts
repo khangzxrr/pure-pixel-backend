@@ -85,6 +85,8 @@ export class UpgradeOrderService {
       currentDate.setMonth(currentDate.getMonth() + requestUpgrade.totalMonths),
     );
 
+    //TODO: calculate price on totalMonths
+
     //should we believe in class-validator?
     //absolutely not
     if (expiredDate < currentDate) {

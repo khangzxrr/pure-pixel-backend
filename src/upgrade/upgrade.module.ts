@@ -7,10 +7,23 @@ import { AuthenModule } from 'src/authen/authen.module';
 import { StorageModule } from 'src/storage/storage.module';
 import { ClearExpiredUpgradeOrder } from './services/clear-expired-upgrade-order.cron.service';
 import { QueueModule } from 'src/queue/queue.module';
+import { UpgradeServiceConsumer } from './consumers/upgrade-service.consumer';
+import { NotificationModule } from 'src/notification/notification.module';
 
 @Module({
-  imports: [DatabaseModule, AuthenModule, StorageModule, QueueModule],
-  providers: [UpgradeService, UpgradeOrderService, ClearExpiredUpgradeOrder],
+  imports: [
+    DatabaseModule,
+    AuthenModule,
+    StorageModule,
+    QueueModule,
+    NotificationModule,
+  ],
+  providers: [
+    UpgradeService,
+    UpgradeOrderService,
+    ClearExpiredUpgradeOrder,
+    UpgradeServiceConsumer,
+  ],
   exports: [UpgradeService, UpgradeOrderService],
   controllers: [UpgradeController],
 })
