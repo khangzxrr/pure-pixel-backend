@@ -89,6 +89,7 @@ export class UpgradePackageOrderRepository {
     userId: string,
     upgradePackage: UpgradePackage,
     expiredAt: Date,
+    calculatedPrice: Prisma.Decimal,
     tx: Prisma.TransactionClient,
   ) {
     return tx.upgradeOrder.create({
@@ -97,7 +98,7 @@ export class UpgradePackageOrderRepository {
         description: upgradePackage.description,
         bookingQuotaSize: upgradePackage.bookingQuotaSize,
         quotaSize: upgradePackage.quotaSize,
-        price: upgradePackage.price,
+        price: calculatedPrice,
         name: upgradePackage.name,
         status: 'PENDING',
         user: {

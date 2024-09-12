@@ -34,14 +34,11 @@ export class UpgradeOrderService {
       throw new UnhandledException(e);
     }
   }
-  async requestUpgradePayment(
+
+  private async checkIfUserHasActivatedOrderWithoutAcceptTransfer(
     userId: string,
     requestUpgrade: RequestUpgradeDto,
   ) {
-    console.log(userId, requestUpgrade);
-
-    //check if user has activated upgrade package
-    //=================
     const activedUpgradePackage =
       await this.upgradePackageOrderRepository.findCurrentUpgradePackageByUserId(
         userId,
@@ -50,12 +47,11 @@ export class UpgradeOrderService {
     if (activedUpgradePackage != null && !requestUpgrade.acceptTransfer) {
       throw new UserHasActivatedUpgradePackage();
     }
-    //===================================================================
+  }
 
-    //TODO: handle transfer upgrade packages
-    //
-
-    //check if upgrade package id supplied is exist
+  private async checkUpgradePackageMustExist(
+    requestUpgrade: RequestUpgradeDto,
+  ) {
     const upgradePackage = await this.upgradePackageRepository.findById(
       requestUpgrade.upgradePackageId,
       UpgradePackageStatus.ENABLED,
@@ -64,8 +60,14 @@ export class UpgradeOrderService {
     if (upgradePackage == null) {
       throw new UpgradePackageNotFoundException();
     }
-    //============================================================
 
+    return upgradePackage;
+  }
+
+  private async checkPendingOrderAndAcceptCancelPending(
+    userId: string,
+    requestUpgrade: RequestUpgradeDto,
+  ) {
     const pendingOrders =
       await this.upgradePackageOrderRepository.findManyPendingOrderByUserId(
         userId,
@@ -78,18 +80,46 @@ export class UpgradeOrderService {
       throw new ExistPendingUpgradeOrderException();
     }
 
+    return pendingOrders;
+  }
+
+  async requestUpgradePayment(
+    userId: string,
+    requestUpgrade: RequestUpgradeDto,
+  ) {
+    await this.checkIfUserHasActivatedOrderWithoutAcceptTransfer(
+      userId,
+      requestUpgrade,
+    );
+
+    const upgradePackage =
+      await this.checkUpgradePackageMustExist(requestUpgrade);
+
+    const pendingOrders = await this.checkPendingOrderAndAcceptCancelPending(
+      userId,
+      requestUpgrade,
+    );
+
+    //TODO: handle transfer upgrade packages
+    //
+
     const currentDate = new Date();
     const expiredDate = new Date(
       currentDate.setMonth(currentDate.getMonth() + requestUpgrade.totalMonths),
     );
-
-    //TODO: calculate price on totalMonths
 
     //should we believe in class-validator?
     //absolutely not
     if (expiredDate < currentDate) {
       throw new NotValidExpireDateException();
     }
+
+    const calculatedPrice = upgradePackage.price.mul(
+      new Prisma.Decimal(requestUpgrade.totalMonths),
+    );
+
+    //TODO: calculate price on totalMonths
+
     const upgradeOrder = await this.prisma.$transaction(
       async (tx: Prisma.TransactionClient) => {
         const cancelOrderPromises = pendingOrders.map((po) =>
@@ -111,6 +141,7 @@ export class UpgradeOrderService {
             userId,
             upgradePackage,
             expiredDate,
+            calculatedPrice,
             tx,
           );
 
