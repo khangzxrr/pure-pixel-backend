@@ -9,6 +9,7 @@ import { PhotoProcessService } from './services/photo-process.service';
 import { HttpModule } from '@nestjs/axios';
 import { PhotoCategoryService } from './services/photo-category.service';
 import { PhotoCategoryController } from './controllers/photo-category.controller';
+import { QueueModule } from 'src/queue/queue.module';
 
 @Module({
   providers: [
@@ -19,6 +20,15 @@ import { PhotoCategoryController } from './controllers/photo-category.controller
   ],
   exports: [PhotoService, PhotoCategoryService],
   controllers: [PhotoController, PhotoCategoryController],
-  imports: [HttpModule, AuthenModule, DatabaseModule, StorageModule],
+  imports: [
+    HttpModule.register({
+      timeout: 30000,
+      maxRedirects: 10,
+    }),
+    AuthenModule,
+    DatabaseModule,
+    StorageModule,
+    QueueModule,
+  ],
 })
 export class PhotoModule {}
