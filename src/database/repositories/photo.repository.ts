@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PhotoVisibility } from '@prisma/client';
-import { PhotoFindAllFilterDto } from 'src/photo/dtos/find-all.filter.dto';
+import { FindAllPhotoFilterDto } from 'src/photo/dtos/find-all.filter.dto';
 import { SignedUpload } from 'src/photo/dtos/presigned-upload-url.response.dto';
 import { Photo } from 'src/photo/entities/photo.entity';
 import { PrismaService } from 'src/prisma.service';
@@ -96,9 +96,11 @@ export class PhotoRepository {
     });
   }
 
-  async findAll(filter: PhotoFindAllFilterDto) {
+  async findAll(filter: FindAllPhotoFilterDto) {
     return this.prisma.photo.findMany({
-      where: filter,
+      where: filter.toWhere(),
+      skip: filter.skip,
+      take: filter.take,
     });
   }
   async findAllByVisibility(visibilityStr: string) {

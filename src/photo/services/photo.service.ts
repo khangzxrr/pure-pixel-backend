@@ -18,7 +18,7 @@ import { Photo } from '../entities/photo.entity';
 import { NotBelongPhotoException } from '../exceptions/not-belong-photo.exception';
 import { PhotoIsPendingStateException } from '../exceptions/photo-is-pending-state.exception';
 import { SignedUrl } from '../dtos/photo-signed-url.dto';
-import { PhotoFindAllFilterDto } from '../dtos/find-all.filter.dto';
+import { FindAllPhotoFilterDto } from '../dtos/find-all.filter.dto';
 
 @Injectable()
 export class PhotoService {
@@ -144,27 +144,14 @@ export class PhotoService {
     return await Promise.all(signedPhotoDtoPromises);
   }
 
-  async findPublicPhotos() {
-    const filter = new PhotoFindAllFilterDto();
+  async findPublicPhotos(filter: FindAllPhotoFilterDto) {
     filter.visibility = PhotoVisibility.PUBLIC;
     filter.status = PhotoStatus.PARSED;
 
-    const photos = await this.photoRepository.findAll(filter);
-
-    const signedPhotoDtoPromises = photos.map(async (p) => {
-      const signedPhotoDto = p as SignedPhotoDto;
-
-      const signedUrls = await this.signUrlFromPhotos(p);
-
-      signedPhotoDto.signedUrl = signedUrls;
-
-      return signedPhotoDto;
-    });
-
-    return await Promise.all(signedPhotoDtoPromises);
+    return await this.findAll(filter);
   }
 
-  async findAll(filter: PhotoFindAllFilterDto) {
+  async findAll(filter: FindAllPhotoFilterDto) {
     const photos = await this.photoRepository.findAll(filter);
 
     const signedPhotoDtoPromises = photos.map(async (p) => {

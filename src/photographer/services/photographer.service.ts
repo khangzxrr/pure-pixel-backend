@@ -3,8 +3,8 @@ import { PrismaService } from 'src/prisma.service';
 import { PhotographerDTO } from '../dtos/photographer.dto';
 import { StorageService } from 'src/storage/services/storage.service';
 import { PhotoService } from 'src/photo/services/photo.service';
-import { PhotoFindAllFilterDto } from 'src/photo/dtos/find-all.filter.dto';
 import { PhotoStatus } from '@prisma/client';
+import { FindAllPhotoFilterDto } from 'src/photo/dtos/find-all.filter.dto';
 
 @Injectable()
 export class PhotographerService {
@@ -21,7 +21,7 @@ export class PhotographerService {
     });
   }
 
-  async getPhotosOfMe(userId: string, filter: PhotoFindAllFilterDto) {
+  async getPhotosOfMe(userId: string, filter: FindAllPhotoFilterDto) {
     filter.status = PhotoStatus.PARSED;
     filter.photographerId = userId;
 

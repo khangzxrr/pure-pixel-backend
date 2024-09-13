@@ -25,6 +25,7 @@ import { PresignedUploadUrlResponse } from '../dtos/presigned-upload-url.respons
 import { ProcessImagesRequest } from '../dtos/process-images.request.dto';
 import { PhotoDto, SignedPhotoDto } from '../dtos/photo.dto';
 import { PhotoUpdateRequest } from '../dtos/photo-update.request.dto';
+import { FindAllPhotoFilterDto } from '../dtos/find-all.filter.dto';
 
 @Controller('photo')
 @ApiTags('photo')
@@ -43,8 +44,8 @@ export class PhotoController {
   })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Public(false)
-  async getAllPublicPhoto() {
-    return await this.photoService.findPublicPhotos();
+  async getAllPublicPhoto(@Query() findPhotoFilter: FindAllPhotoFilterDto) {
+    return await this.photoService.findPublicPhotos(findPhotoFilter);
   }
 
   @Get('/:id')

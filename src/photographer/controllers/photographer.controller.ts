@@ -6,7 +6,7 @@ import { SignedPhotoDto } from 'src/photo/dtos/photo.dto';
 import { AuthenticatedUser, AuthGuard, Roles } from 'nest-keycloak-connect';
 import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
-import { PhotoFindAllFilterDto } from 'src/photo/dtos/find-all.filter.dto';
+import { FindAllPhotoFilterDto } from 'src/photo/dtos/find-all.filter.dto';
 
 @Controller('photographer')
 @ApiTags('photographer')
@@ -29,7 +29,7 @@ export class PhotographerController {
   async getPhotoOfMine(
     @AuthenticatedUser() user,
     @Query()
-    filter: PhotoFindAllFilterDto,
+    filter: FindAllPhotoFilterDto,
   ) {
     return await this.photographerService.getPhotosOfMe(user.sub, filter);
   }
