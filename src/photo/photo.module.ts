@@ -10,6 +10,7 @@ import { HttpModule } from '@nestjs/axios';
 import { PhotoCategoryService } from './services/photo-category.service';
 import { PhotoCategoryController } from './controllers/photo-category.controller';
 import { QueueModule } from 'src/queue/queue.module';
+import { PhotoProcessConsumer } from './consumers/photo-process.consumer';
 
 @Module({
   providers: [
@@ -17,6 +18,7 @@ import { QueueModule } from 'src/queue/queue.module';
     PhotoCleanUpCronService,
     PhotoProcessService,
     PhotoCategoryService,
+    PhotoProcessConsumer,
   ],
   exports: [PhotoService, PhotoCategoryService],
   controllers: [PhotoController, PhotoCategoryController],
