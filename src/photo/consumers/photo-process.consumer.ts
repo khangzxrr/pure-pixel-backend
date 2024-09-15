@@ -40,14 +40,20 @@ export class PhotoProcessConsumer extends WorkerHost {
     );
 
     const updatePhotoPromises = photos.map(async (p) => {
+      await this.photoProcessService.convertJpg(p.originalPhotoUrl);
+
       const thumbnailKey = await this.photoProcessService.thumbnail(
         p.originalPhotoUrl,
       );
       p.thumbnailPhotoUrl = thumbnailKey;
 
-      const watermarkThumbnailKey =
-        await this.photoProcessService.watermark(thumbnailKey);
-      p.watermarkThumbnailPhotoUrl = watermarkThumbnailKey;
+      // const watermarkThumbnailKey =
+      //   await this.photoProcessService.watermark(thumbnailKey);
+      // p.watermarkThumbnailPhotoUrl = watermarkThumbnailKey;
+      //
+      //we need not to create watermark thumbnail
+      //they cannot use it anyway ;)
+      p.watermarkThumbnailPhotoUrl = p.thumbnailPhotoUrl;
 
       const watermarkImageKey = await this.photoProcessService.watermark(
         p.originalPhotoUrl,
@@ -65,18 +71,17 @@ export class PhotoProcessConsumer extends WorkerHost {
 
       p.status = 'PARSED';
 
-      this.logger.log(`generated thumbnail: ${thumbnailKey}`);
-      this.logger.log(
-        `generated watermark thumbnail: ${watermarkThumbnailKey}`,
-      );
       this.logger.log(`generated watermark image: ${watermarkImageKey}`);
 
       return p;
     });
 
-    const updatePhotos = await Promise.all(updatePhotoPromises);
-
-    await this.photoRepository.batchUpdate(updatePhotos);
+    try {
+      const updatePhotos = await Promise.all(updatePhotoPromises);
+      await this.photoRepository.batchUpdate(updatePhotos);
+    } catch (error) {
+      console.log(error);
+    }
 
     this.logger.log(`finish process photos`);
   }
