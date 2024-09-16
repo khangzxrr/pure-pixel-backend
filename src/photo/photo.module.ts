@@ -12,6 +12,7 @@ import { PhotoCategoryController } from './controllers/photo-category.controller
 import { QueueModule } from 'src/queue/queue.module';
 import { PhotoProcessConsumer } from './consumers/photo-process.consumer';
 import { PhotoGateway } from './gateways/socket.io.gateway';
+import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
   providers: [
@@ -29,6 +30,7 @@ import { PhotoGateway } from './gateways/socket.io.gateway';
       timeout: 30000,
       maxRedirects: 10,
     }),
+    CacheModule.register(),
     AuthenModule,
     DatabaseModule,
     StorageModule,
