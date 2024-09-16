@@ -11,9 +11,11 @@ import { PhotoCategoryService } from './services/photo-category.service';
 import { PhotoCategoryController } from './controllers/photo-category.controller';
 import { QueueModule } from 'src/queue/queue.module';
 import { PhotoProcessConsumer } from './consumers/photo-process.consumer';
+import { PhotoGateway } from './gateways/socket.io.gateway';
 
 @Module({
   providers: [
+    PhotoGateway,
     PhotoService,
     PhotoCleanUpCronService,
     PhotoProcessService,
