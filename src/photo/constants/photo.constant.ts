@@ -2,4 +2,6 @@ export class PhotoConstant {
   static PHOTO_PROCESS_QUEUE = 'PHOTO_PROCESS_QUEUE';
 
   static PROCESS_PHOTO_JOB_NAME = 'PROCESS_PHOTO_JOB_NAME';
+
+  static WEBSOCKET_GATEWAY = 'PHOTO_GATEWAY';
 }

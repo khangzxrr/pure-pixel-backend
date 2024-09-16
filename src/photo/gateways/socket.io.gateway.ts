@@ -8,8 +8,12 @@ import {
 import { AuthGuard } from 'nest-keycloak-connect';
 import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import WebsocketAuthGuard from 'src/authen/guards/ws.auth.guard';
+import { PhotoConstant } from '../constants/photo.constant';
 
-@WebSocketGateway(4800, { cors: { origin: '*' } })
+@WebSocketGateway({
+  cors: { origin: '*' },
+  namespace: PhotoConstant.WEBSOCKET_GATEWAY,
+})
 export class PhotoGateway implements OnGatewayConnection, OnGatewayDisconnect {
   handleConnection(client: any) {
     console.log(client);
