@@ -5,14 +5,18 @@ import { ProcessImagesRequest } from '../dtos/process-images.request.dto';
 import { Inject, Logger } from '@nestjs/common';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoProcessService } from '../services/photo-process.service';
+import { PhotoGateway } from '../gateways/socket.io.gateway';
+import { PhotoService } from '../services/photo.service';
 
 @Processor(PhotoConstant.PHOTO_PROCESS_QUEUE)
 export class PhotoProcessConsumer extends WorkerHost {
   private readonly logger = new Logger(PhotoProcessConsumer.name);
 
   constructor(
+    @Inject() private readonly photoGateway: PhotoGateway,
     @Inject() private readonly photoRepository: PhotoRepository,
     @Inject() private readonly photoProcessService: PhotoProcessService,
+    @Inject() private readonly photoService: PhotoService,
   ) {
     super();
   }
@@ -20,11 +24,28 @@ export class PhotoProcessConsumer extends WorkerHost {
   async process(job: Job): Promise<any> {
     try {
       console.log(`consume job`);
-      console.log(job.data);
       await this.processImages(job.data.userId, job.data.processImagesRequest);
+      const photos = await this.getAllProcessedPhotos(
+        job.data.userId,
+        job.data.processImagesRequest,
+      );
+
+      await this.photoGateway.sendToUserId(job.data.userId, photos);
     } catch (e) {
       this.logger.error(e);
+      throw new Error(); //perform retry
     }
+  }
+
+  async getAllProcessedPhotos(
+    userId: string,
+    processImagesRequest: ProcessImagesRequest,
+  ) {
+    const getPhotoPromises = processImagesRequest.signedUploads.map(
+      async (su) => await this.photoService.getPhotoById(userId, su.photoId),
+    );
+
+    return await Promise.all(getPhotoPromises);
   }
 
   async processImages(
@@ -40,6 +61,7 @@ export class PhotoProcessConsumer extends WorkerHost {
     );
 
     const updatePhotoPromises = photos.map(async (p) => {
+      //convert to jpg to prevent watermark error
       await this.photoProcessService.convertJpg(p.originalPhotoUrl);
 
       const thumbnailKey = await this.photoProcessService.thumbnail(
@@ -76,12 +98,8 @@ export class PhotoProcessConsumer extends WorkerHost {
       return p;
     });
 
-    try {
-      const updatePhotos = await Promise.all(updatePhotoPromises);
-      await this.photoRepository.batchUpdate(updatePhotos);
-    } catch (error) {
-      console.log(error);
-    }
+    const updatePhotos = await Promise.all(updatePhotoPromises);
+    await this.photoRepository.batchUpdate(updatePhotos);
 
     this.logger.log(`finish process photos`);
   }
