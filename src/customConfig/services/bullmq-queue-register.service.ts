@@ -16,6 +16,13 @@ export class BullMqQueueRegisterService implements RegisterQueueOptionsFactory {
         host: process.env.REDIS_HOSTNAME,
         port: Number(process.env.REDIS_PORT),
       },
+      defaultJobOptions: {
+        attempts: 5,
+        backoff: {
+          type: 'exponential',
+          delay: 1000,
+        },
+      },
     };
   }
 }
