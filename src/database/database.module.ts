@@ -6,6 +6,7 @@ import { CategoryRepository } from './repositories/category.repository';
 import { UpgradePackageRepository } from './repositories/upgrade-package.repository';
 import { UpgradePackageOrderRepository } from './repositories/upgrade-package-order.repository';
 import { TransactionRepository } from './repositories/transaction.repository';
+import { CommentRepository } from './repositories/comment.repository';
 @Module({
   providers: [
     PrismaService,
@@ -15,6 +16,7 @@ import { TransactionRepository } from './repositories/transaction.repository';
     UpgradePackageRepository,
     UpgradePackageOrderRepository,
     TransactionRepository,
+    CommentRepository,
   ],
   exports: [
     PrismaService,
@@ -24,6 +26,7 @@ import { TransactionRepository } from './repositories/transaction.repository';
     UpgradePackageRepository,
     UpgradePackageOrderRepository,
     TransactionRepository,
+    CommentRepository,
   ],
 })
 export class DatabaseModule {}
