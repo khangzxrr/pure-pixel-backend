@@ -18,8 +18,12 @@ export class UserEntity implements User {
 
   @Exclude()
   ftpPassword: string;
+
   avatar: string;
+
   name: string;
+
+  quote: string;
 
   constructor(partial: Partial<UserEntity>) {
     Object.assign(this, partial);
