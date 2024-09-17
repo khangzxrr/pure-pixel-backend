@@ -4,6 +4,7 @@ import {
   Get,
   HttpStatus,
   Inject,
+  NotImplementedException,
   Param,
   Patch,
   Post,
@@ -30,6 +31,7 @@ import { PhotoUpdateRequest } from '../dtos/photo-update.request.dto';
 import { FindAllPhotoFilterDto } from '../dtos/find-all.filter.dto';
 
 import { Response } from 'express';
+import { ParsedUserDto } from 'src/user/dto/parsed-user.dto';
 
 @Controller('photo')
 @ApiTags('photo')
@@ -52,6 +54,17 @@ export class PhotoController {
     return await this.photoService.findPublicPhotos(findPhotoFilter);
   }
 
+  //TODO: finish get comments API
+  @Get('/id:/comment')
+  @ApiOperation({
+    summary: 'get comments of photo',
+  })
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Public(false)
+  async getComments() {
+    throw new NotImplementedException();
+  }
+
   @Get('/:id')
   @ApiOperation({
     summary: 'get photo by id',
@@ -67,6 +80,7 @@ export class PhotoController {
     return await this.photoService.getPhotoById(user ? user.sub : '', id);
   }
 
+  //TODO: webhook handle sftp
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Public(false)
   async parseExifviaWebhook(@Query() query) {
@@ -100,7 +114,7 @@ export class PhotoController {
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   async processPhotos(
-    @AuthenticatedUser() user,
+    @AuthenticatedUser() user: ParsedUserDto,
     @Body() processImagesRequest: ProcessImagesRequest,
     @Res() res: Response,
   ) {
@@ -124,7 +138,7 @@ export class PhotoController {
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   async updatePhotos(
-    @AuthenticatedUser() user,
+    @AuthenticatedUser() user: ParsedUserDto,
     @Body() body: PhotoUpdateRequest,
   ) {
     return this.photoService.updatePhotos(user.sub, body.photos);
@@ -139,7 +153,7 @@ export class PhotoController {
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   async getPresignedUploadUrl(
-    @AuthenticatedUser() user,
+    @AuthenticatedUser() user: ParsedUserDto,
     @Body() body: PresignedUploadUrlRequest,
   ) {
     const presignedUrl = await this.photoService.getPresignedUploadUrl(

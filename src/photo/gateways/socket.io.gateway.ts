@@ -23,7 +23,9 @@ export class PhotoGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   constructor(@Inject(CACHE_MANAGER) private readonly cacheManager: Cache) {}
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   handleConnection(client: any) {}
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   handleDisconnect(client: any) {}
 
   //TODO: code role guard for websocket
@@ -71,7 +73,7 @@ export class PhotoGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
     const arrayOfSocketIds: string[] = Array.from(socketIds.values());
 
-    this.server.to(arrayOfSocketIds).emit(data);
+    this.server.to(arrayOfSocketIds).emit('finish-process-photos', data);
 
     this.logger.log(`emited to user`);
   }

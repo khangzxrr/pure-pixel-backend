@@ -21,6 +21,17 @@ export class PhotographerService {
     });
   }
 
+  //TODO: finish getAllPhotographer with keycloak API
+  async getAllPhotographerExceptUserId(
+    userId: string,
+  ): Promise<PhotographerDTO[]> {
+    return [];
+  }
+
+  async getAllPhotographer(): Promise<PhotographerDTO[]> {
+    return [];
+  }
+
   async getPhotosOfMe(userId: string, filter: FindAllPhotoFilterDto) {
     filter.status = PhotoStatus.PARSED;
     filter.photographerId = userId;
