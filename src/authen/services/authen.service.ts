@@ -5,7 +5,7 @@ import { Utils } from 'src/infrastructure/utils/utils';
 import { PrismaService } from 'src/prisma.service';
 import { SftpService } from 'src/storage/services/sftp.service';
 import { UserFilterDto } from 'src/user/dto/user-filter.dto';
-import { User } from 'src/user/entities/user.entity';
+import { UserEntity } from 'src/user/entities/user.entity';
 
 @Injectable()
 export class AuthenService {
@@ -32,8 +32,14 @@ export class AuthenService {
           return;
         }
 
-        const newUser = new User(userId);
+        const newUser = new UserEntity({
+          id: userId,
+        });
         newUser.ftpUsername = username;
+        newUser.name = username;
+        newUser.avatar =
+          'https://s3-hcm-r1.s3cloud.vn/sftpgo/avatar%2Favatar.png';
+
         newUser.ftpPassword = Utils.randomString(12);
 
         await this.sftpService.registerNewSftpUser(
