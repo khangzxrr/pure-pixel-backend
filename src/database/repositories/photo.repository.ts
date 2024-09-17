@@ -88,6 +88,17 @@ export class PhotoRepository {
     });
   }
 
+  async getPhotoByIdIncludePhotographer(id: string) {
+    return this.prisma.photo.findUnique({
+      where: {
+        id,
+      },
+      include: {
+        photographer: true,
+      },
+    });
+  }
+
   async getPhotoById(id: string) {
     return this.prisma.photo.findUnique({
       where: {
@@ -96,11 +107,14 @@ export class PhotoRepository {
     });
   }
 
-  async findAll(filter: FindAllPhotoFilterDto) {
+  async findAllIncludedPhotographer(filter: FindAllPhotoFilterDto) {
     return this.prisma.photo.findMany({
       where: filter.toWhere(),
       skip: filter.skip,
       take: filter.take,
+      include: {
+        photographer: true,
+      },
     });
   }
   async findAllByVisibility(visibilityStr: string) {
