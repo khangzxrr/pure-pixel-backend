@@ -21,8 +21,9 @@ model User {
   diskQuota Decimal @default(0)
   diskUsage Decimal @default(0)
 
-  avatar String
-  name   String
+  avatar String @default("https://s3-hcm-r1.s3cloud.vn/sftpgo/avatar%2Favatar.png")
+  name   String @default("")
+  quote String @default("")
 
   ftpUsername String @default("")
   ftpPassword String @default("")

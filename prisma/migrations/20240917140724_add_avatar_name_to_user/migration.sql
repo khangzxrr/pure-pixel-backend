@@ -6,5 +6,5 @@
 
 */
 -- AlterTable
-ALTER TABLE "User" ADD COLUMN     "avatar" TEXT NOT NULL,
-ADD COLUMN     "name" TEXT NOT NULL;
+ALTER TABLE "User" ADD COLUMN     "avatar" TEXT NOT NULL DEFAULT 'https://s3-hcm-r1.s3cloud.vn/sftpgo/avatar%2Favatar.png',
+ADD COLUMN     "name" TEXT NOT NULL DEFAULT '';

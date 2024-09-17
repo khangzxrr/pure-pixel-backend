@@ -88,6 +88,7 @@ async function main() {
       ftpUsername: 'user1',
       ftpPassword: 'user1',
       avatar: 'https://s3-hcm-r1.s3cloud.vn/sftpgo/avatar%2Favatar.png',
+      quote: 'cool!',
       name: 'user1',
 
       photos: {
