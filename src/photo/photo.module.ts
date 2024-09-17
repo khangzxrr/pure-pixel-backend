@@ -13,6 +13,7 @@ import { QueueModule } from 'src/queue/queue.module';
 import { PhotoProcessConsumer } from './consumers/photo-process.consumer';
 import { PhotoGateway } from './gateways/socket.io.gateway';
 import { CacheModule } from '@nestjs/cache-manager';
+import { CommentService } from './services/comment.service';
 
 @Module({
   providers: [
@@ -22,6 +23,7 @@ import { CacheModule } from '@nestjs/cache-manager';
     PhotoProcessService,
     PhotoCategoryService,
     PhotoProcessConsumer,
+    CommentService,
   ],
   exports: [PhotoService, PhotoCategoryService],
   controllers: [PhotoController, PhotoCategoryController],
