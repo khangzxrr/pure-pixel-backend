@@ -102,10 +102,14 @@ export class PhotoService {
   }
 
   async findAll(filter: FindAllPhotoFilterDto) {
-    const photos = await this.photoRepository.findAll(filter);
+    const photos =
+      await this.photoRepository.findAllIncludedPhotographer(filter);
 
     const signedPhotoDtoPromises = photos.map(async (p) => {
-      const signedPhotoDto = p as SignedPhotoDto;
+      const signedPhotoDto = new SignedPhotoDto({
+        photographer: p.photographer,
+        ...p,
+      });
 
       const signedUrls = await this.signUrlFromPhotos(p);
 
@@ -118,7 +122,8 @@ export class PhotoService {
   }
 
   async getPhotoById(userId: string, id: string) {
-    const photo = await this.photoRepository.getPhotoById(id);
+    const photo =
+      await this.photoRepository.getPhotoByIdIncludePhotographer(id);
 
     if (!photo) {
       throw new PhotoNotFoundException();
@@ -131,7 +136,10 @@ export class PhotoService {
       throw new PhotoIsPrivatedException();
     }
 
-    const signedPhotoDto = photo as SignedPhotoDto;
+    const signedPhotoDto = new SignedPhotoDto({
+      photographer: photo.photographer,
+      ...photo,
+    });
 
     const signedUrls = await this.signUrlFromPhotos(photo);
 
