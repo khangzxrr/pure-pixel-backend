@@ -2,12 +2,13 @@ import {
   Body,
   Controller,
   Get,
+  HttpStatus,
   Inject,
-  NotImplementedException,
   Param,
   Patch,
   Post,
   Query,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import { PhotoService } from '../services/photo.service';
@@ -26,7 +27,9 @@ import { PresignedUploadUrlResponse } from '../dtos/presigned-upload-url.respons
 import { ProcessImagesRequest } from '../dtos/process-images.request.dto';
 import { PhotoDto, SignedPhotoDto } from '../dtos/photo.dto';
 import { PhotoUpdateRequest } from '../dtos/photo-update.request.dto';
-import { SignUrlsRequest } from '../dtos/sign-urls.request.dto';
+import { FindAllPhotoFilterDto } from '../dtos/find-all.filter.dto';
+
+import { Response } from 'express';
 
 @Controller('photo')
 @ApiTags('photo')
@@ -45,25 +48,8 @@ export class PhotoController {
   })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Public(false)
-  async getAllPublicPhoto() {
-    return await this.photoService.findPublicPhotos();
-  }
-
-  //TODO: immplement sign url
-  @Post('sign')
-  @ApiOperation({
-    summary: 'sign url from s3 object url',
-  })
-  @ApiResponse({
-    status: HttpStatusCode.Ok,
-    description: 'signed url',
-  })
-  @Public(false)
-  async getSignedUrl(
-    @AuthenticatedUser() user,
-    @Body() signUrlsRequest: SignUrlsRequest,
-  ) {
-    throw new NotImplementedException();
+  async getAllPublicPhoto(@Query() findPhotoFilter: FindAllPhotoFilterDto) {
+    return await this.photoService.findPublicPhotos(findPhotoFilter);
   }
 
   @Get('/:id')
@@ -90,13 +76,24 @@ export class PhotoController {
     return 'cool';
   }
 
-  @Post('/process')
+  @Get('/id:/status')
   @ApiOperation({
-    summary: 'generate watermark, thumbnail, exif images after upload',
+    summary: 'get photo status (can be used for polling in process API)',
   })
   @ApiResponse({
     status: HttpStatusCode.Ok,
-    description: 'processed successfully',
+    description: 'status',
+  })
+  async getPhotoStatus() {}
+
+  @Post('/process')
+  @ApiOperation({
+    summary:
+      'put process image request to queue inorder to generate watermark, thumbnail, exif images after upload',
+  })
+  @ApiResponse({
+    status: HttpStatusCode.Accepted,
+    description: 'puted process request to process queue',
     isArray: true,
     type: SignedPhotoDto,
   })
@@ -105,11 +102,14 @@ export class PhotoController {
   async processPhotos(
     @AuthenticatedUser() user,
     @Body() processImagesRequest: ProcessImagesRequest,
+    @Res() res: Response,
   ) {
-    return await this.photoService.processImages(
+    await this.photoService.sendProcessImageToMq(
       user.sub,
       processImagesRequest,
     );
+
+    res.status(HttpStatus.ACCEPTED).send();
   }
 
   @Patch('/update')

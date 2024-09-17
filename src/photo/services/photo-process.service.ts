@@ -49,6 +49,16 @@ export class PhotoProcessService {
     return exifs;
   }
 
+  async convertJpg(photoKey: string) {
+    const encodedImageUrl = await this.getEncodedSignedGetObjectUrl(photoKey);
+
+    const buffers = await this.getBufferImageFromUrl(
+      `${process.env.IMAGINARY_ENDPOINT}/convert?type=jpeg&quality=100&url=${encodedImageUrl}`,
+    );
+
+    await this.storageService.uploadFromBytes(photoKey, buffers);
+  }
+
   async watermark(originalImageKey: string) {
     const encodedImageUrl =
       await this.getEncodedSignedGetObjectUrl(originalImageKey);

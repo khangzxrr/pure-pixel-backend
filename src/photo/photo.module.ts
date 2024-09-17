@@ -9,16 +9,32 @@ import { PhotoProcessService } from './services/photo-process.service';
 import { HttpModule } from '@nestjs/axios';
 import { PhotoCategoryService } from './services/photo-category.service';
 import { PhotoCategoryController } from './controllers/photo-category.controller';
+import { QueueModule } from 'src/queue/queue.module';
+import { PhotoProcessConsumer } from './consumers/photo-process.consumer';
+import { PhotoGateway } from './gateways/socket.io.gateway';
+import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
   providers: [
+    PhotoGateway,
     PhotoService,
     PhotoCleanUpCronService,
     PhotoProcessService,
     PhotoCategoryService,
+    PhotoProcessConsumer,
   ],
   exports: [PhotoService, PhotoCategoryService],
   controllers: [PhotoController, PhotoCategoryController],
-  imports: [HttpModule, AuthenModule, DatabaseModule, StorageModule],
+  imports: [
+    HttpModule.register({
+      timeout: 30000,
+      maxRedirects: 10,
+    }),
+    CacheModule.register(),
+    AuthenModule,
+    DatabaseModule,
+    StorageModule,
+    QueueModule,
+  ],
 })
 export class PhotoModule {}

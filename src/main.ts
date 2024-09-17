@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { json, urlencoded } from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -10,9 +11,16 @@ async function bootstrap() {
     abortOnError: true,
   });
 
+  app.use(json({ limit: '50mb' }));
+  app.use(urlencoded({ limit: '50mb' }));
+
   const config = app.get(ConfigService);
 
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+    }),
+  );
 
   app.enableCors({
     origin: ['http://localhost:3000', '*'],

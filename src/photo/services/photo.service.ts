@@ -12,13 +12,16 @@ import { Utils } from 'src/infrastructure/utils/utils';
 import { FileIsNotValidException } from '../exceptions/file-is-not-valid.exception';
 import { v4 } from 'uuid';
 import { ProcessImagesRequest } from '../dtos/process-images.request.dto';
-import { PhotoProcessService } from './photo-process.service';
 import { PhotoDto, SignedPhotoDto } from '../dtos/photo.dto';
 import { Photo } from '../entities/photo.entity';
 import { NotBelongPhotoException } from '../exceptions/not-belong-photo.exception';
 import { PhotoIsPendingStateException } from '../exceptions/photo-is-pending-state.exception';
 import { SignedUrl } from '../dtos/photo-signed-url.dto';
-import { PhotoFindAllFilterDto } from '../dtos/find-all.filter.dto';
+import { FindAllPhotoFilterDto } from '../dtos/find-all.filter.dto';
+import { InjectQueue } from '@nestjs/bullmq';
+import { PhotoConstant } from '../constants/photo.constant';
+import { Queue } from 'bullmq';
+import { PhotoNotFoundException } from '../exceptions/photo-not-found.exception';
 
 @Injectable()
 export class PhotoService {
@@ -27,8 +30,21 @@ export class PhotoService {
   constructor(
     @Inject() private readonly photoRepository: PhotoRepository,
     @Inject() private readonly storageService: StorageService,
-    @Inject() private readonly photoProcessService: PhotoProcessService,
+    @InjectQueue(PhotoConstant.PHOTO_PROCESS_QUEUE)
+    private readonly photoProcessQueue: Queue,
   ) {}
+
+  async sendProcessImageToMq(
+    userId: string,
+    processImagesRequest: ProcessImagesRequest,
+  ) {
+    console.log(`send to process image queue`);
+
+    await this.photoProcessQueue.add(PhotoConstant.PROCESS_PHOTO_JOB_NAME, {
+      userId,
+      processImagesRequest,
+    });
+  }
 
   async signUrlFromPhotos(photo: Photo) {
     if (photo.status == 'PENDING') {
@@ -80,92 +96,14 @@ export class PhotoService {
     return updateResults.map((p) => p as PhotoDto);
   }
 
-  //TODO: async process using bullmq
-  async processImages(
-    userId: string,
-    processImagesRequest: ProcessImagesRequest,
-  ): Promise<SignedPhotoDto[]> {
-    const photoIds = processImagesRequest.signedUploads.map((su) => su.photoId);
-
-    const photos = await this.photoRepository.getPhotoByIdsAndStatus(
-      photoIds,
-      'PENDING',
-      userId,
-    );
-
-    const updatePhotoPromises = photos.map(async (p) => {
-      const thumbnailKey = await this.photoProcessService.thumbnail(
-        p.originalPhotoUrl,
-      );
-      p.thumbnailPhotoUrl = thumbnailKey;
-
-      const watermarkThumbnailKey =
-        await this.photoProcessService.watermark(thumbnailKey);
-      p.watermarkThumbnailPhotoUrl = watermarkThumbnailKey;
-
-      const watermarkImageKey = await this.photoProcessService.watermark(
-        p.originalPhotoUrl,
-      );
-      p.watermarkPhotoUrl = watermarkImageKey;
-
-      //this is not optimized because we have to get original image from url
-      //each time we call different process method
-      //wasting bandwidth!
-      //please fix this if we have time
-      const exifs = await this.photoProcessService.parseExif(
-        p.originalPhotoUrl,
-      );
-      p.exif = exifs;
-
-      p.status = 'PARSED';
-
-      this.logger.log(`generated thumbnail: ${thumbnailKey}`);
-      this.logger.log(
-        `generated watermark thumbnail: ${watermarkThumbnailKey}`,
-      );
-      this.logger.log(`generated watermark image: ${watermarkImageKey}`);
-
-      return p;
-    });
-
-    const updatePhotos = await Promise.all(updatePhotoPromises);
-
-    const updatedPhotos = await this.photoRepository.batchUpdate(updatePhotos);
-
-    const signedPhotoDtoPromises = updatedPhotos.map(async (p) => {
-      const signedPhotoDto = p as SignedPhotoDto;
-
-      const signedUrls = await this.signUrlFromPhotos(p);
-
-      signedPhotoDto.signedUrl = signedUrls;
-
-      return signedPhotoDto;
-    });
-
-    return await Promise.all(signedPhotoDtoPromises);
-  }
-
-  async findPublicPhotos() {
-    const filter = new PhotoFindAllFilterDto();
+  async findPublicPhotos(filter: FindAllPhotoFilterDto) {
     filter.visibility = PhotoVisibility.PUBLIC;
     filter.status = PhotoStatus.PARSED;
 
-    const photos = await this.photoRepository.findAll(filter);
-
-    const signedPhotoDtoPromises = photos.map(async (p) => {
-      const signedPhotoDto = p as SignedPhotoDto;
-
-      const signedUrls = await this.signUrlFromPhotos(p);
-
-      signedPhotoDto.signedUrl = signedUrls;
-
-      return signedPhotoDto;
-    });
-
-    return await Promise.all(signedPhotoDtoPromises);
+    return await this.findAll(filter);
   }
 
-  async findAll(filter: PhotoFindAllFilterDto) {
+  async findAll(filter: FindAllPhotoFilterDto) {
     const photos = await this.photoRepository.findAll(filter);
 
     const signedPhotoDtoPromises = photos.map(async (p) => {
@@ -183,6 +121,10 @@ export class PhotoService {
 
   async getPhotoById(userId: string, id: string) {
     const photo = await this.photoRepository.getPhotoById(id);
+
+    if (!photo) {
+      throw new PhotoNotFoundException();
+    }
 
     if (
       photo.visibility == PhotoVisibility.PRIVATE &&
@@ -204,6 +146,8 @@ export class PhotoService {
     userId: string,
     presignedUploadUrlRequest: PresignedUploadUrlRequest,
   ): Promise<PresignedUploadUrlResponse> {
+    console.log(presignedUploadUrlRequest);
+
     let signedUploads = await Promise.all(
       presignedUploadUrlRequest.filenames.map(async (filename) => {
         const extension = Utils.regexFileExtension.exec(filename)[1];

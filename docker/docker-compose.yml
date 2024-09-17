@@ -9,7 +9,6 @@ services:
       - ./images:/mnt/data
     environment:
       PORT: 9000
-      KEY: ${IMAGINARY_API_KEY}
     command: -enable-url-source -mount /mnt/data -http-cache-ttl 86400
     ports:
       - '9000:9000'
@@ -22,14 +21,16 @@ services:
     environment:
       REDIS_PORT: 6379
 
-  stfpgo:
-    image: custom_sftpgo
+  sftpgo:
+    image: drakkan/sftpgo:v2.6.2
+    container_name: sftpgo
     restart: always
     ports:
       - 8080:8080
       - 2022:2022
       - 2121:2121
     environment:
+      DOWNLOAD_PLUGINS: true #this is why we use this image
       SFTPGO_FTPD__BINDINGS__0__PORT: ${SFTPGO_FTP_PORT}
       #      SFTPGO_FTPD_BINDINGS__0__PORT: ${SFTPGO_FTP_PORT}
       SFTPGO_DATA_PROVIDER__DRIVER: ${SFTPGO_DRIVER}
@@ -44,19 +45,20 @@ services:
       - '/etc/localtime:/etc/localtime:ro'
 
   db:
-    image: postgres
+    image: postgres:16.4
     restart: always
     # set shared memory limit when using docker-compose
     shm_size: 128mb
     # or set shared memory limit when deploy via swarm stack
     volumes:
       - data:/var/lib/postgresql/data
-      - ./create-multiple-postgresql-databases:/docker-entrypoint-initdb.d
+      #- ./dump_db.sql:/docker-entrypoint-initdb.d/restore_db.sql
     ports:
       - 5432:5432
     environment:
+      POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_MULTIPLE_DATABASES: ${POSTGRES_MULTIPLE_DATABASES}
+      #POSTGRES_MULTIPLE_DATABASES: ${POSTGRES_MULTIPLE_DATABASES}
 
   keycloak:
     image: quay.io/keycloak/keycloak:25.0.4
@@ -89,17 +91,6 @@ services:
       - 5050:80
     restart: unless-stopped
 
-  web:
-    image: nginx:stable-perl
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-    ports:
-      - '80:80'
-    environment:
-      - NGINX_HOST=foobar.com
-      - NGINX_PORT=80
-
 volumes:
   data: {}
-  minio: {}
   pgadmin: {}
