@@ -38,8 +38,6 @@ export class PhotoService {
     userId: string,
     processImagesRequest: ProcessImagesRequest,
   ) {
-    console.log(`send to process image queue`);
-
     await this.photoProcessQueue.add(PhotoConstant.PROCESS_PHOTO_JOB_NAME, {
       userId,
       processImagesRequest,
@@ -146,8 +144,6 @@ export class PhotoService {
     userId: string,
     presignedUploadUrlRequest: PresignedUploadUrlRequest,
   ): Promise<PresignedUploadUrlResponse> {
-    console.log(presignedUploadUrlRequest);
-
     let signedUploads = await Promise.all(
       presignedUploadUrlRequest.filenames.map(async (filename) => {
         const extension = Utils.regexFileExtension.exec(filename)[1];
@@ -190,7 +186,6 @@ export class PhotoService {
     //attach photo id then covert it back to array of signed uploads
     signedUploads = photos.map(({ id, originalPhotoUrl }) => {
       const signedUpload = signedUploadMap[originalPhotoUrl];
-      console.log(signedUpload);
       signedUpload.photoId = id;
 
       return signedUpload;
