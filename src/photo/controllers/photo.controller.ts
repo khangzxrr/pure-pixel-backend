@@ -60,7 +60,9 @@ export class PhotoController {
   })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Public(false)
-  async getAllPublicPhoto(@Query() findPhotoFilter: FindAllPhotoFilterDto) {
+  async getAllPublicPhoto(
+    @Query() findPhotoFilter: FindAllPhotoFilterDto,
+  ): Promise<SignedPhotoDto[]> {
     return await this.photoService.findPublicPhotos(findPhotoFilter);
   }
 
@@ -127,16 +129,6 @@ export class PhotoController {
 
     return 'cool';
   }
-
-  @Get('/id:/status')
-  @ApiOperation({
-    summary: 'get photo status (can be used for polling in process API)',
-  })
-  @ApiResponse({
-    status: HttpStatusCode.Ok,
-    description: 'status',
-  })
-  async getPhotoStatus() {}
 
   @Post('/process')
   @ApiOperation({
