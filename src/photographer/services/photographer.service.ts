@@ -5,6 +5,7 @@ import { StorageService } from 'src/storage/services/storage.service';
 import { PhotoService } from 'src/photo/services/photo.service';
 import { PhotoStatus } from '@prisma/client';
 import { FindAllPhotoFilterDto } from 'src/photo/dtos/find-all.filter.dto';
+import { UserEntity } from 'src/user/entities/user.entity';
 
 @Injectable()
 export class PhotographerService {
@@ -13,7 +14,7 @@ export class PhotographerService {
     @Inject() private readonly photoService: PhotoService,
     private readonly prisma: PrismaService,
   ) {}
-  async getInfo(userId: string): Promise<PhotographerDTO> {
+  async getInfo(userId: string): Promise<UserEntity> {
     return this.prisma.user.findUnique({
       where: {
         id: userId,
