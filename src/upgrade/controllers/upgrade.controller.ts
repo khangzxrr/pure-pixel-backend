@@ -1,12 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Headers,
-  Inject,
-  Post,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Inject, Post, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UpgradeService } from '../services/upgrade.service';
 import { UpgradePackageDto } from '../dtos/upgrade-package.dto';
@@ -48,12 +40,10 @@ export class UpgradeController {
   })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   async requestUpgradePayment(
-    @Headers('host') host: string,
     @AuthenticatedUser() user,
     @Body() requestUpgrade: RequestUpgradeDto,
   ) {
     return await this.upgradeOrderService.requestUpgradePayment(
-      host,
       user.sub,
       requestUpgrade,
     );
