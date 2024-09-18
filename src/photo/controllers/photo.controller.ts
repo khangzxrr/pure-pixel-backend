@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpStatus,
   Inject,
@@ -154,6 +155,20 @@ export class PhotoController {
     res.status(HttpStatus.ACCEPTED).send();
   }
 
+  @Delete('/:id')
+  @ApiOperation({
+    summary: 'delete photo by id',
+  })
+  @ApiOkResponse({})
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
+  async deletePhotoById(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Param('id') id: string,
+  ) {
+    return await this.photoService.deleteById(user.sub, id);
+  }
+
   @Patch('/update')
   @ApiOperation({
     summary: 'update one or more fields of photos',
@@ -169,7 +184,7 @@ export class PhotoController {
     @AuthenticatedUser() user: ParsedUserDto,
     @Body() body: PhotoUpdateRequest,
   ) {
-    return this.photoService.updatePhotos(user.sub, body.photos);
+    return await this.photoService.updatePhotos(user.sub, body.photos);
   }
 
   @Post('/upload')

@@ -119,6 +119,22 @@ export class PhotoService {
     return await Promise.all(signedPhotoDtoPromises);
   }
 
+  async deleteById(userId: string, photoId: string) {
+    const photo = await this.photoRepository.getPhotoById(photoId);
+
+    if (!photo) {
+      throw new PhotoNotFoundException();
+    }
+
+    if (photo.photographerId !== userId) {
+      throw new NotBelongPhotoException();
+    }
+
+    await this.photoRepository.delete(photoId);
+
+    return true;
+  }
+
   async getPhotoById(userId: string, id: string) {
     const photo =
       await this.photoRepository.getPhotoByIdIncludePhotographer(id);

@@ -9,6 +9,14 @@ import { PrismaService } from 'src/prisma.service';
 export class PhotoRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  async delete(photoId: string) {
+    return this.prisma.photo.delete({
+      where: {
+        id: photoId,
+      },
+    });
+  }
+
   async batchUpdate(photos: Photo[]) {
     const queries = photos.map((p) => {
       return this.prisma.photo.update({
