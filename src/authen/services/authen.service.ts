@@ -35,7 +35,7 @@ export class AuthenService {
         const newUser = new UserEntity({
           id: userId,
         });
-        newUser.ftpUsername = username;
+        newUser.ftpUsername = `${username}${Utils.randomString(5)}`;
         newUser.name = username;
         newUser.avatar =
           'https://s3-hcm-r1.s3cloud.vn/sftpgo/avatar%2Favatar.png';
