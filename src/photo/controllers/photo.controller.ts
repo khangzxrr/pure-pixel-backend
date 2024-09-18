@@ -1,10 +1,10 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpStatus,
   Inject,
-  NotImplementedException,
   Param,
   Patch,
   Post,
@@ -21,7 +21,12 @@ import {
 } from 'nest-keycloak-connect';
 import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiOkResponse,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { HttpStatusCode } from 'axios';
 import { PresignedUploadUrlRequest } from '../dtos/presigned-upload-url.request';
 import { PresignedUploadUrlResponse } from '../dtos/presigned-upload-url.response.dto';
@@ -32,11 +37,17 @@ import { FindAllPhotoFilterDto } from '../dtos/find-all.filter.dto';
 
 import { Response } from 'express';
 import { ParsedUserDto } from 'src/user/dto/parsed-user.dto';
+import { CommentService } from '../services/comment.service';
+import { CreateCommentRequestDto } from '../dtos/create-comment.request.dto';
+import { CommentEntity } from '../entities/comment.entity';
 
 @Controller('photo')
 @ApiTags('photo')
 export class PhotoController {
-  constructor(@Inject() private readonly photoService: PhotoService) {}
+  constructor(
+    @Inject() private readonly photoService: PhotoService,
+    @Inject() private readonly commentService: CommentService,
+  ) {}
 
   @Get('/public')
   @ApiOperation({
@@ -50,19 +61,46 @@ export class PhotoController {
   })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Public(false)
-  async getAllPublicPhoto(@Query() findPhotoFilter: FindAllPhotoFilterDto) {
+  async getAllPublicPhoto(
+    @Query() findPhotoFilter: FindAllPhotoFilterDto,
+  ): Promise<SignedPhotoDto[]> {
     return await this.photoService.findPublicPhotos(findPhotoFilter);
   }
 
   //TODO: finish get comments API
-  @Get('/id:/comment')
+  @Get('/:id/comment')
   @ApiOperation({
     summary: 'get comments of photo',
   })
+  @ApiOkResponse({
+    type: CommentEntity,
+    isArray: true,
+  })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Public(false)
-  async getComments() {
-    throw new NotImplementedException();
+  async getComments(@Param('id') id: string): Promise<CommentEntity[]> {
+    return await this.commentService.findAllByPhotoId(id);
+  }
+
+  @Post('/:id/comment')
+  @ApiOperation({
+    summary: 'create a comment to photo',
+  })
+  @ApiOkResponse({
+    type: CommentEntity,
+  })
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
+  async createComment(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Param('id') id: string,
+    @Body() createCommentRequestDto: CreateCommentRequestDto,
+  ): Promise<CommentEntity> {
+    return await this.commentService.createComment(
+      id,
+      user.sub,
+      createCommentRequestDto,
+    );
   }
 
   @Get('/:id')
@@ -76,7 +114,10 @@ export class PhotoController {
   })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Public(false)
-  async getPhoto(@AuthenticatedUser() user, @Param('id') id: string) {
+  async getPhoto(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Param('id') id: string,
+  ) {
     return await this.photoService.getPhotoById(user ? user.sub : '', id);
   }
 
@@ -90,16 +131,6 @@ export class PhotoController {
     return 'cool';
   }
 
-  @Get('/id:/status')
-  @ApiOperation({
-    summary: 'get photo status (can be used for polling in process API)',
-  })
-  @ApiResponse({
-    status: HttpStatusCode.Ok,
-    description: 'status',
-  })
-  async getPhotoStatus() {}
-
   @Post('/process')
   @ApiOperation({
     summary:
@@ -107,9 +138,6 @@ export class PhotoController {
   })
   @ApiResponse({
     status: HttpStatusCode.Accepted,
-    description: 'puted process request to process queue',
-    isArray: true,
-    type: SignedPhotoDto,
   })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
@@ -124,6 +152,20 @@ export class PhotoController {
     );
 
     res.status(HttpStatus.ACCEPTED).send();
+  }
+
+  @Delete('/:id')
+  @ApiOperation({
+    summary: 'delete photo by id',
+  })
+  @ApiOkResponse({})
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
+  async deletePhotoById(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Param('id') id: string,
+  ) {
+    return await this.photoService.deleteById(user.sub, id);
   }
 
   @Patch('/update')
@@ -141,7 +183,7 @@ export class PhotoController {
     @AuthenticatedUser() user: ParsedUserDto,
     @Body() body: PhotoUpdateRequest,
   ) {
-    return this.photoService.updatePhotos(user.sub, body.photos);
+    return await this.photoService.updatePhotos(user.sub, body.photos);
   }
 
   @Post('/upload')

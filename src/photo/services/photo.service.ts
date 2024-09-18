@@ -38,8 +38,6 @@ export class PhotoService {
     userId: string,
     processImagesRequest: ProcessImagesRequest,
   ) {
-    console.log(`send to process image queue`);
-
     await this.photoProcessQueue.add(PhotoConstant.PROCESS_PHOTO_JOB_NAME, {
       userId,
       processImagesRequest,
@@ -89,8 +87,6 @@ export class PhotoService {
       return Photo.fromDto(dto);
     });
 
-    console.log(photos);
-
     const updateResults = await this.photoRepository.batchUpdate(photos);
 
     return updateResults.map((p) => p as PhotoDto);
@@ -104,10 +100,14 @@ export class PhotoService {
   }
 
   async findAll(filter: FindAllPhotoFilterDto) {
-    const photos = await this.photoRepository.findAll(filter);
+    const photos =
+      await this.photoRepository.findAllIncludedPhotographer(filter);
 
     const signedPhotoDtoPromises = photos.map(async (p) => {
-      const signedPhotoDto = p as SignedPhotoDto;
+      const signedPhotoDto = new SignedPhotoDto({
+        photographer: p.photographer,
+        ...p,
+      });
 
       const signedUrls = await this.signUrlFromPhotos(p);
 
@@ -119,8 +119,25 @@ export class PhotoService {
     return await Promise.all(signedPhotoDtoPromises);
   }
 
+  async deleteById(userId: string, photoId: string) {
+    const photo = await this.photoRepository.getPhotoById(photoId);
+
+    if (!photo) {
+      throw new PhotoNotFoundException();
+    }
+
+    if (photo.photographerId !== userId) {
+      throw new NotBelongPhotoException();
+    }
+
+    await this.photoRepository.delete(photoId);
+
+    return true;
+  }
+
   async getPhotoById(userId: string, id: string) {
-    const photo = await this.photoRepository.getPhotoById(id);
+    const photo =
+      await this.photoRepository.getPhotoByIdIncludePhotographer(id);
 
     if (!photo) {
       throw new PhotoNotFoundException();
@@ -133,7 +150,10 @@ export class PhotoService {
       throw new PhotoIsPrivatedException();
     }
 
-    const signedPhotoDto = photo as SignedPhotoDto;
+    const signedPhotoDto = new SignedPhotoDto({
+      photographer: photo.photographer,
+      ...photo,
+    });
 
     const signedUrls = await this.signUrlFromPhotos(photo);
 
@@ -146,8 +166,6 @@ export class PhotoService {
     userId: string,
     presignedUploadUrlRequest: PresignedUploadUrlRequest,
   ): Promise<PresignedUploadUrlResponse> {
-    console.log(presignedUploadUrlRequest);
-
     let signedUploads = await Promise.all(
       presignedUploadUrlRequest.filenames.map(async (filename) => {
         const extension = Utils.regexFileExtension.exec(filename)[1];
@@ -190,7 +208,6 @@ export class PhotoService {
     //attach photo id then covert it back to array of signed uploads
     signedUploads = photos.map(({ id, originalPhotoUrl }) => {
       const signedUpload = signedUploadMap[originalPhotoUrl];
-      console.log(signedUpload);
       signedUpload.photoId = id;
 
       return signedUpload;

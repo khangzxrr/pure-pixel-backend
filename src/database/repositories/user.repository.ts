@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
-import { User } from 'src/user/entities/user.entity';
+import { UserEntity } from 'src/user/entities/user.entity';
 import { DuplicatedUserIdException } from '../exceptions/duplicatedUserId.exception';
 import { UserFilterDto } from 'src/user/dto/user-filter.dto';
 
@@ -39,7 +39,10 @@ export class UserRepository {
     });
   }
 
-  async createIfNotExistTransaction(user: User, tx: Prisma.TransactionClient) {
+  async createIfNotExistTransaction(
+    user: UserEntity,
+    tx: Prisma.TransactionClient,
+  ) {
     try {
       return tx.user.upsert({
         where: {
@@ -60,7 +63,7 @@ export class UserRepository {
     }
   }
 
-  async createIfNotExist(user: User) {
+  async createIfNotExist(user: UserEntity) {
     try {
       return this.prisma.user.upsert({
         where: {

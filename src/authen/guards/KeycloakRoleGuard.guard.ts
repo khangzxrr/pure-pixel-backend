@@ -64,10 +64,6 @@ export class KeycloakRoleGuard extends RoleGuard implements CanActivate {
         this.prisma,
       );
 
-      //if we dont register authguard as sequence in app.module,
-      //it will allow unauthenticate user to passthough cause user to be undefined
-      //this method will throw exception
-      //      console.log(JSON.stringify(user));
       await authenService.createUserIfNotExist(
         user.sub,
         user.preferred_username,

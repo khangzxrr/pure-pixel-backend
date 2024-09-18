@@ -1,5 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { SignUrl } from './sign-urls.request.dto';
+import { UserEntity } from 'src/user/entities/user.entity';
+import { JsonValue } from '@prisma/client/runtime/library';
 
 export class PhotoDto {
   @ApiProperty()
@@ -21,10 +23,10 @@ export class PhotoDto {
   showExif?: boolean;
 
   @ApiProperty()
-  exif?: string;
+  exif?: JsonValue;
 
   @ApiProperty()
-  colorGrading?: string;
+  colorGrading?: JsonValue;
 
   @ApiProperty()
   location?: string;
@@ -64,9 +66,24 @@ export class PhotoDto {
 
   @ApiProperty()
   updatedAt: Date;
+
+  @ApiProperty()
+  deletedAt?: Date;
+
+  @ApiProperty()
+  photographer: UserEntity;
 }
 
 export class SignedPhotoDto extends PhotoDto {
   @ApiProperty()
   signedUrl: SignUrl;
+
+  constructor({ photographer, ...data }: Partial<PhotoDto>) {
+    super();
+    Object.assign(this, data);
+
+    if (photographer) {
+      this.photographer = new UserEntity(photographer);
+    }
+  }
 }

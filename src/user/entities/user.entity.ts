@@ -1,22 +1,31 @@
-import { Prisma, User as PrismaUser } from '@prisma/client';
+import { User } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
+import { Exclude } from 'class-transformer';
 
-export class User implements PrismaUser {
+export class UserEntity implements User {
+  @Exclude()
   diskQuota: Decimal;
+
+  @Exclude()
   diskUsage: Decimal;
 
   id: string;
   createdAt: Date;
   updatedAt: Date;
 
-  constructor(userId: string) {
-    this.id = userId;
-    this.diskQuota = new Prisma.Decimal(0.0);
-    this.diskUsage = new Prisma.Decimal(0.0);
-    this.ftpUsername = '';
-    this.ftpPassword = '';
-  }
-
+  @Exclude()
   ftpUsername: string;
+
+  @Exclude()
   ftpPassword: string;
+
+  avatar: string;
+
+  name: string;
+
+  quote: string;
+
+  constructor(partial: Partial<UserEntity>) {
+    Object.assign(this, partial);
+  }
 }
