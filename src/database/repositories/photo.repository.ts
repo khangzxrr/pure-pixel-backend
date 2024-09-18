@@ -65,11 +65,21 @@ export class PhotoRepository {
   }
 
   async createTemporaryPhotos(userId: string, signedUploads: SignedUpload[]) {
-    //category can be null
+    //find a better way to do this
+    const category = await this.prisma.category.findFirstOrThrow({
+      where: {
+        name: 'khác',
+      },
+      select: {
+        id: true,
+      },
+    });
+
     const photos = signedUploads.map((u) => {
       const photo = new Photo();
       photo.photographerId = userId;
       photo.originalPhotoUrl = u.storageObject;
+      photo.categoryId = category.id;
       photo.location = '';
       photo.photoType = 'RAW';
       photo.watermarkThumbnailPhotoUrl = '';
@@ -99,13 +109,14 @@ export class PhotoRepository {
     });
   }
 
-  async getPhotoByIdIncludePhotographer(id: string) {
+  async getPhotoDetailById(id: string) {
     return this.prisma.extendedClient().photo.findUnique({
       where: {
         id,
       },
       include: {
         photographer: true,
+        category: true,
         _count: {
           select: {
             votes: {
@@ -135,6 +146,7 @@ export class PhotoRepository {
       take: filter.take,
       include: {
         photographer: true,
+        category: true,
       },
     });
   }

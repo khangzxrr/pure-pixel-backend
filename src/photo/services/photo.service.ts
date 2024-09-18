@@ -136,8 +136,7 @@ export class PhotoService {
   }
 
   async getPhotoById(userId: string, id: string) {
-    const photo =
-      await this.photoRepository.getPhotoByIdIncludePhotographer(id);
+    const photo = await this.photoRepository.getPhotoDetailById(id);
 
     if (!photo) {
       throw new PhotoNotFoundException();
