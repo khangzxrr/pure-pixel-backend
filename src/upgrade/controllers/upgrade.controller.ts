@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Inject, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Headers,
+  Inject,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UpgradeService } from '../services/upgrade.service';
 import { UpgradePackageDto } from '../dtos/upgrade-package.dto';
@@ -7,6 +15,7 @@ import { AuthenticatedUser, AuthGuard } from 'nest-keycloak-connect';
 import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { RequestUpgradeDto } from '../dtos/request-upgrade.dto';
 import { UpgradeOrderService } from '../services/upgrade-order.service';
+import { RequestUpgradeOrderResponseDto } from '../dtos/request-upgrade-order.response.dto';
 
 @Controller('upgrade')
 @ApiTags('upgrade')
@@ -35,13 +44,16 @@ export class UpgradeController {
   })
   @ApiResponse({
     status: HttpStatusCode.Ok,
+    type: RequestUpgradeOrderResponseDto,
   })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   async requestUpgradePayment(
+    @Headers('host') host: string,
     @AuthenticatedUser() user,
     @Body() requestUpgrade: RequestUpgradeDto,
   ) {
     return await this.upgradeOrderService.requestUpgradePayment(
+      host,
       user.sub,
       requestUpgrade,
     );
