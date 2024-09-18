@@ -18,8 +18,10 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  diskQuota Decimal @default(0)
-  diskUsage Decimal @default(0)
+  maxPhotoCount Int @default(0)
+  maxPackageCount Int @default(0)
+  maxBookingPhotoCount Int @default(0) 
+  maxBookingVideoCount Int @default(0)
 
   avatar String @default("https://s3-hcm-r1.s3cloud.vn/sftpgo/avatar%2Favatar.png")
   name   String @default("")
@@ -93,11 +95,19 @@ model UpgradeOrder {
   transaction   Transaction? @relation(fields: [transactionId], references: [id], onDelete: SetNull)
   transactionId String?      @unique
 
-  name             String //copy from Uprade package
-  price            Decimal //copy from upgrade package
-  description      Json //copy from upgrade package
-  quotaSize        Decimal
-  bookingQuotaSize Decimal
+//copy from UpgradePackage
+  name String 
+  price Decimal @default(0)
+  minOrderMonth Int @default(0)
+
+  maxPhotoCount Int @default(0) 
+  maxPackageCount Int @default(0)
+  maxBookingPhotoCount Int @default(0)
+  maxBookingVideoCount Int @default(0)
+
+  descriptions String[]
+
+
 }
 
 enum UpgradePackageStatus {
@@ -111,11 +121,16 @@ model UpgradePackage {
   updatedAt DateTime @updatedAt
 
   name        String  @unique
-  price       Decimal
-  description Json
+  price       Decimal @default(0)
 
-  quotaSize        Decimal
-  bookingQuotaSize Decimal
+  minOrderMonth Int @default(0)
+
+  maxPhotoCount Int @default(0) 
+  maxPackageCount Int @default(0)
+  maxBookingPhotoCount Int @default(0)
+  maxBookingVideoCount Int @default(0)
+
+  descriptions String[]
 
   status UpgradePackageStatus
 
@@ -154,8 +169,8 @@ model Photo {
   photographer   User   @relation(fields: [photographerId], references: [id])
   photographerId String
 
-  category   Category? @relation(fields: [categoryId], references: [id])
-  categoryId String?
+  category   Category @relation(fields: [categoryId], references: [id])
+  categoryId String
 
   title String
 

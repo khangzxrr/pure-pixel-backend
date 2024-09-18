@@ -2,6 +2,7 @@ import {
   PhotoStatus,
   PhotoType,
   PhotoVisibility,
+  Prisma,
   PrismaClient,
   UpgradePackageStatus,
 } from '@prisma/client';
@@ -11,33 +12,42 @@ const prisma = new PrismaClient();
 async function main() {
   const user1Id = 'd2020c98-60f5-45c2-879f-00a5df97e9cd';
 
-  const categoryName = 'landscape';
-  const categoryDescription = 'trees! I love trees!';
+  const categoryName = 'khác';
+  const categoryDescription = 'Những bức ảnh chưa phân loại';
 
   const basicUpgradePackage = {
-    name: 'basic',
-    description: {},
-    price: 100000,
-    quotaSize: 1024 * 5,
-    bookingQuotaSize: 1024 * 5,
+    name: 'Cơ bản',
+    minOrderMonth: 3,
+    descriptions: ['description 1', 'description 2', 'description 3'],
+    maxPhotoCount: 100,
+    maxPackageCount: 10,
+    maxBookingPhotoCount: 50,
+    maxBookingVideoCount: 5,
+    price: new Prisma.Decimal(10000),
     status: UpgradePackageStatus.ENABLED,
   };
 
   const premiumUpgradePackage = {
-    name: 'premium',
-    description: {},
-    price: 200000,
-    quotaSize: 1024 * 10,
-    bookingQuotaSize: 1024 * 10,
+    name: 'Nâng cao',
+    minOrderMonth: 6,
+    descriptions: ['description 1', 'description 2', 'description 3'],
+    maxPhotoCount: 100,
+    maxPackageCount: 10,
+    maxBookingPhotoCount: 50,
+    maxBookingVideoCount: 5,
+    price: new Prisma.Decimal(50000),
     status: UpgradePackageStatus.ENABLED,
   };
 
   const signatureUpgradePackage = {
-    name: 'signaure',
-    description: {},
-    price: 300000,
-    quotaSize: 1024 * 15,
-    bookingQuotaSize: 1024 * 15,
+    name: 'Cao cấp',
+    minOrderMonth: 12,
+    descriptions: ['description 1', 'description 2', 'description 3'],
+    maxPhotoCount: 1000,
+    maxPackageCount: 100,
+    maxBookingPhotoCount: 500,
+    maxBookingVideoCount: 50,
+    price: new Prisma.Decimal(100000),
     status: UpgradePackageStatus.ENABLED,
   };
 
@@ -83,8 +93,6 @@ async function main() {
     update: {},
     create: {
       id: user1Id,
-      diskQuota: 1024 * 5,
-      diskUsage: 0,
       ftpUsername: 'user1',
       ftpPassword: 'user1',
       avatar: 'https://s3-hcm-r1.s3cloud.vn/sftpgo/avatar%2Favatar.png',
