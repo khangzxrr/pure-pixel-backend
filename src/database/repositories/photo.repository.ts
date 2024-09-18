@@ -10,16 +10,19 @@ export class PhotoRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async delete(photoId: string) {
-    return this.prisma.extendedClient.photo.delete({
+    return this.prisma.extendedClient().photo.update({
       where: {
         id: photoId,
+      },
+      data: {
+        deletedAt: new Date(),
       },
     });
   }
 
   async batchUpdate(photos: Photo[]) {
     const queries = photos.map((p) => {
-      return this.prisma.extendedClient.photo.update({
+      return this.prisma.extendedClient().photo.update({
         where: {
           id: p.id,
         },
@@ -27,7 +30,7 @@ export class PhotoRepository {
       });
     });
 
-    return this.prisma.extendedClient.$transaction(queries);
+    return this.prisma.extendedClient().$transaction(queries);
   }
 
   async getPhotoByIdsAndStatus(
@@ -35,7 +38,7 @@ export class PhotoRepository {
     status: string,
     userId?: string,
   ): Promise<Photo[]> {
-    return this.prisma.extendedClient.photo.findMany({
+    return this.prisma.extendedClient().photo.findMany({
       where: {
         id: {
           in: ids,
@@ -51,7 +54,7 @@ export class PhotoRepository {
     //subtract days
     const newDate = new Date(lastDay);
 
-    return this.prisma.extendedClient.photo.deleteMany({
+    return this.prisma.extendedClient().photo.deleteMany({
       where: {
         status: 'PENDING',
         createdAt: {
@@ -86,7 +89,7 @@ export class PhotoRepository {
       return photo;
     });
 
-    return this.prisma.extendedClient.photo.createManyAndReturn({
+    return this.prisma.extendedClient().photo.createManyAndReturn({
       data: photos,
 
       select: {
@@ -97,7 +100,7 @@ export class PhotoRepository {
   }
 
   async getPhotoByIdIncludePhotographer(id: string) {
-    return this.prisma.extendedClient.photo.findUnique({
+    return this.prisma.extendedClient().photo.findUnique({
       where: {
         id,
       },
@@ -118,7 +121,7 @@ export class PhotoRepository {
   }
 
   async getPhotoById(id: string) {
-    return this.prisma.extendedClient.photo.findUnique({
+    return this.prisma.extendedClient().photo.findUnique({
       where: {
         id,
       },
@@ -126,7 +129,7 @@ export class PhotoRepository {
   }
 
   async findAllIncludedPhotographer(filter: FindAllPhotoFilterDto) {
-    return this.prisma.extendedClient.photo.findMany({
+    return this.prisma.extendedClient().photo.findMany({
       where: filter.toWhere(),
       skip: filter.skip,
       take: filter.take,
@@ -144,7 +147,7 @@ export class PhotoRepository {
       visibility = PhotoVisibility.SHARE_LINK;
     }
 
-    return this.prisma.extendedClient.photo.findMany({
+    return this.prisma.extendedClient().photo.findMany({
       where: {
         visibility,
       },
