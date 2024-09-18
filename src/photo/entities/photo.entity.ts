@@ -31,6 +31,8 @@ export class Photo implements PrismaPhotoEntity {
   createdAt: Date;
   updatedAt: Date;
 
+  deletedAt: Date;
+
   constructor() {}
 
   static fromDto(photoDto: PhotoDto) {

@@ -68,6 +68,9 @@ export class PhotoDto {
   updatedAt: Date;
 
   @ApiProperty()
+  deletedAt?: Date;
+
+  @ApiProperty()
   photographer: UserEntity;
 }
 
