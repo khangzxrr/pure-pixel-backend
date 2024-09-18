@@ -186,6 +186,7 @@ model Photo {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  deletedAt DateTime?
 
   comments Comment[]
   votes    Vote[]
