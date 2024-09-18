@@ -26,7 +26,7 @@ export class UpgradeController {
     isArray: true,
   })
   async findAll(): Promise<UpgradePackageDto[]> {
-    return await this.upgradeService.findAll();
+    return await this.upgradeService.getEnableUpgradePackages();
   }
 
   @Post()
