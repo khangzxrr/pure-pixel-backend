@@ -187,8 +187,8 @@ model Photo {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  Comment Comment[]
-  Vote    Vote[]
+  comments Comment[]
+  votes    Vote[]
 }
 
 model Vote {
