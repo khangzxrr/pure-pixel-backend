@@ -95,6 +95,16 @@ export class PhotoRepository {
       },
       include: {
         photographer: true,
+        _count: {
+          select: {
+            votes: {
+              where: {
+                isUpvote: true,
+              },
+            },
+            comments: true,
+          },
+        },
       },
     });
   }

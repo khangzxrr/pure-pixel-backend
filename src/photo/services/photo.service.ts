@@ -87,8 +87,6 @@ export class PhotoService {
       return Photo.fromDto(dto);
     });
 
-    console.log(photos);
-
     const updateResults = await this.photoRepository.batchUpdate(photos);
 
     return updateResults.map((p) => p as PhotoDto);
