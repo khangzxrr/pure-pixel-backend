@@ -146,7 +146,6 @@ export class PhotoController {
     @Body() processImagesRequest: ProcessImagesRequest,
     @Res() res: Response,
   ) {
-    console.log(processImagesRequest);
     await this.photoService.sendProcessImageToMq(
       user.sub,
       processImagesRequest,
