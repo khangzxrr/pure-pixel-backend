@@ -1,16 +1,14 @@
 import { User } from '@prisma/client';
-import { Decimal } from '@prisma/client/runtime/library';
 import { Exclude } from 'class-transformer';
+import { ApplicationEntity } from 'src/infrastructure/entities/application.entity';
 
-export class UserEntity implements User {
-  @Exclude()
-  diskQuota: Decimal;
-
-  @Exclude()
-  diskUsage: Decimal;
-
+export class UserEntity extends ApplicationEntity<UserEntity> implements User {
   id: string;
+
+  @Exclude()
   createdAt: Date;
+
+  @Exclude()
   updatedAt: Date;
 
   @Exclude()
@@ -25,7 +23,15 @@ export class UserEntity implements User {
 
   quote: string;
 
-  constructor(partial: Partial<UserEntity>) {
-    Object.assign(this, partial);
-  }
+  @Exclude()
+  maxPhotoCount: number;
+
+  @Exclude()
+  maxPackageCount: number;
+
+  @Exclude()
+  maxBookingPhotoCount: number;
+
+  @Exclude()
+  maxBookingVideoCount: number;
 }
