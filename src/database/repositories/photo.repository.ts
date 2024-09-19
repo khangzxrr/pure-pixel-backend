@@ -20,6 +20,15 @@ export class PhotoRepository {
     });
   }
 
+  async update(photo: Photo) {
+    return this.prisma.extendedClient().photo.update({
+      where: {
+        id: photo.id,
+      },
+      data: photo,
+    });
+  }
+
   async batchUpdate(photos: Photo[]) {
     const queries = photos.map((p) => {
       return this.prisma.extendedClient().photo.update({
