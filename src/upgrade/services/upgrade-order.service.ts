@@ -92,9 +92,12 @@ export class UpgradeOrderService {
     return `https://qr.sepay.vn/img?acc=${process.env.SEPAY_ACC}&bank=${process.env.SEPAY_BANK}&amount=${amount}&des=${encodeURIComponent(removedDashTransactionId)}&template=TEMPLATE`;
   }
 
-  async generateMockIpnQrCode(transactionId: string): Promise<string> {
+  async generateMockIpnQrCode(
+    transactionId: string,
+    amount: number,
+  ): Promise<string> {
     return await QRCode.toDataURL(
-      `${process.env.SEPAY_MOCK_ORIGIN}/ipn/test/${transactionId}`,
+      `${process.env.SEPAY_MOCK_ORIGIN}/ipn/sepay/test?transactionid=${transactionId}&amount=${amount}`,
     );
   }
 
@@ -174,6 +177,7 @@ export class UpgradeOrderService {
         requestUpgradeResponse.paymentQrcodeUrl = paymentUrl;
         requestUpgradeResponse.mockQrcode = await this.generateMockIpnQrCode(
           newUpgradeOrder.transactionId,
+          calculatedPrice.toNumber(),
         );
 
         return requestUpgradeResponse;
