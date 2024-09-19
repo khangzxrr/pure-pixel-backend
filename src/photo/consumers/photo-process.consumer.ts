@@ -1,12 +1,13 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { PhotoConstant } from '../constants/photo.constant';
 import { Job } from 'bullmq';
-import { ProcessImagesRequest } from '../dtos/process-images.request.dto';
 import { Inject, Logger } from '@nestjs/common';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoProcessService } from '../services/photo-process.service';
 import { PhotoGateway } from '../gateways/socket.io.gateway';
 import { PhotoService } from '../services/photo.service';
+import { GenerateWatermarkRequestDto } from '../dtos/generate-watermark.request.dto';
+import { ProcessPhotosRequest } from '../dtos/process-images.request.dto';
 
 @Processor(PhotoConstant.PHOTO_PROCESS_QUEUE)
 export class PhotoProcessConsumer extends WorkerHost {
@@ -23,34 +24,102 @@ export class PhotoProcessConsumer extends WorkerHost {
 
   async process(job: Job): Promise<any> {
     try {
-      console.log(`consume job`);
-      await this.processImages(job.data.userId, job.data.processImagesRequest);
-      const photos = await this.getAllProcessedPhotos(
-        job.data.userId,
-        job.data.processImagesRequest,
-      );
-
-      await this.photoGateway.sendToUserId(job.data.userId, photos);
+      switch (job.name) {
+        case PhotoConstant.PROCESS_PHOTO_JOB_NAME:
+          await this.processPhoto(
+            job.data.userId,
+            job.data.processPhotosRequest,
+          );
+          break;
+        case PhotoConstant.GENERATE_WATERMARK_JOB:
+          await this.processWatermark(
+            job.data.userId,
+            job.data.generateWatermarkRequest,
+          );
+          break;
+      }
     } catch (e) {
       this.logger.error(e);
       throw new Error(); //perform retry
     }
   }
 
+  async processWatermark(
+    userId: string,
+    generateWatermarkRequest: GenerateWatermarkRequestDto,
+  ) {
+    this.logger.log(`generate watermark`);
+    this.logger.log(generateWatermarkRequest);
+
+    await this.generateWatermark(generateWatermarkRequest);
+
+    const photo = await this.photoService.getSignedPhotoById(
+      userId,
+      generateWatermarkRequest.photoId,
+    );
+
+    await this.photoGateway.sendFinishWatermarkEventToUserId(userId, photo);
+  }
+
+  async generateWatermark(
+    generateWatermarkRequest: GenerateWatermarkRequestDto,
+  ) {
+    const photo = await this.photoRepository.getPhotoById(
+      generateWatermarkRequest.photoId,
+    );
+
+    //when photo is not ready because pending state (photo not convert to jpg yet)
+    //we should call convert
+    //then continue to process safety
+    if (photo.status == 'PENDING') {
+      await this.photoProcessService.convertJpg(photo.originalPhotoUrl);
+    }
+
+    photo.watermarkPhotoUrl = await this.photoProcessService.watermark(
+      photo.originalPhotoUrl,
+      generateWatermarkRequest.text,
+    );
+
+    photo.watermarkThumbnailPhotoUrl = await this.photoProcessService.thumbnail(
+      photo.watermarkPhotoUrl,
+    );
+
+    photo.watermark = true;
+
+    await this.photoRepository.update(photo);
+  }
+
+  async processPhoto(
+    userId: string,
+    processPhotosRequest: ProcessPhotosRequest,
+  ) {
+    this.logger.log(`process photos`);
+    this.logger.log(processPhotosRequest);
+
+    await this.convertAndGenerateThumbnailExif(userId, processPhotosRequest);
+    const photos = await this.getAllProcessedPhotos(
+      userId,
+      processPhotosRequest,
+    );
+
+    await this.photoGateway.sendFinishProcessPhotoEventToUserId(userId, photos);
+  }
+
   async getAllProcessedPhotos(
     userId: string,
-    processImagesRequest: ProcessImagesRequest,
+    processImagesRequest: ProcessPhotosRequest,
   ) {
     const getPhotoPromises = processImagesRequest.signedUploads.map(
-      async (su) => await this.photoService.getPhotoById(userId, su.photoId),
+      async (su) =>
+        await this.photoService.getSignedPhotoById(userId, su.photoId),
     );
 
     return await Promise.all(getPhotoPromises);
   }
 
-  async processImages(
+  async convertAndGenerateThumbnailExif(
     userId: string,
-    processImagesRequest: ProcessImagesRequest,
+    processImagesRequest: ProcessPhotosRequest,
   ) {
     const photoIds = processImagesRequest.signedUploads.map((su) => su.photoId);
 
@@ -77,10 +146,9 @@ export class PhotoProcessConsumer extends WorkerHost {
       //they cannot use it anyway ;)
       p.watermarkThumbnailPhotoUrl = p.thumbnailPhotoUrl;
 
-      const watermarkImageKey = await this.photoProcessService.watermark(
-        p.originalPhotoUrl,
-      );
-      p.watermarkPhotoUrl = watermarkImageKey;
+      //using original
+      //only process watermark if user required
+      p.watermarkPhotoUrl = p.originalPhotoUrl;
 
       //this is not optimized because we have to get original image from url
       //each time we call different process method
@@ -93,14 +161,10 @@ export class PhotoProcessConsumer extends WorkerHost {
 
       p.status = 'PARSED';
 
-      this.logger.log(`generated watermark image: ${watermarkImageKey}`);
-
       return p;
     });
 
     const updatePhotos = await Promise.all(updatePhotoPromises);
     await this.photoRepository.batchUpdate(updatePhotos);
-
-    this.logger.log(`finish process photos`);
   }
 }
