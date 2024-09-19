@@ -1,5 +1,5 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsInt, IsOptional, Max, Min } from "class-validator";
+import { ApiProperty } from '@nestjs/swagger';
+import { IsOptional, IsInt, Min, Max } from 'class-validator';
 
 export class PaginatedQueryRequestDto {
   @IsOptional()
