@@ -42,8 +42,6 @@ export class PhotoProcessService {
     const imagePublicUrl =
       await this.storageService.getSignedGetUrl(originalImageKey);
 
-    console.log(imagePublicUrl);
-
     const exifs = await exifr.parse(imagePublicUrl);
 
     return exifs;
@@ -53,18 +51,22 @@ export class PhotoProcessService {
     const encodedImageUrl = await this.getEncodedSignedGetObjectUrl(photoKey);
 
     const buffers = await this.getBufferImageFromUrl(
-      `${process.env.IMAGINARY_ENDPOINT}/convert?type=jpeg&quality=100&url=${encodedImageUrl}`,
+      `${process.env.IMAGINARY_ENDPOINT}/convert?type=jpeg&stripmeta=true&quality=100&url=${encodedImageUrl}`,
     );
 
     await this.storageService.uploadFromBytes(photoKey, buffers);
   }
 
-  async watermark(originalImageKey: string) {
+  async watermark(originalImageKey: string, text: string) {
     const encodedImageUrl =
       await this.getEncodedSignedGetObjectUrl(originalImageKey);
 
+    const color = '255,255,255';
+    const font = 'sans bold 40';
+    const opacity = '0.7';
+
     const buffers = await this.getBufferImageFromUrl(
-      `${process.env.IMAGINARY_ENDPOINT}/watermark?text=purepixel&textwidth=120&url=${encodedImageUrl}`,
+      `${process.env.IMAGINARY_ENDPOINT}/watermark?&text=${text}&color=${color}&font=${font}&opacity=${opacity}&url=${encodedImageUrl}`,
     );
 
     const watermarkImageKey = `watermark/${originalImageKey}`;
