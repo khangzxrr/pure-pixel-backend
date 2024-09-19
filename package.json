@@ -40,6 +40,7 @@
     "@nestjs/websockets": "^10.4.2",
     "@onesignal/node-onesignal": "^5.0.0-alpha-01",
     "@prisma/client": "^5.19.0",
+    "@s3pweb/keycloak-admin-client-cjs": "^25.0.4",
     "@types/qrcode": "^1.5.5",
     "aws-sdk": "^2.1686.0",
     "axios": "^1.7.7",
