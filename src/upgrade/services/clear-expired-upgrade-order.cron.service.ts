@@ -4,12 +4,15 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { Queue } from 'bullmq';
 import { UpgradePackageOrderRepository } from 'src/database/repositories/upgrade-package-order.repository';
 import { UpgradeConstant } from '../constants/upgrade.constant';
+import { KeycloakService } from 'src/authen/services/keycloak.service';
+import { Constants } from 'src/infrastructure/utils/constants';
 
 @Injectable()
 export class ClearExpiredUpgradeOrder {
   private readonly logger: Logger = new Logger(ClearExpiredUpgradeOrder.name);
   constructor(
     @Inject() private readonly upgradeOrder: UpgradePackageOrderRepository,
+    @Inject() private readonly keycloakService: KeycloakService,
     @InjectQueue(UpgradeConstant.UPGRADE_QUEUE) private upgradeQueue: Queue,
   ) {}
 
@@ -41,7 +44,12 @@ export class ClearExpiredUpgradeOrder {
 
     await this.upgradeOrder.deactivateActivatedAndExpired(currentDate);
 
-    expiredOrders.forEach((order) => {
+    expiredOrders.forEach(async (order) => {
+      await this.keycloakService.deleteRoleFromUser(
+        order.userId,
+        Constants.PHOTOGRAPHER_ROLE,
+      );
+
       this.upgradeQueue.add(UpgradeConstant.EXPIRED_ORDER_NOTIFY, {
         order,
       });
