@@ -37,8 +37,8 @@ model User {
   Comment       Comment[]
   Vote          Vote[]
 
-  follower Follow[] @relation("follower") 
-  following Follow[] @relation("following")
+  followers Follow[] @relation("follower") 
+  followings Follow[] @relation("following")
 }
 
 model Follow {
