@@ -9,6 +9,9 @@ import { FindAllPhotographerResponseDto } from '../dtos/find-all-photographer-dt
 import { FindAllPhotographerRequestDto } from '../dtos/find-all-photographer-dtos/find-all-photographer.request.dto';
 import { PhotographerDTO } from '../dtos/photographer.dto';
 import { UserRepository } from 'src/database/repositories/user.repository';
+import { UserFilterDto } from 'src/user/dto/user-filter.dto';
+import { PhotographerNotFoundException } from '../exceptions/photographer-not-found.exception';
+import { PhotographerProfileDto } from '../dtos/photographer-profile.dto';
 
 @Injectable()
 export class PhotographerService {
@@ -77,6 +80,46 @@ export class PhotographerService {
       count,
       photographerDtosWithNullFilter,
     );
+  }
+
+  async getPhotographerProfileById(id: string) {
+    const userFilterDto = new UserFilterDto();
+    userFilterDto.id = id;
+
+    const photographer =
+      await this.userRepository.findOneWithCount(userFilterDto);
+
+    if (!photographer) {
+      throw new PhotographerNotFoundException();
+    }
+
+    const photos =
+      await this.photoService.findAllWithUpvoteAndCommentCountByUserId(id);
+
+    const profile = new PhotographerProfileDto();
+    profile.photographer = new PhotographerDTO({
+      id: id,
+      quote: photographer.quote,
+      name: photographer.name,
+      avatar: photographer.avatar,
+      location: photographer.location,
+      createdAt: photographer.createdAt,
+      updatedAt: photographer.updatedAt,
+    });
+
+    profile.cover = photographer.cover;
+
+    profile.upvoteCount = 0;
+    profile.commentCount = 0;
+    profile.followersCount = photographer._count.followers;
+    profile.followingsCount = photographer._count.followings;
+
+    photos.forEach((p) => {
+      profile.upvoteCount += p._count.votes;
+      profile.commentCount += p._count.comments;
+    });
+
+    return profile;
   }
 
   async getPhotosOfMe(userId: string, filter: FindAllPhotoFilterDto) {

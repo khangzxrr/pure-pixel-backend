@@ -3,11 +3,17 @@ import {
   Get,
   Inject,
   NotImplementedException,
+  Param,
   Query,
   UseGuards,
 } from '@nestjs/common';
 import { PhotographerService } from '../services/photographer.service';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiOkResponse,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { HttpStatusCode } from 'axios';
 import { SignedPhotoDto } from 'src/photo/dtos/photo.dto';
 import {
@@ -24,6 +30,7 @@ import { FindAllPhotographerRequestDto } from '../dtos/find-all-photographer-dto
 import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.response.dto';
 import { PhotographerDTO } from '../dtos/photographer.dto';
 import { PagingPaginatedResposneDto } from 'src/infrastructure/restful/paging-paginated.response.dto';
+import { PhotographerProfileDto } from '../dtos/photographer-profile.dto';
 
 @Controller('photographer')
 @ApiTags('photographer')
@@ -56,6 +63,19 @@ export class PhotographerController {
       '',
       findAllRequestDto,
     );
+  }
+
+  @Get('/:id/profile')
+  @ApiOperation({
+    summary: 'get photographer profile by id',
+  })
+  @ApiOkResponse({
+    type: PhotographerProfileDto,
+  })
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Public(false)
+  async getPhotographerProfile(@Param('id') id: string) {
+    return await this.photographerService.getPhotographerProfileById(id);
   }
 
   //TODO: finish get all packages of photographer API
