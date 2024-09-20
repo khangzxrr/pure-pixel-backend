@@ -99,19 +99,25 @@ export class KeycloakService {
     });
   }
 
-  async countAllPhotographers(search: string) {
+  async countPhotographer() {
     const kc = await this.getInstance();
+    const client = await this.getClient();
 
-    return kc.users.count({
-      search,
+    const users = await kc.clients.findUsersWithRole({
+      id: client.id,
+      roleName: 'photographer',
     });
+
+    return users.length;
   }
 
-  async findAllPhotographers(search: string, first: number, max: number) {
+  async findAllPhotographers(first: number, max: number) {
     const kc = await this.getInstance();
+    const client = await this.getClient();
 
-    return kc.users.find({
-      search,
+    return kc.clients.findUsersWithRole({
+      id: client.id,
+      roleName: 'photographer',
       first,
       max,
     });
