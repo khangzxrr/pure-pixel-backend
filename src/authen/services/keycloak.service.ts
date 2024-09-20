@@ -4,10 +4,10 @@ import {
 } from '@s3pweb/keycloak-admin-client-cjs';
 
 export class KeycloakService {
-  kcInstance: KeycloakAdminClient;
-  clientInstance: ClientRepresentation;
+  private kcInstance: KeycloakAdminClient;
+  private clientInstance: ClientRepresentation;
 
-  async getClient() {
+  private async getClient() {
     if (this.clientInstance) {
       return this.clientInstance;
     }
@@ -23,7 +23,7 @@ export class KeycloakService {
     return this.clientInstance;
   }
 
-  async getInstance() {
+  private async getInstance() {
     if (this.kcInstance) {
       return this.kcInstance;
     }
@@ -96,6 +96,24 @@ export class KeycloakService {
           name: role.name!,
         },
       ],
+    });
+  }
+
+  async countAllPhotographers(search: string) {
+    const kc = await this.getInstance();
+
+    return kc.users.count({
+      search,
+    });
+  }
+
+  async findAllPhotographers(search: string, first: number, max: number) {
+    const kc = await this.getInstance();
+
+    return kc.users.find({
+      search,
+      first,
+      max,
     });
   }
 }
