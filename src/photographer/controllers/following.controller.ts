@@ -19,7 +19,7 @@ export class FollowingController {
   })
   @ApiOkResponsePaginated(FollowingDto)
   @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
   async findAllAvailablePhoto(
     @AuthenticatedUser() user: ParsedUserDto,
     @Query() findAllFollowingRequestDto: FindAllFollowingRequestDto,
