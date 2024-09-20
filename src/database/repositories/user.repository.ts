@@ -12,7 +12,6 @@ export class UserRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findOne(userFilterDto: UserFilterDto) {
-    console.log(userFilterDto);
     return this.prisma.user.findUnique({
       where: {
         id: userFilterDto.id,
