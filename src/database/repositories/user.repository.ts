@@ -25,6 +25,30 @@ export class UserRepository {
     });
   }
 
+  async findOneWithCount(userFilterDto: UserFilterDto) {
+    return this.prisma.user.findUnique({
+      where: {
+        id: userFilterDto.id,
+      },
+
+      include: {
+        transactions: userFilterDto.transactions,
+        upgradeOrders: userFilterDto.upgradeOrders,
+        followers: userFilterDto.followers,
+        followings: userFilterDto.followings,
+
+        _count: {
+          select: {
+            transactions: userFilterDto.transactions,
+            upgradeOrders: userFilterDto.upgradeOrders,
+            followers: userFilterDto.followers,
+            followings: userFilterDto.followings,
+          },
+        },
+      },
+    });
+  }
+
   async findOneTransaction(
     userFilterDto: UserFilterDto,
     tx: Prisma.TransactionClient,

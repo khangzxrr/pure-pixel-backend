@@ -118,6 +118,28 @@ export class PhotoRepository {
     });
   }
 
+  async findAllPhotosWithVoteAndCommentCountByUserId(photographerId: string) {
+    return this.prisma.extendedClient().photo.findMany({
+      where: {
+        photographerId,
+      },
+      include: {
+        photographer: true,
+        category: true,
+        _count: {
+          select: {
+            votes: {
+              where: {
+                isUpvote: true,
+              },
+            },
+            comments: true,
+          },
+        },
+      },
+    });
+  }
+
   async getPhotoDetailById(id: string) {
     return this.prisma.extendedClient().photo.findUnique({
       where: {
