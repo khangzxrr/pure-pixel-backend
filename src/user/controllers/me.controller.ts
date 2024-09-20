@@ -24,8 +24,6 @@ export class MeController {
     user: any,
     @Query() userFilterDto: UserFilterDto,
   ) {
-    console.log(userFilterDto);
-
     userFilterDto.id = user.sub;
 
     return await this.userService.findOne(userFilterDto);
