@@ -3,6 +3,7 @@ import { Exclude } from 'class-transformer';
 import { ApplicationEntity } from 'src/infrastructure/entities/application.entity';
 
 export class UserEntity extends ApplicationEntity<UserEntity> implements User {
+  location: string;
   id: string;
 
   @Exclude()
