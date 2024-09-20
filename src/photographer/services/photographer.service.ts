@@ -43,6 +43,8 @@ export class PhotographerService {
         id: p.id,
         transactions: false,
         upgradeOrders: false,
+        followings: false,
+        followers: false,
       });
 
       if (!applicationUser) {
@@ -67,7 +69,7 @@ export class PhotographerService {
     //some user may appear in production, some may appear in local
     //that's why we have null user
     const photographerDtosWithNullFilter = photographerDtos.filter(
-      (p) => p != null || p.id != userId,
+      (p) => p != null && p.id != userId,
     );
 
     return new FindAllPhotographerResponseDto(
