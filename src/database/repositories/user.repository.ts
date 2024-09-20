@@ -19,6 +19,8 @@ export class UserRepository {
       include: {
         transactions: userFilterDto.transactions,
         upgradeOrders: userFilterDto.upgradeOrders,
+        followers: userFilterDto.followers,
+        followings: userFilterDto.followings,
       },
     });
   }
@@ -34,6 +36,8 @@ export class UserRepository {
       include: {
         transactions: userFilterDto.transactions,
         upgradeOrders: userFilterDto.upgradeOrders,
+        followers: userFilterDto.followers,
+        followings: userFilterDto.followings,
       },
     });
   }
