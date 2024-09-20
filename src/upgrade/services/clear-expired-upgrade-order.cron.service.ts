@@ -40,8 +40,8 @@ export class ClearExpiredUpgradeOrder {
     const expiredOrders =
       await this.upgradeOrder.findManyActivateAndExpired(currentDate);
 
-    //TODO: what if photographer has booking on going
-
+    //after deactivate but there are(is) booking(s) still going
+    //photographer still interact normally until booking is closed or expired
     await this.upgradeOrder.deactivateActivatedAndExpired(currentDate);
 
     expiredOrders.forEach(async (order) => {
