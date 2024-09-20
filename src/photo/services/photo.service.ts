@@ -120,6 +120,12 @@ export class PhotoService {
     return await this.findAll(filter);
   }
 
+  async findAllWithUpvoteAndCommentCountByUserId(userId: string) {
+    return this.photoRepository.findAllPhotosWithVoteAndCommentCountByUserId(
+      userId,
+    );
+  }
+
   async findAll(filter: FindAllPhotoFilterDto) {
     const photos =
       await this.photoRepository.findAllIncludedPhotographer(filter);
