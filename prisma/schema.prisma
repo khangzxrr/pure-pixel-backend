@@ -24,6 +24,7 @@ model User {
   maxBookingVideoCount Int @default(0)
 
   avatar   String @default("https://s3-hcm-r1.s3cloud.vn/sftpgo/avatar%2Favatar.png")
+  cover String @default("https://s3-hcm-r1.s3cloud.vn/sftpgo/avatar%2Fcover.jpg")
   name     String @default("")
   location String @default("")
   quote    String @default("")
