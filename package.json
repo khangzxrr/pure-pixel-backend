@@ -40,6 +40,8 @@
     "@nestjs/websockets": "^10.4.2",
     "@onesignal/node-onesignal": "^5.0.0-alpha-01",
     "@prisma/client": "^5.19.0",
+    "@s3pweb/keycloak-admin-client-cjs": "^25.0.4",
+    "@types/qrcode": "^1.5.5",
     "aws-sdk": "^2.1686.0",
     "axios": "^1.7.7",
     "bullmq": "^5.13.0",
@@ -54,6 +56,7 @@
     "oxide.ts": "^1.1.0",
     "passport": "^0.7.0",
     "passport-http": "^0.3.0",
+    "qrcode": "^1.5.4",
     "rxjs": "^7.8.1",
     "socket.io": "^4.7.5",
     "uuid": "^10.0.0"

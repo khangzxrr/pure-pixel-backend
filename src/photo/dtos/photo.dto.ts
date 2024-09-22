@@ -1,7 +1,8 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { SignUrl } from './sign-urls.request.dto';
 import { UserEntity } from 'src/user/entities/user.entity';
 import { JsonValue } from '@prisma/client/runtime/library';
+import { CategoryEntity } from '../entities/category.entity';
 
 export class PhotoDto {
   @ApiProperty()
@@ -70,8 +71,11 @@ export class PhotoDto {
   @ApiProperty()
   deletedAt?: Date;
 
-  @ApiProperty()
-  photographer: UserEntity;
+  @ApiPropertyOptional()
+  photographer?: UserEntity;
+
+  @ApiPropertyOptional()
+  category?: CategoryEntity;
 }
 
 export class SignedPhotoDto extends PhotoDto {
@@ -84,6 +88,10 @@ export class SignedPhotoDto extends PhotoDto {
 
     if (photographer) {
       this.photographer = new UserEntity(photographer);
+    }
+
+    if (data.category) {
+      this.category = new CategoryEntity(data.category);
     }
   }
 }

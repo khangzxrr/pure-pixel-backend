@@ -11,7 +11,6 @@ import {
 import { Utils } from 'src/infrastructure/utils/utils';
 import { FileIsNotValidException } from '../exceptions/file-is-not-valid.exception';
 import { v4 } from 'uuid';
-import { ProcessImagesRequest } from '../dtos/process-images.request.dto';
 import { PhotoDto, SignedPhotoDto } from '../dtos/photo.dto';
 import { Photo } from '../entities/photo.entity';
 import { NotBelongPhotoException } from '../exceptions/not-belong-photo.exception';
@@ -22,6 +21,8 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { PhotoConstant } from '../constants/photo.constant';
 import { Queue } from 'bullmq';
 import { PhotoNotFoundException } from '../exceptions/photo-not-found.exception';
+import { ProcessPhotosRequest } from '../dtos/process-images.request.dto';
+import { GenerateWatermarkRequestDto } from '../dtos/generate-watermark.request.dto';
 
 @Injectable()
 export class PhotoService {
@@ -34,13 +35,33 @@ export class PhotoService {
     private readonly photoProcessQueue: Queue,
   ) {}
 
+  async sendWatermarkRequest(
+    userId: string,
+    generateWatermarkRequest: GenerateWatermarkRequestDto,
+  ) {
+    const photo = await this.photoRepository.getPhotoById(
+      generateWatermarkRequest.photoId,
+    );
+
+    if (!photo) {
+      throw new PhotoNotFoundException();
+    }
+
+    if (photo.photographerId != userId) {
+      throw new NotBelongPhotoException();
+    }
+    await this.photoProcessQueue.add(PhotoConstant.GENERATE_WATERMARK_JOB, {
+      userId,
+      generateWatermarkRequest,
+    });
+  }
   async sendProcessImageToMq(
     userId: string,
-    processImagesRequest: ProcessImagesRequest,
+    processPhotosRequest: ProcessPhotosRequest,
   ) {
     await this.photoProcessQueue.add(PhotoConstant.PROCESS_PHOTO_JOB_NAME, {
       userId,
-      processImagesRequest,
+      processPhotosRequest,
     });
   }
 
@@ -99,6 +120,12 @@ export class PhotoService {
     return await this.findAll(filter);
   }
 
+  async findAllWithUpvoteAndCommentCountByUserId(userId: string) {
+    return this.photoRepository.findAllPhotosWithVoteAndCommentCountByUserId(
+      userId,
+    );
+  }
+
   async findAll(filter: FindAllPhotoFilterDto) {
     const photos =
       await this.photoRepository.findAllIncludedPhotographer(filter);
@@ -135,9 +162,8 @@ export class PhotoService {
     return true;
   }
 
-  async getPhotoById(userId: string, id: string) {
-    const photo =
-      await this.photoRepository.getPhotoByIdIncludePhotographer(id);
+  async getSignedPhotoById(userId: string, id: string) {
+    const photo = await this.photoRepository.getPhotoDetailById(id);
 
     if (!photo) {
       throw new PhotoNotFoundException();

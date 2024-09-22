@@ -1,18 +1,23 @@
 import { $Enums, UpgradeOrder as PrismaUpgradeOrder } from '@prisma/client';
-import { Decimal, JsonValue } from '@prisma/client/runtime/library';
+import { Decimal } from '@prisma/client/runtime/library';
 
 export class UpgradeOrder implements PrismaUpgradeOrder {
+  name: string;
+  price: Decimal;
+  minOrderMonth: number;
+  maxPhotoCount: number;
+  maxPackageCount: number;
+  maxBookingPhotoCount: number;
+  maxBookingVideoCount: number;
+  descriptions: string[];
+
+  originalUpgradePackageId: string;
+
   expiredAt: Date;
   status: $Enums.UpgradeOrderStatus;
   id: string;
   createdAt: Date;
   updatedAt: Date;
-  originalUpgradePackageId: string;
   userId: string;
   transactionId: string;
-  name: string;
-  price: Decimal;
-  description: JsonValue;
-  quotaSize: Decimal;
-  bookingQuotaSize: Decimal;
 }

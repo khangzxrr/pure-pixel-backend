@@ -3,14 +3,17 @@ import { TransactionRepository } from 'src/database/repositories/transaction.rep
 import { SepayRequestDto } from '../dtos/sepay.request.dto';
 import { TransactionNotFoundException } from '../exceptions/transaction-not-found.exception';
 import { AmountIsNotEqualException } from '../exceptions/amount-is-not-equal.exception';
+import { KeycloakService } from 'src/authen/services/keycloak.service';
+import { Constants } from 'src/infrastructure/utils/constants';
 
 @Injectable()
 export class SepayService {
   constructor(
     @Inject() private readonly transactionRepository: TransactionRepository,
+    @Inject() private readonly keycloakService: KeycloakService,
   ) {}
 
-  async cancelAllPendingUpgradeOrderTransaction(id: string) {}
+  // async cancelAllPendingUpgradeOrderTransaction(id: string) {}
 
   async processTransaction(sepay: SepayRequestDto) {
     const transactionId = sepay.content.replaceAll(' ', '-');
@@ -25,7 +28,7 @@ export class SepayService {
       return HttpStatus.OK;
     }
 
-    if (transaction.amount != sepay.transferAmount) {
+    if (transaction.amount.toNumber() != sepay.transferAmount) {
       throw new AmountIsNotEqualException();
     }
 
@@ -35,7 +38,10 @@ export class SepayService {
           transaction.id,
           sepay,
         );
-        break;
+        await this.keycloakService.addRoleToUser(
+          transaction.userId,
+          Constants.PHOTOGRAPHER_ROLE,
+        );
       case 'IMAGE_SELL':
         break;
       case 'IMAGE_BUY':

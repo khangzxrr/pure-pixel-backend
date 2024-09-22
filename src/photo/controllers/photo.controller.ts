@@ -30,7 +30,6 @@ import {
 import { HttpStatusCode } from 'axios';
 import { PresignedUploadUrlRequest } from '../dtos/presigned-upload-url.request';
 import { PresignedUploadUrlResponse } from '../dtos/presigned-upload-url.response.dto';
-import { ProcessImagesRequest } from '../dtos/process-images.request.dto';
 import { PhotoDto, SignedPhotoDto } from '../dtos/photo.dto';
 import { PhotoUpdateRequest } from '../dtos/photo-update.request.dto';
 import { FindAllPhotoFilterDto } from '../dtos/find-all.filter.dto';
@@ -40,6 +39,8 @@ import { ParsedUserDto } from 'src/user/dto/parsed-user.dto';
 import { CommentService } from '../services/comment.service';
 import { CreateCommentRequestDto } from '../dtos/create-comment.request.dto';
 import { CommentEntity } from '../entities/comment.entity';
+import { ProcessPhotosRequest } from '../dtos/process-images.request.dto';
+import { GenerateWatermarkRequestDto } from '../dtos/generate-watermark.request.dto';
 
 @Controller('photo')
 @ApiTags('photo')
@@ -118,7 +119,7 @@ export class PhotoController {
     @AuthenticatedUser() user: ParsedUserDto,
     @Param('id') id: string,
   ) {
-    return await this.photoService.getPhotoById(user ? user.sub : '', id);
+    return await this.photoService.getSignedPhotoById(user ? user.sub : '', id);
   }
 
   //TODO: webhook handle sftp
@@ -131,10 +132,32 @@ export class PhotoController {
     return 'cool';
   }
 
+  @Post('/watermark')
+  @ApiOperation({
+    summary: 'put photo to watermark queue inorder to generate watermark',
+  })
+  @ApiResponse({
+    status: HttpStatusCode.Accepted,
+  })
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
+  async generateWatermark(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Body() generateWatermarkRequest: GenerateWatermarkRequestDto,
+    @Res() res: Response,
+  ) {
+    await this.photoService.sendWatermarkRequest(
+      user.sub,
+      generateWatermarkRequest,
+    );
+
+    res.status(HttpStatus.ACCEPTED).send();
+  }
+
   @Post('/process')
   @ApiOperation({
     summary:
-      'put process image request to queue inorder to generate watermark, thumbnail, exif images after upload',
+      'put process image request to queue inorder to generate thumbnail, exif images after upload',
   })
   @ApiResponse({
     status: HttpStatusCode.Accepted,
@@ -143,12 +166,12 @@ export class PhotoController {
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   async processPhotos(
     @AuthenticatedUser() user: ParsedUserDto,
-    @Body() processImagesRequest: ProcessImagesRequest,
+    @Body() processPhotosRequest: ProcessPhotosRequest,
     @Res() res: Response,
   ) {
     await this.photoService.sendProcessImageToMq(
       user.sub,
-      processImagesRequest,
+      processPhotosRequest,
     );
 
     res.status(HttpStatus.ACCEPTED).send();

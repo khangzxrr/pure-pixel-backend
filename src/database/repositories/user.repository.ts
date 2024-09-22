@@ -12,7 +12,6 @@ export class UserRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findOne(userFilterDto: UserFilterDto) {
-    console.log(userFilterDto);
     return this.prisma.user.findUnique({
       where: {
         id: userFilterDto.id,
@@ -20,6 +19,32 @@ export class UserRepository {
       include: {
         transactions: userFilterDto.transactions,
         upgradeOrders: userFilterDto.upgradeOrders,
+        followers: userFilterDto.followers,
+        followings: userFilterDto.followings,
+      },
+    });
+  }
+
+  async findOneWithCount(userFilterDto: UserFilterDto) {
+    return this.prisma.user.findUnique({
+      where: {
+        id: userFilterDto.id,
+      },
+
+      include: {
+        transactions: userFilterDto.transactions,
+        upgradeOrders: userFilterDto.upgradeOrders,
+        followers: userFilterDto.followers,
+        followings: userFilterDto.followings,
+
+        _count: {
+          select: {
+            transactions: userFilterDto.transactions,
+            upgradeOrders: userFilterDto.upgradeOrders,
+            followers: userFilterDto.followers,
+            followings: userFilterDto.followings,
+          },
+        },
       },
     });
   }
@@ -35,6 +60,8 @@ export class UserRepository {
       include: {
         transactions: userFilterDto.transactions,
         upgradeOrders: userFilterDto.upgradeOrders,
+        followers: userFilterDto.followers,
+        followings: userFilterDto.followings,
       },
     });
   }

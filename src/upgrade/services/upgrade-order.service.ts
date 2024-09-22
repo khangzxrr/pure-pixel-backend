@@ -10,6 +10,9 @@ import { UpgradePackageRepository } from 'src/database/repositories/upgrade-pack
 import { PrismaService } from 'src/prisma.service';
 import { ExistPendingOrderException as ExistPendingUpgradeOrderException } from '../exceptions/exist-pending-order-exception';
 import { NotValidExpireDateException } from '../exceptions/not-valid-expired-date.exception';
+import { TotalMonthLesserThanMinMonthException } from '../exceptions/total-month-lesser-min-order-month.exception';
+import { RequestUpgradeOrderResponseDto } from '../dtos/request-upgrade-order.response.dto';
+import * as QRCode from 'qrcode';
 
 @Injectable()
 export class UpgradeOrderService {
@@ -83,10 +86,25 @@ export class UpgradeOrderService {
     return pendingOrders;
   }
 
+  generatePaymentUrl(amount: number, transactionId: string) {
+    const removedDashTransactionId = transactionId.trim().replaceAll('-', ' ');
+
+    return `https://qr.sepay.vn/img?acc=${process.env.SEPAY_ACC}&bank=${process.env.SEPAY_BANK}&amount=${amount}&des=${encodeURIComponent(removedDashTransactionId)}&template=TEMPLATE`;
+  }
+
+  async generateMockIpnQrCode(
+    transactionId: string,
+    amount: number,
+  ): Promise<string> {
+    return await QRCode.toDataURL(
+      `${process.env.SEPAY_MOCK_ORIGIN}/ipn/sepay/test?transactionid=${transactionId}&amount=${amount}`,
+    );
+  }
+
   async requestUpgradePayment(
     userId: string,
     requestUpgrade: RequestUpgradeDto,
-  ) {
+  ): Promise<RequestUpgradeOrderResponseDto> {
     await this.checkIfUserHasActivatedOrderWithoutAcceptTransfer(
       userId,
       requestUpgrade,
@@ -101,7 +119,10 @@ export class UpgradeOrderService {
     );
 
     //TODO: handle transfer upgrade packages
-    //
+
+    if (requestUpgrade.totalMonths < upgradePackage.minOrderMonth) {
+      throw new TotalMonthLesserThanMinMonthException();
+    }
 
     const currentDate = new Date();
     const expiredDate = new Date(
@@ -118,9 +139,7 @@ export class UpgradeOrderService {
       new Prisma.Decimal(requestUpgrade.totalMonths),
     );
 
-    //TODO: calculate price on totalMonths
-
-    const upgradeOrder = await this.prisma.$transaction(
+    return await this.prisma.$transaction(
       async (tx: Prisma.TransactionClient) => {
         const cancelOrderPromises = pendingOrders.map((po) =>
           this.upgradePackageOrderRepository.cancelOrderAndTransaction(
@@ -145,10 +164,24 @@ export class UpgradeOrderService {
             tx,
           );
 
-        return newUpgradeOrder;
+        const paymentUrl = this.generatePaymentUrl(
+          calculatedPrice.toNumber(),
+          newUpgradeOrder.transactionId,
+        );
+
+        const requestUpgradeResponse = new RequestUpgradeOrderResponseDto();
+        requestUpgradeResponse.id = newUpgradeOrder.id;
+        requestUpgradeResponse.transactionId = newUpgradeOrder.transactionId;
+        requestUpgradeResponse.originalUpgradePackageId =
+          newUpgradeOrder.originalUpgradePackageId;
+        requestUpgradeResponse.paymentQrcodeUrl = paymentUrl;
+        requestUpgradeResponse.mockQrcode = await this.generateMockIpnQrCode(
+          newUpgradeOrder.transactionId,
+          calculatedPrice.toNumber(),
+        );
+
+        return requestUpgradeResponse;
       },
     );
-
-    return upgradeOrder;
   }
 }

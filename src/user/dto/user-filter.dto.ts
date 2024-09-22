@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsString } from 'class-validator';
 import { ToBoolean } from 'src/infrastructure/transforms/to-boolean';
 
 export class UserFilterDto {
@@ -7,11 +7,13 @@ export class UserFilterDto {
     description: 'Filter by id, leave blank if get current logged user',
     example: '5f9d5b6b-9e1b-4e9f-9f9f-9e9e9e9e9e9e',
   })
+  @IsString()
+  @IsNotEmpty()
   id: string;
 
   @ApiPropertyOptional({
     description: 'Include all transactions',
-    example: true,
+    example: false,
   })
   @ToBoolean()
   @IsBoolean()
@@ -19,9 +21,25 @@ export class UserFilterDto {
 
   @ApiPropertyOptional({
     description: 'Include all upgrade orders',
-    example: true,
+    example: false,
   })
   @ToBoolean()
   @IsBoolean()
   upgradeOrders: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Include all followers',
+    example: false,
+  })
+  @ToBoolean()
+  @IsBoolean()
+  followers: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Include all followings',
+    example: false,
+  })
+  @ToBoolean()
+  @IsBoolean()
+  followings: boolean;
 }

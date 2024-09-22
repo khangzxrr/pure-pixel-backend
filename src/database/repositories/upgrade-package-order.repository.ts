@@ -95,11 +95,15 @@ export class UpgradePackageOrderRepository {
     return tx.upgradeOrder.create({
       data: {
         expiredAt,
-        description: upgradePackage.description,
-        bookingQuotaSize: upgradePackage.bookingQuotaSize,
-        quotaSize: upgradePackage.quotaSize,
-        price: calculatedPrice,
+
+        descriptions: upgradePackage.descriptions,
+        price: upgradePackage.price,
         name: upgradePackage.name,
+        maxPhotoCount: upgradePackage.maxPhotoCount,
+        maxPackageCount: upgradePackage.maxPackageCount,
+        maxBookingPhotoCount: upgradePackage.maxBookingPhotoCount,
+        maxBookingVideoCount: upgradePackage.maxBookingVideoCount,
+        minOrderMonth: upgradePackage.minOrderMonth,
         status: 'PENDING',
         user: {
           connect: {
@@ -118,7 +122,7 @@ export class UpgradePackageOrderRepository {
                 id: userId,
               },
             },
-            amount: upgradePackage.price,
+            amount: calculatedPrice,
             paymentMethod: 'sepay',
             status: 'PENDING',
             type: 'UPGRADE_TO_PHOTOGRAPHER',

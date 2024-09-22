@@ -1,5 +1,4 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Decimal } from '@prisma/client/runtime/library';
 
 export class SepayRequestDto {
   @ApiProperty()
@@ -24,7 +23,7 @@ export class SepayRequestDto {
   transferType: string;
 
   @ApiProperty()
-  transferAmount: Decimal;
+  transferAmount: number;
 
   @ApiProperty()
   accumulated: number;

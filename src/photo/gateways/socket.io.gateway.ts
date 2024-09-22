@@ -61,7 +61,21 @@ export class PhotoGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.logger.log(`add ${socketId} to sets`);
   }
 
-  async sendToUserId(userId: string, data: any) {
+  async sendFinishWatermarkEventToUserId(userId: string, data: any) {
+    const socketIds = await this.getSetOfSocketIdsByUserId(userId);
+
+    if (!socketIds) {
+      this.logger.log(`no socket ids with user id ${userId}`);
+      return;
+    }
+    const arrayOfSocketIds: string[] = Array.from(socketIds.values());
+
+    this.server.to(arrayOfSocketIds).emit('finish-watermark-photo', data);
+
+    this.logger.log(`emited to user`);
+  }
+
+  async sendFinishProcessPhotoEventToUserId(userId: string, data: any) {
     //TODO: what if user disconnect before this method is called
     // handle recall
     //

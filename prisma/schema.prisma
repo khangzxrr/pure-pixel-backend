@@ -18,12 +18,16 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  diskQuota Decimal @default(0)
-  diskUsage Decimal @default(0)
+  maxPhotoCount        Int @default(0)
+  maxPackageCount      Int @default(0)
+  maxBookingPhotoCount Int @default(0)
+  maxBookingVideoCount Int @default(0)
 
-  avatar String @default("https://s3-hcm-r1.s3cloud.vn/sftpgo/avatar%2Favatar.png")
-  name   String @default("")
-  quote String @default("")
+  avatar   String @default("https://s3-hcm-r1.s3cloud.vn/sftpgo/avatar%2Favatar.png")
+  cover String @default("https://s3-hcm-r1.s3cloud.vn/sftpgo/avatar%2Fcover.jpg")
+  name     String @default("")
+  location String @default("")
+  quote    String @default("")
 
   ftpUsername String @default("")
   ftpPassword String @default("")
@@ -33,6 +37,20 @@ model User {
   transactions  Transaction[]
   Comment       Comment[]
   Vote          Vote[]
+
+  followers Follow[] @relation("follower") 
+  followings Follow[] @relation("following")
+}
+
+model Follow {
+
+    follower User @relation(name: "follower", fields: [followerId], references: [id])
+    followerId String
+
+    following User @relation(name: "following", fields: [followingId], references: [id])
+    followingId String
+
+    @@id([followerId, followingId])
 }
 
 enum TransactionType {
@@ -93,11 +111,17 @@ model UpgradeOrder {
   transaction   Transaction? @relation(fields: [transactionId], references: [id], onDelete: SetNull)
   transactionId String?      @unique
 
-  name             String //copy from Uprade package
-  price            Decimal //copy from upgrade package
-  description      Json //copy from upgrade package
-  quotaSize        Decimal
-  bookingQuotaSize Decimal
+  //copy from UpgradePackage
+  name          String
+  price         Decimal @default(0)
+  minOrderMonth Int     @default(0)
+
+  maxPhotoCount        Int @default(0)
+  maxPackageCount      Int @default(0)
+  maxBookingPhotoCount Int @default(0)
+  maxBookingVideoCount Int @default(0)
+
+  descriptions String[]
 }
 
 enum UpgradePackageStatus {
@@ -110,12 +134,17 @@ model UpgradePackage {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  name        String  @unique
-  price       Decimal
-  description Json
+  name  String  @unique
+  price Decimal @default(0)
 
-  quotaSize        Decimal
-  bookingQuotaSize Decimal
+  minOrderMonth Int @default(0)
+
+  maxPhotoCount        Int @default(0)
+  maxPackageCount      Int @default(0)
+  maxBookingPhotoCount Int @default(0)
+  maxBookingVideoCount Int @default(0)
+
+  descriptions String[]
 
   status UpgradePackageStatus
 
@@ -154,8 +183,8 @@ model Photo {
   photographer   User   @relation(fields: [photographerId], references: [id])
   photographerId String
 
-  category   Category? @relation(fields: [categoryId], references: [id])
-  categoryId String?
+  category   Category @relation(fields: [categoryId], references: [id])
+  categoryId String
 
   title String
 
@@ -184,8 +213,8 @@ model Photo {
 
   photoTags String[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
   comments Comment[]
