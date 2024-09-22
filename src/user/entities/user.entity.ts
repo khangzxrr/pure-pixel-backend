@@ -4,8 +4,11 @@ import { ApplicationEntity } from 'src/infrastructure/entities/application.entit
 
 export class UserEntity extends ApplicationEntity<UserEntity> implements User {
   maxPhotoQuota: number;
+
   maxPackageCount: number;
+
   maxBookingPhotoQuota: number;
+
   maxBookingVideoQuota: number;
 
   cover: string;
