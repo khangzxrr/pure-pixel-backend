@@ -18,13 +18,13 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  maxPhotoCount        Int @default(0)
+  maxPhotoQuota        Int @default(0)
   maxPackageCount      Int @default(0)
-  maxBookingPhotoCount Int @default(0)
-  maxBookingVideoCount Int @default(0)
+  maxBookingPhotoQuota Int @default(0)
+  maxBookingVideoQuota Int @default(0)
 
   avatar   String @default("https://s3-hcm-r1.s3cloud.vn/sftpgo/avatar%2Favatar.png")
-  cover String @default("https://s3-hcm-r1.s3cloud.vn/sftpgo/avatar%2Fcover.jpg")
+  cover    String @default("https://s3-hcm-r1.s3cloud.vn/sftpgo/avatar%2Fcover.jpg")
   name     String @default("")
   location String @default("")
   quote    String @default("")
@@ -38,19 +38,18 @@ model User {
   Comment       Comment[]
   Vote          Vote[]
 
-  followers Follow[] @relation("follower") 
+  followers  Follow[] @relation("follower")
   followings Follow[] @relation("following")
 }
 
 model Follow {
+  follower   User   @relation(name: "follower", fields: [followerId], references: [id])
+  followerId String
 
-    follower User @relation(name: "follower", fields: [followerId], references: [id])
-    followerId String
+  following   User   @relation(name: "following", fields: [followingId], references: [id])
+  followingId String
 
-    following User @relation(name: "following", fields: [followingId], references: [id])
-    followingId String
-
-    @@id([followerId, followingId])
+  @@id([followerId, followingId])
 }
 
 enum TransactionType {

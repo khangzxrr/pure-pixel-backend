@@ -3,6 +3,11 @@ import { Exclude } from 'class-transformer';
 import { ApplicationEntity } from 'src/infrastructure/entities/application.entity';
 
 export class UserEntity extends ApplicationEntity<UserEntity> implements User {
+  maxPhotoQuota: number;
+  maxPackageCount: number;
+  maxBookingPhotoQuota: number;
+  maxBookingVideoQuota: number;
+
   cover: string;
 
   location: string;
@@ -26,16 +31,4 @@ export class UserEntity extends ApplicationEntity<UserEntity> implements User {
   name: string;
 
   quote: string;
-
-  @Exclude()
-  maxPhotoCount: number;
-
-  @Exclude()
-  maxPackageCount: number;
-
-  @Exclude()
-  maxBookingPhotoCount: number;
-
-  @Exclude()
-  maxBookingVideoCount: number;
 }
