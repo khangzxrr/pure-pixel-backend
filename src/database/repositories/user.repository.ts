@@ -11,6 +11,20 @@ export class UserRepository {
 
   constructor(private readonly prisma: PrismaService) {}
 
+  async findUserQuotaById(userId: string) {
+    return this.prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+      select: {
+        maxPhotoQuota: true,
+        maxBookingPhotoQuota: true,
+        maxBookingVideoQuota: true,
+        maxPackageCount: true,
+      },
+    });
+  }
+
   async findOne(userFilterDto: UserFilterDto) {
     return this.prisma.user.findUnique({
       where: {
