@@ -23,6 +23,9 @@ import { Queue } from 'bullmq';
 import { PhotoNotFoundException } from '../exceptions/photo-not-found.exception';
 import { ProcessPhotosRequest } from '../dtos/process-images.request.dto';
 import { GenerateWatermarkRequestDto } from '../dtos/generate-watermark.request.dto';
+import { UserRepository } from 'src/database/repositories/user.repository';
+import { PhotographerNotFoundException } from 'src/photographer/exceptions/photographer-not-found.exception';
+import { RunOutPhotoQuotaException } from '../exceptions/run-out-photo-quota.exception';
 
 @Injectable()
 export class PhotoService {
@@ -30,6 +33,7 @@ export class PhotoService {
 
   constructor(
     @Inject() private readonly photoRepository: PhotoRepository,
+    @Inject() private readonly userRepository: UserRepository,
     @Inject() private readonly storageService: StorageService,
     @InjectQueue(PhotoConstant.PHOTO_PROCESS_QUEUE)
     private readonly photoProcessQueue: Queue,
@@ -192,6 +196,18 @@ export class PhotoService {
     userId: string,
     presignedUploadUrlRequest: PresignedUploadUrlRequest,
   ): Promise<PresignedUploadUrlResponse> {
+    const user = await this.userRepository.findUserQuotaById(userId);
+
+    if (!user) {
+      throw new PhotographerNotFoundException();
+    }
+
+    if (user.photoQuotaUsage >= user.maxPhotoQuota) {
+      throw new RunOutPhotoQuotaException();
+    }
+
+    //TODO: update quota on process
+
     let signedUploads = await Promise.all(
       presignedUploadUrlRequest.filenames.map(async (filename) => {
         const extension = Utils.regexFileExtension.exec(filename)[1];
