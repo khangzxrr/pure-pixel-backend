@@ -57,7 +57,7 @@ export class UpgradePackageOrderRepository {
   }
 
   async findCurrentUpgradePackageByUserIdOrThrow(userId: string) {
-    return this.prisma.upgradeOrder.findFirstOrThrow({
+    return this.prisma.upgradeOrder.findFirst({
       where: {
         userId,
         status: 'ACTIVE',
