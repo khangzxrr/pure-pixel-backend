@@ -115,10 +115,10 @@ model UpgradeOrder {
   price         Decimal @default(0)
   minOrderMonth Int     @default(0)
 
-  maxPhotoCount        Int @default(0)
+  maxPhotoQuota        Int @default(0)
   maxPackageCount      Int @default(0)
-  maxBookingPhotoCount Int @default(0)
-  maxBookingVideoCount Int @default(0)
+  maxBookingPhotoQuota Int @default(0)
+  maxBookingVideoQuota Int @default(0)
 
   descriptions String[]
 }
@@ -138,10 +138,10 @@ model UpgradePackage {
 
   minOrderMonth Int @default(0)
 
-  maxPhotoCount        Int @default(0)
+  maxPhotoQuota        Int @default(0)
   maxPackageCount      Int @default(0)
-  maxBookingPhotoCount Int @default(0)
-  maxBookingVideoCount Int @default(0)
+  maxBookingPhotoQuota Int @default(0)
+  maxBookingVideoQuota Int @default(0)
 
   descriptions String[]
 

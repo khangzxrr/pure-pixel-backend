@@ -12,18 +12,21 @@ const prisma = new PrismaClient();
 async function main() {
   const user1Id = 'd2020c98-60f5-45c2-879f-00a5df97e9cd';
 
-  const categoryName = 'khác';
-  const categoryDescription = 'Những bức ảnh chưa phân loại';
+  const category = {
+    id: 'dd890386-7d82-415f-91f8-3891889b328c',
+    name: 'khác',
+    description: 'Những bức ảnh chưa phân loại',
+  };
 
   const basicUpgradePackage = {
     name: 'Cơ bản',
     minOrderMonth: 3,
     descriptions: ['description 1', 'description 2', 'description 3'],
-    maxPhotoCount: 100,
+    maxPhotoQuota: 5 * 1024 * 1024,
     maxPackageCount: 10,
-    maxBookingPhotoCount: 50,
-    maxBookingVideoCount: 5,
-    price: new Prisma.Decimal(10000),
+    maxBookingPhotoQuota: 5 * 1024 * 1024,
+    maxBookingVideoQuota: 5 * 1024 * 1024,
+    price: new Prisma.Decimal(20000),
     status: UpgradePackageStatus.ENABLED,
   };
 
@@ -31,11 +34,11 @@ async function main() {
     name: 'Nâng cao',
     minOrderMonth: 6,
     descriptions: ['description 1', 'description 2', 'description 3'],
-    maxPhotoCount: 100,
+    maxPhotoQuota: 10 * 1024 * 1024,
     maxPackageCount: 10,
-    maxBookingPhotoCount: 50,
-    maxBookingVideoCount: 5,
-    price: new Prisma.Decimal(50000),
+    maxBookingPhotoQuota: 10 * 1024 * 1024,
+    maxBookingVideoQuota: 10 * 1024 * 1024,
+    price: new Prisma.Decimal(38000),
     status: UpgradePackageStatus.ENABLED,
   };
 
@@ -43,23 +46,24 @@ async function main() {
     name: 'Cao cấp',
     minOrderMonth: 12,
     descriptions: ['description 1', 'description 2', 'description 3'],
-    maxPhotoCount: 1000,
+    maxPhotoQuota: 20 * 1024 * 1024,
     maxPackageCount: 100,
-    maxBookingPhotoCount: 500,
-    maxBookingVideoCount: 50,
-    price: new Prisma.Decimal(100000),
+    maxBookingPhotoQuota: 20 * 1024 * 1024,
+    maxBookingVideoQuota: 20 * 1024 * 1024,
+    price: new Prisma.Decimal(50000),
     status: UpgradePackageStatus.ENABLED,
   };
 
-  const category = await prisma.category.upsert({
+  await prisma.category.upsert({
     where: {
-      name: categoryName,
+      name: category.name,
     },
 
-    update: {},
+    update: {
+      ...category,
+    },
     create: {
-      name: categoryName,
-      description: categoryDescription,
+      ...category,
     },
   });
 
@@ -68,21 +72,27 @@ async function main() {
     where: {
       name: signatureUpgradePackage.name,
     },
-    update: {},
+    update: {
+      ...signatureUpgradePackage,
+    },
     create: signatureUpgradePackage,
   });
   await prisma.upgradePackage.upsert({
     where: {
       name: premiumUpgradePackage.name,
     },
-    update: {},
+    update: {
+      ...premiumUpgradePackage,
+    },
     create: premiumUpgradePackage,
   });
   await prisma.upgradePackage.upsert({
     where: {
       name: basicUpgradePackage.name,
     },
-    update: {},
+    update: {
+      ...basicUpgradePackage,
+    },
     create: basicUpgradePackage,
   });
 
