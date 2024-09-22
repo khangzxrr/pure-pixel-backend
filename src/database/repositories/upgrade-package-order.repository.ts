@@ -99,10 +99,10 @@ export class UpgradePackageOrderRepository {
         descriptions: upgradePackage.descriptions,
         price: upgradePackage.price,
         name: upgradePackage.name,
-        maxPhotoCount: upgradePackage.maxPhotoCount,
+        maxPhotoQuota: upgradePackage.maxPhotoQuota,
         maxPackageCount: upgradePackage.maxPackageCount,
-        maxBookingPhotoCount: upgradePackage.maxBookingPhotoCount,
-        maxBookingVideoCount: upgradePackage.maxBookingVideoCount,
+        maxBookingPhotoQuota: upgradePackage.maxBookingPhotoQuota,
+        maxBookingVideoQuota: upgradePackage.maxBookingVideoQuota,
         minOrderMonth: upgradePackage.minOrderMonth,
         status: 'PENDING',
         user: {

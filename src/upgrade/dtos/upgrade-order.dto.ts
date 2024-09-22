@@ -12,16 +12,16 @@ export class UpgradeOrderDto {
   minOrderMonth: number;
 
   @ApiProperty()
-  maxPhotoCount: number;
+  maxPhotoQuota: number;
 
   @ApiProperty()
   maxPackageCount: number;
 
   @ApiProperty()
-  maxBookingPhotoCount: number;
+  maxBookingPhotoQuota: number;
 
   @ApiProperty()
-  maxBookingVideoCount: number;
+  maxBookingVideoQuota: number;
 
   @ApiProperty()
   descriptions: string[];
