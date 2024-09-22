@@ -21,6 +21,11 @@ export class UserRepository {
         maxBookingPhotoQuota: true,
         maxBookingVideoQuota: true,
         maxPackageCount: true,
+
+        photoQuotaUsage: true,
+        bookingPhotoQuotaUsage: true,
+        bookingVideoQuotaUsage: true,
+        packageCount: true,
       },
     });
   }
