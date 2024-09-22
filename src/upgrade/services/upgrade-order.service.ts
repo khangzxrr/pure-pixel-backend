@@ -1,7 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { UpgradePackageOrderRepository } from 'src/database/repositories/upgrade-package-order.repository';
-import { CurrentUpgradePackageOrderNotFound } from '../exceptions/current-upgrade-package-order-not-found.exception';
-import { UnhandledException } from 'src/infrastructure/exceptions/unhandled-exception';
 import { RequestUpgradeDto } from '../dtos/request-upgrade.dto';
 import { UserHasActivatedUpgradePackage } from '../exceptions/user-has-activated-upgrade-package-exception';
 import { Prisma, UpgradePackageStatus } from '@prisma/client';
@@ -13,6 +11,7 @@ import { NotValidExpireDateException } from '../exceptions/not-valid-expired-dat
 import { TotalMonthLesserThanMinMonthException } from '../exceptions/total-month-lesser-min-order-month.exception';
 import { RequestUpgradeOrderResponseDto } from '../dtos/request-upgrade-order.response.dto';
 import * as QRCode from 'qrcode';
+import { UpgradeOrderDto } from '../dtos/upgrade-order.dto';
 
 @Injectable()
 export class UpgradeOrderService {
@@ -24,18 +23,15 @@ export class UpgradeOrderService {
     private readonly prisma: PrismaService,
   ) {}
 
-  async findActiveUpgradePackageOrderByUserId(userId: string) {
-    try {
-      return await this.upgradePackageOrderRepository.findCurrentUpgradePackageByUserIdOrThrow(
+  async findActiveUpgradePackageOrderByUserId(
+    userId: string,
+  ): Promise<UpgradeOrderDto> {
+    const upgradeOrder =
+      await this.upgradePackageOrderRepository.findCurrentUpgradePackageByUserIdOrThrow(
         userId,
       );
-    } catch (e) {
-      if (e.code === 'P2025') {
-        throw new CurrentUpgradePackageOrderNotFound();
-      }
 
-      throw new UnhandledException(e);
-    }
+    return new UpgradeOrderDto(upgradeOrder);
   }
 
   private async checkIfUserHasActivatedOrderWithoutAcceptTransfer(

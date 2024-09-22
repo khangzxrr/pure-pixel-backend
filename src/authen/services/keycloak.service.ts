@@ -53,6 +53,12 @@ export class KeycloakService {
     });
   }
 
+  async isUserHasRole(userId: string, roleName: string) {
+    const roles = await this.getUserRoles(userId);
+
+    return roles.some((r) => r.name === roleName);
+  }
+
   async getUserRoles(userId: string) {
     const instance = await this.getInstance();
     const client = await this.getClient();

@@ -3,11 +3,17 @@ import { Exclude } from 'class-transformer';
 import { ApplicationEntity } from 'src/infrastructure/entities/application.entity';
 
 export class UserEntity extends ApplicationEntity<UserEntity> implements User {
-  cover: string;
+  @Exclude()
+  maxPhotoQuota: number;
 
-  location: string;
+  @Exclude()
+  maxPackageCount: number;
 
-  id: string;
+  @Exclude()
+  maxBookingPhotoQuota: number;
+
+  @Exclude()
+  maxBookingVideoQuota: number;
 
   @Exclude()
   createdAt: Date;
@@ -21,21 +27,15 @@ export class UserEntity extends ApplicationEntity<UserEntity> implements User {
   @Exclude()
   ftpPassword: string;
 
+  cover: string;
+
+  location: string;
+
+  id: string;
+
   avatar: string;
 
   name: string;
 
   quote: string;
-
-  @Exclude()
-  maxPhotoCount: number;
-
-  @Exclude()
-  maxPackageCount: number;
-
-  @Exclude()
-  maxBookingPhotoCount: number;
-
-  @Exclude()
-  maxBookingVideoCount: number;
 }

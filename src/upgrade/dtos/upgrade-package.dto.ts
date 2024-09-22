@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { UpgradePackage } from '@prisma/client';
+import { UpgradePackageEntity } from '../entities/upgrade-package.entity';
 
 export class UpgradePackageDto {
   @ApiProperty()
@@ -21,18 +21,18 @@ export class UpgradePackageDto {
   minOrderMonth: number;
 
   @ApiProperty()
-  maxPhotoCount: number;
+  maxPhotoQuota: number;
 
   @ApiProperty()
   maxPackageCount: number;
 
   @ApiProperty()
-  maxBookingPhotoCount: number;
+  maxBookingPhotoQuota: number;
 
   @ApiProperty()
-  maxBookingVideoCount: number;
+  maxBookingVideoQuota: number;
 
-  constructor({ ...data }: Partial<UpgradePackage>) {
+  constructor({ ...data }: Partial<UpgradePackageEntity>) {
     Object.assign(this, data);
 
     if (data.price) {
