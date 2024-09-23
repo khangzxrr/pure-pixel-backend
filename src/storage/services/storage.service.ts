@@ -3,6 +3,7 @@ import {
   GetObjectAclCommand,
   GetObjectCommand,
   HeadObjectCommand,
+  HeadObjectCommandOutput,
   PutBucketCorsCommand,
   PutObjectAclCommand,
   PutObjectCommand,
@@ -81,7 +82,7 @@ export class StorageService {
     return signedUrl;
   }
 
-  async getObjectHead(key: string) {
+  async getObjectHead(key: string): Promise<HeadObjectCommandOutput> {
     const command = new HeadObjectCommand({
       Key: key,
       Bucket: process.env.S3_BUCKET,
