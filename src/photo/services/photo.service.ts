@@ -26,12 +26,14 @@ import { GenerateWatermarkRequestDto } from '../dtos/generate-watermark.request.
 import { UserRepository } from 'src/database/repositories/user.repository';
 import { PhotographerNotFoundException } from 'src/photographer/exceptions/photographer-not-found.exception';
 import { RunOutPhotoQuotaException } from '../exceptions/run-out-photo-quota.exception';
+import { DatabaseService } from 'src/database/database.service';
 
 @Injectable()
 export class PhotoService {
   private readonly logger = new Logger(PhotoService.name);
 
   constructor(
+    @Inject() private readonly databaseService: DatabaseService,
     @Inject() private readonly photoRepository: PhotoRepository,
     @Inject() private readonly userRepository: UserRepository,
     @Inject() private readonly storageService: StorageService,
@@ -112,7 +114,9 @@ export class PhotoService {
       return Photo.fromDto(dto);
     });
 
-    const updateResults = await this.photoRepository.batchUpdate(photos);
+    const updateQueries = this.photoRepository.batchUpdate(photos);
+    const updateResults =
+      await this.databaseService.applyTransactionMultipleQueries(updateQueries);
 
     return updateResults.map((p) => p as PhotoDto);
   }
@@ -205,8 +209,6 @@ export class PhotoService {
     if (user.photoQuotaUsage >= user.maxPhotoQuota) {
       throw new RunOutPhotoQuotaException();
     }
-
-    //TODO: update quota on process
 
     let signedUploads = await Promise.all(
       presignedUploadUrlRequest.filenames.map(async (filename) => {
