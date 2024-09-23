@@ -6,6 +6,14 @@ import { PrismaService } from 'src/prisma.service';
 export class UpgradePackageOrderRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  async findById(id: string) {
+    return this.prisma.extendedClient().upgradeOrder.findUnique({
+      where: {
+        id,
+      },
+    });
+  }
+
   async findManyActivateOrder() {
     return this.prisma.upgradeOrder.findMany({
       where: {

@@ -11,7 +11,27 @@ export class UserRepository {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  increasePhotoQuotaById(id: string, increment: number) {
+  updateMaxQuotaByUserId(
+    id: string,
+    maxPhotoQuota: number,
+    maxPackageCount: number,
+    maxBookingPhotoQuota: number,
+    maxBookingVideoQuota: number,
+  ) {
+    return this.prisma.extendedClient().user.update({
+      where: {
+        id,
+      },
+      data: {
+        maxPhotoQuota,
+        maxPackageCount,
+        maxBookingPhotoQuota,
+        maxBookingVideoQuota,
+      },
+    });
+  }
+
+  increasePhotoQuotaUsageById(id: string, increment: number) {
     return this.prisma.extendedClient().user.update({
       where: {
         id,
