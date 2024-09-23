@@ -23,13 +23,19 @@ import { Queue } from 'bullmq';
 import { PhotoNotFoundException } from '../exceptions/photo-not-found.exception';
 import { ProcessPhotosRequest } from '../dtos/process-images.request.dto';
 import { GenerateWatermarkRequestDto } from '../dtos/generate-watermark.request.dto';
+import { UserRepository } from 'src/database/repositories/user.repository';
+import { PhotographerNotFoundException } from 'src/photographer/exceptions/photographer-not-found.exception';
+import { RunOutPhotoQuotaException } from '../exceptions/run-out-photo-quota.exception';
+import { DatabaseService } from 'src/database/database.service';
 
 @Injectable()
 export class PhotoService {
   private readonly logger = new Logger(PhotoService.name);
 
   constructor(
+    @Inject() private readonly databaseService: DatabaseService,
     @Inject() private readonly photoRepository: PhotoRepository,
+    @Inject() private readonly userRepository: UserRepository,
     @Inject() private readonly storageService: StorageService,
     @InjectQueue(PhotoConstant.PHOTO_PROCESS_QUEUE)
     private readonly photoProcessQueue: Queue,
@@ -108,7 +114,9 @@ export class PhotoService {
       return Photo.fromDto(dto);
     });
 
-    const updateResults = await this.photoRepository.batchUpdate(photos);
+    const updateQueries = this.photoRepository.batchUpdate(photos);
+    const updateResults =
+      await this.databaseService.applyTransactionMultipleQueries(updateQueries);
 
     return updateResults.map((p) => p as PhotoDto);
   }
@@ -192,6 +200,16 @@ export class PhotoService {
     userId: string,
     presignedUploadUrlRequest: PresignedUploadUrlRequest,
   ): Promise<PresignedUploadUrlResponse> {
+    const user = await this.userRepository.findUserQuotaById(userId);
+
+    if (!user) {
+      throw new PhotographerNotFoundException();
+    }
+
+    if (user.photoQuotaUsage >= user.maxPhotoQuota) {
+      throw new RunOutPhotoQuotaException();
+    }
+
     let signedUploads = await Promise.all(
       presignedUploadUrlRequest.filenames.map(async (filename) => {
         const extension = Utils.regexFileExtension.exec(filename)[1];

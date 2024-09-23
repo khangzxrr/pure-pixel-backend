@@ -11,6 +11,58 @@ export class UserRepository {
 
   constructor(private readonly prisma: PrismaService) {}
 
+  updateMaxQuotaByUserId(
+    id: string,
+    maxPhotoQuota: number,
+    maxPackageCount: number,
+    maxBookingPhotoQuota: number,
+    maxBookingVideoQuota: number,
+  ) {
+    return this.prisma.extendedClient().user.update({
+      where: {
+        id,
+      },
+      data: {
+        maxPhotoQuota,
+        maxPackageCount,
+        maxBookingPhotoQuota,
+        maxBookingVideoQuota,
+      },
+    });
+  }
+
+  increasePhotoQuotaUsageById(id: string, increment: number) {
+    return this.prisma.extendedClient().user.update({
+      where: {
+        id,
+      },
+      data: {
+        photoQuotaUsage: {
+          increment,
+        },
+      },
+    });
+  }
+
+  async findUserQuotaById(userId: string) {
+    return this.prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+      select: {
+        maxPhotoQuota: true,
+        maxBookingPhotoQuota: true,
+        maxBookingVideoQuota: true,
+        maxPackageCount: true,
+
+        photoQuotaUsage: true,
+        bookingPhotoQuotaUsage: true,
+        bookingVideoQuotaUsage: true,
+        packageCount: true,
+      },
+    });
+  }
+
   async findOne(userFilterDto: UserFilterDto) {
     return this.prisma.user.findUnique({
       where: {

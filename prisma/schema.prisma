@@ -23,6 +23,11 @@ model User {
   maxBookingPhotoQuota Int @default(0)
   maxBookingVideoQuota Int @default(0)
 
+  photoQuotaUsage        Int @default(0)
+  packageCount           Int @default(0)
+  bookingPhotoQuotaUsage Int @default(0)
+  bookingVideoQuotaUsage Int @default(0)
+
   avatar   String @default("https://s3-hcm-r1.s3cloud.vn/sftpgo/avatar%2Favatar.png")
   cover    String @default("https://s3-hcm-r1.s3cloud.vn/sftpgo/avatar%2Fcover.jpg")
   name     String @default("")
@@ -82,7 +87,7 @@ model Transaction {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  UpgradeOrder UpgradeOrder?
+  upgradeOrder UpgradeOrder?
 }
 
 enum UpgradeOrderStatus {
@@ -211,6 +216,8 @@ model Photo {
   status PhotoStatus @default(PENDING)
 
   photoTags String[]
+
+  size Int @default(0) 
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt

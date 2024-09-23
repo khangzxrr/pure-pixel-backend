@@ -47,6 +47,10 @@ export class PhotoProcessService {
     return exifs;
   }
 
+  async getSize(key: string) {
+    return this.storageService.getObjectHead(key);
+  }
+
   async convertJpg(photoKey: string) {
     const encodedImageUrl = await this.getEncodedSignedGetObjectUrl(photoKey);
 

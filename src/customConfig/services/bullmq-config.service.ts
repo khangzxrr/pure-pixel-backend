@@ -9,7 +9,6 @@ export class BullMqConfigService implements SharedBullConfigurationFactory {
   createSharedConfiguration():
     | Promise<BullRootModuleOptions>
     | BullRootModuleOptions {
-    console.log(`redis host name ${process.env.REDIS_HOSTNAME}`);
     return {
       connection: {
         host: process.env.REDIS_HOSTNAME,

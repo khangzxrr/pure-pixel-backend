@@ -5,15 +5,50 @@ import { TransactionNotFoundException } from '../exceptions/transaction-not-foun
 import { AmountIsNotEqualException } from '../exceptions/amount-is-not-equal.exception';
 import { KeycloakService } from 'src/authen/services/keycloak.service';
 import { Constants } from 'src/infrastructure/utils/constants';
+import { DatabaseService } from 'src/database/database.service';
+import { UserRepository } from 'src/database/repositories/user.repository';
+import { UpgradePackageOrderRepository } from 'src/database/repositories/upgrade-package-order.repository';
+import { Transaction, UpgradeOrder } from '@prisma/client';
 
 @Injectable()
 export class SepayService {
   constructor(
     @Inject() private readonly transactionRepository: TransactionRepository,
+    @Inject()
+    private readonly upgradeOrderRepository: UpgradePackageOrderRepository,
+    @Inject() private readonly databaseService: DatabaseService,
     @Inject() private readonly keycloakService: KeycloakService,
+    @Inject() private readonly userRepository: UserRepository,
   ) {}
 
-  // async cancelAllPendingUpgradeOrderTransaction(id: string) {}
+  async handleUpgradeToPhotographer(
+    transaction: Transaction,
+    order: UpgradeOrder,
+    sepay: SepayRequestDto,
+  ) {
+    const updateTransactionAndUpgradeOrderQuery =
+      this.transactionRepository.updateSuccessTransactionAndActivateUpgradeOrder(
+        transaction.id,
+        sepay,
+      );
+    const updateUserMaxQuotaQuery = this.userRepository.updateMaxQuotaByUserId(
+      transaction.userId,
+      order.maxPhotoQuota,
+      order.maxPackageCount,
+      order.maxBookingPhotoQuota,
+      order.maxBookingVideoQuota,
+    );
+
+    await this.databaseService.applyTransactionMultipleQueries([
+      updateTransactionAndUpgradeOrderQuery,
+      updateUserMaxQuotaQuery,
+    ]);
+
+    await this.keycloakService.addRoleToUser(
+      transaction.userId,
+      Constants.PHOTOGRAPHER_ROLE,
+    );
+  }
 
   async processTransaction(sepay: SepayRequestDto) {
     const transactionId = sepay.content.replaceAll(' ', '-');
@@ -34,14 +69,12 @@ export class SepayService {
 
     switch (transaction.type) {
       case 'UPGRADE_TO_PHOTOGRAPHER':
-        await this.transactionRepository.updateSuccessTransactionAndActivateUpgradeOrder(
-          transaction.id,
+        await this.handleUpgradeToPhotographer(
+          transaction,
+          transaction.upgradeOrder,
           sepay,
         );
-        await this.keycloakService.addRoleToUser(
-          transaction.userId,
-          Constants.PHOTOGRAPHER_ROLE,
-        );
+        break;
       case 'IMAGE_SELL':
         break;
       case 'IMAGE_BUY':

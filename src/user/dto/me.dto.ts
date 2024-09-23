@@ -5,6 +5,18 @@ import { Constants } from 'src/infrastructure/utils/constants';
 
 export class MeDto extends ResponseBaseDto {
   @ApiProperty()
+  photoQuotaUsage: number;
+
+  @ApiProperty()
+  packageCount: number;
+
+  @ApiProperty()
+  bookingPhotoQuotaUsage: number;
+
+  @ApiProperty()
+  bookingVideoQuotaUsage: number;
+
+  @ApiProperty()
   maxPhotoQuota: number;
 
   @ApiProperty()
@@ -61,6 +73,11 @@ export class MeDto extends ResponseBaseDto {
   }
 
   mapAsPhotographer(user: UserEntity) {
+    this.photoQuotaUsage = user.photoQuotaUsage;
+    this.packageCount = user.packageCount;
+    this.bookingPhotoQuotaUsage = user.bookingPhotoQuotaUsage;
+    this.bookingVideoQuotaUsage = user.bookingVideoQuotaUsage;
+
     this.maxPhotoQuota = user.maxPhotoQuota;
     this.maxPackageCount = user.maxPackageCount;
     this.maxBookingPhotoQuota = user.maxBookingPhotoQuota;

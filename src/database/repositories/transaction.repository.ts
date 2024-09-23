@@ -27,21 +27,21 @@ export class TransactionRepository {
       where: {
         id,
       },
+      include: {
+        upgradeOrder: true,
+      },
     });
   }
 
-  async updateSuccessTransactionAndActivateUpgradeOrder(
-    id: string,
-    payload: object,
-  ) {
-    return this.prisma.transaction.update({
+  updateSuccessTransactionAndActivateUpgradeOrder(id: string, payload: object) {
+    return this.prisma.extendedClient().transaction.update({
       where: {
         id,
       },
       data: {
         status: 'SUCCESS',
         paymentPayload: payload,
-        UpgradeOrder: {
+        upgradeOrder: {
           update: {
             status: 'ACTIVE',
           },
