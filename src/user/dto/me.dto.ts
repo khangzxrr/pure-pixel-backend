@@ -5,28 +5,28 @@ import { Constants } from 'src/infrastructure/utils/constants';
 
 export class MeDto extends ResponseBaseDto {
   @ApiProperty()
-  photoQuotaUsage: number;
+  photoQuotaUsage: string;
 
   @ApiProperty()
-  packageCount: number;
+  packageCount: string;
 
   @ApiProperty()
-  bookingPhotoQuotaUsage: number;
+  bookingPhotoQuotaUsage: string;
 
   @ApiProperty()
-  bookingVideoQuotaUsage: number;
+  bookingVideoQuotaUsage: string;
 
   @ApiProperty()
-  maxPhotoQuota: number;
+  maxPhotoQuota: string;
 
   @ApiProperty()
-  maxPackageCount: number;
+  maxPackageCount: string;
 
   @ApiProperty()
-  maxBookingPhotoQuota: number;
+  maxBookingPhotoQuota: string;
 
   @ApiProperty()
-  maxBookingVideoQuota: number;
+  maxBookingVideoQuota: string;
 
   @ApiProperty()
   ftpUsername: string;
@@ -73,15 +73,16 @@ export class MeDto extends ResponseBaseDto {
   }
 
   mapAsPhotographer(user: UserEntity) {
-    this.photoQuotaUsage = user.photoQuotaUsage;
-    this.packageCount = user.packageCount;
-    this.bookingPhotoQuotaUsage = user.bookingPhotoQuotaUsage;
-    this.bookingVideoQuotaUsage = user.bookingVideoQuotaUsage;
+    this.photoQuotaUsage = user.photoQuotaUsage.toString();
+    this.packageCount = user.packageCount.toString();
+    this.bookingPhotoQuotaUsage = user.bookingPhotoQuotaUsage.toString();
+    this.bookingVideoQuotaUsage = user.bookingVideoQuotaUsage.toString();
 
-    this.maxPhotoQuota = user.maxPhotoQuota;
-    this.maxPackageCount = user.maxPackageCount;
-    this.maxBookingPhotoQuota = user.maxBookingPhotoQuota;
-    this.maxBookingVideoQuota = user.maxBookingVideoQuota;
+    this.maxPhotoQuota = user.maxPhotoQuota.toString();
+    this.maxPackageCount = user.maxPackageCount.toString();
+    this.maxBookingPhotoQuota = user.maxBookingPhotoQuota.toString();
+    this.maxBookingVideoQuota = user.maxBookingVideoQuota.toString();
+
     this.ftpUsername = user.ftpUsername;
     this.ftpPassword = user.ftpPassword;
   }

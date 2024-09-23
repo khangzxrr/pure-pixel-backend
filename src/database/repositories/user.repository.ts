@@ -13,10 +13,10 @@ export class UserRepository {
 
   updateMaxQuotaByUserId(
     id: string,
-    maxPhotoQuota: number,
-    maxPackageCount: number,
-    maxBookingPhotoQuota: number,
-    maxBookingVideoQuota: number,
+    maxPhotoQuota: bigint,
+    maxPackageCount: bigint,
+    maxBookingPhotoQuota: bigint,
+    maxBookingVideoQuota: bigint,
   ) {
     return this.prisma.extendedClient().user.update({
       where: {
