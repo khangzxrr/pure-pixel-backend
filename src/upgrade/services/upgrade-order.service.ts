@@ -31,6 +31,10 @@ export class UpgradeOrderService {
         userId,
       );
 
+    if (!upgradeOrder) {
+      return null;
+    }
+
     return new UpgradeOrderDto(upgradeOrder);
   }
 
