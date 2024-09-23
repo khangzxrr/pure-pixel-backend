@@ -28,7 +28,7 @@ export class TransactionRepository {
         id,
       },
       include: {
-        UpgradeOrder: true,
+        upgradeOrder: true,
       },
     });
   }
@@ -41,7 +41,7 @@ export class TransactionRepository {
       data: {
         status: 'SUCCESS',
         paymentPayload: payload,
-        UpgradeOrder: {
+        upgradeOrder: {
           update: {
             status: 'ACTIVE',
           },
