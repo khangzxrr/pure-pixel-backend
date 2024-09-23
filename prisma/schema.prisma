@@ -87,7 +87,7 @@ model Transaction {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  UpgradeOrder UpgradeOrder?
+  upgradeOrder UpgradeOrder?
 }
 
 enum UpgradeOrderStatus {
