@@ -8,6 +8,8 @@ import { PhotoGateway } from '../gateways/socket.io.gateway';
 import { PhotoService } from '../services/photo.service';
 import { GenerateWatermarkRequestDto } from '../dtos/generate-watermark.request.dto';
 import { ProcessPhotosRequest } from '../dtos/process-images.request.dto';
+import { DatabaseService } from 'src/database/database.service';
+import { UserRepository } from 'src/database/repositories/user.repository';
 
 @Processor(PhotoConstant.PHOTO_PROCESS_QUEUE)
 export class PhotoProcessConsumer extends WorkerHost {
@@ -16,8 +18,10 @@ export class PhotoProcessConsumer extends WorkerHost {
   constructor(
     @Inject() private readonly photoGateway: PhotoGateway,
     @Inject() private readonly photoRepository: PhotoRepository,
+    @Inject() private readonly userRepository: UserRepository,
     @Inject() private readonly photoProcessService: PhotoProcessService,
     @Inject() private readonly photoService: PhotoService,
+    @Inject() private readonly databaseService: DatabaseService,
   ) {
     super();
   }
@@ -39,6 +43,7 @@ export class PhotoProcessConsumer extends WorkerHost {
           break;
       }
     } catch (e) {
+      console.log(e);
       this.logger.error(e);
       throw new Error(); //perform retry
     }
@@ -133,6 +138,10 @@ export class PhotoProcessConsumer extends WorkerHost {
       //convert to jpg to prevent watermark error
       await this.photoProcessService.convertJpg(p.originalPhotoUrl);
 
+      const head = await this.photoProcessService.getSize(p.originalPhotoUrl);
+
+      p.size = head.ContentLength;
+
       const thumbnailKey = await this.photoProcessService.thumbnail(
         p.originalPhotoUrl,
       );
@@ -165,6 +174,23 @@ export class PhotoProcessConsumer extends WorkerHost {
     });
 
     const updatePhotos = await Promise.all(updatePhotoPromises);
-    await this.photoRepository.batchUpdate(updatePhotos);
+
+    const initPhotoBytes = 0;
+    const sumOfPhotoBytes = updatePhotos.reduce(
+      (acc, current) => acc + current.size,
+      initPhotoBytes,
+    );
+
+    const updateQueries = this.photoRepository.batchUpdate(updatePhotos);
+
+    const updateQuotaQuery = this.userRepository.increasePhotoQuotaUsageById(
+      userId,
+      sumOfPhotoBytes,
+    );
+
+    await this.databaseService.applyTransactionMultipleQueries([
+      ...updateQueries,
+      updateQuotaQuery,
+    ]);
   }
 }
