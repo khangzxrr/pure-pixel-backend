@@ -11,6 +11,19 @@ export class UserRepository {
 
   constructor(private readonly prisma: PrismaService) {}
 
+  increasePhotoQuotaById(id: string, increment: number) {
+    return this.prisma.extendedClient().user.update({
+      where: {
+        id,
+      },
+      data: {
+        photoQuotaUsage: {
+          increment,
+        },
+      },
+    });
+  }
+
   async findUserQuotaById(userId: string) {
     return this.prisma.user.findUnique({
       where: {

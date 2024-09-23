@@ -29,7 +29,7 @@ export class PhotoRepository {
     });
   }
 
-  async batchUpdate(photos: Photo[]) {
+  batchUpdate(photos: Photo[]) {
     const queries = photos.map((p) => {
       return this.prisma.extendedClient().photo.update({
         where: {
@@ -39,7 +39,7 @@ export class PhotoRepository {
       });
     });
 
-    return this.prisma.extendedClient().$transaction(queries);
+    return queries;
   }
 
   async getPhotoByIdsAndStatus(
