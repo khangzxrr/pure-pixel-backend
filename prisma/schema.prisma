@@ -18,15 +18,15 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  maxPhotoQuota        Int @default(0)
-  maxPackageCount      Int @default(0)
-  maxBookingPhotoQuota Int @default(0)
-  maxBookingVideoQuota Int @default(0)
+  maxPhotoQuota        BigInt @default(0)
+  maxPackageCount      BigInt @default(0)
+  maxBookingPhotoQuota BigInt @default(0)
+  maxBookingVideoQuota BigInt @default(0)
 
-  photoQuotaUsage        Int @default(0)
-  packageCount           Int @default(0)
-  bookingPhotoQuotaUsage Int @default(0)
-  bookingVideoQuotaUsage Int @default(0)
+  photoQuotaUsage        BigInt @default(0)
+  packageCount           BigInt @default(0)
+  bookingPhotoQuotaUsage BigInt @default(0)
+  bookingVideoQuotaUsage BigInt @default(0)
 
   avatar   String @default("https://s3-hcm-r1.s3cloud.vn/sftpgo/avatar%2Favatar.png")
   cover    String @default("https://s3-hcm-r1.s3cloud.vn/sftpgo/avatar%2Fcover.jpg")
@@ -120,10 +120,10 @@ model UpgradeOrder {
   price         Decimal @default(0)
   minOrderMonth Int     @default(0)
 
-  maxPhotoQuota        Int @default(0)
-  maxPackageCount      Int @default(0)
-  maxBookingPhotoQuota Int @default(0)
-  maxBookingVideoQuota Int @default(0)
+  maxPhotoQuota        BigInt @default(0)
+  maxPackageCount      BigInt @default(0)
+  maxBookingPhotoQuota BigInt @default(0)
+  maxBookingVideoQuota BigInt @default(0)
 
   descriptions String[]
 }
@@ -143,10 +143,10 @@ model UpgradePackage {
 
   minOrderMonth Int @default(0)
 
-  maxPhotoQuota        Int @default(0)
-  maxPackageCount      Int @default(0)
-  maxBookingPhotoQuota Int @default(0)
-  maxBookingVideoQuota Int @default(0)
+  maxPhotoQuota        BigInt @default(0)
+  maxPackageCount      BigInt @default(0)
+  maxBookingPhotoQuota BigInt @default(0)
+  maxBookingVideoQuota BigInt @default(0)
 
   descriptions String[]
 

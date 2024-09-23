@@ -8,10 +8,10 @@ export class UpgradePackageEntity implements UpgradePackage {
   name: string;
   price: Decimal;
   minOrderMonth: number;
-  maxPhotoQuota: number;
-  maxPackageCount: number;
-  maxBookingPhotoQuota: number;
-  maxBookingVideoQuota: number;
+  maxPhotoQuota: bigint;
+  maxPackageCount: bigint;
+  maxBookingPhotoQuota: bigint;
+  maxBookingVideoQuota: bigint;
   descriptions: string[];
   status: $Enums.UpgradePackageStatus;
 }

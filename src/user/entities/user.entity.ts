@@ -4,28 +4,28 @@ import { ApplicationEntity } from 'src/infrastructure/entities/application.entit
 
 export class UserEntity extends ApplicationEntity<UserEntity> implements User {
   @Exclude()
-  photoQuotaUsage: number;
+  maxPhotoQuota: bigint;
 
   @Exclude()
-  packageCount: number;
+  maxPackageCount: bigint;
 
   @Exclude()
-  bookingPhotoQuotaUsage: number;
+  maxBookingPhotoQuota: bigint;
 
   @Exclude()
-  bookingVideoQuotaUsage: number;
+  maxBookingVideoQuota: bigint;
 
   @Exclude()
-  maxPhotoQuota: number;
+  photoQuotaUsage: bigint;
 
   @Exclude()
-  maxPackageCount: number;
+  packageCount: bigint;
 
   @Exclude()
-  maxBookingPhotoQuota: number;
+  bookingPhotoQuotaUsage: bigint;
 
   @Exclude()
-  maxBookingVideoQuota: number;
+  bookingVideoQuotaUsage: bigint;
 
   @Exclude()
   createdAt: Date;
