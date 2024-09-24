@@ -6,6 +6,10 @@ import { ConfigService } from '@nestjs/config';
 import { json, urlencoded } from 'express';
 
 async function bootstrap() {
+  BigInt.prototype['toJSON'] = function () {
+    return this.toString();
+  };
+
   const app = await NestFactory.create(AppModule, {
     snapshot: true,
     abortOnError: true,
