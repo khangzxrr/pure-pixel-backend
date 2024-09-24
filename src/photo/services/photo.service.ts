@@ -212,7 +212,7 @@ export class PhotoService {
 
     const extension = Utils.regexFileExtension.exec(
       presignedUploadUrlRequest.filename,
-    )[0];
+    )[1];
 
     if (
       extension !== 'jpg' &&
