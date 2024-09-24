@@ -6,4 +6,6 @@ export class PhotoConstant {
   static GENERATE_WATERMARK_JOB = 'GENERATE_WATERMARK_JOB';
 
   static WEBSOCKET_GATEWAY = 'PHOTO_GATEWAY';
+
+  static THUMBNAIL_WIDTH = 400;
 }

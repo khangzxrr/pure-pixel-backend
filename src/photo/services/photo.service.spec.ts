@@ -9,18 +9,17 @@ import { SignedUpload } from '../dtos/presigned-upload-url.response.dto';
 import { UserRepository } from 'src/database/repositories/user.repository';
 import { PhotographerNotFoundException } from 'src/photographer/exceptions/photographer-not-found.exception';
 import { RunOutPhotoQuotaException } from '../exceptions/run-out-photo-quota.exception';
+import { DatabaseModule } from 'src/database/database.module';
 
 describe('PhotoService', () => {
   let photoService: PhotoService;
   const photoRepository = {
     //lazy mock, write full object if required
-    createTemporaryPhotos: (userId: string, signedUploads: SignedUpload[]) => {
-      const result = signedUploads.map((su) => {
-        return {
-          id: '90ff5312-51e1-456b-ad05-67e175ac532c',
-          originalPhotoUrl: su.storageObject,
-        };
-      });
+    createTemporaryPhotos: (userId: string, signedUpload: SignedUpload) => {
+      const result = {
+        id: '90ff5312-51e1-456b-ad05-67e175ac532c',
+        originalPhotoUrl: signedUpload.storageObject,
+      };
       return Promise.resolve(result);
     },
   };
@@ -41,7 +40,7 @@ describe('PhotoService', () => {
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [StorageModule, QueueModule],
+      imports: [DatabaseModule, StorageModule, QueueModule],
       providers: [
         PhotoService,
         {
@@ -64,7 +63,7 @@ describe('PhotoService', () => {
 
   describe('getPresignedUploadUrl', () => {
     it('should throw FileIsNotValidException when extension is empty', () => {
-      presignedUploadUrlRequest.filenames = ['test'];
+      presignedUploadUrlRequest.filename = 'test';
 
       expect(
         async () =>
@@ -76,7 +75,7 @@ describe('PhotoService', () => {
     });
 
     it('should throw FileIsNotValidException when extension is not valid', async () => {
-      presignedUploadUrlRequest.filenames = ['test.abc'];
+      presignedUploadUrlRequest.filename = 'test.abc';
 
       expect(
         async () =>
@@ -88,15 +87,15 @@ describe('PhotoService', () => {
     });
 
     it('should return correct SignedUpload when filename is valid', async () => {
-      presignedUploadUrlRequest.filenames = ['test.jpg'];
+      presignedUploadUrlRequest.filename = 'test.jpg';
 
       const result = await photoService.getPresignedUploadUrl(
         userId,
         presignedUploadUrlRequest,
       );
 
-      expect(result).toHaveProperty('signedUploads');
-      expect(result.signedUploads[0].uploadUrl.length > 0).toBeTruthy();
+      expect(result).toHaveProperty('signedUpload');
+      expect(result.signedUpload.uploadUrl.length > 0).toBeTruthy();
     });
 
     it('should throw PhotographerNotFoundException when userid is not found', () => {

@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PhotoVisibility } from '@prisma/client';
 import { FindAllPhotoFilterDto } from 'src/photo/dtos/find-all.filter.dto';
-import { SignedUpload } from 'src/photo/dtos/presigned-upload-url.response.dto';
 import { Photo } from 'src/photo/entities/photo.entity';
 import { PrismaService } from 'src/prisma.service';
 
@@ -42,16 +41,14 @@ export class PhotoRepository {
     return queries;
   }
 
-  async getPhotoByIdsAndStatus(
-    ids: string[],
+  async getPhotoByIdAndStatusAndUserId(
+    id: string,
     status: string,
-    userId?: string,
-  ): Promise<Photo[]> {
-    return this.prisma.extendedClient().photo.findMany({
+    userId: string,
+  ): Promise<Photo> {
+    return this.prisma.extendedClient().photo.findUnique({
       where: {
-        id: {
-          in: ids,
-        },
+        id: id,
         status: status == 'PENDING' ? 'PENDING' : 'PARSED',
         photographerId: userId,
       },
@@ -73,7 +70,7 @@ export class PhotoRepository {
     });
   }
 
-  async createTemporaryPhotos(userId: string, signedUploads: SignedUpload[]) {
+  async createTemporaryPhotos(userId: string, originalPhotoUrl: string) {
     //find a better way to do this
     const category = await this.prisma.category.findFirstOrThrow({
       where: {
@@ -84,32 +81,28 @@ export class PhotoRepository {
       },
     });
 
-    const photos = signedUploads.map((u) => {
-      const photo = new Photo();
-      photo.photographerId = userId;
-      photo.originalPhotoUrl = u.storageObject;
-      photo.categoryId = category.id;
-      photo.location = '';
-      photo.photoType = 'RAW';
-      photo.watermarkThumbnailPhotoUrl = '';
-      photo.thumbnailPhotoUrl = '';
-      photo.watermarkPhotoUrl = '';
-      photo.description = '';
-      photo.captureTime = new Date();
-      photo.colorGrading = {};
-      photo.exif = {};
-      photo.showExif = false;
-      photo.watermark = false;
-      photo.visibility = 'PRIVATE';
-      photo.status = 'PENDING';
-      photo.title = '';
-      photo.photoTags = [];
+    const photo = new Photo();
+    photo.photographerId = userId;
+    photo.originalPhotoUrl = originalPhotoUrl;
+    photo.categoryId = category.id;
+    photo.location = '';
+    photo.photoType = 'RAW';
+    photo.watermarkThumbnailPhotoUrl = '';
+    photo.thumbnailPhotoUrl = '';
+    photo.watermarkPhotoUrl = '';
+    photo.description = '';
+    photo.captureTime = new Date();
+    photo.colorGrading = {};
+    photo.exif = {};
+    photo.showExif = false;
+    photo.watermark = false;
+    photo.visibility = 'PRIVATE';
+    photo.status = 'PENDING';
+    photo.title = '';
+    photo.photoTags = [];
 
-      return photo;
-    });
-
-    return this.prisma.extendedClient().photo.createManyAndReturn({
-      data: photos,
+    return this.prisma.extendedClient().photo.create({
+      data: photo,
 
       select: {
         id: true,
