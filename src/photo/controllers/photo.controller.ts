@@ -41,7 +41,6 @@ import { CreateCommentRequestDto } from '../dtos/create-comment.request.dto';
 import { CommentEntity } from '../entities/comment.entity';
 import { ProcessPhotosRequest } from '../dtos/process-images.request.dto';
 import { GenerateWatermarkRequestDto } from '../dtos/generate-watermark.request.dto';
-import { PhotoProcessService } from '../services/photo-process.service';
 
 @Controller('photo')
 @ApiTags('photo')
@@ -49,7 +48,6 @@ export class PhotoController {
   constructor(
     @Inject() private readonly photoService: PhotoService,
     @Inject() private readonly commentService: CommentService,
-    @Inject() private readonly photoProcessService: PhotoProcessService,
   ) {}
 
   // @Get('/test/:key')
