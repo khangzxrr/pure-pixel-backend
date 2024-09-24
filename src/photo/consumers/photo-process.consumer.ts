@@ -73,119 +73,92 @@ export class PhotoProcessConsumer extends WorkerHost {
       generateWatermarkRequest.photoId,
     );
 
-    //when photo is not ready because pending state (photo not convert to jpg yet)
-    //we should call convert
-    //then continue to process safety
-    if (photo.status == 'PENDING') {
-      await this.photoProcessService.convertJpg(photo.originalPhotoUrl);
-    }
+    const sharp = await this.photoProcessService.sharpInitFromObjectKey(
+      photo.id,
+    );
 
-    photo.watermarkPhotoUrl = await this.photoProcessService.watermark(
-      photo.originalPhotoUrl,
+    const watermark = await this.photoProcessService.makeWatermark(
+      sharp,
       generateWatermarkRequest.text,
     );
 
-    photo.watermarkThumbnailPhotoUrl = await this.photoProcessService.thumbnail(
+    const watermarkBuffer = await watermark.toBuffer();
+    photo.watermarkPhotoUrl = `watermark/${photo.originalPhotoUrl}`;
+    await this.photoProcessService.uploadFromBuffer(
       photo.watermarkPhotoUrl,
+      watermarkBuffer,
     );
 
-    photo.watermark = true;
+    const watermarkThumbnail =
+      await this.photoProcessService.makeThumbnail(watermark);
+
+    const watermarkThumbnailBuffer = await watermarkThumbnail.toBuffer();
+    photo.watermarkThumbnailPhotoUrl = `thumbnail/${photo.originalPhotoUrl}`;
+    await this.photoProcessService.uploadFromBuffer(
+      photo.watermarkThumbnailPhotoUrl,
+      watermarkThumbnailBuffer,
+    );
 
     await this.photoRepository.update(photo);
   }
 
-  async processPhoto(
-    userId: string,
-    processPhotosRequest: ProcessPhotosRequest,
-  ) {
+  async processPhoto(userId: string, processRequest: ProcessPhotosRequest) {
     this.logger.log(`process photos`);
-    this.logger.log(processPhotosRequest);
+    this.logger.log(processRequest);
 
-    await this.convertAndGenerateThumbnailExif(userId, processPhotosRequest);
-    const photos = await this.getAllProcessedPhotos(
+    await this.convertAndEmitProcessEvents(userId, processRequest);
+
+    const photo = await this.photoService.getSignedPhotoById(
       userId,
-      processPhotosRequest,
+      processRequest.signedUpload.photoId,
     );
 
-    await this.photoGateway.sendFinishProcessPhotoEventToUserId(userId, photos);
+    await this.photoGateway.sendFinishProcessPhotoEventToUserId(userId, photo);
   }
 
-  async getAllProcessedPhotos(
+  async convertAndEmitProcessEvents(
     userId: string,
     processImagesRequest: ProcessPhotosRequest,
   ) {
-    const getPhotoPromises = processImagesRequest.signedUploads.map(
-      async (su) =>
-        await this.photoService.getSignedPhotoById(userId, su.photoId),
-    );
-
-    return await Promise.all(getPhotoPromises);
-  }
-
-  async convertAndGenerateThumbnailExif(
-    userId: string,
-    processImagesRequest: ProcessPhotosRequest,
-  ) {
-    const photoIds = processImagesRequest.signedUploads.map((su) => su.photoId);
-
-    const photos = await this.photoRepository.getPhotoByIdsAndStatus(
-      photoIds,
+    const photo = await this.photoRepository.getPhotoByIdAndStatusAndUserId(
+      processImagesRequest.signedUpload.photoId,
       'PENDING',
       userId,
     );
 
-    const updatePhotoPromises = photos.map(async (p) => {
-      //convert to jpg to prevent watermark error
-      await this.photoProcessService.convertJpg(p.originalPhotoUrl);
-
-      const head = await this.photoProcessService.getSize(p.originalPhotoUrl);
-
-      p.size = head.ContentLength;
-
-      const thumbnailKey = await this.photoProcessService.thumbnail(
-        p.originalPhotoUrl,
+    if (!photo) {
+      this.logger.error(
+        `photo not found to process userId: ${userId}, photoId: ${processImagesRequest.signedUpload.photoId}`,
       );
-      p.thumbnailPhotoUrl = thumbnailKey;
 
-      // const watermarkThumbnailKey =
-      //   await this.photoProcessService.watermark(thumbnailKey);
-      // p.watermarkThumbnailPhotoUrl = watermarkThumbnailKey;
-      //
-      //we need not to create watermark thumbnail
-      //they cannot use it anyway ;)
-      p.watermarkThumbnailPhotoUrl = p.thumbnailPhotoUrl;
+      return;
+    }
 
-      //using original
-      //only process watermark if user required
-      p.watermarkPhotoUrl = p.originalPhotoUrl;
-
-      //this is not optimized because we have to get original image from url
-      //each time we call different process method
-      //wasting bandwidth!
-      //please fix this if we have time
-      const exifs = await this.photoProcessService.parseExif(
-        p.originalPhotoUrl,
-      );
-      p.exif = exifs;
-
-      p.status = 'PARSED';
-
-      return p;
-    });
-
-    const updatePhotos = await Promise.all(updatePhotoPromises);
-
-    const initPhotoBytes = 0;
-    const sumOfPhotoBytes = updatePhotos.reduce(
-      (acc, current) => acc + current.size,
-      initPhotoBytes,
+    const sharp = await this.photoProcessService.sharpInitFromObjectKey(
+      photo.originalPhotoUrl,
     );
 
-    const updateQueries = this.photoRepository.batchUpdate(updatePhotos);
+    const sharpJpegBuffer = await this.photoProcessService
+      .convertJpeg(sharp)
+      .then((s) => s.toBuffer());
+    await this.photoProcessService.uploadFromBuffer(
+      photo.originalPhotoUrl,
+      sharpJpegBuffer,
+    );
 
+    const metadata = await sharp.metadata();
+    photo.size = metadata.size;
+    photo.exif = await this.photoProcessService.makeExif(sharp);
+
+    photo.thumbnailPhotoUrl = photo.originalPhotoUrl;
+    photo.watermarkThumbnailPhotoUrl = photo.originalPhotoUrl;
+    photo.watermarkPhotoUrl = photo.originalPhotoUrl;
+    photo.status = 'PARSED';
+
+    const updateQueries = this.photoRepository.batchUpdate([photo]);
     const updateQuotaQuery = this.userRepository.increasePhotoQuotaUsageById(
       userId,
-      sumOfPhotoBytes,
+      photo.size,
     );
 
     await this.databaseService.applyTransactionMultipleQueries([
