@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PhotoVisibility } from '@prisma/client';
 import { FindAllPhotoFilterDto } from 'src/photo/dtos/find-all.filter.dto';
-import { SignedUpload } from 'src/photo/dtos/presigned-upload-url.response.dto';
 import { Photo } from 'src/photo/entities/photo.entity';
 import { PrismaService } from 'src/prisma.service';
 
@@ -42,16 +41,14 @@ export class PhotoRepository {
     return queries;
   }
 
-  async getPhotoByIdsAndStatus(
-    ids: string[],
+  async getPhotoByIdAndStatusAndUserId(
+    id: string,
     status: string,
-    userId?: string,
-  ): Promise<Photo[]> {
-    return this.prisma.extendedClient().photo.findMany({
+    userId: string,
+  ): Promise<Photo> {
+    return this.prisma.extendedClient().photo.findUnique({
       where: {
-        id: {
-          in: ids,
-        },
+        id: id,
         status: status == 'PENDING' ? 'PENDING' : 'PARSED',
         photographerId: userId,
       },
