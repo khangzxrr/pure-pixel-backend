@@ -5,6 +5,7 @@ import { StorageService } from 'src/storage/services/storage.service';
 import { FailedToGenerateThumbnailException } from '../exceptions/failed-to-generate-thumbnail.exception';
 
 import exifr from 'exifr';
+import sharp from 'sharp';
 
 @Injectable()
 export class PhotoProcessService {
@@ -14,6 +15,16 @@ export class PhotoProcessService {
     private readonly httpService: HttpService,
     @Inject() private readonly storageService: StorageService,
   ) {}
+
+  async sharpInitFromObjectKey(key: string) {
+    const signedGetUrl = await this.getEncodedSignedGetObjectUrl(key);
+
+    const buffer = await this.getBufferImageFromUrl(signedGetUrl);
+
+    const photo = sharp(buffer);
+
+    console.log(photo);
+  }
 
   async getEncodedSignedGetObjectUrl(originalImageKey: string) {
     const imagePublicUrl =
@@ -35,7 +46,7 @@ export class PhotoProcessService {
       throw new FailedToGenerateThumbnailException();
     }
 
-    return response.data;
+    return Buffer.from(response.data, 'binary');
   }
 
   async parseExif(originalImageKey: string) {
