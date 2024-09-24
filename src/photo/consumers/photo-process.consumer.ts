@@ -1,6 +1,6 @@
-import { InjectQueue, Processor, WorkerHost } from '@nestjs/bullmq';
+import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { PhotoConstant } from '../constants/photo.constant';
-import { Job, Queue } from 'bullmq';
+import { Job } from 'bullmq';
 import { Inject, Logger } from '@nestjs/common';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoProcessService } from '../services/photo-process.service';
@@ -22,8 +22,6 @@ export class PhotoProcessConsumer extends WorkerHost {
     @Inject() private readonly photoProcessService: PhotoProcessService,
     @Inject() private readonly photoService: PhotoService,
     @Inject() private readonly databaseService: DatabaseService,
-    @InjectQueue(PhotoConstant.PHOTO_PROCESS_QUEUE)
-    private readonly photoProcessQueue: Queue,
   ) {
     super();
   }

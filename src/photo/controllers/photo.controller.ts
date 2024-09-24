@@ -41,6 +41,7 @@ import { CreateCommentRequestDto } from '../dtos/create-comment.request.dto';
 import { CommentEntity } from '../entities/comment.entity';
 import { ProcessPhotosRequest } from '../dtos/process-images.request.dto';
 import { GenerateWatermarkRequestDto } from '../dtos/generate-watermark.request.dto';
+import { PhotoProcessService } from '../services/photo-process.service';
 
 @Controller('photo')
 @ApiTags('photo')
@@ -48,8 +49,34 @@ export class PhotoController {
   constructor(
     @Inject() private readonly photoService: PhotoService,
     @Inject() private readonly commentService: CommentService,
+    @Inject() private readonly photoProcessService: PhotoProcessService,
   ) {}
 
+  // @Get('/test/:key')
+  // async test(@Param('key') key: string, @Res() res: Response) {
+  //   const sharp = await this.photoProcessService.sharpInitFromObjectKey(key); // const thumbnail = await this.photoProcessService
+  //   //   .makeThumbnail(sharp)
+  //   //   .toBuffer();
+  //   //
+  //
+  //   console.log(await this.photoProcessService.makeExif(sharp));
+  //
+  //   const watermark = await this.photoProcessService
+  //     .makeWatermark(sharp, 'test')
+  //     .then((s) => s.toBuffer());
+  //
+  //   res.set({
+  //     'Content-Type': 'image/jpeg',
+  //     'Content-Length': watermark.length,
+  //   });
+  //
+  //   const stream = new Readable();
+  //   stream.push(watermark);
+  //   stream.push(null);
+  //
+  //   stream.pipe(res);
+  // }
+  //
   @Get('/public')
   @ApiOperation({
     summary: 'get public photos',
@@ -123,14 +150,14 @@ export class PhotoController {
   }
 
   //TODO: webhook handle sftp
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Public(false)
-  async parseExifviaWebhook(@Query() query) {
-    console.log(query);
-    console.log('call from webhook');
-
-    return 'cool';
-  }
+  // @UseGuards(AuthGuard, KeycloakRoleGuard)
+  // @Public(false)
+  // async parseExifviaWebhook(@Query() query) {
+  //   console.log(query);
+  //   console.log('call from webhook');
+  //
+  //   return 'cool';
+  // }
 
   @Post('/watermark')
   @ApiOperation({
