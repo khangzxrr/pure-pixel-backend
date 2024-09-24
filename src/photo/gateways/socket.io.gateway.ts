@@ -28,9 +28,6 @@ export class PhotoGateway implements OnGatewayConnection, OnGatewayDisconnect {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   handleDisconnect(client: any) {}
 
-  //TODO: code role guard for websocket
-  // @UseGuards(WebsocketAuthGuard, KeycloakRoleGuard)
-  // @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
   @UseGuards(WebsocketAuthGuard)
   @SubscribeMessage('join')
   async joinEvent(socket: any) {
