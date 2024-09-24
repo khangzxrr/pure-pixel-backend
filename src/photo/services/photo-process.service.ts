@@ -17,6 +17,10 @@ export class PhotoProcessService {
     @Inject() private readonly storageService: StorageService,
   ) {}
 
+  async sharpInitFromBuffer(buffer: Buffer) {
+    return SharpLib(buffer);
+  }
+
   async sharpInitFromObjectKey(key: string) {
     const signedGetUrl = await this.storageService.getSignedGetUrl(key);
 
