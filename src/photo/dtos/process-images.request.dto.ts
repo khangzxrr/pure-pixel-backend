@@ -3,5 +3,5 @@ import { SignedUpload } from './presigned-upload-url.response.dto';
 
 export class ProcessPhotosRequest {
   @ApiProperty({ type: [SignedUpload] })
-  signedUploads: SignedUpload[];
+  signedUpload: SignedUpload;
 }

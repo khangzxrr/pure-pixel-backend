@@ -73,7 +73,7 @@ export class PhotoRepository {
     });
   }
 
-  async createTemporaryPhotos(userId: string, signedUploads: SignedUpload[]) {
+  async createTemporaryPhotos(userId: string, originalPhotoUrl: string) {
     //find a better way to do this
     const category = await this.prisma.category.findFirstOrThrow({
       where: {
@@ -84,32 +84,28 @@ export class PhotoRepository {
       },
     });
 
-    const photos = signedUploads.map((u) => {
-      const photo = new Photo();
-      photo.photographerId = userId;
-      photo.originalPhotoUrl = u.storageObject;
-      photo.categoryId = category.id;
-      photo.location = '';
-      photo.photoType = 'RAW';
-      photo.watermarkThumbnailPhotoUrl = '';
-      photo.thumbnailPhotoUrl = '';
-      photo.watermarkPhotoUrl = '';
-      photo.description = '';
-      photo.captureTime = new Date();
-      photo.colorGrading = {};
-      photo.exif = {};
-      photo.showExif = false;
-      photo.watermark = false;
-      photo.visibility = 'PRIVATE';
-      photo.status = 'PENDING';
-      photo.title = '';
-      photo.photoTags = [];
+    const photo = new Photo();
+    photo.photographerId = userId;
+    photo.originalPhotoUrl = originalPhotoUrl;
+    photo.categoryId = category.id;
+    photo.location = '';
+    photo.photoType = 'RAW';
+    photo.watermarkThumbnailPhotoUrl = '';
+    photo.thumbnailPhotoUrl = '';
+    photo.watermarkPhotoUrl = '';
+    photo.description = '';
+    photo.captureTime = new Date();
+    photo.colorGrading = {};
+    photo.exif = {};
+    photo.showExif = false;
+    photo.watermark = false;
+    photo.visibility = 'PRIVATE';
+    photo.status = 'PENDING';
+    photo.title = '';
+    photo.photoTags = [];
 
-      return photo;
-    });
-
-    return this.prisma.extendedClient().photo.createManyAndReturn({
-      data: photos,
+    return this.prisma.extendedClient().photo.create({
+      data: photo,
 
       select: {
         id: true,

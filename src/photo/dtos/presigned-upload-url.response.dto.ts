@@ -38,9 +38,9 @@ export class SignedUpload {
 
 export class PresignedUploadUrlResponse {
   @ApiProperty({ type: SignedUpload })
-  signedUploads: SignedUpload[];
+  signedUpload: SignedUpload;
 
-  constructor(urls: SignedUpload[]) {
-    this.signedUploads = urls;
+  constructor(signedUpload: SignedUpload) {
+    this.signedUpload = signedUpload;
   }
 }

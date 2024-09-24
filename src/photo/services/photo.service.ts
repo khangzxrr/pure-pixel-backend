@@ -210,53 +210,37 @@ export class PhotoService {
       throw new RunOutPhotoQuotaException();
     }
 
-    let signedUploads = await Promise.all(
-      presignedUploadUrlRequest.filenames.map(async (filename) => {
-        const extension = Utils.regexFileExtension.exec(filename)[1];
+    const extension = Utils.regexFileExtension.exec(
+      presignedUploadUrlRequest.filename,
+    )[0];
 
-        if (
-          extension !== 'jpg' &&
-          extension !== 'jpeg' &&
-          extension !== 'png' &&
-          extension !== 'bmp' &&
-          extension !== 'bitmap'
-        ) {
-          throw new FileIsNotValidException();
-        }
+    if (
+      extension !== 'jpg' &&
+      extension !== 'jpeg' &&
+      extension !== 'png' &&
+      extension !== 'bmp' &&
+      extension !== 'bitmap'
+    ) {
+      throw new FileIsNotValidException();
+    }
 
-        const storageObjectKey = `${userId}/${v4()}.${extension}`;
+    const storageObjectKey = `${userId}/${v4()}.${extension}`;
 
-        //generate presigned url
-        const url =
-          await this.storageService.getPresignedUploadUrl(storageObjectKey);
+    const presignedUploadUrl =
+      await this.storageService.getPresignedUploadUrl(storageObjectKey);
 
-        //map correct url with filename
-        return new SignedUpload(filename, url, storageObjectKey, '');
-      }),
-    );
-
-    //covert array of signed uploads to directory for attach photo ID easier
-    const signedUploadMap = new Map();
-
-    signedUploads.reduce((result, signedUpload) => {
-      result[signedUpload.storageObject] = signedUpload;
-
-      return result;
-    }, signedUploadMap);
-
-    const photos = await this.photoRepository.createTemporaryPhotos(
+    const photo = await this.photoRepository.createTemporaryPhotos(
       userId,
-      signedUploads,
+      storageObjectKey,
     );
 
-    //attach photo id then covert it back to array of signed uploads
-    signedUploads = photos.map(({ id, originalPhotoUrl }) => {
-      const signedUpload = signedUploadMap[originalPhotoUrl];
-      signedUpload.photoId = id;
+    const signedUpload = new SignedUpload(
+      presignedUploadUrlRequest.filename,
+      presignedUploadUrl,
+      storageObjectKey,
+      photo.id,
+    );
 
-      return signedUpload;
-    });
-
-    return new PresignedUploadUrlResponse(signedUploads);
+    return new PresignedUploadUrlResponse(signedUpload);
   }
 }

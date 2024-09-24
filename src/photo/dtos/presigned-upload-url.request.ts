@@ -5,5 +5,5 @@ export class PresignedUploadUrlRequest {
   @ApiProperty()
   @IsArray()
   @ArrayNotEmpty({})
-  filenames: string[];
+  filename: string;
 }
