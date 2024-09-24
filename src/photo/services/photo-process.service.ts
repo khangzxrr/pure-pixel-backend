@@ -5,7 +5,8 @@ import { StorageService } from 'src/storage/services/storage.service';
 import { FailedToGenerateThumbnailException } from '../exceptions/failed-to-generate-thumbnail.exception';
 
 import exifr from 'exifr';
-import sharp from 'sharp';
+import * as SharpLib from 'sharp';
+import { PhotoConstant } from '../constants/photo.constant';
 
 @Injectable()
 export class PhotoProcessService {
@@ -17,13 +18,50 @@ export class PhotoProcessService {
   ) {}
 
   async sharpInitFromObjectKey(key: string) {
-    const signedGetUrl = await this.getEncodedSignedGetObjectUrl(key);
+    const signedGetUrl = await this.storageService.getSignedGetUrl(key);
 
     const buffer = await this.getBufferImageFromUrl(signedGetUrl);
+    const photo = SharpLib(buffer);
 
-    const photo = sharp(buffer);
+    return photo;
+  }
 
-    console.log(photo);
+  async makeThumbnail(sharp: SharpLib.Sharp) {
+    return sharp.clone().resize(PhotoConstant.THUMBNAIL_WIDTH);
+  }
+
+  async makeWatermark(sharp: SharpLib.Sharp, watermarkText: string) {
+    const metadata = await sharp.metadata();
+
+    const fontSizeScaledByWidth = (metadata.width * 10) / 100;
+
+    const svg = `<svg height="${metadata.height}" width="${metadata.width}"> 
+        <text x="0%" y="10%" dominant-baseline="hanging" text-anchor="start" font-family="Roboto"  font-size="${fontSizeScaledByWidth}"  fill="#fff" fill-opacity="0.7">${watermarkText}</text> 
+<text x="100%" y="10%" dominant-baseline="hanging" text-anchor="end" font-family="Roboto"  font-size="${fontSizeScaledByWidth}"  fill="#fff" fill-opacity="0.7">${watermarkText}</text> 
+
+        <text x="0%" y="100%" dominant-baseline="middle" text-anchor="start" font-family="Roboto"  font-size="${fontSizeScaledByWidth}"  fill="#fff" fill-opacity="0.7">${watermarkText}</text> 
+
+ 
+        <text x="100%" y="100%" dominant-baseline="middle" text-anchor="end" font-family="Roboto"  font-size="${fontSizeScaledByWidth}"  fill="#fff" fill-opacity="0.7">${watermarkText}</text> 
+
+        <text x="50%" y="50%" font-family="Roboto" dominant-baseline="middle" text-anchor="middle" font-size="${fontSizeScaledByWidth}"  fill="#fff" fill-opacity="0.7">${watermarkText}</text>         
+</svg>`;
+
+    return sharp.clone().composite([
+      {
+        input: Buffer.from(svg),
+      },
+    ]);
+  }
+
+  async convertJpeg(sharp: SharpLib.Sharp) {
+    return sharp.keepExif().clone().jpeg();
+  }
+
+  async makeExif(sharp: SharpLib.Sharp) {
+    return exifr.parse(await sharp.keepExif().toBuffer(), {
+      exif: true,
+    });
   }
 
   async getEncodedSignedGetObjectUrl(originalImageKey: string) {
@@ -46,72 +84,10 @@ export class PhotoProcessService {
       throw new FailedToGenerateThumbnailException();
     }
 
-    return Buffer.from(response.data, 'binary');
+    return response.data;
   }
 
-  async parseExif(originalImageKey: string) {
-    const imagePublicUrl =
-      await this.storageService.getSignedGetUrl(originalImageKey);
-
-    const exifs = await exifr.parse(imagePublicUrl);
-
-    return exifs;
-  }
-
-  async getSize(key: string) {
-    return this.storageService.getObjectHead(key);
-  }
-
-  async convertJpg(photoKey: string) {
-    const encodedImageUrl = await this.getEncodedSignedGetObjectUrl(photoKey);
-
-    const buffers = await this.getBufferImageFromUrl(
-      `${process.env.IMAGINARY_ENDPOINT}/convert?type=jpeg&stripmeta=true&quality=100&url=${encodedImageUrl}`,
-    );
-
-    await this.storageService.uploadFromBytes(photoKey, buffers);
-  }
-
-  async watermark(originalImageKey: string, text: string) {
-    const encodedImageUrl =
-      await this.getEncodedSignedGetObjectUrl(originalImageKey);
-
-    const color = '255,255,255';
-    const font = 'sans bold 40';
-    const opacity = '0.7';
-
-    const buffers = await this.getBufferImageFromUrl(
-      `${process.env.IMAGINARY_ENDPOINT}/watermark?&text=${text}&color=${color}&font=${font}&opacity=${opacity}&url=${encodedImageUrl}`,
-    );
-
-    const watermarkImageKey = `watermark/${originalImageKey}`;
-
-    await this.storageService.uploadFromBytes(watermarkImageKey, buffers);
-
-    this.logger.log(`created watermark for key ${originalImageKey}`);
-
-    return watermarkImageKey;
-  }
-
-  async thumbnail(originalImageKey: string) {
-    const encodedImageUrl =
-      await this.getEncodedSignedGetObjectUrl(originalImageKey);
-
-    const width = '400';
-
-    this.logger.debug(`get image from ${encodedImageUrl}`);
-    const buffers = await this.getBufferImageFromUrl(
-      `${process.env.IMAGINARY_ENDPOINT}/thumbnail?width=${width}&url=${encodedImageUrl}`,
-    );
-
-    const thumbnailKey = `thumbnail/${originalImageKey}`;
-
-    this.logger.debug(`upload image `);
-
-    await this.storageService.uploadFromBytes(thumbnailKey, buffers);
-
-    this.logger.log(`created thumbnail for key ${originalImageKey}`);
-
-    return thumbnailKey;
+  async uploadFromBuffer(key: string, buffer: Buffer) {
+    await this.storageService.uploadFromBytes(key, buffer);
   }
 }
