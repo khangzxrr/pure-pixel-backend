@@ -1,6 +1,6 @@
-import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { InjectQueue, Processor, WorkerHost } from '@nestjs/bullmq';
 import { PhotoConstant } from '../constants/photo.constant';
-import { Job } from 'bullmq';
+import { Job, Queue } from 'bullmq';
 import { Inject, Logger } from '@nestjs/common';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoProcessService } from '../services/photo-process.service';
@@ -22,6 +22,8 @@ export class PhotoProcessConsumer extends WorkerHost {
     @Inject() private readonly photoProcessService: PhotoProcessService,
     @Inject() private readonly photoService: PhotoService,
     @Inject() private readonly databaseService: DatabaseService,
+    @InjectQueue(PhotoConstant.PHOTO_PROCESS_QUEUE)
+    private readonly photoProcessQueue: Queue,
   ) {
     super();
   }
@@ -74,7 +76,7 @@ export class PhotoProcessConsumer extends WorkerHost {
     );
 
     const sharp = await this.photoProcessService.sharpInitFromObjectKey(
-      photo.id,
+      photo.originalPhotoUrl,
     );
 
     const watermark = await this.photoProcessService.makeWatermark(
@@ -89,8 +91,12 @@ export class PhotoProcessConsumer extends WorkerHost {
       watermarkBuffer,
     );
 
+    //make a copy from buffer DO NOT DIRECT USE watermark: sharp
+    //or it will throw composite image not valid size
+    const watermarkFromBuffer =
+      await this.photoProcessService.sharpInitFromBuffer(watermarkBuffer);
     const watermarkThumbnail =
-      await this.photoProcessService.makeThumbnail(watermark);
+      await this.photoProcessService.makeThumbnail(watermarkFromBuffer);
 
     const watermarkThumbnailBuffer = await watermarkThumbnail.toBuffer();
     photo.watermarkThumbnailPhotoUrl = `thumbnail/${photo.originalPhotoUrl}`;
@@ -150,8 +156,17 @@ export class PhotoProcessConsumer extends WorkerHost {
     photo.size = metadata.size;
     photo.exif = await this.photoProcessService.makeExif(sharp);
 
-    photo.thumbnailPhotoUrl = photo.originalPhotoUrl;
-    photo.watermarkThumbnailPhotoUrl = photo.originalPhotoUrl;
+    const thumbnailBuffer = await this.photoProcessService
+      .makeThumbnail(sharp)
+      .then((s) => s.toBuffer());
+    photo.thumbnailPhotoUrl = `thumbnail/${photo.originalPhotoUrl}`;
+    await this.photoProcessService.uploadFromBuffer(
+      photo.thumbnailPhotoUrl,
+      thumbnailBuffer,
+    );
+
+    photo.watermarkThumbnailPhotoUrl = photo.thumbnailPhotoUrl;
+
     photo.watermarkPhotoUrl = photo.originalPhotoUrl;
     photo.status = 'PARSED';
 
