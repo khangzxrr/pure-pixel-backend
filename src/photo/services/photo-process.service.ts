@@ -77,6 +77,10 @@ export class PhotoProcessService {
     return encodedImageUrl;
   }
 
+  async getSignedObjectUrl(key: string) {
+    return this.storageService.getSignedGetUrl(key);
+  }
+
   async getBufferImageFromUrl(url: string) {
     const response = await lastValueFrom(
       this.httpService.get(url, {
