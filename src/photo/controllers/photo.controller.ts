@@ -263,8 +263,11 @@ export class PhotoController {
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   async getPhotoAvailableResolution(
     @AuthenticatedUser() user: ParsedUserDto,
-    @Param() id: string,
-  ) {}
+    @Param('id') id: string,
+  ) {
+    return await this.photoService.getAvailablePhotoResolution(user.sub, id);
+  }
+
   @Post('/share')
   @ApiOperation({
     summary: 'generate share url by photo id',
