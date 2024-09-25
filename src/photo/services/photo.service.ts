@@ -2,7 +2,6 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { PhotoStatus, PhotoVisibility } from '@prisma/client';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoIsPrivatedException } from '../exceptions/photo-is-private.exception';
-import { StorageService } from 'src/storage/services/storage.service';
 import { PresignedUploadUrlRequest } from '../dtos/presigned-upload-url.request';
 import {
   PresignedUploadUrlResponse,
@@ -52,6 +51,14 @@ export class PhotoService {
     if (photo.photographerId !== userId) {
       throw new NotBelongPhotoException();
     }
+
+    if (photo.status === 'PENDING') {
+      throw new PhotoIsPendingStateException();
+    }
+
+    return this.photoProcessService.getAvailableResolution(
+      photo.originalPhotoUrl,
+    );
   }
 
   async sendWatermarkRequest(
@@ -240,7 +247,7 @@ export class PhotoService {
     const storageObjectKey = `${userId}/${v4()}.${extension}`;
 
     const presignedUploadUrl =
-      await this.storageService.getPresignedUploadUrl(storageObjectKey);
+      await this.photoProcessService.getPresignUploadUrl(storageObjectKey);
 
     const photo = await this.photoRepository.createTemporaryPhotos(
       userId,
