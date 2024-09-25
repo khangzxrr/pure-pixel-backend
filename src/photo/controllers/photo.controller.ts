@@ -41,6 +41,7 @@ import { CreateCommentRequestDto } from '../dtos/create-comment.request.dto';
 import { CommentEntity } from '../entities/comment.entity';
 import { ProcessPhotosRequest } from '../dtos/process-images.request.dto';
 import { GenerateWatermarkRequestDto } from '../dtos/generate-watermark.request.dto';
+import { SharePhotoRequestDto } from '../dtos/share-photo.request.dto';
 
 @Controller('photo')
 @ApiTags('photo')
@@ -252,5 +253,32 @@ export class PhotoController {
     );
 
     return presignedUrl;
+  }
+
+  @Get('/:id/avaiable-resolution')
+  @ApiOperation({
+    summary: 'get photo available scaling resolution',
+  })
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
+  async getPhotoAvailableResolution(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Param() id: string,
+  ) {}
+  @Post('/share')
+  @ApiOperation({
+    summary: 'generate share url by photo id',
+  })
+  @ApiOkResponse({
+    status: HttpStatusCode.Ok,
+    type: String,
+  })
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
+  async sharePhoto(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Body() body: SharePhotoRequestDto,
+  ) {
+    console.log(user, body);
   }
 }
