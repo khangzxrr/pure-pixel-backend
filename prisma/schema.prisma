@@ -181,6 +181,11 @@ enum PhotoStatus {
   PENDING
 }
 
+enum ShareStatus {
+    READY
+    NOT_READY
+  }
+
 model Photo {
   id String @id @default(uuid())
 
@@ -214,6 +219,9 @@ model Photo {
   visibility PhotoVisibility @default(PUBLIC)
 
   status PhotoStatus @default(PENDING)
+
+  shareStatus ShareStatus @default(NOT_READY) 
+  sharePayload Json @default("{}")
 
   photoTags String[]
 
