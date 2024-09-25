@@ -27,6 +27,7 @@ import { UserRepository } from 'src/database/repositories/user.repository';
 import { PhotographerNotFoundException } from 'src/photographer/exceptions/photographer-not-found.exception';
 import { RunOutPhotoQuotaException } from '../exceptions/run-out-photo-quota.exception';
 import { DatabaseService } from 'src/database/database.service';
+import { PhotoProcessService } from './photo-process.service';
 
 @Injectable()
 export class PhotoService {
@@ -36,10 +37,22 @@ export class PhotoService {
     @Inject() private readonly databaseService: DatabaseService,
     @Inject() private readonly photoRepository: PhotoRepository,
     @Inject() private readonly userRepository: UserRepository,
-    @Inject() private readonly storageService: StorageService,
+    @Inject() private readonly photoProcessService: PhotoProcessService,
     @InjectQueue(PhotoConstant.PHOTO_PROCESS_QUEUE)
     private readonly photoProcessQueue: Queue,
   ) {}
+
+  async getAvailablePhotoResolution(userId: string, id: string) {
+    const photo = await this.photoRepository.getPhotoById(id);
+
+    if (!photo) {
+      throw new PhotoNotFoundException();
+    }
+
+    if (photo.photographerId !== userId) {
+      throw new NotBelongPhotoException();
+    }
+  }
 
   async sendWatermarkRequest(
     userId: string,
@@ -84,9 +97,9 @@ export class PhotoService {
       ? photo.watermarkThumbnailPhotoUrl
       : photo.thumbnailPhotoUrl;
 
-    const signedUrl = await this.storageService.getSignedGetUrl(url);
+    const signedUrl = await this.photoProcessService.getSignedObjectUrl(url);
     const signedThumbnail =
-      await this.storageService.getSignedGetUrl(thumbnail);
+      await this.photoProcessService.getSignedObjectUrl(thumbnail);
 
     return new SignedUrl(signedUrl, signedThumbnail);
   }
