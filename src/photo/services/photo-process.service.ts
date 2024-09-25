@@ -52,6 +52,12 @@ export class PhotoProcessService {
     return availableRes;
   }
 
+  async resize(sharp: SharpLib.Sharp, height: number) {
+    return sharp.clone().resize({
+      height,
+    });
+  }
+
   async makeThumbnail(sharp: SharpLib.Sharp) {
     return sharp.clone().resize(PhotoConstant.THUMBNAIL_WIDTH);
   }
