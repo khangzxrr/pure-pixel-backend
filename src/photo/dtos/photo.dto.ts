@@ -8,6 +8,8 @@ export class PhotoDto {
   @ApiProperty()
   id: string;
 
+  //TODO: add share status, share payload to dto
+  //
   @ApiProperty()
   categoryId: string;
 

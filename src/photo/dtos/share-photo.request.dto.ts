@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class SharePhotoRequestDto {
   @ApiProperty()
@@ -9,10 +8,7 @@ export class SharePhotoRequestDto {
   photoId: string;
 
   @ApiProperty()
-  @IsNumber()
+  @IsString()
   @IsNotEmpty()
-  @Transform(({ value }) => {
-    return Number(value);
-  })
-  quality: number;
+  quality: string;
 }
