@@ -72,6 +72,9 @@ USER node
 
 FROM node:18.19.1-alpine As production
 
+RUN apk add --no-cache fontconfig
+RUN apk add --no-cache font-roboto
+
 COPY --chown=node:node --from=build /usr/src/app/node_modules ./node_modules
 COPY --chown=node:node --from=build /usr/src/app/dist ./dist
 
