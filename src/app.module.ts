@@ -8,8 +8,9 @@ import { PhotographerModule } from './photographer/photographer.module';
 import { AuthenModule } from './authen/authen.module';
 import { DatabaseModule } from './database/database.module';
 import { PhotoModule } from './photo/photo.module';
-import { NotificationModule } from './notification/notification.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { UpgradeModule } from './upgrade/upgrade.module';
+import { PaymentModule } from './payment/payment.module';
 
 @Module({
   providers: [],
@@ -26,7 +27,8 @@ import { ScheduleModule } from '@nestjs/schedule';
     PhotographerModule,
     DatabaseModule,
     PhotoModule,
-    NotificationModule,
+    UpgradeModule,
+    PaymentModule,
   ],
   controllers: [AppController],
 })

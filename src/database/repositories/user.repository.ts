@@ -1,23 +1,127 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
-import { User } from 'src/user/entities/user.entity';
+import { UserEntity } from 'src/user/entities/user.entity';
 import { DuplicatedUserIdException } from '../exceptions/duplicatedUserId.exception';
+import { UserFilterDto } from 'src/user/dto/user-filter.dto';
 
 @Injectable()
 export class UserRepository {
   private logger = new Logger(UserRepository.name);
 
   constructor(private readonly prisma: PrismaService) {}
-  async getById(id: string) {
-    return this.prisma.user.findFirst({
+
+  updateMaxQuotaByUserId(
+    id: string,
+    maxPhotoQuota: bigint,
+    maxPackageCount: bigint,
+    maxBookingPhotoQuota: bigint,
+    maxBookingVideoQuota: bigint,
+  ) {
+    return this.prisma.extendedClient().user.update({
       where: {
         id,
+      },
+      data: {
+        maxPhotoQuota,
+        maxPackageCount,
+        maxBookingPhotoQuota,
+        maxBookingVideoQuota,
       },
     });
   }
 
-  async createIfNotExistTransaction(user: User, tx: Prisma.TransactionClient) {
+  increasePhotoQuotaUsageById(id: string, increment: number) {
+    return this.prisma.extendedClient().user.update({
+      where: {
+        id,
+      },
+      data: {
+        photoQuotaUsage: {
+          increment,
+        },
+      },
+    });
+  }
+
+  async findUserQuotaById(userId: string) {
+    return this.prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+      select: {
+        maxPhotoQuota: true,
+        maxBookingPhotoQuota: true,
+        maxBookingVideoQuota: true,
+        maxPackageCount: true,
+
+        photoQuotaUsage: true,
+        bookingPhotoQuotaUsage: true,
+        bookingVideoQuotaUsage: true,
+        packageCount: true,
+      },
+    });
+  }
+
+  async findOne(userFilterDto: UserFilterDto) {
+    return this.prisma.user.findUnique({
+      where: {
+        id: userFilterDto.id,
+      },
+      include: {
+        transactions: userFilterDto.transactions,
+        upgradeOrders: userFilterDto.upgradeOrders,
+        followers: userFilterDto.followers,
+        followings: userFilterDto.followings,
+      },
+    });
+  }
+
+  async findOneWithCount(userFilterDto: UserFilterDto) {
+    return this.prisma.user.findUnique({
+      where: {
+        id: userFilterDto.id,
+      },
+
+      include: {
+        transactions: userFilterDto.transactions,
+        upgradeOrders: userFilterDto.upgradeOrders,
+        followers: userFilterDto.followers,
+        followings: userFilterDto.followings,
+
+        _count: {
+          select: {
+            transactions: userFilterDto.transactions,
+            upgradeOrders: userFilterDto.upgradeOrders,
+            followers: userFilterDto.followers,
+            followings: userFilterDto.followings,
+          },
+        },
+      },
+    });
+  }
+
+  async findOneTransaction(
+    userFilterDto: UserFilterDto,
+    tx: Prisma.TransactionClient,
+  ) {
+    return tx.user.findUnique({
+      where: {
+        id: userFilterDto.id,
+      },
+      include: {
+        transactions: userFilterDto.transactions,
+        upgradeOrders: userFilterDto.upgradeOrders,
+        followers: userFilterDto.followers,
+        followings: userFilterDto.followings,
+      },
+    });
+  }
+
+  async createIfNotExistTransaction(
+    user: UserEntity,
+    tx: Prisma.TransactionClient,
+  ) {
     try {
       return tx.user.upsert({
         where: {
@@ -26,7 +130,6 @@ export class UserRepository {
         update: {
           ftpUsername: user.ftpUsername,
           ftpPassword: user.ftpPassword,
-          ftpEndpoint: user.ftpEndpoint,
         },
         create: user,
       });
@@ -39,7 +142,7 @@ export class UserRepository {
     }
   }
 
-  async createIfNotExist(user: User) {
+  async createIfNotExist(user: UserEntity) {
     try {
       return this.prisma.user.upsert({
         where: {

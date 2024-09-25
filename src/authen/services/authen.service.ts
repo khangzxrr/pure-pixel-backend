@@ -4,7 +4,8 @@ import { UserRepository } from 'src/database/repositories/user.repository';
 import { Utils } from 'src/infrastructure/utils/utils';
 import { PrismaService } from 'src/prisma.service';
 import { SftpService } from 'src/storage/services/sftp.service';
-import { User } from 'src/user/entities/user.entity';
+import { UserFilterDto } from 'src/user/dto/user-filter.dto';
+import { UserEntity } from 'src/user/entities/user.entity';
 
 @Injectable()
 export class AuthenService {
@@ -16,29 +17,39 @@ export class AuthenService {
     private prisma: PrismaService,
   ) {}
   async createUserIfNotExist(userId: string, username: string, email: string) {
-    const user = new User(userId);
-
     await this.prisma.$transaction(
       async (tx) => {
-        const createdUser =
-          await this.userRepository.createIfNotExistTransaction(user, tx);
+        const userFilterDto = new UserFilterDto();
+        userFilterDto.id = userId;
 
-        if (createdUser.ftpUsername.length !== 0) {
+        const existUser = await this.userRepository.findOneTransaction(
+          userFilterDto,
+          tx,
+        );
+
+        if (existUser != null) {
+          this.logger.log(`user is exist in DB, skip creation`);
           return;
         }
 
-        createdUser.ftpUsername = `${username}${new Date().getTime()}`;
-        createdUser.ftpPassword = Utils.randomString(12);
+        const newUser = new UserEntity({
+          id: userId,
+        });
+        newUser.ftpUsername = `${username}${Utils.randomString(5)}`;
+        newUser.name = username;
+        newUser.avatar =
+          'https://s3-hcm-r1.s3cloud.vn/sftpgo/avatar%2Favatar.png';
+
+        newUser.ftpPassword = Utils.randomString(12);
 
         await this.sftpService.registerNewSftpUser(
           userId,
-          `${username}${new Date().getTime()}`,
+          newUser.ftpUsername,
           email,
-          Utils.randomString(12),
+          newUser.ftpPassword,
         );
 
-        //update sftp profile to database
-        await this.userRepository.createIfNotExistTransaction(createdUser, tx);
+        await this.userRepository.createIfNotExistTransaction(newUser, tx);
 
         this.logger.log(`create new user to database,`);
       },

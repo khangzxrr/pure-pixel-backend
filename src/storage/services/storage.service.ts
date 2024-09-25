@@ -2,6 +2,8 @@ import {
   GetBucketCorsCommand,
   GetObjectAclCommand,
   GetObjectCommand,
+  HeadObjectCommand,
+  HeadObjectCommandOutput,
   PutBucketCorsCommand,
   PutObjectAclCommand,
   PutObjectCommand,
@@ -15,8 +17,14 @@ import { S3FailedUploadException } from '../exceptions/s3-failed-upload.exceptio
 export class StorageService {
   private logger: Logger = new Logger(StorageService.name);
 
+  private s3: S3Client;
+
   getS3() {
-    return new S3Client({
+    if (this.s3) {
+      return this.s3;
+    }
+
+    this.s3 = new S3Client({
       region: process.env.S3_REGION,
       endpoint: process.env.S3_URL,
       credentials: {
@@ -24,6 +32,8 @@ export class StorageService {
         secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
       },
     });
+
+    return this.s3;
   }
 
   async sendCommand(command) {
@@ -78,6 +88,17 @@ export class StorageService {
     const signedUrl = await getSignedUrl(this.getS3(), command, {});
 
     return signedUrl;
+  }
+
+  async getObjectHead(key: string): Promise<HeadObjectCommandOutput> {
+    const command = new HeadObjectCommand({
+      Key: key,
+      Bucket: process.env.S3_BUCKET,
+    });
+
+    const result = await this.sendCommand(command);
+
+    return result;
   }
 
   async uploadFromBytes(key: string, bytes) {

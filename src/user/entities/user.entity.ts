@@ -1,23 +1,53 @@
-import { Prisma, User as PrismaUser } from '@prisma/client';
-import { Decimal } from '@prisma/client/runtime/library';
+import { User } from '@prisma/client';
+import { Exclude } from 'class-transformer';
+import { ApplicationEntity } from 'src/infrastructure/entities/application.entity';
 
-export class User implements PrismaUser {
-  diskQuota: Decimal;
-  diskUsage: Decimal;
+export class UserEntity extends ApplicationEntity<UserEntity> implements User {
+  @Exclude()
+  maxPhotoQuota: bigint;
 
-  id: string;
+  @Exclude()
+  maxPackageCount: bigint;
+
+  @Exclude()
+  maxBookingPhotoQuota: bigint;
+
+  @Exclude()
+  maxBookingVideoQuota: bigint;
+
+  @Exclude()
+  photoQuotaUsage: bigint;
+
+  @Exclude()
+  packageCount: bigint;
+
+  @Exclude()
+  bookingPhotoQuotaUsage: bigint;
+
+  @Exclude()
+  bookingVideoQuotaUsage: bigint;
+
+  @Exclude()
   createdAt: Date;
+
+  @Exclude()
   updatedAt: Date;
 
-  constructor(userId: string) {
-    this.id = userId;
-    this.diskQuota = new Prisma.Decimal(0.0);
-    this.diskUsage = new Prisma.Decimal(0.0);
-    this.ftpUsername = undefined;
-    this.ftpEndpoint = undefined;
-    this.ftpPassword = undefined;
-  }
+  @Exclude()
   ftpUsername: string;
+
+  @Exclude()
   ftpPassword: string;
-  ftpEndpoint: string;
+
+  cover: string;
+
+  location: string;
+
+  id: string;
+
+  avatar: string;
+
+  name: string;
+
+  quote: string;
 }

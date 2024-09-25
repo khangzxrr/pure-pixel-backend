@@ -18,14 +18,141 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  diskQuota Decimal @default(0)
-  diskUsage Decimal @default(0)
+  maxPhotoQuota        BigInt @default(0)
+  maxPackageCount      BigInt @default(0)
+  maxBookingPhotoQuota BigInt @default(0)
+  maxBookingVideoQuota BigInt @default(0)
+
+  photoQuotaUsage        BigInt @default(0)
+  packageCount           BigInt @default(0)
+  bookingPhotoQuotaUsage BigInt @default(0)
+  bookingVideoQuotaUsage BigInt @default(0)
+
+  avatar   String @default("https://s3-hcm-r1.s3cloud.vn/sftpgo/avatar%2Favatar.png")
+  cover    String @default("https://s3-hcm-r1.s3cloud.vn/sftpgo/avatar%2Fcover.jpg")
+  name     String @default("")
+  location String @default("")
+  quote    String @default("")
 
   ftpUsername String @default("")
   ftpPassword String @default("")
-  ftpEndpoint String @default("")
 
-  photos Photo[]
+  photos        Photo[]
+  upgradeOrders UpgradeOrder[]
+  transactions  Transaction[]
+  Comment       Comment[]
+  Vote          Vote[]
+
+  followers  Follow[] @relation("follower")
+  followings Follow[] @relation("following")
+}
+
+model Follow {
+  follower   User   @relation(name: "follower", fields: [followerId], references: [id])
+  followerId String
+
+  following   User   @relation(name: "following", fields: [followingId], references: [id])
+  followingId String
+
+  @@id([followerId, followingId])
+}
+
+enum TransactionType {
+  UPGRADE_TO_PHOTOGRAPHER
+  IMAGE_SELL
+  IMAGE_BUY
+  FIRST_BOOKING_PAYMENT
+  SECOND_BOOKING_PAYMENT
+}
+
+enum TransactionStatus {
+  SUCCESS
+  FAILED
+  PENDING
+  CANCEL
+}
+
+model Transaction {
+  id String @id @unique @default(uuid())
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  paymentPayload Json
+  paymentMethod  String
+  type           TransactionType
+  status         TransactionStatus
+  amount         Decimal
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  upgradeOrder UpgradeOrder?
+}
+
+enum UpgradeOrderStatus {
+  ACTIVE
+  EXPIRE
+  PENDING
+  CANCEL
+}
+
+model UpgradeOrder {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  expiredAt DateTime
+
+  originalUpgradePackage   UpgradePackage @relation(fields: [originalUpgradePackageId], references: [id])
+  originalUpgradePackageId String
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  status UpgradeOrderStatus @default(PENDING)
+
+  transaction   Transaction? @relation(fields: [transactionId], references: [id], onDelete: SetNull)
+  transactionId String?      @unique
+
+  //copy from UpgradePackage
+  name          String
+  price         Decimal @default(0)
+  minOrderMonth Int     @default(0)
+
+  maxPhotoQuota        BigInt @default(0)
+  maxPackageCount      BigInt @default(0)
+  maxBookingPhotoQuota BigInt @default(0)
+  maxBookingVideoQuota BigInt @default(0)
+
+  descriptions String[]
+}
+
+enum UpgradePackageStatus {
+  ENABLED
+  DISABLED
+}
+
+model UpgradePackage {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name  String  @unique
+  price Decimal @default(0)
+
+  minOrderMonth Int @default(0)
+
+  maxPhotoQuota        BigInt @default(0)
+  maxPackageCount      BigInt @default(0)
+  maxBookingPhotoQuota BigInt @default(0)
+  maxBookingVideoQuota BigInt @default(0)
+
+  descriptions String[]
+
+  status UpgradePackageStatus
+
+  upgradeOrders UpgradeOrder[]
 }
 
 model Category {
@@ -44,14 +171,14 @@ enum PhotoType {
 }
 
 enum PhotoVisibility {
-    PUBLIC
-    PRIVATE
-    SHARE_LINK
+  PUBLIC
+  PRIVATE
+  SHARE_LINK
 }
 
 enum PhotoStatus {
-    PARSED
-    PENDING
+  PARSED
+  PENDING
 }
 
 model Photo {
@@ -60,38 +187,72 @@ model Photo {
   photographer   User   @relation(fields: [photographerId], references: [id])
   photographerId String
 
-  category   Category? @relation(fields: [categoryId], references: [id])
-  categoryId String?
-
+  category   Category @relation(fields: [categoryId], references: [id])
+  categoryId String
 
   title String
 
   watermark Boolean @default(false)
-  showExif Boolean @default(false)
+  showExif  Boolean @default(false)
 
-  exif Json
+  exif         Json
   colorGrading Json
 
-  location String
+  location    String
   captureTime DateTime
 
   description String
 
-  originalPhotoUrl String
+  originalPhotoUrl  String
   watermarkPhotoUrl String
 
-  thumbnailPhotoUrl String
+  thumbnailPhotoUrl          String
   watermarkThumbnailPhotoUrl String
 
   photoType PhotoType
 
-  visibility PhotoVisibility @default(PUBLIC) 
+  visibility PhotoVisibility @default(PUBLIC)
 
-  status PhotoStatus @default(PENDING) 
+  status PhotoStatus @default(PENDING)
 
   photoTags String[]
+
+  size Int @default(0) 
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  comments Comment[]
+  votes    Vote[]
+}
+
+model Vote {
+  id String @id @default(uuid())
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  photo   Photo  @relation(fields: [photoId], references: [id])
+  photoId String
+
+  isUpvote Boolean
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
+model Comment {
+  id String @id @default(uuid())
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  photo   Photo  @relation(fields: [photoId], references: [id])
+  photoId String
+
+  content String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

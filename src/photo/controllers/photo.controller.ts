@@ -1,13 +1,15 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  HttpStatus,
   Inject,
-  NotImplementedException,
   Param,
   Patch,
   Post,
   Query,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import { PhotoService } from '../services/photo.service';
@@ -19,20 +21,60 @@ import {
 } from 'nest-keycloak-connect';
 import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiOkResponse,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { HttpStatusCode } from 'axios';
 import { PresignedUploadUrlRequest } from '../dtos/presigned-upload-url.request';
 import { PresignedUploadUrlResponse } from '../dtos/presigned-upload-url.response.dto';
-import { ProcessImagesRequest } from '../dtos/process-images.request.dto';
 import { PhotoDto, SignedPhotoDto } from '../dtos/photo.dto';
 import { PhotoUpdateRequest } from '../dtos/photo-update.request.dto';
-import { SignUrlsRequest } from '../dtos/sign-urls.request.dto';
+import { FindAllPhotoFilterDto } from '../dtos/find-all.filter.dto';
+
+import { Response } from 'express';
+import { ParsedUserDto } from 'src/user/dto/parsed-user.dto';
+import { CommentService } from '../services/comment.service';
+import { CreateCommentRequestDto } from '../dtos/create-comment.request.dto';
+import { CommentEntity } from '../entities/comment.entity';
+import { ProcessPhotosRequest } from '../dtos/process-images.request.dto';
+import { GenerateWatermarkRequestDto } from '../dtos/generate-watermark.request.dto';
 
 @Controller('photo')
 @ApiTags('photo')
 export class PhotoController {
-  constructor(@Inject() private readonly photoService: PhotoService) {}
+  constructor(
+    @Inject() private readonly photoService: PhotoService,
+    @Inject() private readonly commentService: CommentService,
+  ) {}
 
+  // @Get('/test/:key')
+  // async test(@Param('key') key: string, @Res() res: Response) {
+  //   const sharp = await this.photoProcessService.sharpInitFromObjectKey(key); // const thumbnail = await this.photoProcessService
+  //   //   .makeThumbnail(sharp)
+  //   //   .toBuffer();
+  //   //
+  //
+  //   console.log(await this.photoProcessService.makeExif(sharp));
+  //
+  //   const watermark = await this.photoProcessService
+  //     .makeWatermark(sharp, 'test')
+  //     .then((s) => s.toBuffer());
+  //
+  //   res.set({
+  //     'Content-Type': 'image/jpeg',
+  //     'Content-Length': watermark.length,
+  //   });
+  //
+  //   const stream = new Readable();
+  //   stream.push(watermark);
+  //   stream.push(null);
+  //
+  //   stream.pipe(res);
+  // }
+  //
   @Get('/public')
   @ApiOperation({
     summary: 'get public photos',
@@ -45,25 +87,46 @@ export class PhotoController {
   })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Public(false)
-  async getAllPublicPhoto() {
-    return await this.photoService.findPublicPhotos();
+  async getAllPublicPhoto(
+    @Query() findPhotoFilter: FindAllPhotoFilterDto,
+  ): Promise<SignedPhotoDto[]> {
+    return await this.photoService.findPublicPhotos(findPhotoFilter);
   }
 
-  //TODO: immplement sign url
-  @Post('sign')
+  //TODO: finish get comments API
+  @Get('/:id/comment')
   @ApiOperation({
-    summary: 'sign url from s3 object url',
+    summary: 'get comments of photo',
   })
-  @ApiResponse({
-    status: HttpStatusCode.Ok,
-    description: 'signed url',
+  @ApiOkResponse({
+    type: CommentEntity,
+    isArray: true,
   })
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Public(false)
-  async getSignedUrl(
-    @AuthenticatedUser() user,
-    @Body() signUrlsRequest: SignUrlsRequest,
-  ) {
-    throw new NotImplementedException();
+  async getComments(@Param('id') id: string): Promise<CommentEntity[]> {
+    return await this.commentService.findAllByPhotoId(id);
+  }
+
+  @Post('/:id/comment')
+  @ApiOperation({
+    summary: 'create a comment to photo',
+  })
+  @ApiOkResponse({
+    type: CommentEntity,
+  })
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
+  async createComment(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Param('id') id: string,
+    @Body() createCommentRequestDto: CreateCommentRequestDto,
+  ): Promise<CommentEntity> {
+    return await this.commentService.createComment(
+      id,
+      user.sub,
+      createCommentRequestDto,
+    );
   }
 
   @Get('/:id')
@@ -77,39 +140,80 @@ export class PhotoController {
   })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Public(false)
-  async getPhoto(@AuthenticatedUser() user, @Param('id') id: string) {
-    return await this.photoService.getPhotoById(user ? user.sub : '', id);
+  async getPhoto(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Param('id') id: string,
+  ) {
+    return await this.photoService.getSignedPhotoById(user ? user.sub : '', id);
   }
 
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Public(false)
-  async parseExifviaWebhook(@Query() query) {
-    console.log(query);
-    console.log('call from webhook');
+  //TODO: webhook handle sftp
+  // @UseGuards(AuthGuard, KeycloakRoleGuard)
+  // @Public(false)
+  // async parseExifviaWebhook(@Query() query) {
+  //   console.log(query);
+  //   console.log('call from webhook');
+  //
+  //   return 'cool';
+  // }
 
-    return 'cool';
+  @Post('/watermark')
+  @ApiOperation({
+    summary: 'put photo to watermark queue inorder to generate watermark',
+  })
+  @ApiResponse({
+    status: HttpStatusCode.Accepted,
+  })
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
+  async generateWatermark(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Body() generateWatermarkRequest: GenerateWatermarkRequestDto,
+    @Res() res: Response,
+  ) {
+    await this.photoService.sendWatermarkRequest(
+      user.sub,
+      generateWatermarkRequest,
+    );
+
+    res.status(HttpStatus.ACCEPTED).send();
   }
 
   @Post('/process')
   @ApiOperation({
-    summary: 'generate watermark, thumbnail, exif images after upload',
+    summary:
+      'put process image request to queue inorder to generate thumbnail, exif images after upload',
   })
   @ApiResponse({
-    status: HttpStatusCode.Ok,
-    description: 'processed successfully',
-    isArray: true,
-    type: SignedPhotoDto,
+    status: HttpStatusCode.Accepted,
   })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   async processPhotos(
-    @AuthenticatedUser() user,
-    @Body() processImagesRequest: ProcessImagesRequest,
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Body() processPhotosRequest: ProcessPhotosRequest,
+    @Res() res: Response,
   ) {
-    return await this.photoService.processImages(
+    await this.photoService.sendProcessImageToMq(
       user.sub,
-      processImagesRequest,
+      processPhotosRequest,
     );
+
+    res.status(HttpStatus.ACCEPTED).send();
+  }
+
+  @Delete('/:id')
+  @ApiOperation({
+    summary: 'delete photo by id',
+  })
+  @ApiOkResponse({})
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
+  async deletePhotoById(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Param('id') id: string,
+  ) {
+    return await this.photoService.deleteById(user.sub, id);
   }
 
   @Patch('/update')
@@ -124,10 +228,10 @@ export class PhotoController {
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   async updatePhotos(
-    @AuthenticatedUser() user,
+    @AuthenticatedUser() user: ParsedUserDto,
     @Body() body: PhotoUpdateRequest,
   ) {
-    return this.photoService.updatePhotos(user.sub, body.photos);
+    return await this.photoService.updatePhotos(user.sub, body.photos);
   }
 
   @Post('/upload')
@@ -139,7 +243,7 @@ export class PhotoController {
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   async getPresignedUploadUrl(
-    @AuthenticatedUser() user,
+    @AuthenticatedUser() user: ParsedUserDto,
     @Body() body: PresignedUploadUrlRequest,
   ) {
     const presignedUrl = await this.photoService.getPresignedUploadUrl(

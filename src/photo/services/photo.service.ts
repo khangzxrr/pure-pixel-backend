@@ -11,24 +11,65 @@ import {
 import { Utils } from 'src/infrastructure/utils/utils';
 import { FileIsNotValidException } from '../exceptions/file-is-not-valid.exception';
 import { v4 } from 'uuid';
-import { ProcessImagesRequest } from '../dtos/process-images.request.dto';
-import { PhotoProcessService } from './photo-process.service';
 import { PhotoDto, SignedPhotoDto } from '../dtos/photo.dto';
 import { Photo } from '../entities/photo.entity';
 import { NotBelongPhotoException } from '../exceptions/not-belong-photo.exception';
 import { PhotoIsPendingStateException } from '../exceptions/photo-is-pending-state.exception';
 import { SignedUrl } from '../dtos/photo-signed-url.dto';
-import { PhotoFindAllFilterDto } from '../dtos/find-all.filter.dto';
+import { FindAllPhotoFilterDto } from '../dtos/find-all.filter.dto';
+import { InjectQueue } from '@nestjs/bullmq';
+import { PhotoConstant } from '../constants/photo.constant';
+import { Queue } from 'bullmq';
+import { PhotoNotFoundException } from '../exceptions/photo-not-found.exception';
+import { ProcessPhotosRequest } from '../dtos/process-images.request.dto';
+import { GenerateWatermarkRequestDto } from '../dtos/generate-watermark.request.dto';
+import { UserRepository } from 'src/database/repositories/user.repository';
+import { PhotographerNotFoundException } from 'src/photographer/exceptions/photographer-not-found.exception';
+import { RunOutPhotoQuotaException } from '../exceptions/run-out-photo-quota.exception';
+import { DatabaseService } from 'src/database/database.service';
 
 @Injectable()
 export class PhotoService {
   private readonly logger = new Logger(PhotoService.name);
 
   constructor(
+    @Inject() private readonly databaseService: DatabaseService,
     @Inject() private readonly photoRepository: PhotoRepository,
+    @Inject() private readonly userRepository: UserRepository,
     @Inject() private readonly storageService: StorageService,
-    @Inject() private readonly photoProcessService: PhotoProcessService,
+    @InjectQueue(PhotoConstant.PHOTO_PROCESS_QUEUE)
+    private readonly photoProcessQueue: Queue,
   ) {}
+
+  async sendWatermarkRequest(
+    userId: string,
+    generateWatermarkRequest: GenerateWatermarkRequestDto,
+  ) {
+    const photo = await this.photoRepository.getPhotoById(
+      generateWatermarkRequest.photoId,
+    );
+
+    if (!photo) {
+      throw new PhotoNotFoundException();
+    }
+
+    if (photo.photographerId != userId) {
+      throw new NotBelongPhotoException();
+    }
+    await this.photoProcessQueue.add(PhotoConstant.GENERATE_WATERMARK_JOB, {
+      userId,
+      generateWatermarkRequest,
+    });
+  }
+  async sendProcessImageToMq(
+    userId: string,
+    processPhotosRequest: ProcessPhotosRequest,
+  ) {
+    await this.photoProcessQueue.add(PhotoConstant.PROCESS_PHOTO_JOB_NAME, {
+      userId,
+      processPhotosRequest,
+    });
+  }
 
   async signUrlFromPhotos(photo: Photo) {
     if (photo.status == 'PENDING') {
@@ -73,87 +114,35 @@ export class PhotoService {
       return Photo.fromDto(dto);
     });
 
-    console.log(photos);
-
-    const updateResults = await this.photoRepository.batchUpdate(photos);
+    const updateQueries = this.photoRepository.batchUpdate(photos);
+    const updateResults =
+      await this.databaseService.applyTransactionMultipleQueries(updateQueries);
 
     return updateResults.map((p) => p as PhotoDto);
   }
 
-  //TODO: async process using bullmq
-  async processImages(
-    userId: string,
-    processImagesRequest: ProcessImagesRequest,
-  ): Promise<SignedPhotoDto[]> {
-    const photoIds = processImagesRequest.signedUploads.map((su) => su.photoId);
-
-    const photos = await this.photoRepository.getPhotoByIdsAndStatus(
-      photoIds,
-      'PENDING',
-      userId,
-    );
-
-    const updatePhotoPromises = photos.map(async (p) => {
-      const thumbnailKey = await this.photoProcessService.thumbnail(
-        p.originalPhotoUrl,
-      );
-      p.thumbnailPhotoUrl = thumbnailKey;
-
-      const watermarkThumbnailKey =
-        await this.photoProcessService.watermark(thumbnailKey);
-      p.watermarkThumbnailPhotoUrl = watermarkThumbnailKey;
-
-      const watermarkImageKey = await this.photoProcessService.watermark(
-        p.originalPhotoUrl,
-      );
-      p.watermarkPhotoUrl = watermarkImageKey;
-
-      //this is not optimized because we have to get original image from url
-      //each time we call different process method
-      //wasting bandwidth!
-      //please fix this if we have time
-      const exifs = await this.photoProcessService.parseExif(
-        p.originalPhotoUrl,
-      );
-      p.exif = exifs;
-
-      p.status = 'PARSED';
-
-      this.logger.log(`generated thumbnail: ${thumbnailKey}`);
-      this.logger.log(
-        `generated watermark thumbnail: ${watermarkThumbnailKey}`,
-      );
-      this.logger.log(`generated watermark image: ${watermarkImageKey}`);
-
-      return p;
-    });
-
-    const updatePhotos = await Promise.all(updatePhotoPromises);
-
-    const updatedPhotos = await this.photoRepository.batchUpdate(updatePhotos);
-
-    const signedPhotoDtoPromises = updatedPhotos.map(async (p) => {
-      const signedPhotoDto = p as SignedPhotoDto;
-
-      const signedUrls = await this.signUrlFromPhotos(p);
-
-      signedPhotoDto.signedUrl = signedUrls;
-
-      return signedPhotoDto;
-    });
-
-    return await Promise.all(signedPhotoDtoPromises);
-  }
-
-  async findPublicPhotos() {
-    const filter = new PhotoFindAllFilterDto();
+  async findPublicPhotos(filter: FindAllPhotoFilterDto) {
     filter.visibility = PhotoVisibility.PUBLIC;
     filter.status = PhotoStatus.PARSED;
 
-    const photos = await this.photoRepository.findAll(filter);
+    return await this.findAll(filter);
+  }
+
+  async findAllWithUpvoteAndCommentCountByUserId(userId: string) {
+    return this.photoRepository.findAllPhotosWithVoteAndCommentCountByUserId(
+      userId,
+    );
+  }
+
+  async findAll(filter: FindAllPhotoFilterDto) {
+    const photos =
+      await this.photoRepository.findAllIncludedPhotographer(filter);
 
     const signedPhotoDtoPromises = photos.map(async (p) => {
-      const signedPhotoDto = p as SignedPhotoDto;
+      const signedPhotoDto = new SignedPhotoDto({
+        photographer: p.photographer,
+        ...p,
+      });
 
       const signedUrls = await this.signUrlFromPhotos(p);
 
@@ -165,24 +154,28 @@ export class PhotoService {
     return await Promise.all(signedPhotoDtoPromises);
   }
 
-  async findAll(filter: PhotoFindAllFilterDto) {
-    const photos = await this.photoRepository.findAll(filter);
+  async deleteById(userId: string, photoId: string) {
+    const photo = await this.photoRepository.getPhotoById(photoId);
 
-    const signedPhotoDtoPromises = photos.map(async (p) => {
-      const signedPhotoDto = p as SignedPhotoDto;
+    if (!photo) {
+      throw new PhotoNotFoundException();
+    }
 
-      const signedUrls = await this.signUrlFromPhotos(p);
+    if (photo.photographerId !== userId) {
+      throw new NotBelongPhotoException();
+    }
 
-      signedPhotoDto.signedUrl = signedUrls;
+    await this.photoRepository.delete(photoId);
 
-      return signedPhotoDto;
-    });
-
-    return await Promise.all(signedPhotoDtoPromises);
+    return true;
   }
 
-  async getPhotoById(userId: string, id: string) {
-    const photo = await this.photoRepository.getPhotoById(id);
+  async getSignedPhotoById(userId: string, id: string) {
+    const photo = await this.photoRepository.getPhotoDetailById(id);
+
+    if (!photo) {
+      throw new PhotoNotFoundException();
+    }
 
     if (
       photo.visibility == PhotoVisibility.PRIVATE &&
@@ -191,7 +184,10 @@ export class PhotoService {
       throw new PhotoIsPrivatedException();
     }
 
-    const signedPhotoDto = photo as SignedPhotoDto;
+    const signedPhotoDto = new SignedPhotoDto({
+      photographer: photo.photographer,
+      ...photo,
+    });
 
     const signedUrls = await this.signUrlFromPhotos(photo);
 
@@ -204,54 +200,47 @@ export class PhotoService {
     userId: string,
     presignedUploadUrlRequest: PresignedUploadUrlRequest,
   ): Promise<PresignedUploadUrlResponse> {
-    let signedUploads = await Promise.all(
-      presignedUploadUrlRequest.filenames.map(async (filename) => {
-        const extension = Utils.regexFileExtension.exec(filename)[1];
+    const user = await this.userRepository.findUserQuotaById(userId);
 
-        if (
-          extension !== 'jpg' &&
-          extension !== 'jpeg' &&
-          extension !== 'png' &&
-          extension !== 'bmp' &&
-          extension !== 'bitmap'
-        ) {
-          throw new FileIsNotValidException();
-        }
+    if (!user) {
+      throw new PhotographerNotFoundException();
+    }
 
-        const storageObjectKey = `${userId}/${v4()}.${extension}`;
+    if (user.photoQuotaUsage >= user.maxPhotoQuota) {
+      throw new RunOutPhotoQuotaException();
+    }
 
-        //generate presigned url
-        const url =
-          await this.storageService.getPresignedUploadUrl(storageObjectKey);
+    const extension = Utils.regexFileExtension.exec(
+      presignedUploadUrlRequest.filename,
+    )[1];
 
-        //map correct url with filename
-        return new SignedUpload(filename, url, storageObjectKey, '');
-      }),
-    );
+    if (
+      extension !== 'jpg' &&
+      extension !== 'jpeg' &&
+      extension !== 'png' &&
+      extension !== 'bmp' &&
+      extension !== 'bitmap'
+    ) {
+      throw new FileIsNotValidException();
+    }
 
-    //covert array of signed uploads to directory for attach photo ID easier
-    const signedUploadMap = new Map();
+    const storageObjectKey = `${userId}/${v4()}.${extension}`;
 
-    signedUploads.reduce((result, signedUpload) => {
-      result[signedUpload.storageObject] = signedUpload;
+    const presignedUploadUrl =
+      await this.storageService.getPresignedUploadUrl(storageObjectKey);
 
-      return result;
-    }, signedUploadMap);
-
-    const photos = await this.photoRepository.createTemporaryPhotos(
+    const photo = await this.photoRepository.createTemporaryPhotos(
       userId,
-      signedUploads,
+      storageObjectKey,
     );
 
-    //attach photo id then covert it back to array of signed uploads
-    signedUploads = photos.map(({ id, originalPhotoUrl }) => {
-      const signedUpload = signedUploadMap[originalPhotoUrl];
-      console.log(signedUpload);
-      signedUpload.photoId = id;
+    const signedUpload = new SignedUpload(
+      presignedUploadUrlRequest.filename,
+      presignedUploadUrl,
+      storageObjectKey,
+      photo.id,
+    );
 
-      return signedUpload;
-    });
-
-    return new PresignedUploadUrlResponse(signedUploads);
+    return new PresignedUploadUrlResponse(signedUpload);
   }
 }

@@ -28,8 +28,13 @@ export class Photo implements PrismaPhotoEntity {
   visibility: $Enums.PhotoVisibility;
   status: $Enums.PhotoStatus;
   photoTags: string[];
+
+  size: number;
+
   createdAt: Date;
   updatedAt: Date;
+
+  deletedAt: Date;
 
   constructor() {}
 

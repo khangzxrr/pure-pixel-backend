@@ -1,21 +1,35 @@
-import { NestFactory } from '@nestjs/core';
+import { NestFactory, Reflector } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { ValidationPipe } from '@nestjs/common';
+import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { json, urlencoded } from 'express';
 
 async function bootstrap() {
+  BigInt.prototype['toJSON'] = function () {
+    return this.toString();
+  };
+
   const app = await NestFactory.create(AppModule, {
     snapshot: true,
     abortOnError: true,
   });
 
+  app.use(json({ limit: '50mb' }));
+  app.use(urlencoded({ limit: '50mb' }));
+
   const config = app.get(ConfigService);
 
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      // whitelist: true,
+    }),
+  );
+  app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
 
   app.enableCors({
-    origin: ['http://localhost:3000', '*'],
+    origin: ['http://localhost:3000', 'https://purepixel.io.vn', '*'],
     allowedHeaders: ['content-type', 'Authorization'],
     credentials: true,
   });
