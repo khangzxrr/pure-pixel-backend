@@ -5,6 +5,7 @@ import {
   Get,
   HttpStatus,
   Inject,
+  NotImplementedException,
   Param,
   Patch,
   Post,
@@ -268,6 +269,25 @@ export class PhotoController {
     return await this.photoService.getAvailablePhotoResolution(user.sub, id);
   }
 
+  //TODO: implement GET /share API
+  @Get('/:id/share')
+  @ApiOperation({
+    summary: 'get shared info of photo by id',
+  })
+  @ApiOkResponse({
+    status: HttpStatusCode.Ok,
+    type: PhotoDto,
+  })
+  async getSharedInfo(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Param('id') id: string,
+  ) {
+    throw new NotImplementedException();
+  }
+
+  //if public =>  share info = selected share photo info with quality
+  //if private => share info = selected share photo but when GET /share will throw 401
+  //if shared_link => share info = selected share photo with quality, GET /share return correct quality of image
   @Post('/share')
   @ApiOperation({
     summary: 'generate share url by photo id',
@@ -281,7 +301,5 @@ export class PhotoController {
   async sharePhoto(
     @AuthenticatedUser() user: ParsedUserDto,
     @Body() body: SharePhotoRequestDto,
-  ) {
-    console.log(user, body);
-  }
+  ) {}
 }
