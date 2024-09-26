@@ -79,9 +79,7 @@ export class PhotoProcessConsumer extends WorkerHost {
 
     for (const r of availableResolutions) {
       //BUG: generate image take resolution as WIDTH not HEIGHT
-      const buffer = await this.photoProcessService
-        .resize(sharp, r.pixels)
-        .then((b) => b.toBuffer());
+      const buffer = await this.photoProcessService.resize(sharp, r.pixels);
 
       const key = `${r.resolution}/${photo.originalPhotoUrl}`;
       sharePayload[r.resolution] = key;
