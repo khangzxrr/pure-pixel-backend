@@ -52,10 +52,16 @@ export class PhotoProcessService {
     return availableRes;
   }
 
-  async resize(sharp: SharpLib.Sharp, height: number) {
-    return sharp.clone().resize({
-      height,
-    });
+  async resize(sharp: SharpLib.Sharp, heightRequired: number) {
+    //this resize will take orientation from exif
+    //to determine resize width or height
+    //caution this is a feature not a BUG!
+    return sharp
+      .clone()
+      .resize({
+        height: heightRequired,
+      })
+      .toBuffer();
   }
 
   async makeThumbnail(sharp: SharpLib.Sharp) {
