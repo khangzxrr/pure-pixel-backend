@@ -55,7 +55,7 @@ export class PhotoProcessService {
   async resize(sharp: SharpLib.Sharp, heightRequired: number) {
     //this resize will take orientation from exif
     //to determine resize width or height
-    //caution this is a feature not a BUG!
+    //caution this is a feature not a bug!
     return sharp
       .clone()
       .resize({
