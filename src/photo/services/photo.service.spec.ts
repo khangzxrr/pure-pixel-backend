@@ -11,15 +11,28 @@ import { PhotographerNotFoundException } from 'src/photographer/exceptions/photo
 import { RunOutPhotoQuotaException } from '../exceptions/run-out-photo-quota.exception';
 import { DatabaseModule } from 'src/database/database.module';
 import { ShareStatusIsNotReadyException } from '../exceptions/share-status-is-not-ready.exception';
+import { PhotoNotFoundException } from '../exceptions/photo-not-found.exception';
+import { NotBelongPhotoException } from '../exceptions/not-belong-photo.exception';
+import { PhotoProcessService } from './photo-process.service';
+import { HttpModule, HttpService } from '@nestjs/axios';
 
 describe('PhotoService', () => {
   let photoService: PhotoService;
   const photoRepository = {
+    getPhotoById: (id: string) => {
+      const photo = {
+        id: id,
+        photographerId: 'feecbedf-16a5-42a2-ad81-9d3c3b13809d',
+      };
+
+      return Promise.resolve(photo);
+    },
     //lazy mock, write full object if required
     createTemporaryPhotos: (userId: string, signedUpload: SignedUpload) => {
       const result = {
         id: '90ff5312-51e1-456b-ad05-67e175ac532c',
         originalPhotoUrl: signedUpload.storageObject,
+        photographerId: userId,
       };
       return Promise.resolve(result);
     },
@@ -41,7 +54,15 @@ describe('PhotoService', () => {
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [DatabaseModule, StorageModule, QueueModule],
+      imports: [
+        DatabaseModule,
+        StorageModule,
+        QueueModule,
+        HttpModule.register({
+          timeout: 30000,
+          maxRedirects: 10,
+        }),
+      ],
       providers: [
         PhotoService,
         {
@@ -52,6 +73,7 @@ describe('PhotoService', () => {
           provide: UserRepository,
           useValue: userRepository,
         },
+        PhotoProcessService,
       ],
     }).compile();
 
@@ -62,10 +84,44 @@ describe('PhotoService', () => {
     expect(photoService).toBeDefined();
   });
 
+  describe('findAndValidatePhotoIsNotFoundAndBelongToPhotographer', () => {
+    it(`it should throw ${PhotoNotFoundException.name} when photo is null`, () => {
+      jest
+        .spyOn(photoRepository, 'getPhotoById')
+        .mockImplementation(async () => Promise.resolve(null));
+
+      expect(async () => {
+        const photo =
+          await photoService.findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
+            userId,
+            'randomIdWithoutKnowledge',
+          );
+
+        console.log(photo);
+
+        return photo;
+      }).rejects.toThrow(PhotoNotFoundException);
+    });
+    it(`it should throw ${NotBelongPhotoException.name} when photographerId != userId`, () => {
+      jest.spyOn(photoRepository, 'getPhotoById').mockImplementation(async () =>
+        Promise.resolve({
+          id: 'aebf9a74-8c69-44b2-a317-1d57d874b12a',
+          photographerId: 'not_found_id',
+        }),
+      );
+
+      expect(
+        async () =>
+          await photoService.findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
+            userId,
+            'photoId',
+          ),
+      ).rejects.toThrow(NotBelongPhotoException);
+    });
+  });
+
   describe('sharePhoto', () => {
-    it(
-      `should throw ${ShareStatusIsNotReadyException.name} when share status is not READY`,
-    );
+    it(`should throw ${ShareStatusIsNotReadyException.name} when share status is not READY`, () => {});
   });
 
   describe('getPresignedUploadUrl', () => {
