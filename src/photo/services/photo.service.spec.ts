@@ -20,6 +20,7 @@ import { SharePhotoRequestDto } from '../dtos/share-photo.request.dto';
 import { JsonObject } from '@prisma/client/runtime/library';
 import { ChoosedShareQualityIsNotFoundException } from '../exceptions/choosed-share-quality-is-not-found.exception';
 import { SharePhotoUrlIsEmptyException } from '../exceptions/share-photo-url-is-empty.exception';
+import { Photo } from '../entities/photo.entity';
 
 describe('PhotoService', () => {
   interface PhotoType {
@@ -197,42 +198,33 @@ describe('PhotoService', () => {
 
   describe(`getSharedPhoto`, () => {
     it(`should throw ${ShareStatusIsNotReadyException.name} when share status is not READY`, () => {
-      photo.id = '767dcf23-eea7-42df-ba26-c9ea482beeae';
+      const photo = new Photo();
+      photo.id = '74029e0d-d831-4035-a7c6-85a4e3dae5bd';
       photo.shareStatus = ShareStatus.NOT_READY;
 
-      jest
-        .spyOn(photoRepository, 'getPhotoById')
-        .mockReturnValue(Promise.resolve(photo));
-
       expect(
-        async () => await photoService.getSharedPhoto(userId, photo.id),
+        async () => await photoService.getSignedSharePhotoUrl(photo),
       ).rejects.toThrow(ShareStatusIsNotReadyException);
     });
     it(`should throw ${SharePhotoUrlIsEmptyException.name} when current share photo url is empty`, () => {
-      photo.currentSharePhotoUrl = '';
-      photo.id = 'dfa01247-4728-4585-8ed8-5b6876c7fd66';
+      const photo = new Photo();
+      photo.id = '74029e0d-d831-4035-a7c6-85a4e3dae5bd';
       photo.shareStatus = ShareStatus.READY;
-
-      jest
-        .spyOn(photoRepository, 'getPhotoById')
-        .mockReturnValue(Promise.resolve(photo));
+      photo.currentSharePhotoUrl = '';
 
       expect(
-        async () => await photoService.getSharedPhoto(userId, photo.id),
+        async () => await photoService.getSignedSharePhotoUrl(photo),
       ).rejects.toThrow(SharePhotoUrlIsEmptyException);
     });
     it(`should return signed object with not empty signed photo url when share status is valid and currentShareUrl is not empty`, async () => {
+      const photo = new Photo();
       photo.currentSharePhotoUrl = 'https://example.com';
       photo.id = '23330d5f-0c0f-4906-8659-457f76ada3f6';
       photo.shareStatus = ShareStatus.READY;
 
-      jest
-        .spyOn(photoRepository, 'getPhotoDetailById')
-        .mockReturnValue(Promise.resolve(photo));
+      const result = await photoService.getSignedSharePhotoUrl(photo);
 
-      const result = await photoService.getSharedPhoto(userId, photo.id);
-
-      expect(result.signedUrl.url.trim().length !== 0).toBeTruthy();
+      expect(result.trim().length !== 0).toBeTruthy();
     });
   });
 
