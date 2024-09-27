@@ -14,7 +14,7 @@ import { ShareStatusIsNotReadyException } from '../exceptions/share-status-is-no
 import { PhotoNotFoundException } from '../exceptions/photo-not-found.exception';
 import { NotBelongPhotoException } from '../exceptions/not-belong-photo.exception';
 import { PhotoProcessService } from './photo-process.service';
-import { HttpModule, HttpService } from '@nestjs/axios';
+import { HttpModule } from '@nestjs/axios';
 
 describe('PhotoService', () => {
   let photoService: PhotoService;
