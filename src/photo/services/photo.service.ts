@@ -27,6 +27,8 @@ import { PhotographerNotFoundException } from 'src/photographer/exceptions/photo
 import { RunOutPhotoQuotaException } from '../exceptions/run-out-photo-quota.exception';
 import { DatabaseService } from 'src/database/database.service';
 import { PhotoProcessService } from './photo-process.service';
+import { SharePhotoRequestDto } from '../dtos/share-photo.request.dto';
+import { ShareStatusIsNotReadyException } from '../exceptions/share-status-is-not-ready.exception';
 
 @Injectable()
 export class PhotoService {
@@ -41,7 +43,10 @@ export class PhotoService {
     private readonly photoProcessQueue: Queue,
   ) {}
 
-  async getAvailablePhotoResolution(userId: string, id: string) {
+  async findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
+    userId: string,
+    id: string,
+  ) {
     const photo = await this.photoRepository.getPhotoById(id);
 
     if (!photo) {
@@ -51,6 +56,28 @@ export class PhotoService {
     if (photo.photographerId !== userId) {
       throw new NotBelongPhotoException();
     }
+
+    return photo;
+  }
+
+  async sharePhoto(userId: string, shareRequest: SharePhotoRequestDto) {
+    const photo =
+      await this.findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
+        userId,
+        shareRequest.photoId,
+      );
+
+    if (photo.shareStatus !== 'READY') {
+      throw new ShareStatusIsNotReadyException();
+    }
+  }
+
+  async getAvailablePhotoResolution(userId: string, id: string) {
+    const photo =
+      await this.findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
+        userId,
+        id,
+      );
 
     if (photo.status === 'PENDING') {
       throw new PhotoIsPendingStateException();
@@ -175,17 +202,13 @@ export class PhotoService {
   }
 
   async deleteById(userId: string, photoId: string) {
-    const photo = await this.photoRepository.getPhotoById(photoId);
+    const photo =
+      await this.findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
+        userId,
+        photoId,
+      );
 
-    if (!photo) {
-      throw new PhotoNotFoundException();
-    }
-
-    if (photo.photographerId !== userId) {
-      throw new NotBelongPhotoException();
-    }
-
-    await this.photoRepository.delete(photoId);
+    await this.photoRepository.delete(photo.id);
 
     return true;
   }
