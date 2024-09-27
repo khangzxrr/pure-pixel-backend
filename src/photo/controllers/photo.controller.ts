@@ -43,6 +43,7 @@ import { CommentEntity } from '../entities/comment.entity';
 import { ProcessPhotosRequest } from '../dtos/process-images.request.dto';
 import { GenerateWatermarkRequestDto } from '../dtos/generate-watermark.request.dto';
 import { SharePhotoRequestDto } from '../dtos/share-photo.request.dto';
+import { GetPhotoDetailDto } from '../dtos/get-photo-detail.dto';
 
 @Controller('photo')
 @ApiTags('photo')
@@ -145,7 +146,9 @@ export class PhotoController {
   async getPhoto(
     @AuthenticatedUser() user: ParsedUserDto,
     @Param('id') id: string,
+    @Query() getPhotoDetailDto: GetPhotoDetailDto,
   ) {
+    console.log(getPhotoDetailDto);
     return await this.photoService.getSignedPhotoById(user ? user.sub : '', id);
   }
 
