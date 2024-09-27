@@ -38,6 +38,7 @@ export class Photo implements PrismaPhotoEntity {
 
   shareStatus: $Enums.ShareStatus;
   sharePayload: Prisma.JsonValue;
+  currentSharePhotoUrl: string;
 
   constructor() {}
   static fromDto(photoDto: PhotoDto) {
