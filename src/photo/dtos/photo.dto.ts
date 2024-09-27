@@ -10,6 +10,13 @@ export class PhotoDto {
 
   //TODO: add share status, share payload to dto
   //
+  //
+  @ApiProperty()
+  shareStatus: string;
+
+  @ApiProperty()
+  sharePayload: JsonValue;
+
   @ApiProperty()
   categoryId: string;
 
