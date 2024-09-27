@@ -285,9 +285,10 @@ export class PhotoController {
     throw new NotImplementedException();
   }
 
-  //if public =>  share info = selected share photo info with quality
+  //if image is sell => share image is watermarked
   //if private => share info = selected share photo but when GET /share will throw 401
   //if shared_link => share info = selected share photo with quality, GET /share return correct quality of image
+  //if public =>  share info = selected share photo info with quality
   @Post('/share')
   @ApiOperation({
     summary: 'generate share url by photo id',
