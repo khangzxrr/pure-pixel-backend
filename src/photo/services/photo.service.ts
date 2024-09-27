@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { PhotoStatus, PhotoVisibility } from '@prisma/client';
+import { PhotoStatus, PhotoVisibility, ShareStatus } from '@prisma/client';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoIsPrivatedException } from '../exceptions/photo-is-private.exception';
 import { PresignedUploadUrlRequest } from '../dtos/presigned-upload-url.request';
@@ -32,6 +32,7 @@ import { ShareStatusIsNotReadyException } from '../exceptions/share-status-is-no
 import { ChoosedShareQualityIsNotFoundException } from '../exceptions/choosed-share-quality-is-not-found.exception';
 import { SharePhotoUrlIsEmptyException } from '../exceptions/share-photo-url-is-empty.exception';
 import { SharePhotoResponseDto } from '../exceptions/share-photo-response.dto';
+import { GetPhotoDetailDto } from '../dtos/get-photo-detail.dto';
 
 @Injectable()
 export class PhotoService {
@@ -63,10 +64,8 @@ export class PhotoService {
     return photo;
   }
 
-  async getSharedPhoto(userId: string, id: string) {
-    const photo = await this.photoRepository.getPhotoById(id);
-
-    if (photo.shareStatus != 'READY') {
+  async getSignedSharePhotoUrl(photo: Photo) {
+    if (photo.shareStatus != ShareStatus.READY) {
       throw new ShareStatusIsNotReadyException();
     }
 
@@ -78,10 +77,7 @@ export class PhotoService {
       photo.currentSharePhotoUrl,
     );
 
-    const signedPhoto = await this.getSignedPhotoById(userId, id);
-    signedPhoto.signedUrl.url = signedShareUrl;
-
-    return signedPhoto;
+    return signedShareUrl;
   }
 
   async sharePhoto(userId: string, shareRequest: SharePhotoRequestDto) {
@@ -91,7 +87,7 @@ export class PhotoService {
         shareRequest.photoId,
       );
 
-    if (photo.shareStatus !== 'READY') {
+    if (photo.shareStatus !== ShareStatus.READY) {
       throw new ShareStatusIsNotReadyException();
     }
 
@@ -105,7 +101,7 @@ export class PhotoService {
     await this.photoRepository.update(photo);
 
     return new SharePhotoResponseDto(
-      `${process.env.FRONTEND_ORIGIN}/${photo.id}?shared`,
+      `${process.env.FRONTEND_ORIGIN}/${photo.id}?shared=true`,
     );
   }
 
@@ -250,7 +246,11 @@ export class PhotoService {
     return true;
   }
 
-  async getSignedPhotoById(userId: string, id: string) {
+  async getSignedPhotoById(
+    userId: string,
+    id: string,
+    query?: GetPhotoDetailDto,
+  ) {
     const photo = await this.photoRepository.getPhotoDetailById(id);
 
     if (!photo) {
@@ -270,8 +270,15 @@ export class PhotoService {
     });
 
     const signedUrls = await this.signUrlFromPhotos(photo);
-
     signedPhotoDto.signedUrl = signedUrls;
+
+    console.log(query);
+    if (query?.shared === true) {
+      console.log('get shared');
+      signedPhotoDto.signedUrl.url = await this.getSignedSharePhotoUrl(photo);
+    }
+
+    console.log('work');
 
     return signedPhotoDto;
   }
