@@ -17,6 +17,10 @@ export class PhotoProcessService {
     @Inject() private readonly storageService: StorageService,
   ) {}
 
+  async getPresignUploadUrl(key: string) {
+    return this.storageService.getPresignedUploadUrl(key);
+  }
+
   async sharpInitFromBuffer(buffer: Buffer) {
     return SharpLib(buffer);
   }
@@ -28,6 +32,36 @@ export class PhotoProcessService {
     const photo = SharpLib(buffer);
 
     return photo;
+  }
+
+  async getAvailableResolution(key: string) {
+    const sharp = await this.sharpInitFromObjectKey(key);
+
+    const metadata = await sharp.metadata();
+
+    const availableRes = PhotoConstant.PHOTO_RESOLUTION_MAP;
+
+    for (let i = 0; i < PhotoConstant.PHOTO_RESOLUTION_MAP.length; i++) {
+      if (metadata.height >= PhotoConstant.PHOTO_RESOLUTION_MAP[i].pixels) {
+        break;
+      }
+
+      availableRes.shift();
+    }
+
+    return availableRes;
+  }
+
+  async resize(sharp: SharpLib.Sharp, heightRequired: number) {
+    //this resize will take orientation from exif
+    //to determine resize width or height
+    //caution this is a feature not a bug!
+    return sharp
+      .clone()
+      .resize({
+        height: heightRequired,
+      })
+      .toBuffer();
   }
 
   async makeThumbnail(sharp: SharpLib.Sharp) {
@@ -75,6 +109,10 @@ export class PhotoProcessService {
     const encodedImageUrl = encodeURIComponent(imagePublicUrl);
 
     return encodedImageUrl;
+  }
+
+  async getSignedObjectUrl(key: string) {
+    return this.storageService.getSignedGetUrl(key);
   }
 
   async getBufferImageFromUrl(url: string) {

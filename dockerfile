@@ -50,7 +50,8 @@ ENV ONESIGNAL_APP_ID=$ONESIGNAL_APP_ID
 
 ENV SEPAY_ACC=$SEPAY_ACC
 ENV SEPAY_BANK=$SEPAY_BANK
-ENV SEPAY_MOCK_ORIGIN=$SEPAY_MOCK_ORIGIN
+
+ENV FRONTEND_ORIGIN=$FRONTEND_ORIGIN
 
 WORKDIR /usr/src/app
 
@@ -71,6 +72,9 @@ USER node
 ###################
 
 FROM node:18.19.1-alpine As production
+
+RUN apk add --no-cache fontconfig
+RUN apk add --no-cache font-roboto
 
 COPY --chown=node:node --from=build /usr/src/app/node_modules ./node_modules
 COPY --chown=node:node --from=build /usr/src/app/dist ./dist

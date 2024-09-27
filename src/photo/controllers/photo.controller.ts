@@ -41,6 +41,8 @@ import { CreateCommentRequestDto } from '../dtos/create-comment.request.dto';
 import { CommentEntity } from '../entities/comment.entity';
 import { ProcessPhotosRequest } from '../dtos/process-images.request.dto';
 import { GenerateWatermarkRequestDto } from '../dtos/generate-watermark.request.dto';
+import { SharePhotoRequestDto } from '../dtos/share-photo.request.dto';
+import { GetPhotoDetailDto } from '../dtos/get-photo-detail.dto';
 
 @Controller('photo')
 @ApiTags('photo')
@@ -143,8 +145,14 @@ export class PhotoController {
   async getPhoto(
     @AuthenticatedUser() user: ParsedUserDto,
     @Param('id') id: string,
+    @Query() getPhotoDetailDto: GetPhotoDetailDto,
   ) {
-    return await this.photoService.getSignedPhotoById(user ? user.sub : '', id);
+    console.log(getPhotoDetailDto);
+    return await this.photoService.getSignedPhotoById(
+      user ? user.sub : '',
+      id,
+      getPhotoDetailDto,
+    );
   }
 
   //TODO: webhook handle sftp
@@ -252,5 +260,38 @@ export class PhotoController {
     );
 
     return presignedUrl;
+  }
+
+  @Get('/:id/avaiable-resolution')
+  @ApiOperation({
+    summary: 'get photo available scaling resolution',
+  })
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
+  async getPhotoAvailableResolution(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Param('id') id: string,
+  ) {
+    return await this.photoService.getAvailablePhotoResolution(user.sub, id);
+  }
+  //if image is sell => share image is watermarked
+  //if private => share info = selected share photo but when GET /share will throw 401
+  //if shared_link => share info = selected share photo with quality, GET /share return correct quality of image
+  //if public =>  share info = selected share photo info with quality
+  @Post('/share')
+  @ApiOperation({
+    summary: 'generate share url by photo id',
+  })
+  @ApiOkResponse({
+    status: HttpStatusCode.Ok,
+    type: String,
+  })
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
+  async sharePhoto(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Body() body: SharePhotoRequestDto,
+  ) {
+    return await this.photoService.sharePhoto(user.sub, body);
   }
 }

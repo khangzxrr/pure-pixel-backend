@@ -10,6 +10,9 @@ import { GenerateWatermarkRequestDto } from '../dtos/generate-watermark.request.
 import { ProcessPhotosRequest } from '../dtos/process-images.request.dto';
 import { DatabaseService } from 'src/database/database.service';
 import { UserRepository } from 'src/database/repositories/user.repository';
+import { Sharp } from 'sharp';
+import { Photo } from '../entities/photo.entity';
+import { ShareStatus } from '@prisma/client';
 
 @Processor(PhotoConstant.PHOTO_PROCESS_QUEUE)
 export class PhotoProcessConsumer extends WorkerHost {
@@ -66,6 +69,40 @@ export class PhotoProcessConsumer extends WorkerHost {
     await this.photoGateway.sendFinishWatermarkEventToUserId(userId, photo);
   }
 
+  async generateSharePayload(sharp: Sharp, photo: Photo) {
+    const availableResolutions =
+      await this.photoProcessService.getAvailableResolution(
+        photo.originalPhotoUrl,
+      );
+
+    const sharePayload = {};
+
+    for (const r of availableResolutions) {
+      const buffer = await this.photoProcessService.resize(sharp, r.pixels);
+
+      const key = `${r.resolution}/${photo.originalPhotoUrl}`;
+      sharePayload[r.resolution] = key;
+
+      await this.photoProcessService.uploadFromBuffer(key, buffer);
+    }
+
+    photo.shareStatus = ShareStatus.READY;
+    photo.sharePayload = sharePayload;
+
+    const updatedPhoto = await this.photoRepository.update(photo);
+
+    await this.photoGateway.sendFinishWatermarkEventToUserId(
+      photo.photographerId,
+      updatedPhoto,
+    );
+
+    await this.photoGateway.sendDataToUserId(
+      photo.photographerId,
+      'generated-multiple-share-resolutions',
+      updatedPhoto,
+    );
+  }
+
   async generateWatermark(
     generateWatermarkRequest: GenerateWatermarkRequestDto,
   ) {
@@ -110,14 +147,12 @@ export class PhotoProcessConsumer extends WorkerHost {
     this.logger.log(`process photos`);
     this.logger.log(processRequest);
 
-    await this.convertAndEmitProcessEvents(userId, processRequest);
-
-    const photo = await this.photoService.getSignedPhotoById(
+    const processResult = await this.convertAndEmitProcessEvents(
       userId,
-      processRequest.signedUpload.photoId,
+      processRequest,
     );
 
-    await this.photoGateway.sendFinishProcessPhotoEventToUserId(userId, photo);
+    await this.generateSharePayload(processResult.sharp, processResult.photo);
   }
 
   async convertAndEmitProcessEvents(
@@ -178,5 +213,12 @@ export class PhotoProcessConsumer extends WorkerHost {
       ...updateQueries,
       updateQuotaQuery,
     ]);
+
+    await this.photoGateway.sendFinishProcessPhotoEventToUserId(userId, photo);
+
+    return {
+      photo,
+      sharp,
+    };
   }
 }

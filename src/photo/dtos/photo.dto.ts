@@ -9,6 +9,12 @@ export class PhotoDto {
   id: string;
 
   @ApiProperty()
+  shareStatus: string;
+
+  @ApiProperty()
+  sharePayload: JsonValue;
+
+  @ApiProperty()
   categoryId: string;
 
   @ApiProperty()

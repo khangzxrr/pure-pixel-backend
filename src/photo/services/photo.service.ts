@@ -1,8 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { PhotoStatus, PhotoVisibility } from '@prisma/client';
+import { PhotoStatus, PhotoVisibility, ShareStatus } from '@prisma/client';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoIsPrivatedException } from '../exceptions/photo-is-private.exception';
-import { StorageService } from 'src/storage/services/storage.service';
 import { PresignedUploadUrlRequest } from '../dtos/presigned-upload-url.request';
 import {
   PresignedUploadUrlResponse,
@@ -27,6 +26,13 @@ import { UserRepository } from 'src/database/repositories/user.repository';
 import { PhotographerNotFoundException } from 'src/photographer/exceptions/photographer-not-found.exception';
 import { RunOutPhotoQuotaException } from '../exceptions/run-out-photo-quota.exception';
 import { DatabaseService } from 'src/database/database.service';
+import { PhotoProcessService } from './photo-process.service';
+import { SharePhotoRequestDto } from '../dtos/share-photo.request.dto';
+import { ShareStatusIsNotReadyException } from '../exceptions/share-status-is-not-ready.exception';
+import { ChoosedShareQualityIsNotFoundException } from '../exceptions/choosed-share-quality-is-not-found.exception';
+import { SharePhotoUrlIsEmptyException } from '../exceptions/share-photo-url-is-empty.exception';
+import { SharePhotoResponseDto } from '../exceptions/share-photo-response.dto';
+import { GetPhotoDetailDto } from '../dtos/get-photo-detail.dto';
 
 @Injectable()
 export class PhotoService {
@@ -36,10 +42,84 @@ export class PhotoService {
     @Inject() private readonly databaseService: DatabaseService,
     @Inject() private readonly photoRepository: PhotoRepository,
     @Inject() private readonly userRepository: UserRepository,
-    @Inject() private readonly storageService: StorageService,
+    @Inject() private readonly photoProcessService: PhotoProcessService,
     @InjectQueue(PhotoConstant.PHOTO_PROCESS_QUEUE)
     private readonly photoProcessQueue: Queue,
   ) {}
+
+  async findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
+    userId: string,
+    id: string,
+  ) {
+    const photo = await this.photoRepository.getPhotoById(id);
+
+    if (!photo) {
+      throw new PhotoNotFoundException();
+    }
+
+    if (photo.photographerId !== userId) {
+      throw new NotBelongPhotoException();
+    }
+
+    return photo;
+  }
+
+  async getSignedSharePhotoUrl(photo: Photo) {
+    if (photo.shareStatus != ShareStatus.READY) {
+      throw new ShareStatusIsNotReadyException();
+    }
+
+    if (photo.currentSharePhotoUrl.trim().length === 0) {
+      throw new SharePhotoUrlIsEmptyException();
+    }
+
+    const signedShareUrl = await this.photoProcessService.getSignedObjectUrl(
+      photo.watermark ? photo.watermarkPhotoUrl : photo.currentSharePhotoUrl,
+    );
+
+    return signedShareUrl;
+  }
+
+  async sharePhoto(userId: string, shareRequest: SharePhotoRequestDto) {
+    const photo =
+      await this.findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
+        userId,
+        shareRequest.photoId,
+      );
+
+    if (photo.shareStatus !== ShareStatus.READY) {
+      throw new ShareStatusIsNotReadyException();
+    }
+
+    const choosedQualityPhotoUrl = photo.sharePayload[shareRequest.quality];
+
+    if (!choosedQualityPhotoUrl) {
+      throw new ChoosedShareQualityIsNotFoundException();
+    }
+
+    photo.currentSharePhotoUrl = choosedQualityPhotoUrl;
+    await this.photoRepository.update(photo);
+
+    return new SharePhotoResponseDto(
+      `${process.env.FRONTEND_ORIGIN}/${photo.id}?shared=true`,
+    );
+  }
+
+  async getAvailablePhotoResolution(userId: string, id: string) {
+    const photo =
+      await this.findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
+        userId,
+        id,
+      );
+
+    if (photo.status === 'PENDING') {
+      throw new PhotoIsPendingStateException();
+    }
+
+    return this.photoProcessService.getAvailableResolution(
+      photo.originalPhotoUrl,
+    );
+  }
 
   async sendWatermarkRequest(
     userId: string,
@@ -84,9 +164,9 @@ export class PhotoService {
       ? photo.watermarkThumbnailPhotoUrl
       : photo.thumbnailPhotoUrl;
 
-    const signedUrl = await this.storageService.getSignedGetUrl(url);
+    const signedUrl = await this.photoProcessService.getSignedObjectUrl(url);
     const signedThumbnail =
-      await this.storageService.getSignedGetUrl(thumbnail);
+      await this.photoProcessService.getSignedObjectUrl(thumbnail);
 
     return new SignedUrl(signedUrl, signedThumbnail);
   }
@@ -155,22 +235,22 @@ export class PhotoService {
   }
 
   async deleteById(userId: string, photoId: string) {
-    const photo = await this.photoRepository.getPhotoById(photoId);
+    const photo =
+      await this.findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
+        userId,
+        photoId,
+      );
 
-    if (!photo) {
-      throw new PhotoNotFoundException();
-    }
-
-    if (photo.photographerId !== userId) {
-      throw new NotBelongPhotoException();
-    }
-
-    await this.photoRepository.delete(photoId);
+    await this.photoRepository.delete(photo.id);
 
     return true;
   }
 
-  async getSignedPhotoById(userId: string, id: string) {
+  async getSignedPhotoById(
+    userId: string,
+    id: string,
+    query?: GetPhotoDetailDto,
+  ) {
     const photo = await this.photoRepository.getPhotoDetailById(id);
 
     if (!photo) {
@@ -190,8 +270,15 @@ export class PhotoService {
     });
 
     const signedUrls = await this.signUrlFromPhotos(photo);
-
     signedPhotoDto.signedUrl = signedUrls;
+
+    console.log(query);
+    if (query?.shared === true) {
+      console.log('get shared');
+      signedPhotoDto.signedUrl.url = await this.getSignedSharePhotoUrl(photo);
+    }
+
+    console.log('work');
 
     return signedPhotoDto;
   }
@@ -227,7 +314,7 @@ export class PhotoService {
     const storageObjectKey = `${userId}/${v4()}.${extension}`;
 
     const presignedUploadUrl =
-      await this.storageService.getPresignedUploadUrl(storageObjectKey);
+      await this.photoProcessService.getPresignUploadUrl(storageObjectKey);
 
     const photo = await this.photoRepository.createTemporaryPhotos(
       userId,
