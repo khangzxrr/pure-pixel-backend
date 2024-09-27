@@ -15,27 +15,29 @@ import { PhotoNotFoundException } from '../exceptions/photo-not-found.exception'
 import { NotBelongPhotoException } from '../exceptions/not-belong-photo.exception';
 import { PhotoProcessService } from './photo-process.service';
 import { HttpModule } from '@nestjs/axios';
+import { ShareStatus } from '@prisma/client';
+import { SharePhotoRequestDto } from '../dtos/share-photo.request.dto';
+import { JsonObject } from '@prisma/client/runtime/library';
 
 describe('PhotoService', () => {
+  interface PhotoType {
+    id: string;
+    photographerId: string;
+    originalPhotoUrl: string;
+    shareStatus: ShareStatus;
+    sharePayload: JsonObject;
+  }
+
   let photoService: PhotoService;
   const photoRepository = {
-    getPhotoById: (id: string) => {
-      const photo = {
-        id: id,
-        photographerId: 'feecbedf-16a5-42a2-ad81-9d3c3b13809d',
-      };
-
-      return Promise.resolve(photo);
-    },
-    //lazy mock, write full object if required
-    createTemporaryPhotos: (userId: string, signedUpload: SignedUpload) => {
-      const result = {
-        id: '90ff5312-51e1-456b-ad05-67e175ac532c',
-        originalPhotoUrl: signedUpload.storageObject,
-        photographerId: userId,
-      };
-      return Promise.resolve(result);
-    },
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    getPhotoById: (id: string): Promise<PhotoType> => Promise.resolve(null), //lazy mock, write full object if required
+    createTemporaryPhotos: (
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      userId: string,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      signedUpload: SignedUpload,
+    ): Promise<PhotoType> => Promise.resolve(null),
   };
 
   const userRepository = {
@@ -51,6 +53,14 @@ describe('PhotoService', () => {
 
   const userId = '6db1c6a1-f4ab-4ecb-a489-9285ebb53135';
   const presignedUploadUrlRequest = new PresignedUploadUrlRequest();
+
+  const photo: PhotoType = {
+    id: '3cb95f2e-4164-47ec-84ef-418c247c1963',
+    photographerId: 'd682487e-e941-48e8-b7e8-e96f2a4674f9',
+    originalPhotoUrl: 'https://example.com',
+    shareStatus: ShareStatus.NOT_READY,
+    sharePayload: {},
+  };
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -88,7 +98,7 @@ describe('PhotoService', () => {
     it(`it should throw ${PhotoNotFoundException.name} when photo is null`, () => {
       jest
         .spyOn(photoRepository, 'getPhotoById')
-        .mockImplementation(async () => Promise.resolve(null));
+        .mockReturnValue(Promise.resolve(null));
 
       expect(async () => {
         const photo =
@@ -97,18 +107,14 @@ describe('PhotoService', () => {
             'randomIdWithoutKnowledge',
           );
 
-        console.log(photo);
-
         return photo;
       }).rejects.toThrow(PhotoNotFoundException);
     });
     it(`it should throw ${NotBelongPhotoException.name} when photographerId != userId`, () => {
-      jest.spyOn(photoRepository, 'getPhotoById').mockImplementation(async () =>
-        Promise.resolve({
-          id: 'aebf9a74-8c69-44b2-a317-1d57d874b12a',
-          photographerId: 'not_found_id',
-        }),
-      );
+      photo.photographerId = 'random_string_photographer_id';
+      jest
+        .spyOn(photoRepository, 'getPhotoById')
+        .mockReturnValue(Promise.resolve(photo));
 
       expect(
         async () =>
@@ -118,10 +124,42 @@ describe('PhotoService', () => {
           ),
       ).rejects.toThrow(NotBelongPhotoException);
     });
+    it(`it should return photo when photo is found and belong to photographer`, async () => {
+      const photoId = '8fec219d-d840-41f4-8ead-ff84526c2ee0';
+
+      photo.id = photoId;
+      photo.photographerId = userId;
+
+      jest
+        .spyOn(photoRepository, 'getPhotoById')
+        .mockReturnValue(Promise.resolve(photo));
+
+      const result =
+        await photoService.findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
+          userId,
+          photoId,
+        );
+
+      expect(result).toHaveProperty('id');
+      expect(result).toHaveProperty('photographerId');
+    });
   });
 
   describe('sharePhoto', () => {
-    it(`should throw ${ShareStatusIsNotReadyException.name} when share status is not READY`, () => {});
+    it(`should throw ${ShareStatusIsNotReadyException.name} when share status is not READY or SHARED`, () => {
+      photo.shareStatus = ShareStatus.NOT_READY;
+      photo.photographerId = userId;
+
+      jest
+        .spyOn(photoRepository, 'getPhotoById')
+        .mockReturnValue(Promise.resolve(photo));
+
+      const shareRequest = new SharePhotoRequestDto();
+
+      expect(
+        async () => await photoService.sharePhoto(userId, shareRequest),
+      ).rejects.toThrow(ShareStatusIsNotReadyException);
+    });
   });
 
   describe('getPresignedUploadUrl', () => {
@@ -152,19 +190,46 @@ describe('PhotoService', () => {
     it('should return correct SignedUpload when filename is valid', async () => {
       presignedUploadUrlRequest.filename = 'test.jpg';
 
+      const signedUpload = new SignedUpload(
+        'name',
+        'url',
+        'object',
+        'be1fe599-7aab-4a04-8620-dac51c6bc31e',
+      );
+
+      jest.spyOn(userRepository, 'findUserQuotaById').mockReturnValue(
+        Promise.resolve({
+          maxPhotoQuota: 999,
+          maxPackageCount: 999,
+          maxBookingPhotoQuota: 999,
+          maxBookingVideoQuota: 999,
+        }),
+      );
+
+      jest.spyOn(photoRepository, 'createTemporaryPhotos').mockReturnValue(
+        Promise.resolve({
+          photographerId: userId,
+          originalPhotoUrl: 'https://example.com',
+          sharePayload: {},
+          shareStatus: ShareStatus.NOT_READY,
+          id: signedUpload.photoId,
+        }),
+      );
+
       const result = await photoService.getPresignedUploadUrl(
         userId,
         presignedUploadUrlRequest,
       );
 
       expect(result).toHaveProperty('signedUpload');
+      expect(result.signedUpload.photoId.length > 0).toBeTruthy();
       expect(result.signedUpload.uploadUrl.length > 0).toBeTruthy();
     });
 
     it('should throw PhotographerNotFoundException when userid is not found', () => {
       jest
         .spyOn(userRepository, 'findUserQuotaById')
-        .mockImplementation(async () => Promise.resolve(null));
+        .mockReturnValue(Promise.resolve(null));
 
       expect(
         async () =>
