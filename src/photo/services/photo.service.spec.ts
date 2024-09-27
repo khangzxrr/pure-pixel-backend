@@ -10,6 +10,7 @@ import { UserRepository } from 'src/database/repositories/user.repository';
 import { PhotographerNotFoundException } from 'src/photographer/exceptions/photographer-not-found.exception';
 import { RunOutPhotoQuotaException } from '../exceptions/run-out-photo-quota.exception';
 import { DatabaseModule } from 'src/database/database.module';
+import { ShareStatusIsNotReadyException } from '../exceptions/share-status-is-not-ready.exception';
 
 describe('PhotoService', () => {
   let photoService: PhotoService;
@@ -59,6 +60,12 @@ describe('PhotoService', () => {
 
   it('should define service', async () => {
     expect(photoService).toBeDefined();
+  });
+
+  describe('sharePhoto', () => {
+    it(
+      `should throw ${ShareStatusIsNotReadyException.name} when share status is not READY`,
+    );
   });
 
   describe('getPresignedUploadUrl', () => {
