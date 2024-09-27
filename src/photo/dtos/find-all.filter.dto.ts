@@ -19,7 +19,9 @@ export class FindAllPhotoFilterDto {
   @ApiPropertyOptional()
   cursorId: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    default: 0,
+  })
   @IsNumber()
   @Min(0)
   @Transform(({ value }) => {
@@ -27,7 +29,9 @@ export class FindAllPhotoFilterDto {
   })
   skip: number;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    default: 20,
+  })
   @IsNumber()
   @Min(1)
   @Max(20)
