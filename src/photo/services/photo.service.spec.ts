@@ -18,18 +18,24 @@ import { HttpModule } from '@nestjs/axios';
 import { ShareStatus } from '@prisma/client';
 import { SharePhotoRequestDto } from '../dtos/share-photo.request.dto';
 import { JsonObject } from '@prisma/client/runtime/library';
+import { ChoosedShareQualityIsNotFoundException } from '../exceptions/choosed-share-quality-is-not-found.exception';
+import { SharePhotoUrlIsEmptyException } from '../exceptions/share-photo-url-is-empty.exception';
 
 describe('PhotoService', () => {
   interface PhotoType {
-    id: string;
-    photographerId: string;
-    originalPhotoUrl: string;
-    shareStatus: ShareStatus;
-    sharePayload: JsonObject;
+    id?: string;
+    photographerId?: string;
+    originalPhotoUrl?: string;
+    shareStatus?: ShareStatus;
+    sharePayload?: JsonObject;
+    currentSharePhotoUrl?: string;
   }
 
   let photoService: PhotoService;
   const photoRepository = {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    getPhotoDetailById: (id: string): Promise<PhotoType> =>
+      Promise.resolve(null),
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     getPhotoById: (id: string): Promise<PhotoType> => Promise.resolve(null), //lazy mock, write full object if required
     createTemporaryPhotos: (
@@ -49,6 +55,11 @@ describe('PhotoService', () => {
         maxPackageCount: 0,
       });
     },
+  };
+
+  const photoProcessService = {
+    getSignedObjectUrl: (key: string): Promise<string> => Promise.resolve(key),
+    getPresignUploadUrl: (key: string): Promise<string> => Promise.resolve(key),
   };
 
   const userId = '6db1c6a1-f4ab-4ecb-a489-9285ebb53135';
@@ -83,7 +94,10 @@ describe('PhotoService', () => {
           provide: UserRepository,
           useValue: userRepository,
         },
-        PhotoProcessService,
+        {
+          provide: PhotoProcessService,
+          useValue: photoProcessService,
+        },
       ],
     }).compile();
 
@@ -146,7 +160,7 @@ describe('PhotoService', () => {
   });
 
   describe('sharePhoto', () => {
-    it(`should throw ${ShareStatusIsNotReadyException.name} when share status is not READY or SHARED`, () => {
+    it(`should throw ${ShareStatusIsNotReadyException.name} when share status is not READY`, () => {
       photo.shareStatus = ShareStatus.NOT_READY;
       photo.photographerId = userId;
 
@@ -159,6 +173,66 @@ describe('PhotoService', () => {
       expect(
         async () => await photoService.sharePhoto(userId, shareRequest),
       ).rejects.toThrow(ShareStatusIsNotReadyException);
+    });
+    it(`should throw ${ChoosedShareQualityIsNotFoundException.name} when share quality supply is not found`, () => {
+      photo.id = 'd02936b6-281e-40bd-b9ac-36631e073242';
+      photo.shareStatus = ShareStatus.READY;
+      photo.sharePayload = {
+        '4K': 'https://example.com',
+      };
+
+      jest
+        .spyOn(photoRepository, 'getPhotoById')
+        .mockReturnValue(Promise.resolve(photo));
+
+      const shareRequest = new SharePhotoRequestDto();
+      shareRequest.photoId = photo.id;
+      shareRequest.quality = 'NOT_FOUND_CHOOSED_QUALITY';
+
+      expect(
+        async () => await photoService.sharePhoto(userId, shareRequest),
+      ).rejects.toThrow(ChoosedShareQualityIsNotFoundException);
+    });
+  });
+
+  describe(`getSharedPhoto`, () => {
+    it(`should throw ${ShareStatusIsNotReadyException.name} when share status is not READY`, () => {
+      photo.id = '767dcf23-eea7-42df-ba26-c9ea482beeae';
+      photo.shareStatus = ShareStatus.NOT_READY;
+
+      jest
+        .spyOn(photoRepository, 'getPhotoById')
+        .mockReturnValue(Promise.resolve(photo));
+
+      expect(
+        async () => await photoService.getSharedPhoto(userId, photo.id),
+      ).rejects.toThrow(ShareStatusIsNotReadyException);
+    });
+    it(`should throw ${SharePhotoUrlIsEmptyException.name} when current share photo url is empty`, () => {
+      photo.currentSharePhotoUrl = '';
+      photo.id = 'dfa01247-4728-4585-8ed8-5b6876c7fd66';
+      photo.shareStatus = ShareStatus.READY;
+
+      jest
+        .spyOn(photoRepository, 'getPhotoById')
+        .mockReturnValue(Promise.resolve(photo));
+
+      expect(
+        async () => await photoService.getSharedPhoto(userId, photo.id),
+      ).rejects.toThrow(SharePhotoUrlIsEmptyException);
+    });
+    it(`should return signed object with not empty signed photo url when share status is valid and currentShareUrl is not empty`, async () => {
+      photo.currentSharePhotoUrl = 'https://example.com';
+      photo.id = '23330d5f-0c0f-4906-8659-457f76ada3f6';
+      photo.shareStatus = ShareStatus.READY;
+
+      jest
+        .spyOn(photoRepository, 'getPhotoDetailById')
+        .mockReturnValue(Promise.resolve(photo));
+
+      const result = await photoService.getSharedPhoto(userId, photo.id);
+
+      expect(result.signedUrl.url.trim().length !== 0).toBeTruthy();
     });
   });
 

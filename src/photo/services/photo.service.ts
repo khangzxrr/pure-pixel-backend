@@ -29,6 +29,9 @@ import { DatabaseService } from 'src/database/database.service';
 import { PhotoProcessService } from './photo-process.service';
 import { SharePhotoRequestDto } from '../dtos/share-photo.request.dto';
 import { ShareStatusIsNotReadyException } from '../exceptions/share-status-is-not-ready.exception';
+import { ChoosedShareQualityIsNotFoundException } from '../exceptions/choosed-share-quality-is-not-found.exception';
+import { SharePhotoUrlIsEmptyException } from '../exceptions/share-photo-url-is-empty.exception';
+import { SharePhotoResponseDto } from '../exceptions/share-photo-response.dto';
 
 @Injectable()
 export class PhotoService {
@@ -60,6 +63,27 @@ export class PhotoService {
     return photo;
   }
 
+  async getSharedPhoto(userId: string, id: string) {
+    const photo = await this.photoRepository.getPhotoById(id);
+
+    if (photo.shareStatus != 'READY') {
+      throw new ShareStatusIsNotReadyException();
+    }
+
+    if (photo.currentSharePhotoUrl.trim().length === 0) {
+      throw new SharePhotoUrlIsEmptyException();
+    }
+
+    const signedShareUrl = await this.photoProcessService.getSignedObjectUrl(
+      photo.currentSharePhotoUrl,
+    );
+
+    const signedPhoto = await this.getSignedPhotoById(userId, id);
+    signedPhoto.signedUrl.url = signedShareUrl;
+
+    return signedPhoto;
+  }
+
   async sharePhoto(userId: string, shareRequest: SharePhotoRequestDto) {
     const photo =
       await this.findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
@@ -70,6 +94,19 @@ export class PhotoService {
     if (photo.shareStatus !== 'READY') {
       throw new ShareStatusIsNotReadyException();
     }
+
+    const choosedQualityPhotoUrl = photo.sharePayload[shareRequest.quality];
+
+    if (!choosedQualityPhotoUrl) {
+      throw new ChoosedShareQualityIsNotFoundException();
+    }
+
+    photo.currentSharePhotoUrl = choosedQualityPhotoUrl;
+    await this.photoRepository.update(photo);
+
+    return new SharePhotoResponseDto(
+      `${process.env.FRONTEND_ORIGIN}/${photo.id}?shared`,
+    );
   }
 
   async getAvailablePhotoResolution(userId: string, id: string) {
