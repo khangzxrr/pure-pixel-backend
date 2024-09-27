@@ -182,9 +182,10 @@ enum PhotoStatus {
 }
 
 enum ShareStatus {
-    READY
-    NOT_READY
-  }
+  NOT_READY
+  READY
+  SHARED
+}
 
 model Photo {
   id String @id @default(uuid())
@@ -220,12 +221,14 @@ model Photo {
 
   status PhotoStatus @default(PENDING)
 
-  shareStatus ShareStatus @default(NOT_READY) 
-  sharePayload Json @default("{}")
+  shareStatus  ShareStatus @default(NOT_READY)
+  sharePayload Json        @default("{}")
+
+  currentSharePhotoUrl String @default("")
 
   photoTags String[]
 
-  size Int @default(0) 
+  size Int @default(0)
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
