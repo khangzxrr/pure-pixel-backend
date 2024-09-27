@@ -5,7 +5,6 @@ import {
   Get,
   HttpStatus,
   Inject,
-  NotImplementedException,
   Param,
   Patch,
   Post,
@@ -149,7 +148,11 @@ export class PhotoController {
     @Query() getPhotoDetailDto: GetPhotoDetailDto,
   ) {
     console.log(getPhotoDetailDto);
-    return await this.photoService.getSignedPhotoById(user ? user.sub : '', id);
+    return await this.photoService.getSignedPhotoById(
+      user ? user.sub : '',
+      id,
+      getPhotoDetailDto,
+    );
   }
 
   //TODO: webhook handle sftp
@@ -271,23 +274,6 @@ export class PhotoController {
   ) {
     return await this.photoService.getAvailablePhotoResolution(user.sub, id);
   }
-
-  //TODO: implement GET /share API
-  @Get('/:id/share')
-  @ApiOperation({
-    summary: 'get shared info of photo by id',
-  })
-  @ApiOkResponse({
-    status: HttpStatusCode.Ok,
-    type: PhotoDto,
-  })
-  async getSharedInfo(
-    @AuthenticatedUser() user: ParsedUserDto,
-    @Param('id') id: string,
-  ) {
-    throw new NotImplementedException();
-  }
-
   //if image is sell => share image is watermarked
   //if private => share info = selected share photo but when GET /share will throw 401
   //if shared_link => share info = selected share photo with quality, GET /share return correct quality of image
@@ -305,5 +291,7 @@ export class PhotoController {
   async sharePhoto(
     @AuthenticatedUser() user: ParsedUserDto,
     @Body() body: SharePhotoRequestDto,
-  ) {}
+  ) {
+    return await this.photoService.sharePhoto(user.sub, body);
+  }
 }
