@@ -74,7 +74,7 @@ export class PhotoService {
     }
 
     const signedShareUrl = await this.photoProcessService.getSignedObjectUrl(
-      photo.currentSharePhotoUrl,
+      photo.watermark ? photo.watermarkPhotoUrl : photo.currentSharePhotoUrl,
     );
 
     return signedShareUrl;

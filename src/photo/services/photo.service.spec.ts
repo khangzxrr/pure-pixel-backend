@@ -226,6 +226,22 @@ describe('PhotoService', () => {
 
       expect(result.trim().length !== 0).toBeTruthy();
     });
+    it(`should return watermark url when share photo is watermarked`, async () => {
+      const photo = new Photo();
+
+      photo.id = '52b0c3b9-39ef-469b-89d3-017acaddb0a7';
+      photo.shareStatus = ShareStatus.READY;
+      photo.sharePayload = {
+        '4K': 'https://example.com',
+      };
+      photo.watermark = true;
+      photo.currentSharePhotoUrl = 'https://example.com/share';
+      photo.watermarkPhotoUrl = 'https://example.com/watermark/test.jpg';
+
+      const result = await photoService.getSignedSharePhotoUrl(photo);
+
+      expect(result.indexOf('watermark/') > 0).toBeTruthy();
+    });
   });
 
   describe('getPresignedUploadUrl', () => {
