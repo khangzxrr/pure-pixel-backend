@@ -8,13 +8,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { PhotographerService } from '../services/photographer.service';
-import {
-  ApiOkResponse,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
-import { HttpStatusCode } from 'axios';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { SignedPhotoDto } from 'src/photo/dtos/photo.dto';
 import {
   AuthenticatedUser,
@@ -91,11 +85,7 @@ export class PhotographerController {
   @ApiOperation({
     summary: 'get all photos of mine',
   })
-  @ApiResponse({
-    isArray: true,
-    status: HttpStatusCode.Ok,
-    type: SignedPhotoDto,
-  })
+  @ApiOkResponsePaginated(SignedPhotoDto)
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   async getPhotoOfMine(

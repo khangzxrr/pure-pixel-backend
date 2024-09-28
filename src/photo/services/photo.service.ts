@@ -34,6 +34,7 @@ import { SharePhotoUrlIsEmptyException } from '../exceptions/share-photo-url-is-
 import { SharePhotoResponseDto } from '../exceptions/share-photo-response.dto';
 import { GetPhotoDetailDto } from '../dtos/get-photo-detail.dto';
 import { EmptyOriginalPhotoException } from '../exceptions/empty-original-photo.exception';
+import { PagingPaginatedResposneDto } from 'src/infrastructure/restful/paging-paginated.response.dto';
 
 @Injectable()
 export class PhotoService {
@@ -263,9 +264,22 @@ export class PhotoService {
     );
   }
 
-  async findAll(filter: FindAllPhotoFilterDto) {
-    const photos =
-      await this.photoRepository.findAllIncludedPhotographer(filter);
+  async findAll(
+    filter: FindAllPhotoFilterDto,
+  ): Promise<PagingPaginatedResposneDto<SignedPhotoDto>> {
+    this.logger.log({
+      filter,
+    });
+
+    const count = await this.photoRepository.count(filter);
+
+    const photos = await this.photoRepository.findAll(
+      filter,
+      filter.toSkip(),
+      filter.limit,
+      true,
+      true,
+    );
 
     const signedPhotoDtoPromises = photos.map(async (p) => {
       const signedPhotoDto = new SignedPhotoDto({
@@ -280,7 +294,13 @@ export class PhotoService {
       return signedPhotoDto;
     });
 
-    return await Promise.all(signedPhotoDtoPromises);
+    const signedPhotos = await Promise.all(signedPhotoDtoPromises);
+
+    return new PagingPaginatedResposneDto<SignedPhotoDto>(
+      filter.limit,
+      count,
+      signedPhotos,
+    );
   }
 
   async deleteById(userId: string, photoId: string) {
