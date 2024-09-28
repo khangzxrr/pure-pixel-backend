@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PhotoVisibility } from '@prisma/client';
 import { FindAllPhotoFilterDto } from 'src/photo/dtos/find-all.filter.dto';
+import { PhotoProcessDto } from 'src/photo/dtos/photo-process.dto';
 import { Photo } from 'src/photo/entities/photo.entity';
 import { PrismaService } from 'src/prisma.service';
 
@@ -28,6 +29,32 @@ export class PhotoRepository {
     });
   }
 
+  async updatePhotoShare(photo: Photo) {
+    return this.prisma.extendedClient().photo.update({
+      where: {
+        id: photo.id,
+      },
+      data: {
+        sharePayload: photo.sharePayload,
+        shareStatus: photo.shareStatus,
+      },
+    });
+  }
+
+  batchUpdatePhotoProcess(photoProcesses: PhotoProcessDto[]) {
+    const queries = photoProcesses.map((p) => {
+      return this.prisma.extendedClient().photo.update({
+        where: {
+          id: p.id,
+        },
+        data: {
+          ...p,
+        },
+      });
+    });
+
+    return queries;
+  }
   batchUpdate(photos: Photo[]) {
     const queries = photos.map((p) => {
       return this.prisma.extendedClient().photo.update({
