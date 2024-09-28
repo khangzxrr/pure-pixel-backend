@@ -1,7 +1,6 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Logger, Inject } from '@nestjs/common';
 import { Job } from 'bullmq';
-import { DatabaseService } from 'src/database/database.service';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoConstant } from '../constants/photo.constant';
 import { GenerateWatermarkRequestDto } from '../dtos/generate-watermark.request.dto';
@@ -18,7 +17,6 @@ export class PhotoWatermarkConsumer extends WorkerHost {
     @Inject() private readonly photoRepository: PhotoRepository,
     @Inject() private readonly photoProcessService: PhotoProcessService,
     @Inject() private readonly photoService: PhotoService,
-    @Inject() private readonly databaseService: DatabaseService,
   ) {
     super();
   }

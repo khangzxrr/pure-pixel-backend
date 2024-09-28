@@ -64,7 +64,11 @@ export class PhotoProcessConsumer extends WorkerHost {
     photo.shareStatus = ShareStatus.READY;
     photo.sharePayload = sharePayload;
 
-    const updatedPhoto = await this.photoRepository.updatePhotoShare(photo);
+    const updatedPhoto = await this.photoRepository.updatePhotoShare(
+      photo.id,
+      ShareStatus.READY,
+      sharePayload,
+    );
 
     await this.photoGateway.sendFinishWatermarkEventToUserId(
       photo.photographerId,
@@ -156,5 +160,7 @@ export class PhotoProcessConsumer extends WorkerHost {
     ]);
 
     await this.photoGateway.sendFinishProcessPhotoEventToUserId(userId, photo);
+
+    this.generateSharePayload(sharp, photo);
   }
 }
