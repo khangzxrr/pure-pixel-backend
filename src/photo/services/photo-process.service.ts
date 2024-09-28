@@ -39,18 +39,14 @@ export class PhotoProcessService {
 
     const metadata = await sharp.metadata();
 
-    console.log(metadata.height);
+    const availableRes = [...PhotoConstant.PHOTO_RESOLUTION_MAP];
 
-    const availableRes = PhotoConstant.PHOTO_RESOLUTION_MAP;
-
-    //BUG: wrong return available resolution
     for (let i = 0; i < PhotoConstant.PHOTO_RESOLUTION_MAP.length; i++) {
       if (metadata.height >= PhotoConstant.PHOTO_RESOLUTION_MAP[i].pixels) {
         break;
       }
 
       availableRes.shift();
-      console.log(availableRes);
     }
 
     return availableRes;
