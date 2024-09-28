@@ -5,7 +5,6 @@ import { Inject, Logger } from '@nestjs/common';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoProcessService } from '../services/photo-process.service';
 import { PhotoGateway } from '../gateways/socket.io.gateway';
-import { PhotoService } from '../services/photo.service';
 import { ProcessPhotosRequest } from '../dtos/process-images.request.dto';
 import { DatabaseService } from 'src/database/database.service';
 import { UserRepository } from 'src/database/repositories/user.repository';
