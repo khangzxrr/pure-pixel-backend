@@ -70,11 +70,6 @@ export class PhotoProcessConsumer extends WorkerHost {
       sharePayload,
     );
 
-    await this.photoGateway.sendFinishWatermarkEventToUserId(
-      photo.photographerId,
-      updatedPhoto,
-    );
-
     await this.photoGateway.sendDataToUserId(
       photo.photographerId,
       'generated-multiple-share-resolutions',
