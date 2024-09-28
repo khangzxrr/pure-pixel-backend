@@ -13,6 +13,7 @@ import { UserRepository } from 'src/database/repositories/user.repository';
 import { Sharp } from 'sharp';
 import { Photo } from '../entities/photo.entity';
 import { ShareStatus } from '@prisma/client';
+import { PhotoProcessDto } from '../dtos/photo-process.dto';
 
 @Processor(PhotoConstant.PHOTO_PROCESS_QUEUE)
 export class PhotoProcessConsumer extends WorkerHost {
@@ -89,7 +90,7 @@ export class PhotoProcessConsumer extends WorkerHost {
     photo.shareStatus = ShareStatus.READY;
     photo.sharePayload = sharePayload;
 
-    const updatedPhoto = await this.photoRepository.update(photo);
+    const updatedPhoto = await this.photoRepository.updatePhotoShare(photo);
 
     await this.photoGateway.sendFinishWatermarkEventToUserId(
       photo.photographerId,
@@ -187,7 +188,6 @@ export class PhotoProcessConsumer extends WorkerHost {
 
     const metadata = await sharp.metadata();
     photo.size = metadata.size;
-    photo.exif = await this.photoProcessService.makeExif(sharp);
 
     const thumbnailBuffer = await this.photoProcessService
       .makeThumbnail(sharp)
@@ -203,7 +203,19 @@ export class PhotoProcessConsumer extends WorkerHost {
     photo.watermarkPhotoUrl = photo.originalPhotoUrl;
     photo.status = 'PARSED';
 
-    const updateQueries = this.photoRepository.batchUpdate([photo]);
+    const photoProcess = new PhotoProcessDto(
+      photo.id,
+      photo.originalPhotoUrl,
+      photo.thumbnailPhotoUrl,
+      photo.watermarkPhotoUrl,
+      photo.watermarkThumbnailPhotoUrl,
+      photo.status,
+      photo.size,
+    );
+
+    const updateQueries = this.photoRepository.batchUpdatePhotoProcess([
+      photoProcess,
+    ]);
     const updateQuotaQuery = this.userRepository.increasePhotoQuotaUsageById(
       userId,
       photo.size,
