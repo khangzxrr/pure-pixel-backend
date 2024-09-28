@@ -175,8 +175,14 @@ export class PhotoService {
     userId: string,
     photoDtos: PhotoDto[],
   ): Promise<PhotoDto[]> {
-    const photos = photoDtos.map((dto) => {
-      if (dto.photographerId != userId) {
+    const photoPromises = photoDtos.map(async (dto) => {
+      const photo =
+        await this.findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
+          userId,
+          dto.id,
+        );
+
+      if (photo.photographerId !== userId) {
         throw new NotBelongPhotoException();
       }
 
@@ -193,6 +199,8 @@ export class PhotoService {
 
       return Photo.fromDto(dto);
     });
+
+    const photos = await Promise.all(photoPromises);
 
     const updateQueries = this.photoRepository.batchUpdate(photos);
     const updateResults =
