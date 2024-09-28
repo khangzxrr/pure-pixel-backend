@@ -321,13 +321,9 @@ export class PhotoService {
     const signedUrls = await this.signUrlFromPhotos(photo);
     signedPhotoDto.signedUrl = signedUrls;
 
-    console.log(query);
     if (query?.shared === true) {
-      console.log('get shared');
       signedPhotoDto.signedUrl.url = await this.getSignedSharePhotoUrl(photo);
     }
-
-    console.log('work');
 
     return signedPhotoDto;
   }

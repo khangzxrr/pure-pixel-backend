@@ -29,6 +29,22 @@ export class PhotoRepository {
     });
   }
 
+  async updatePhotoWatermarkById(
+    id: string,
+    watermarkPhotoUrl: string,
+    watermarkThumbnailPhotoUrl: string,
+  ) {
+    return this.prisma.extendedClient().photo.update({
+      where: {
+        id,
+      },
+      data: {
+        watermarkPhotoUrl,
+        watermarkThumbnailPhotoUrl,
+      },
+    });
+  }
+
   async updatePhotoShare(photo: Photo) {
     return this.prisma.extendedClient().photo.update({
       where: {

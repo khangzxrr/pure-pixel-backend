@@ -94,6 +94,16 @@ export class PhotoWatermarkConsumer extends WorkerHost {
       watermarkThumbnailBuffer,
     );
 
-    await this.photoRepository.update(photo);
+    await this.photoRepository.updatePhotoWatermarkById(
+      photo.id,
+      photo.watermarkPhotoUrl,
+      photo.watermarkThumbnailPhotoUrl,
+    );
+
+    this.logger.log(
+      `created watermark:
+${photo.watermarkPhotoUrl}
+${photo.watermarkThumbnailPhotoUrl}`,
+    );
   }
 }
