@@ -256,7 +256,7 @@ export class PhotoController {
     return presignedUrl;
   }
 
-  @Get('/:id/avaiable-resolution')
+  @Get('/:id/available-resolution')
   @ApiOperation({
     summary: 'get photo available scaling resolution',
   })
