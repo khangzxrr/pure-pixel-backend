@@ -33,6 +33,7 @@ import { ChoosedShareQualityIsNotFoundException } from '../exceptions/choosed-sh
 import { SharePhotoUrlIsEmptyException } from '../exceptions/share-photo-url-is-empty.exception';
 import { SharePhotoResponseDto } from '../exceptions/share-photo-response.dto';
 import { GetPhotoDetailDto } from '../dtos/get-photo-detail.dto';
+import { EmptyOriginalPhotoException } from '../exceptions/empty-original-photo.exception';
 
 @Injectable()
 export class PhotoService {
@@ -164,6 +165,10 @@ export class PhotoService {
       ? photo.watermarkThumbnailPhotoUrl
       : photo.thumbnailPhotoUrl;
 
+    if (url.length == 0 || thumbnail.length == 0) {
+      console.log(`error photo without thumbnail or original: ${photo.id}`);
+      throw new EmptyOriginalPhotoException();
+    }
     const signedUrl = await this.photoProcessService.getSignedObjectUrl(url);
     const signedThumbnail =
       await this.photoProcessService.getSignedObjectUrl(thumbnail);
@@ -186,18 +191,32 @@ export class PhotoService {
         throw new NotBelongPhotoException();
       }
 
-      //set undefined to prevent update what user shouldn't
-      dto.photographerId = undefined;
-      dto.thumbnailPhotoUrl = undefined;
-      dto.originalPhotoUrl = undefined;
-      dto.watermarkPhotoUrl = undefined;
-      dto.watermarkThumbnailPhotoUrl = undefined;
-      dto.updatedAt = undefined;
-      dto.createdAt = undefined;
+      photo.exif = dto?.exif;
+      photo.categoryId = dto?.categoryId;
+      photo.title = dto?.title;
+      photo.watermark = dto?.watermark;
+      photo.showExif = dto?.showExif;
+      photo.colorGrading = dto?.colorGrading;
+      photo.location = dto?.location;
+      photo.captureTime = dto?.captureTime;
+      photo.description = dto?.description;
+      photo.photoTags = dto?.photoTags;
 
-      dto.categoryId = undefined;
+      if (dto?.photoType === 'RAW') {
+        photo.photoType = 'RAW';
+      } else if (dto?.photoType === 'EDITED') {
+        photo.photoType = 'EDITED';
+      }
 
-      return Photo.fromDto(dto);
+      if (dto?.visibility === 'PRIVATE') {
+        photo.visibility = 'PRIVATE';
+      } else if (dto?.visibility === 'PUBLIC') {
+        photo.visibility = 'PUBLIC';
+      } else {
+        photo.visibility = 'SHARE_LINK';
+      }
+
+      return photo;
     });
 
     const photos = await Promise.all(photoPromises);
