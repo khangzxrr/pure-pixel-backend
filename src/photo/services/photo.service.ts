@@ -46,6 +46,8 @@ export class PhotoService {
     @Inject() private readonly photoProcessService: PhotoProcessService,
     @InjectQueue(PhotoConstant.PHOTO_PROCESS_QUEUE)
     private readonly photoProcessQueue: Queue,
+    @InjectQueue(PhotoConstant.PHOTO_WATERMARK_QUEUE)
+    private readonly photoWatermarkQueue: Queue,
   ) {}
 
   async findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
@@ -137,19 +139,39 @@ export class PhotoService {
     if (photo.photographerId != userId) {
       throw new NotBelongPhotoException();
     }
-    await this.photoProcessQueue.add(PhotoConstant.GENERATE_WATERMARK_JOB, {
-      userId,
-      generateWatermarkRequest,
-    });
+
+    await this.photoWatermarkQueue.add(
+      PhotoConstant.GENERATE_WATERMARK_JOB,
+      {
+        userId,
+        generateWatermarkRequest,
+      },
+      {
+        debounce: {
+          id: photo.id,
+          ttl: 10000,
+        },
+      },
+    );
   }
+
   async sendProcessImageToMq(
     userId: string,
     processPhotosRequest: ProcessPhotosRequest,
   ) {
-    await this.photoProcessQueue.add(PhotoConstant.PROCESS_PHOTO_JOB_NAME, {
-      userId,
-      processPhotosRequest,
-    });
+    await this.photoProcessQueue.add(
+      PhotoConstant.PROCESS_PHOTO_JOB_NAME,
+      {
+        userId,
+        processPhotosRequest,
+      },
+      {
+        debounce: {
+          id: processPhotosRequest.signedUpload.photoId,
+          ttl: 10000,
+        },
+      },
+    );
   }
 
   async signUrlFromPhotos(photo: Photo) {
