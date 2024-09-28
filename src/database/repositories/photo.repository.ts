@@ -210,14 +210,26 @@ export class PhotoRepository {
     });
   }
 
-  async findAllIncludedPhotographer(filter: FindAllPhotoFilterDto) {
+  async count(filter: FindAllPhotoFilterDto) {
+    return this.prisma.extendedClient().photo.count({
+      where: filter.toWhere(),
+    });
+  }
+
+  async findAll(
+    filter: FindAllPhotoFilterDto,
+    skip: number,
+    take: number,
+    includePhotographer: boolean = false,
+    includeCategory: boolean = false,
+  ) {
     return this.prisma.extendedClient().photo.findMany({
       where: filter.toWhere(),
-      skip: filter.skip,
-      take: filter.take,
+      skip,
+      take,
       include: {
-        photographer: true,
-        category: true,
+        photographer: includePhotographer,
+        category: includeCategory,
       },
     });
   }
