@@ -29,6 +29,12 @@ import { UpgradeConstant } from 'src/upgrade/constants/upgrade.constant';
       useExisting: BullMqQueueRegisterService,
       inject: [CustomConfigModule],
     }),
+    BullModule.registerQueueAsync({
+      imports: [CustomConfigModule],
+      name: PhotoConstant.PHOTO_WATERMARK_QUEUE,
+      useExisting: BullMqQueueRegisterService,
+      inject: [CustomConfigModule],
+    }),
   ],
 })
 export class QueueModule {}
