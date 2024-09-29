@@ -97,7 +97,7 @@ export class UpgradeOrderService {
     amount: number,
   ): Promise<string> {
     return await QRCode.toDataURL(
-      `${process.env.FONTEND_ORIGIN}/ipn/sepay/test?transactionid=${transactionId}&amount=${amount}`,
+      `${process.env.FRONTEND_ORIGIN}/ipn/sepay/test?transactionid=${transactionId}&amount=${amount}`,
     );
   }
 
