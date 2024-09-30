@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 import { UserEntity } from 'src/user/entities/user.entity';
 import { DuplicatedUserIdException } from '../exceptions/duplicatedUserId.exception';
-import { UserFilterDto } from 'src/user/dto/user-filter.dto';
+import { UserFilterDto } from 'src/user/dtos/user-filter.dto';
 
 @Injectable()
 export class UserRepository {
