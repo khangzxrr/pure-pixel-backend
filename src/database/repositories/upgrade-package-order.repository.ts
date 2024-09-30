@@ -109,6 +109,19 @@ export class UpgradePackageOrderRepository {
     tx: Prisma.TransactionClient,
   ) {
     return tx.upgradeOrder.create({
+      select: {
+        id: true,
+        serviceTransaction: {
+          select: {
+            transactionId: true,
+          },
+        },
+        upgradePackageHistory: {
+          select: {
+            id: true,
+          },
+        },
+      },
       data: {
         expiredAt,
         status: 'PENDING',
