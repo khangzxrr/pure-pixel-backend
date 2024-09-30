@@ -7,9 +7,8 @@ export class TransactionEntity
   implements Transaction
 {
   id: string;
-  userId: string;
   paymentPayload: JsonValue;
-  paymentMethod: string;
+  paymentMethod: $Enums.PaymentMethod;
   type: $Enums.TransactionType;
   status: $Enums.TransactionStatus;
   amount: Decimal;
