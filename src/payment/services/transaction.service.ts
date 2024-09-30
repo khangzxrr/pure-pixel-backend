@@ -1,6 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { TransactionRepository } from 'src/database/repositories/transaction.repository';
-import { NotBelongTransactionException } from '../exceptions/not-belong-transaction.exception';
 import { TransactionNotFoundException } from '../exceptions/transaction-not-found.exception';
 
 @Injectable()
@@ -11,15 +10,15 @@ export class TransactionService {
 
   async findById(userId: string, id: string) {
     console.log(userId);
-    const transaction = await this.transactionRepository.getById(id);
+    const transaction = await this.transactionRepository.findById(id);
 
     if (!transaction) {
       throw new TransactionNotFoundException();
     }
 
-    if (transaction.userId !== userId) {
-      throw new NotBelongTransactionException();
-    }
+    // if (transaction. !== userId) {
+    //   throw new NotBelongTransactionException();
+    // }
 
     return transaction;
   }
