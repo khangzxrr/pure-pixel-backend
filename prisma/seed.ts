@@ -1,5 +1,4 @@
 import { Prisma, PrismaClient, UpgradePackageStatus } from '@prisma/client';
-import { Constants } from 'src/infrastructure/utils/constants';
 
 const prisma = new PrismaClient();
 
@@ -97,7 +96,7 @@ async function main() {
     update: {},
     create: {
       id: adminId,
-      avatar: Constants.DEFAULT_AVATAR,
+      avatar: 'https://s3-hcm-r1.s3cloud.vn/sftpgo/avatar%2Favatar.png',
       quote: 'đây là admin',
       name: 'admin',
     },

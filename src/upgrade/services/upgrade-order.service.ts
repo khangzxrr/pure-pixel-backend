@@ -161,22 +161,24 @@ export class UpgradeOrderService {
             upgradePackage,
             expiredDate,
             calculatedPrice,
+            'SEPAY',
             tx,
           );
 
         const paymentUrl = this.generatePaymentUrl(
           calculatedPrice.toNumber(),
-          newUpgradeOrder.transactionId,
+          newUpgradeOrder.id,
         );
 
         const requestUpgradeResponse = new RequestUpgradeOrderResponseDto();
         requestUpgradeResponse.id = newUpgradeOrder.id;
-        requestUpgradeResponse.transactionId = newUpgradeOrder.transactionId;
-        requestUpgradeResponse.originalUpgradePackageId =
-          newUpgradeOrder.originalUpgradePackageId;
+        requestUpgradeResponse.transactionId =
+          newUpgradeOrder.serviceTransactionId;
+        requestUpgradeResponse.upgradePackageHistoryId =
+          newUpgradeOrder.upgradePackageHistoryId;
         requestUpgradeResponse.paymentQrcodeUrl = paymentUrl;
         requestUpgradeResponse.mockQrcode = await this.generateMockIpnQrCode(
-          newUpgradeOrder.transactionId,
+          newUpgradeOrder.serviceTransactionId,
           calculatedPrice.toNumber(),
         );
 

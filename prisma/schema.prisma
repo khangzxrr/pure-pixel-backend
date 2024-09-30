@@ -39,12 +39,35 @@ model User {
 
   photos        Photo[]
   upgradeOrders UpgradeOrder[]
-  transactions  Transaction[]
-  Comment       Comment[]
-  Vote          Vote[]
+
+  Comment Comment[]
+  Vote    Vote[]
 
   followers  Follow[] @relation("follower")
   followings Follow[] @relation("following")
+
+  bankInfos BankInfo[]
+
+  fromUserTransactions UserToUserTransaction[] @relation("fromUser")
+  toUserTransactions   UserToUserTransaction[] @relation("toUser")
+
+  withdrawalTransactions WithdrawalTransaction[]
+  depositTransactions    DepositTransaction[]
+  serviceTransactions    ServiceTransaction[]
+}
+
+model BankInfo {
+  id        String   @id @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  bankName     String
+  bankNumber   String
+  bankUserName String
+  User         User?   @relation(fields: [userId], references: [id])
+  userId       String?
+
+  withdrawalTransactions WithdrawalTransaction[]
 }
 
 model Follow {
@@ -61,8 +84,8 @@ enum TransactionType {
   UPGRADE_TO_PHOTOGRAPHER
   IMAGE_SELL
   IMAGE_BUY
-  FIRST_BOOKING_PAYMENT
-  SECOND_BOOKING_PAYMENT
+  DEPOSIT
+  WITHDRAWAL
 }
 
 enum TransactionStatus {
@@ -72,26 +95,88 @@ enum TransactionStatus {
   CANCEL
 }
 
+enum PaymentMethod {
+  WALLET
+  SEPAY
+}
+
 model Transaction {
   id String @id @unique @default(uuid())
 
-  fromUser   User   @relation(fields: [fromUserId], references: [id])
-  fromUserId String
-
-  toUser User @relation(fields: [toUserId], references: [id])
-  toUserId String
-
   paymentPayload Json
-  paymentMethod  String
+  paymentMethod  PaymentMethod
   type           TransactionType
   status         TransactionStatus @default(PENDING)
-  amount         Decimal
+
+  amount Decimal
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userToUserTransaction UserToUserTransaction?
+  withdrawalTransaction WithdrawalTransaction?
+  depositTransaction    DepositTransaction?
+  serviceTransaction    ServiceTransaction?
+}
+
+model UserToUserTransaction {
+  id String @id @unique @default(uuid())
+
+  fromUser   User   @relation(name: "fromUser", fields: [fromUserId], references: [id])
+  fromUserId String
+
+  toUser   User   @relation(name: "toUser", fields: [toUserId], references: [id])
+  toUserId String
+
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+  transactionId String      @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model WithdrawalTransaction {
+  id String @id @unique @default(uuid())
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  bankInfo   BankInfo @relation(fields: [bankInfoId], references: [id])
+  bankInfoId String
+
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+  transactionId String      @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DepositTransaction {
+  id String @id @unique @default(uuid())
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+  transactionId String      @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ServiceTransaction {
+  id String @id @unique @default(uuid())
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+  transactionId String      @unique
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   upgradeOrder UpgradeOrder?
-
 }
 
 enum UpgradeOrderStatus {
@@ -108,21 +193,27 @@ model UpgradeOrder {
 
   expiredAt DateTime
 
-  originalUpgradePackage   UpgradePackage @relation(fields: [originalUpgradePackageId], references: [id])
-  originalUpgradePackageId String
-
   user   User   @relation(fields: [userId], references: [id])
   userId String
 
   status UpgradeOrderStatus @default(PENDING)
 
-  transaction   Transaction? @relation(fields: [transactionId], references: [id], onDelete: SetNull)
-  transactionId String?      @unique
+  serviceTransaction   ServiceTransaction @relation(fields: [serviceTransactionId], references: [id])
+  serviceTransactionId String             @unique
 
-  //copy from UpgradePackage
-  name          String
-  price         Decimal @default(0)
-  minOrderMonth Int     @default(0)
+  upgradePackageHistory   UpgradePackageHistory @relation(fields: [upgradePackageHistoryId], references: [id])
+  upgradePackageHistoryId String                @unique
+}
+
+model UpgradePackageHistory {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name  String  @unique
+  price Decimal @default(0)
+
+  minOrderMonth Int @default(0)
 
   maxPhotoQuota        BigInt @default(0)
   maxPackageCount      BigInt @default(0)
@@ -130,6 +221,11 @@ model UpgradeOrder {
   maxBookingVideoQuota BigInt @default(0)
 
   descriptions String[]
+
+  originalUpgradePackage   UpgradePackage @relation(fields: [originalUpgradePackageId], references: [id])
+  originalUpgradePackageId String
+
+  upgradeOrder UpgradeOrder?
 }
 
 enum UpgradePackageStatus {
@@ -156,7 +252,7 @@ model UpgradePackage {
 
   status UpgradePackageStatus
 
-  upgradeOrders UpgradeOrder[]
+  upgradePackageHistories UpgradePackageHistory[]
 }
 
 model Category {
