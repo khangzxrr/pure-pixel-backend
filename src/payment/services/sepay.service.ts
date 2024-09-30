@@ -22,6 +22,7 @@ export class SepayService {
   ) {}
 
   async handleUpgradeToPhotographer(
+    userId: string,
     serviceTransactionId: string,
     sepay: SepayRequestDto,
   ) {
@@ -37,7 +38,7 @@ export class SepayService {
       );
 
     const updateUserMaxQuotaQuery = this.userRepository.updateMaxQuotaByUserId(
-      serviceTransaction.userId,
+      userId,
       serviceTransaction.upgradeOrder.upgradePackageHistory.maxPhotoQuota,
       serviceTransaction.upgradeOrder.upgradePackageHistory.maxPackageCount,
       serviceTransaction.upgradeOrder.upgradePackageHistory
@@ -52,7 +53,7 @@ export class SepayService {
     ]);
 
     await this.keycloakService.addRoleToUser(
-      serviceTransaction.userId,
+      userId,
       Constants.PHOTOGRAPHER_ROLE,
     );
   }
@@ -83,6 +84,7 @@ export class SepayService {
     switch (transaction.type) {
       case 'UPGRADE_TO_PHOTOGRAPHER':
         await this.handleUpgradeToPhotographer(
+          transaction.userId,
           transaction.serviceTransaction.id,
           sepay,
         );
