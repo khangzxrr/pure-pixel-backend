@@ -172,11 +172,16 @@ export class UpgradeOrderService {
 
         const requestUpgradeResponse = new RequestUpgradeOrderResponseDto();
         requestUpgradeResponse.id = newUpgradeOrder.id;
+
+        //IMPORTANT: must using transactionId instead of serviceTransactionId
         requestUpgradeResponse.transactionId =
           newUpgradeOrder.serviceTransaction.transactionId;
+
         requestUpgradeResponse.upgradePackageHistoryId =
           newUpgradeOrder.upgradePackageHistory.id;
         requestUpgradeResponse.paymentQrcodeUrl = paymentUrl;
+
+        //IMPORTANT: must using transactionId instead of serviceTransactionId
         requestUpgradeResponse.mockQrcode = await this.generateMockIpnQrCode(
           newUpgradeOrder.serviceTransaction.transactionId,
           calculatedPrice.toNumber(),
