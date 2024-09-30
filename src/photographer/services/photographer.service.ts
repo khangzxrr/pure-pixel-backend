@@ -9,9 +9,9 @@ import { FindAllPhotographerResponseDto } from '../dtos/find-all-photographer-dt
 import { FindAllPhotographerRequestDto } from '../dtos/find-all-photographer-dtos/find-all-photographer.request.dto';
 import { PhotographerDTO } from '../dtos/photographer.dto';
 import { UserRepository } from 'src/database/repositories/user.repository';
-import { UserFilterDto } from 'src/user/dto/user-filter.dto';
 import { PhotographerNotFoundException } from '../exceptions/photographer-not-found.exception';
 import { PhotographerProfileDto } from '../dtos/photographer-profile.dto';
+import { UserFilterDto } from 'src/user/dtos/user-filter.dto';
 
 @Injectable()
 export class PhotographerService {

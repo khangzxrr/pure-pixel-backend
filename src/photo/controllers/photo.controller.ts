@@ -35,7 +35,6 @@ import { PhotoUpdateRequest } from '../dtos/photo-update.request.dto';
 import { FindAllPhotoFilterDto } from '../dtos/find-all.filter.dto';
 
 import { Response } from 'express';
-import { ParsedUserDto } from 'src/user/dto/parsed-user.dto';
 import { CommentService } from '../services/comment.service';
 import { CreateCommentRequestDto } from '../dtos/create-comment.request.dto';
 import { CommentEntity } from '../entities/comment.entity';
@@ -44,6 +43,7 @@ import { GenerateWatermarkRequestDto } from '../dtos/generate-watermark.request.
 import { SharePhotoRequestDto } from '../dtos/share-photo.request.dto';
 import { GetPhotoDetailDto } from '../dtos/get-photo-detail.dto';
 import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.response.dto';
+import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
 
 @Controller('photo')
 @ApiTags('photo')
