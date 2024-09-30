@@ -27,9 +27,11 @@ export class ServiceTransactionRepository {
   ) {
     return tx.serviceTransaction.findMany({
       where: {
-        userId,
         upgradeOrder: {
           status: 'PENDING',
+        },
+        transaction: {
+          userId,
         },
       },
       select: {
