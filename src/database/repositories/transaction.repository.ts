@@ -6,41 +6,66 @@ import { PrismaService } from 'src/prisma.service';
 export class TransactionRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async cancelAllPendingOrderTransaction(
+  async getAllPendingOrderIdTransactionByUserId(
     userId: string,
     tx: Prisma.TransactionClient,
   ) {
-    return tx.transaction.updateMany({
+    return tx.serviceTransaction.findMany({
       where: {
         userId,
-        status: 'PENDING',
+        upgradeOrder: {
+          status: 'PENDING',
+        },
       },
-
-      data: {
-        status: 'CANCEL',
-      },
-    });
-  }
-
-  async getById(id: string) {
-    return this.prisma.transaction.findUnique({
-      where: {
-        id,
-      },
-      include: {
-        upgradeOrder: true,
+      select: {
+        id: true,
       },
     });
   }
 
-  updateSuccessTransactionAndActivateUpgradeOrder(id: string, payload: object) {
-    return this.prisma.extendedClient().transaction.update({
+  async cancelAllPendingOrderTransactionQueries(
+    ids: string[],
+    tx: Prisma.TransactionClient,
+  ) {
+    const updatePromises = ids.map((id) => {
+      return tx.serviceTransaction.update({
+        where: {
+          id,
+        },
+
+        data: {
+          upgradeOrder: {
+            update: {
+              status: 'CANCEL',
+            },
+          },
+          transaction: {
+            update: {
+              status: 'CANCEL',
+            },
+          },
+        },
+      });
+    });
+
+    return updatePromises;
+  }
+
+  updateSuccessServiceTransactionAndActivateUpgradeOrder(
+    id: string,
+    payload: object,
+  ) {
+    return this.prisma.extendedClient().serviceTransaction.update({
       where: {
         id,
       },
       data: {
-        status: 'SUCCESS',
-        paymentPayload: payload,
+        transaction: {
+          update: {
+            status: 'SUCCESS',
+            paymentPayload: payload,
+          },
+        },
         upgradeOrder: {
           update: {
             status: 'ACTIVE',
