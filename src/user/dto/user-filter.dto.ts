@@ -12,22 +12,6 @@ export class UserFilterDto {
   id: string;
 
   @ApiPropertyOptional({
-    description: 'Include all transactions',
-    example: false,
-  })
-  @ToBoolean()
-  @IsBoolean()
-  transactions: boolean;
-
-  @ApiPropertyOptional({
-    description: 'Include all upgrade orders',
-    example: false,
-  })
-  @ToBoolean()
-  @IsBoolean()
-  upgradeOrders: boolean;
-
-  @ApiPropertyOptional({
     description: 'Include all followers',
     example: false,
   })
