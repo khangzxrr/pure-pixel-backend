@@ -5,10 +5,11 @@ import { DatabaseModule } from 'src/database/database.module';
 import { StorageModule } from 'src/storage/storage.module';
 import { UserService } from './services/user.service';
 import { UpgradeModule } from 'src/upgrade/upgrade.module';
+import { WalletService } from './services/wallet.service';
 
 @Module({
   controllers: [MeController],
   imports: [StorageModule, DatabaseModule, AuthenModule, UpgradeModule],
-  providers: [UserService],
+  providers: [UserService, WalletService],
 })
 export class UserModule {}
