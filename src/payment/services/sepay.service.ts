@@ -61,13 +61,8 @@ export class SepayService {
   async processTransaction(sepay: SepayRequestDto) {
     const transactionId = sepay.content.replaceAll(' ', '-');
 
-    const transaction = await this.transactionRepository.findById(
-      transactionId,
-      true,
-      true,
-      true,
-      true,
-    );
+    const transaction =
+      await this.transactionRepository.findById(transactionId);
 
     if (transaction == null) {
       throw new TransactionNotFoundException();
