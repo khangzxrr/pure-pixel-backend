@@ -6,9 +6,10 @@ import { StorageModule } from 'src/storage/storage.module';
 import { UserService } from './services/user.service';
 import { UpgradeModule } from 'src/upgrade/upgrade.module';
 import { WalletService } from './services/wallet.service';
+import { WalletController } from './controllers/wallet.controller';
 
 @Module({
-  controllers: [MeController],
+  controllers: [MeController, WalletController],
   imports: [StorageModule, DatabaseModule, AuthenModule, UpgradeModule],
   providers: [UserService, WalletService],
 })
