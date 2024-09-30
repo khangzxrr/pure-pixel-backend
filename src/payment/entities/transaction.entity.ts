@@ -14,4 +14,5 @@ export class TransactionEntity
   amount: Decimal;
   createdAt: Date;
   updatedAt: Date;
+  userId: string;
 }
