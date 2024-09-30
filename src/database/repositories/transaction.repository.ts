@@ -1,74 +1,40 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
 export class TransactionRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getAllPendingOrderIdTransactionByUserId(
-    userId: string,
-    tx: Prisma.TransactionClient,
-  ) {
-    return tx.serviceTransaction.findMany({
-      where: {
-        userId,
-        upgradeOrder: {
-          status: 'PENDING',
-        },
-      },
-      select: {
-        id: true,
-      },
-    });
-  }
-
-  async cancelAllPendingOrderTransactionQueries(
-    ids: string[],
-    tx: Prisma.TransactionClient,
-  ) {
-    const updatePromises = ids.map((id) => {
-      return tx.serviceTransaction.update({
-        where: {
-          id,
-        },
-
-        data: {
-          upgradeOrder: {
-            update: {
-              status: 'CANCEL',
-            },
-          },
-          transaction: {
-            update: {
-              status: 'CANCEL',
-            },
-          },
-        },
-      });
-    });
-
-    return updatePromises;
-  }
-
-  updateSuccessServiceTransactionAndActivateUpgradeOrder(
+  async findById(
     id: string,
-    payload: object,
+    includeUserToUserTransactionId: boolean = false,
+    includeDepositTransactionId: boolean = false,
+    includeServiceTransactionId: boolean = false,
+    includeWithdrawalTransactionId: boolean = false,
   ) {
-    return this.prisma.extendedClient().serviceTransaction.update({
+    return this.prisma.transaction.findUnique({
       where: {
         id,
       },
-      data: {
-        transaction: {
-          update: {
-            status: 'SUCCESS',
-            paymentPayload: payload,
+      include: {
+        userToUserTransaction: {
+          select: {
+            id: includeUserToUserTransactionId,
           },
         },
-        upgradeOrder: {
-          update: {
-            status: 'ACTIVE',
+        depositTransaction: {
+          select: {
+            id: includeDepositTransactionId,
+          },
+        },
+        serviceTransaction: {
+          select: {
+            id: includeServiceTransactionId,
+          },
+        },
+        withdrawalTransaction: {
+          select: {
+            id: includeWithdrawalTransactionId,
           },
         },
       },
