@@ -14,7 +14,7 @@ export class UserService {
   ) {}
 
   async findOne(userFilterDto: UserFilterDto) {
-    const user = await this.userRepository.findOne(userFilterDto);
+    const user = await this.userRepository.findOneWithCount(userFilterDto);
 
     if (!user) {
       throw new UserNotFoundException();
