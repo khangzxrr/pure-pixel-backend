@@ -5,13 +5,7 @@ import { PrismaService } from 'src/prisma.service';
 export class TransactionRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findById(
-    id: string,
-    includeUserToUserTransactionId: boolean = false,
-    includeDepositTransactionId: boolean = false,
-    includeServiceTransactionId: boolean = false,
-    includeWithdrawalTransactionId: boolean = false,
-  ) {
+  async findById(id: string) {
     return this.prisma.transaction.findUnique({
       where: {
         id,
@@ -19,22 +13,22 @@ export class TransactionRepository {
       include: {
         userToUserTransaction: {
           select: {
-            id: includeUserToUserTransactionId,
+            id: true,
           },
         },
         depositTransaction: {
           select: {
-            id: includeDepositTransactionId,
+            id: true,
           },
         },
         serviceTransaction: {
           select: {
-            id: includeServiceTransactionId,
+            id: true,
           },
         },
         withdrawalTransaction: {
           select: {
-            id: includeWithdrawalTransactionId,
+            id: true,
           },
         },
       },
