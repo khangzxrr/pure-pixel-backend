@@ -63,10 +63,17 @@ export class UserRepository {
     });
   }
 
-  async findOneById(userId: string) {
+  async findOneById(userId: string, includeFollowings: boolean = false) {
     return this.prisma.user.findUnique({
       where: {
         id: userId,
+      },
+      include: {
+        followings: {
+          select: {
+            followingId: includeFollowings,
+          },
+        },
       },
     });
   }
