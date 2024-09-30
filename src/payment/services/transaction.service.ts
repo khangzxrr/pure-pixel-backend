@@ -9,7 +9,6 @@ export class TransactionService {
   ) {}
 
   async findById(userId: string, id: string) {
-    console.log(userId);
     const transaction = await this.transactionRepository.findById(id);
 
     if (!transaction) {
