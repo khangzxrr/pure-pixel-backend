@@ -142,13 +142,13 @@ export class UpgradePackageOrderRepository {
         },
         serviceTransaction: {
           create: {
-            user: {
-              connect: {
-                id: userId,
-              },
-            },
             transaction: {
               create: {
+                user: {
+                  connect: {
+                    id: userId,
+                  },
+                },
                 type: 'UPGRADE_TO_PHOTOGRAPHER',
                 amount: calculatedPrice,
                 paymentMethod,
