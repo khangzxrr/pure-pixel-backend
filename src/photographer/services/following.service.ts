@@ -3,7 +3,6 @@ import { PhotographerService } from './photographer.service';
 import { FindAllFollowingResponseDto } from '../dtos/find-all-following-dtos/find-all-following.response.dto';
 import { FindAllFollowingRequestDto } from '../dtos/find-all-following-dtos/find-all-following.request.dto';
 import { UserRepository } from 'src/database/repositories/user.repository';
-import { UserFilterDto } from 'src/user/dto/user-filter.dto';
 import { FollowingDto } from '../dtos/following-dto';
 
 @Injectable()
@@ -23,13 +22,7 @@ export class FollowingService {
         findAllFollowingRequestDto,
       );
 
-    console.log(photographerDtos);
-
-    const userFilterDto = new UserFilterDto();
-    userFilterDto.id = userId;
-    userFilterDto.followings = true;
-
-    const user = await this.userRepository.findOne(userFilterDto);
+    const user = await this.userRepository.findOneById(userId, true);
 
     const followingDtos = photographerDtos.objects.map((p) => {
       const isFollowThisPhotographer = user.followings.some(
