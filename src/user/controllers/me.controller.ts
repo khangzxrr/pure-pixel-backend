@@ -15,10 +15,10 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { UserFilterDto } from '../dto/user-filter.dto';
+import { UserFilterDto } from '../dtos/user-filter.dto';
 import { UpgradeOrderService } from 'src/upgrade/services/upgrade-order.service';
-import { ParsedUserDto } from '../dto/parsed-user.dto';
-import { MeDto } from '../dto/me.dto';
+import { ParsedUserDto } from '../dtos/parsed-user.dto';
+import { MeDto } from '../dtos/me.dto';
 
 import { Response } from 'express';
 import { UpgradeOrderDto } from 'src/upgrade/dtos/upgrade-order.dto';
