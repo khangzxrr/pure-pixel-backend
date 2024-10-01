@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 import { UserEntity } from 'src/user/entities/user.entity';
 import { DuplicatedUserIdException } from '../exceptions/duplicatedUserId.exception';
@@ -63,17 +63,25 @@ export class UserRepository {
     });
   }
 
-  async findOneById(userId: string, includeFollowings: boolean = false) {
+  async findOneByIdWithFollowings(userId: string) {
     return this.prisma.user.findUnique({
       where: {
         id: userId,
       },
+
       include: {
         followings: {
           select: {
-            followingId: includeFollowings,
+            followingId: true,
           },
         },
+      },
+    });
+  }
+  async findOneById(userId: string) {
+    return this.prisma.user.findUnique({
+      where: {
+        id: userId,
       },
     });
   }
@@ -95,6 +103,15 @@ export class UserRepository {
           },
         },
       },
+    });
+  }
+
+  async updateUser(userId: string, { ...user }: Partial<User>) {
+    return this.prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: user,
     });
   }
 

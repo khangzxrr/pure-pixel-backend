@@ -30,7 +30,7 @@ export class StorageController {
   @Get('/object/:key/grant-public')
   @Public()
   async grantPublicAccess(@Param('key') key: string) {
-    return await this.storageService.grantObjectPublicAccess(key);
+    return await this.storageService.grantObjectPublicReadAccess(key);
   }
 
   @Get('/object/:key/acl')

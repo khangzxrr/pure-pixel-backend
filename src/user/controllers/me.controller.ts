@@ -1,8 +1,10 @@
 import {
+  Body,
   Controller,
   Get,
   HttpStatus,
   Inject,
+  Patch,
   Res,
   UseGuards,
 } from '@nestjs/common';
@@ -22,6 +24,8 @@ import { MeDto } from '../dtos/me.dto';
 
 import { Response } from 'express';
 import { UpgradeOrderDto } from 'src/upgrade/dtos/upgrade-order.dto';
+import { PresignedUploadMediaDto } from '../dtos/presigned-upload-media.dto';
+import { UpdateProfileDto } from '../dtos/rest/update-profile.request.dto';
 
 @Controller('me')
 @ApiTags('user')
@@ -47,6 +51,35 @@ export class MeController {
     userFilterDto.id = user.sub;
 
     return await this.userService.findOne(userFilterDto);
+  }
+
+  @Get('/presigned-upload-media')
+  @ApiOperation({
+    summary:
+      'get presigned upload media (avatar, cover) for logged user to upload media',
+  })
+  @ApiOkResponse({
+    type: PresignedUploadMediaDto,
+  })
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  async getPresignedUploadMedia(@AuthenticatedUser() user: ParsedUserDto) {
+    return await this.userService.generatePresignedUploadMedia(user.sub);
+  }
+
+  @Patch()
+  @ApiOperation({
+    summary: 'update one or more field of profile',
+  })
+  @ApiOkResponse({
+    type: MeDto,
+  })
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  async patchUpdateProfile(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Body() updateProfileRequest: UpdateProfileDto,
+  ) {
+    console.log(updateProfileRequest);
+    return await this.userService.updateProfile(user.sub, updateProfileRequest);
   }
 
   @ApiOperation({

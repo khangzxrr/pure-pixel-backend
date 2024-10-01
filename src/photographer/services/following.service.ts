@@ -22,7 +22,7 @@ export class FollowingService {
         findAllFollowingRequestDto,
       );
 
-    const user = await this.userRepository.findOneById(userId, true);
+    const user = await this.userRepository.findOneByIdWithFollowings(userId);
 
     const followingDtos = photographerDtos.objects.map((p) => {
       const isFollowThisPhotographer = user.followings.some(

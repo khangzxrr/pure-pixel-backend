@@ -18,7 +18,7 @@ export class PhotoProcessService {
   ) {}
 
   async getPresignUploadUrl(key: string) {
-    return this.storageService.getPresignedUploadUrl(key);
+    return this.storageService.getPresignedUploadUrl(key, 'private');
   }
 
   async sharpInitFromBuffer(buffer: Buffer) {

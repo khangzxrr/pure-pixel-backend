@@ -41,6 +41,18 @@ export class MeDto extends ResponseBaseDto {
   location: string;
 
   @ApiProperty()
+  mail: string;
+
+  @ApiProperty()
+  phonenumber: string;
+
+  @ApiProperty()
+  socialLinks: string[];
+
+  @ApiProperty()
+  expertises: string[];
+
+  @ApiProperty()
   id: string;
 
   @ApiProperty()
@@ -67,6 +79,11 @@ export class MeDto extends ResponseBaseDto {
     this.avatar = user.avatar;
     this.name = user.name;
     this.quote = user.quote;
+
+    this.mail = user.mail;
+    this.phonenumber = user.phonenumber;
+    this.socialLinks = user.socialLinks;
+    this.expertises = user.expertises;
 
     this.createdAt = user.createdAt;
     this.updatedAt = user.updatedAt;
