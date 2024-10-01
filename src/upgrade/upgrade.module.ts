@@ -9,6 +9,7 @@ import { ClearExpiredUpgradeOrder } from './services/clear-expired-upgrade-order
 import { QueueModule } from 'src/queue/queue.module';
 import { UpgradeServiceConsumer } from './consumers/upgrade-service.consumer';
 import { NotificationModule } from 'src/notification/notification.module';
+import { PaymentModule } from 'src/payment/payment.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { NotificationModule } from 'src/notification/notification.module';
     StorageModule,
     QueueModule,
     NotificationModule,
+    PaymentModule,
   ],
   providers: [
     UpgradeService,
