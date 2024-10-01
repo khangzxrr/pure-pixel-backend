@@ -5,12 +5,42 @@ import { Transaction } from '@prisma/client';
 import { PagingPaginatedResposneDto } from 'src/infrastructure/restful/paging-paginated.response.dto';
 import { TransactionDto } from '../dtos/transaction.dto';
 import { FindAllTransactionDto } from '../dtos/rest/find-all-transaction.dto';
+import { CreateDepositRequestDto } from '../dtos/rest/create-deposit.request.dto';
+import { DepositTransactionRepository } from 'src/database/repositories/deposit-transaction.repository';
+import { SepayService } from 'src/payment/services/sepay.service';
+import { CreateDepositResponseDto } from '../dtos/rest/create-deposit.response.dto';
 
 @Injectable()
 export class WalletService {
   constructor(
     @Inject() private readonly transactionRepository: TransactionRepository,
+    @Inject()
+    private readonly depositTransactionRepository: DepositTransactionRepository,
+    @Inject() private readonly sepayService: SepayService,
   ) {}
+
+  async createDeposit(
+    userId: string,
+    createDepositDto: CreateDepositRequestDto,
+  ) {
+    const transaction = await this.depositTransactionRepository.create(
+      userId,
+      createDepositDto.amount,
+      'SEPAY',
+    );
+
+    const paymentUrl = this.sepayService.generatePaymentUrl(
+      createDepositDto.amount,
+      transaction.id,
+    );
+
+    const mockQrcode = await this.sepayService.generateMockIpnQrCode(
+      transaction.id,
+      createDepositDto.amount,
+    );
+
+    return new CreateDepositResponseDto(paymentUrl, mockQrcode);
+  }
 
   async findAllTransactionByUserId(
     userId: string,

@@ -7,10 +7,17 @@ import { UserService } from './services/user.service';
 import { UpgradeModule } from 'src/upgrade/upgrade.module';
 import { WalletService } from './services/wallet.service';
 import { WalletController } from './controllers/wallet.controller';
+import { PaymentModule } from 'src/payment/payment.module';
 
 @Module({
   controllers: [MeController, WalletController],
-  imports: [StorageModule, DatabaseModule, AuthenModule, UpgradeModule],
+  imports: [
+    StorageModule,
+    DatabaseModule,
+    AuthenModule,
+    UpgradeModule,
+    PaymentModule,
+  ],
   providers: [UserService, WalletService],
 })
 export class UserModule {}
