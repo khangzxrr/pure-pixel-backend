@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, TransactionStatus } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
@@ -10,6 +10,22 @@ export class TransactionRepository {
     return this.prisma.transaction.count({
       where: {
         userId,
+      },
+    });
+  }
+
+  async updateStatusAndPayload(
+    id: string,
+    status: TransactionStatus,
+    payload: object,
+  ) {
+    return this.prisma.transaction.update({
+      where: {
+        id,
+      },
+      data: {
+        status,
+        paymentPayload: payload,
       },
     });
   }

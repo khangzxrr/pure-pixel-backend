@@ -4,6 +4,6 @@ import { IsNumber, Min } from 'class-validator';
 export class CreateDepositRequestDto {
   @ApiProperty()
   @IsNumber()
-  @Min(1)
+  @Min(10000)
   amount: number;
 }

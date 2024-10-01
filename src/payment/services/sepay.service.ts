@@ -10,6 +10,7 @@ import { UserRepository } from 'src/database/repositories/user.repository';
 import { ServiceTransactionRepository } from 'src/database/repositories/service-transaction.repository';
 
 import * as QRCode from 'qrcode';
+import { Transaction } from '@prisma/client';
 
 @Injectable()
 export class SepayService {
@@ -60,6 +61,14 @@ export class SepayService {
     );
   }
 
+  async handleDeposit(transaction: Transaction, sepay: SepayRequestDto) {
+    return await this.transactionRepository.updateStatusAndPayload(
+      transaction.id,
+      'SUCCESS',
+      sepay,
+    );
+  }
+
   async processTransaction(sepay: SepayRequestDto) {
     const transactionId = sepay.content.replaceAll(' ', '-');
 
@@ -85,6 +94,9 @@ export class SepayService {
           transaction.serviceTransaction.id,
           sepay,
         );
+        break;
+      case 'DEPOSIT':
+        await this.handleDeposit(transaction, sepay);
         break;
       case 'IMAGE_SELL':
         break;
