@@ -69,6 +69,14 @@ export class SepayService {
     );
   }
 
+  async handleWithdrawal(transaction: Transaction, sepay: SepayRequestDto) {
+    return await this.transactionRepository.updateStatusAndPayload(
+      transaction.id,
+      'SUCCESS',
+      sepay,
+    );
+  }
+
   async processTransaction(sepay: SepayRequestDto) {
     const transactionId = sepay.content.replaceAll(' ', '-');
 
@@ -79,7 +87,7 @@ export class SepayService {
       throw new TransactionNotFoundException();
     }
 
-    if (transaction.status === 'SUCCESS') {
+    if (transaction.status === 'SUCCESS' || transaction.status !== 'PENDING') {
       return HttpStatus.OK;
     }
 
@@ -97,6 +105,9 @@ export class SepayService {
         break;
       case 'DEPOSIT':
         await this.handleDeposit(transaction, sepay);
+        break;
+      case 'WITHDRAWAL':
+        await this.handleWithdrawal(transaction, sepay);
         break;
       case 'IMAGE_SELL':
         break;

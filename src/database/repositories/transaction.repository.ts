@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, TransactionStatus } from '@prisma/client';
+import { Prisma, TransactionStatus, TransactionType } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
@@ -10,6 +10,18 @@ export class TransactionRepository {
     return this.prisma.transaction.count({
       where: {
         userId,
+      },
+    });
+  }
+
+  cancelAllPendingTransactionByIdAndType(type: TransactionType) {
+    return this.prisma.transaction.updateMany({
+      where: {
+        type,
+        status: 'PENDING',
+      },
+      data: {
+        status: 'CANCEL',
       },
     });
   }

@@ -9,6 +9,11 @@ import { CreateDepositRequestDto } from '../dtos/rest/create-deposit.request.dto
 import { DepositTransactionRepository } from 'src/database/repositories/deposit-transaction.repository';
 import { SepayService } from 'src/payment/services/sepay.service';
 import { CreateDepositResponseDto } from '../dtos/rest/create-deposit.response.dto';
+import { CreateWithdrawalRequestDto } from '../dtos/rest/create-withdrawal.request.dto';
+import { NotEnoughBalanceException } from '../exceptions/not-enought-balance.exception';
+import { WithdrawalTransactionRepository } from 'src/database/repositories/withdrawal-transaction.repository';
+import { PrismaService } from 'src/prisma.service';
+import { CreateWithdrawalResponseDto } from '../dtos/rest/create-withdrawal.response.dto';
 
 @Injectable()
 export class WalletService {
@@ -17,7 +22,42 @@ export class WalletService {
     @Inject()
     private readonly depositTransactionRepository: DepositTransactionRepository,
     @Inject() private readonly sepayService: SepayService,
+    @Inject()
+    private readonly withdrawalTransactionRepository: WithdrawalTransactionRepository,
+    private readonly prisma: PrismaService,
   ) {}
+
+  async createWithdrawal(
+    userId: string,
+    createWithdrawal: CreateWithdrawalRequestDto,
+  ) {
+    const walletDto = await this.getWalletByUserId(userId);
+
+    if (walletDto.walletBalance < createWithdrawal.amount) {
+      throw new NotEnoughBalanceException();
+    }
+
+    const cancelAllPreviousPendingWithdrawalTransactions =
+      this.transactionRepository.cancelAllPendingTransactionByIdAndType(
+        'WITHDRAWAL',
+      );
+
+    const createWithdrawalTransaction =
+      this.withdrawalTransactionRepository.create(
+        userId,
+        createWithdrawal.amount,
+        createWithdrawal.bankName,
+        createWithdrawal.bankNumber,
+        createWithdrawal.bankUsername,
+      );
+
+    const [, withdrawalTransaction] = await this.prisma.$transaction([
+      cancelAllPreviousPendingWithdrawalTransactions,
+      createWithdrawalTransaction,
+    ]);
+
+    return new CreateWithdrawalResponseDto(withdrawalTransaction.id);
+  }
 
   async createDeposit(
     userId: string,
@@ -81,6 +121,11 @@ export class WalletService {
       await this.transactionRepository.findAllByUserId(userId);
 
     const walletBalance = transactions.reduce((acc: number, t: Transaction) => {
+      //only process success transaction
+      if (t.status !== 'SUCCESS') {
+        return acc;
+      }
+
       switch (t.type) {
         case 'DEPOSIT':
           return acc + t.amount.toNumber();

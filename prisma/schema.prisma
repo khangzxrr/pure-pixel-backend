@@ -28,16 +28,16 @@ model User {
   bookingPhotoQuotaUsage BigInt @default(0)
   bookingVideoQuotaUsage BigInt @default(0)
 
-  avatar   String @default("https://s3-hcm-r1.s3cloud.vn/sftpgo/avatar%2Favatar.png")
-  cover    String @default("https://s3-hcm-r1.s3cloud.vn/sftpgo/avatar%2Fcover.jpg")
+  avatar String @default("https://s3-hcm-r1.s3cloud.vn/sftpgo/avatar%2Favatar.png")
+  cover  String @default("https://s3-hcm-r1.s3cloud.vn/sftpgo/avatar%2Fcover.jpg")
 
-  name     String @default("")
-  mail String @default("")
-  phonenumber String @default("")
+  name        String   @default("")
+  mail        String   @default("")
+  phonenumber String   @default("")
   socialLinks String[]
-  expertises String[]
-  location String @default("")
-  quote    String @default("")
+  expertises  String[]
+  location    String   @default("")
+  quote       String   @default("")
 
   ftpUsername String @default("")
   ftpPassword String @default("")
@@ -59,13 +59,14 @@ model User {
 }
 
 model BankInfo {
-  id        String   @id @unique
+  id String @id @unique @default(uuid())
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   bankName     String
-  bankNumber   String
-  bankUserName String
+  bankNumber   String  @unique
+  bankUsername String
   User         User?   @relation(fields: [userId], references: [id])
   userId       String?
 
