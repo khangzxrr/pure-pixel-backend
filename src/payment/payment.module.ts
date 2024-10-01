@@ -12,6 +12,7 @@ import { StorageModule } from 'src/storage/storage.module';
 @Module({
   imports: [DatabaseModule, AuthenModule, StorageModule],
   providers: [VietQrBasicStrategy, SepayService, TransactionService],
+  exports: [SepayService],
   controllers: [VietQrController, SepayController, TransactionController],
 })
 export class PaymentModule {}

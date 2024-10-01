@@ -9,6 +9,8 @@ import { DatabaseService } from 'src/database/database.service';
 import { UserRepository } from 'src/database/repositories/user.repository';
 import { ServiceTransactionRepository } from 'src/database/repositories/service-transaction.repository';
 
+import * as QRCode from 'qrcode';
+
 @Injectable()
 export class SepayService {
   constructor(
@@ -91,5 +93,20 @@ export class SepayService {
     }
 
     return HttpStatus.OK;
+  }
+
+  generatePaymentUrl(amount: number, transactionId: string) {
+    const removedDashTransactionId = transactionId.trim().replaceAll('-', ' ');
+
+    return `https://qr.sepay.vn/img?acc=${process.env.SEPAY_ACC}&bank=${process.env.SEPAY_BANK}&amount=${amount}&des=${encodeURIComponent(removedDashTransactionId)}&template=TEMPLATE`;
+  }
+
+  async generateMockIpnQrCode(
+    transactionId: string,
+    amount: number,
+  ): Promise<string> {
+    return await QRCode.toDataURL(
+      `${process.env.FRONTEND_ORIGIN}/ipn/sepay/test?transactionid=${transactionId}&amount=${amount}`,
+    );
   }
 }
