@@ -9,6 +9,7 @@ import { TransactionRepository } from './repositories/transaction.repository';
 import { CommentRepository } from './repositories/comment.repository';
 import { DatabaseService } from './database.service';
 import { ServiceTransactionRepository } from './repositories/service-transaction.repository';
+import { DepositTransactionRepository } from './repositories/deposit-transaction.repository';
 @Module({
   providers: [
     PrismaService,
@@ -21,6 +22,7 @@ import { ServiceTransactionRepository } from './repositories/service-transaction
     CommentRepository,
     ServiceTransactionRepository,
     DatabaseService,
+    DepositTransactionRepository,
   ],
   exports: [
     PrismaService,
@@ -33,6 +35,7 @@ import { ServiceTransactionRepository } from './repositories/service-transaction
     CommentRepository,
     ServiceTransactionRepository,
     DatabaseService,
+    DepositTransactionRepository,
   ],
 })
 export class DatabaseModule {}
