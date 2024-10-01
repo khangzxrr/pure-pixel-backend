@@ -27,9 +27,6 @@ export class UpgradeOrderDto {
   descriptions: string[];
 
   @ApiProperty()
-  originalUpgradePackageId: string;
-
-  @ApiProperty()
   expiredAt: Date;
 
   @ApiProperty()
@@ -48,17 +45,16 @@ export class UpgradeOrderDto {
   userId: string;
 
   @ApiProperty()
-  transactionId: string;
+  serviceTransactionId: string;
+
+  @ApiProperty()
+  upgradePackageHistoryId: string;
 
   constructor({ ...data }: Partial<UpgradeOrder>) {
     Object.assign(this, data);
 
     if (data.status) {
       this.status = data.status.toString();
-    }
-
-    if (data.price) {
-      this.price = data.price.toNumber();
     }
   }
 }

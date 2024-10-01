@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, PrismaPromise, UpgradePackage } from '@prisma/client';
+import {
+  PaymentMethod,
+  Prisma,
+  PrismaPromise,
+  UpgradePackage,
+} from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
@@ -55,9 +60,13 @@ export class UpgradePackageOrderRepository {
       },
       data: {
         status: 'CANCEL',
-        transaction: {
+        serviceTransaction: {
           update: {
-            status: 'CANCEL',
+            transaction: {
+              update: {
+                status: 'CANCEL',
+              },
+            },
           },
         },
       },
@@ -77,9 +86,7 @@ export class UpgradePackageOrderRepository {
     return this.prisma.upgradeOrder.findMany({
       where: {
         userId,
-        transaction: {
-          status: 'PENDING',
-        },
+        status: 'PENDING',
       },
     });
   }
@@ -98,43 +105,64 @@ export class UpgradePackageOrderRepository {
     upgradePackage: UpgradePackage,
     expiredAt: Date,
     calculatedPrice: Prisma.Decimal,
+    paymentMethod: PaymentMethod,
     tx: Prisma.TransactionClient,
   ) {
     return tx.upgradeOrder.create({
+      select: {
+        id: true,
+        serviceTransaction: {
+          select: {
+            transactionId: true,
+          },
+        },
+        upgradePackageHistory: {
+          select: {
+            id: true,
+          },
+        },
+      },
       data: {
         expiredAt,
-
-        descriptions: upgradePackage.descriptions,
-        price: upgradePackage.price,
-        name: upgradePackage.name,
-        maxPhotoQuota: upgradePackage.maxPhotoQuota,
-        maxPackageCount: upgradePackage.maxPackageCount,
-        maxBookingPhotoQuota: upgradePackage.maxBookingPhotoQuota,
-        maxBookingVideoQuota: upgradePackage.maxBookingVideoQuota,
-        minOrderMonth: upgradePackage.minOrderMonth,
         status: 'PENDING',
         user: {
           connect: {
             id: userId,
           },
         },
-        originalUpgradePackage: {
-          connect: {
-            id: upgradePackage.id,
-          },
-        },
-        transaction: {
+        upgradePackageHistory: {
           create: {
-            user: {
+            originalUpgradePackage: {
               connect: {
-                id: userId,
+                id: upgradePackage.id,
               },
             },
-            amount: calculatedPrice,
-            paymentMethod: 'sepay',
-            status: 'PENDING',
-            type: 'UPGRADE_TO_PHOTOGRAPHER',
-            paymentPayload: {},
+            price: upgradePackage.price,
+            name: upgradePackage.name,
+            descriptions: upgradePackage.descriptions,
+            maxPhotoQuota: upgradePackage.maxPhotoQuota,
+            minOrderMonth: upgradePackage.minOrderMonth,
+            maxPackageCount: upgradePackage.maxPackageCount,
+            maxBookingPhotoQuota: upgradePackage.maxBookingPhotoQuota,
+            maxBookingVideoQuota: upgradePackage.maxBookingVideoQuota,
+          },
+        },
+        serviceTransaction: {
+          create: {
+            transaction: {
+              create: {
+                user: {
+                  connect: {
+                    id: userId,
+                  },
+                },
+                type: 'UPGRADE_TO_PHOTOGRAPHER',
+                amount: calculatedPrice,
+                paymentMethod,
+                status: 'PENDING',
+                paymentPayload: {},
+              },
+            },
           },
         },
       },

@@ -18,7 +18,7 @@ export class PhotoProcessService {
   ) {}
 
   async getPresignUploadUrl(key: string) {
-    return this.storageService.getPresignedUploadUrl(key);
+    return this.storageService.getPresignedUploadUrl(key, 'private');
   }
 
   async sharpInitFromBuffer(buffer: Buffer) {
@@ -39,7 +39,7 @@ export class PhotoProcessService {
 
     const metadata = await sharp.metadata();
 
-    const availableRes = PhotoConstant.PHOTO_RESOLUTION_MAP;
+    const availableRes = [...PhotoConstant.PHOTO_RESOLUTION_MAP];
 
     for (let i = 0; i < PhotoConstant.PHOTO_RESOLUTION_MAP.length; i++) {
       if (metadata.height >= PhotoConstant.PHOTO_RESOLUTION_MAP[i].pixels) {

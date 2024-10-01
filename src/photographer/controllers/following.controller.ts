@@ -4,10 +4,10 @@ import { AuthenticatedUser, AuthGuard, Roles } from 'nest-keycloak-connect';
 import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.response.dto';
 import { FollowingService } from '../services/following.service';
-import { ParsedUserDto } from 'src/user/dto/parsed-user.dto';
 import { FindAllFollowingRequestDto } from '../dtos/find-all-following-dtos/find-all-following.request.dto';
 import { FollowingDto } from '../dtos/following-dto';
 import { Constants } from 'src/infrastructure/utils/constants';
+import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
 
 @Controller('following')
 @ApiTags('following')

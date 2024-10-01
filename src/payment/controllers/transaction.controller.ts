@@ -4,7 +4,7 @@ import { TransactionService } from '../services/transaction.service';
 import { AuthenticatedUser, AuthGuard, Roles } from 'nest-keycloak-connect';
 import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
-import { ParsedUserDto } from 'src/user/dto/parsed-user.dto';
+import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
 
 @Controller('payment')
 @ApiTags('payment')

@@ -29,7 +29,7 @@ export class PhotoGateway implements OnGatewayConnection, OnGatewayDisconnect {
   handleDisconnect(client: any) {}
 
   @UseGuards(WebsocketAuthGuard)
-  @SubscribeMessage('join')
+  @SubscribeMessage('join-photo-process-notification-room')
   async joinEvent(socket: any) {
     this.logger.log(
       `socket: ${socket.id} with user id: ${socket.user.sub} join`,

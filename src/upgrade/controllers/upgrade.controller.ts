@@ -8,7 +8,7 @@ import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { RequestUpgradeDto } from '../dtos/request-upgrade.dto';
 import { UpgradeOrderService } from '../services/upgrade-order.service';
 import { RequestUpgradeOrderResponseDto } from '../dtos/request-upgrade-order.response.dto';
-import { ParsedUserDto } from 'src/user/dto/parsed-user.dto';
+import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
 
 @Controller('upgrade')
 @ApiTags('upgrade')

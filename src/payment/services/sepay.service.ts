@@ -7,36 +7,47 @@ import { KeycloakService } from 'src/authen/services/keycloak.service';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { DatabaseService } from 'src/database/database.service';
 import { UserRepository } from 'src/database/repositories/user.repository';
-import { UpgradePackageOrderRepository } from 'src/database/repositories/upgrade-package-order.repository';
-import { Transaction, UpgradeOrder } from '@prisma/client';
+import { ServiceTransactionRepository } from 'src/database/repositories/service-transaction.repository';
+
+import * as QRCode from 'qrcode';
+import { Transaction } from '@prisma/client';
 
 @Injectable()
 export class SepayService {
   constructor(
-    @Inject() private readonly transactionRepository: TransactionRepository,
     @Inject()
-    private readonly upgradeOrderRepository: UpgradePackageOrderRepository,
+    private readonly serviceTransactionRepository: ServiceTransactionRepository,
+    @Inject()
+    private readonly transactionRepository: TransactionRepository,
     @Inject() private readonly databaseService: DatabaseService,
     @Inject() private readonly keycloakService: KeycloakService,
     @Inject() private readonly userRepository: UserRepository,
   ) {}
 
   async handleUpgradeToPhotographer(
-    transaction: Transaction,
-    order: UpgradeOrder,
+    userId: string,
+    serviceTransactionId: string,
     sepay: SepayRequestDto,
   ) {
+    const serviceTransaction = await this.serviceTransactionRepository.findById(
+      serviceTransactionId,
+      true,
+    );
+
     const updateTransactionAndUpgradeOrderQuery =
-      this.transactionRepository.updateSuccessTransactionAndActivateUpgradeOrder(
-        transaction.id,
+      this.serviceTransactionRepository.updateSuccessServiceTransactionAndActivateUpgradeOrder(
+        serviceTransactionId,
         sepay,
       );
+
     const updateUserMaxQuotaQuery = this.userRepository.updateMaxQuotaByUserId(
-      transaction.userId,
-      order.maxPhotoQuota,
-      order.maxPackageCount,
-      order.maxBookingPhotoQuota,
-      order.maxBookingVideoQuota,
+      userId,
+      serviceTransaction.upgradeOrder.upgradePackageHistory.maxPhotoQuota,
+      serviceTransaction.upgradeOrder.upgradePackageHistory.maxPackageCount,
+      serviceTransaction.upgradeOrder.upgradePackageHistory
+        .maxBookingPhotoQuota,
+      serviceTransaction.upgradeOrder.upgradePackageHistory
+        .maxBookingVideoQuota,
     );
 
     await this.databaseService.applyTransactionMultipleQueries([
@@ -45,21 +56,38 @@ export class SepayService {
     ]);
 
     await this.keycloakService.addRoleToUser(
-      transaction.userId,
+      userId,
       Constants.PHOTOGRAPHER_ROLE,
+    );
+  }
+
+  async handleDeposit(transaction: Transaction, sepay: SepayRequestDto) {
+    return await this.transactionRepository.updateStatusAndPayload(
+      transaction.id,
+      'SUCCESS',
+      sepay,
+    );
+  }
+
+  async handleWithdrawal(transaction: Transaction, sepay: SepayRequestDto) {
+    return await this.transactionRepository.updateStatusAndPayload(
+      transaction.id,
+      'SUCCESS',
+      sepay,
     );
   }
 
   async processTransaction(sepay: SepayRequestDto) {
     const transactionId = sepay.content.replaceAll(' ', '-');
 
-    const transaction = await this.transactionRepository.getById(transactionId);
+    const transaction =
+      await this.transactionRepository.findById(transactionId);
 
     if (transaction == null) {
       throw new TransactionNotFoundException();
     }
 
-    if (transaction.status === 'SUCCESS') {
+    if (transaction.status === 'SUCCESS' || transaction.status !== 'PENDING') {
       return HttpStatus.OK;
     }
 
@@ -70,21 +98,38 @@ export class SepayService {
     switch (transaction.type) {
       case 'UPGRADE_TO_PHOTOGRAPHER':
         await this.handleUpgradeToPhotographer(
-          transaction,
-          transaction.upgradeOrder,
+          transaction.userId,
+          transaction.serviceTransaction.id,
           sepay,
         );
+        break;
+      case 'DEPOSIT':
+        await this.handleDeposit(transaction, sepay);
+        break;
+      case 'WITHDRAWAL':
+        await this.handleWithdrawal(transaction, sepay);
         break;
       case 'IMAGE_SELL':
         break;
       case 'IMAGE_BUY':
         break;
-      case 'FIRST_BOOKING_PAYMENT':
-        break;
-      case 'SECOND_BOOKING_PAYMENT':
-        break;
     }
 
     return HttpStatus.OK;
+  }
+
+  generatePaymentUrl(amount: number, transactionId: string) {
+    const removedDashTransactionId = transactionId.trim().replaceAll('-', ' ');
+
+    return `https://qr.sepay.vn/img?acc=${process.env.SEPAY_ACC}&bank=${process.env.SEPAY_BANK}&amount=${amount}&des=${encodeURIComponent(removedDashTransactionId)}&template=TEMPLATE`;
+  }
+
+  async generateMockIpnQrCode(
+    transactionId: string,
+    amount: number,
+  ): Promise<string> {
+    return await QRCode.toDataURL(
+      `${process.env.FRONTEND_ORIGIN}/ipn/sepay/test?transactionid=${transactionId}&amount=${amount}`,
+    );
   }
 }

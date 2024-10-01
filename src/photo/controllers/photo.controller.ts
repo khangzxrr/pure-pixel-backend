@@ -35,7 +35,6 @@ import { PhotoUpdateRequest } from '../dtos/photo-update.request.dto';
 import { FindAllPhotoFilterDto } from '../dtos/find-all.filter.dto';
 
 import { Response } from 'express';
-import { ParsedUserDto } from 'src/user/dto/parsed-user.dto';
 import { CommentService } from '../services/comment.service';
 import { CreateCommentRequestDto } from '../dtos/create-comment.request.dto';
 import { CommentEntity } from '../entities/comment.entity';
@@ -43,6 +42,8 @@ import { ProcessPhotosRequest } from '../dtos/process-images.request.dto';
 import { GenerateWatermarkRequestDto } from '../dtos/generate-watermark.request.dto';
 import { SharePhotoRequestDto } from '../dtos/share-photo.request.dto';
 import { GetPhotoDetailDto } from '../dtos/get-photo-detail.dto';
+import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.response.dto';
+import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
 
 @Controller('photo')
 @ApiTags('photo')
@@ -81,17 +82,10 @@ export class PhotoController {
   @ApiOperation({
     summary: 'get public photos',
   })
-  @ApiResponse({
-    status: HttpStatusCode.Ok,
-    description: 'array of photos',
-    type: PhotoDto,
-    isArray: true,
-  })
+  @ApiOkResponsePaginated(SignedPhotoDto)
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Public(false)
-  async getAllPublicPhoto(
-    @Query() findPhotoFilter: FindAllPhotoFilterDto,
-  ): Promise<SignedPhotoDto[]> {
+  async getAllPublicPhoto(@Query() findPhotoFilter: FindAllPhotoFilterDto) {
     return await this.photoService.findPublicPhotos(findPhotoFilter);
   }
 
@@ -262,7 +256,7 @@ export class PhotoController {
     return presignedUrl;
   }
 
-  @Get('/:id/avaiable-resolution')
+  @Get('/:id/available-resolution')
   @ApiOperation({
     summary: 'get photo available scaling resolution',
   })

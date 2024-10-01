@@ -8,7 +8,7 @@ export class RequestUpgradeOrderResponseDto {
   transactionId: string;
 
   @ApiProperty()
-  originalUpgradePackageId: string;
+  upgradePackageHistoryId: string;
 
   @ApiProperty()
   paymentQrcodeUrl: string;

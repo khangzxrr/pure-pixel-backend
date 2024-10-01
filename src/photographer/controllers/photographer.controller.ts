@@ -8,13 +8,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { PhotographerService } from '../services/photographer.service';
-import {
-  ApiOkResponse,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
-import { HttpStatusCode } from 'axios';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { SignedPhotoDto } from 'src/photo/dtos/photo.dto';
 import {
   AuthenticatedUser,
@@ -25,12 +19,12 @@ import {
 import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { FindAllPhotoFilterDto } from 'src/photo/dtos/find-all.filter.dto';
-import { ParsedUserDto } from 'src/user/dto/parsed-user.dto';
 import { FindAllPhotographerRequestDto } from '../dtos/find-all-photographer-dtos/find-all-photographer.request.dto';
 import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.response.dto';
 import { PhotographerDTO } from '../dtos/photographer.dto';
 import { PagingPaginatedResposneDto } from 'src/infrastructure/restful/paging-paginated.response.dto';
 import { PhotographerProfileDto } from '../dtos/photographer-profile.dto';
+import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
 
 @Controller('photographer')
 @ApiTags('photographer')
@@ -91,11 +85,7 @@ export class PhotographerController {
   @ApiOperation({
     summary: 'get all photos of mine',
   })
-  @ApiResponse({
-    isArray: true,
-    status: HttpStatusCode.Ok,
-    type: SignedPhotoDto,
-  })
+  @ApiOkResponsePaginated(SignedPhotoDto)
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   async getPhotoOfMine(

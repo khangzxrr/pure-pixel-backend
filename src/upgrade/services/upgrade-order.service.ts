@@ -10,8 +10,8 @@ import { ExistPendingOrderException as ExistPendingUpgradeOrderException } from 
 import { NotValidExpireDateException } from '../exceptions/not-valid-expired-date.exception';
 import { TotalMonthLesserThanMinMonthException } from '../exceptions/total-month-lesser-min-order-month.exception';
 import { RequestUpgradeOrderResponseDto } from '../dtos/request-upgrade-order.response.dto';
-import * as QRCode from 'qrcode';
 import { UpgradeOrderDto } from '../dtos/upgrade-order.dto';
+import { SepayService } from 'src/payment/services/sepay.service';
 
 @Injectable()
 export class UpgradeOrderService {
@@ -20,6 +20,8 @@ export class UpgradeOrderService {
     private readonly upgradePackageOrderRepository: UpgradePackageOrderRepository,
     @Inject()
     private readonly upgradePackageRepository: UpgradePackageRepository,
+    @Inject()
+    private readonly sepayService: SepayService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -86,21 +88,6 @@ export class UpgradeOrderService {
     return pendingOrders;
   }
 
-  generatePaymentUrl(amount: number, transactionId: string) {
-    const removedDashTransactionId = transactionId.trim().replaceAll('-', ' ');
-
-    return `https://qr.sepay.vn/img?acc=${process.env.SEPAY_ACC}&bank=${process.env.SEPAY_BANK}&amount=${amount}&des=${encodeURIComponent(removedDashTransactionId)}&template=TEMPLATE`;
-  }
-
-  async generateMockIpnQrCode(
-    transactionId: string,
-    amount: number,
-  ): Promise<string> {
-    return await QRCode.toDataURL(
-      `${process.env.FONTEND_ORIGIN}/ipn/sepay/test?transactionid=${transactionId}&amount=${amount}`,
-    );
-  }
-
   async requestUpgradePayment(
     userId: string,
     requestUpgrade: RequestUpgradeDto,
@@ -161,24 +148,32 @@ export class UpgradeOrderService {
             upgradePackage,
             expiredDate,
             calculatedPrice,
+            'SEPAY',
             tx,
           );
 
-        const paymentUrl = this.generatePaymentUrl(
+        const paymentUrl = this.sepayService.generatePaymentUrl(
           calculatedPrice.toNumber(),
-          newUpgradeOrder.transactionId,
+          newUpgradeOrder.id,
         );
 
         const requestUpgradeResponse = new RequestUpgradeOrderResponseDto();
         requestUpgradeResponse.id = newUpgradeOrder.id;
-        requestUpgradeResponse.transactionId = newUpgradeOrder.transactionId;
-        requestUpgradeResponse.originalUpgradePackageId =
-          newUpgradeOrder.originalUpgradePackageId;
+
+        //IMPORTANT: must using transactionId instead of serviceTransactionId
+        requestUpgradeResponse.transactionId =
+          newUpgradeOrder.serviceTransaction.transactionId;
+
+        requestUpgradeResponse.upgradePackageHistoryId =
+          newUpgradeOrder.upgradePackageHistory.id;
         requestUpgradeResponse.paymentQrcodeUrl = paymentUrl;
-        requestUpgradeResponse.mockQrcode = await this.generateMockIpnQrCode(
-          newUpgradeOrder.transactionId,
-          calculatedPrice.toNumber(),
-        );
+
+        //IMPORTANT: must using transactionId instead of serviceTransactionId
+        requestUpgradeResponse.mockQrcode =
+          await this.sepayService.generateMockIpnQrCode(
+            newUpgradeOrder.serviceTransaction.transactionId,
+            calculatedPrice.toNumber(),
+          );
 
         return requestUpgradeResponse;
       },

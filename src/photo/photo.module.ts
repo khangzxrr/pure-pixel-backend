@@ -14,6 +14,7 @@ import { PhotoProcessConsumer } from './consumers/photo-process.consumer';
 import { PhotoGateway } from './gateways/socket.io.gateway';
 import { CacheModule } from '@nestjs/cache-manager';
 import { CommentService } from './services/comment.service';
+import { PhotoWatermarkConsumer } from './consumers/photo-watermark.consumer';
 
 @Module({
   providers: [
@@ -23,6 +24,7 @@ import { CommentService } from './services/comment.service';
     PhotoProcessService,
     PhotoCategoryService,
     PhotoProcessConsumer,
+    PhotoWatermarkConsumer,
     CommentService,
   ],
   exports: [PhotoService, PhotoCategoryService],

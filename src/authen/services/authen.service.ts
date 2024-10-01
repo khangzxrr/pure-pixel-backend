@@ -4,7 +4,7 @@ import { UserRepository } from 'src/database/repositories/user.repository';
 import { Utils } from 'src/infrastructure/utils/utils';
 import { PrismaService } from 'src/prisma.service';
 import { SftpService } from 'src/storage/services/sftp.service';
-import { UserFilterDto } from 'src/user/dto/user-filter.dto';
+import { UserFilterDto } from 'src/user/dtos/user-filter.dto';
 import { UserEntity } from 'src/user/entities/user.entity';
 
 @Injectable()

@@ -1,9 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 import { UserEntity } from 'src/user/entities/user.entity';
 import { DuplicatedUserIdException } from '../exceptions/duplicatedUserId.exception';
-import { UserFilterDto } from 'src/user/dto/user-filter.dto';
+import { UserFilterDto } from 'src/user/dtos/user-filter.dto';
 
 @Injectable()
 export class UserRepository {
@@ -63,16 +63,25 @@ export class UserRepository {
     });
   }
 
-  async findOne(userFilterDto: UserFilterDto) {
+  async findOneByIdWithFollowings(userId: string) {
     return this.prisma.user.findUnique({
       where: {
-        id: userFilterDto.id,
+        id: userId,
       },
+
       include: {
-        transactions: userFilterDto.transactions,
-        upgradeOrders: userFilterDto.upgradeOrders,
-        followers: userFilterDto.followers,
-        followings: userFilterDto.followings,
+        followings: {
+          select: {
+            followingId: true,
+          },
+        },
+      },
+    });
+  }
+  async findOneById(userId: string) {
+    return this.prisma.user.findUnique({
+      where: {
+        id: userId,
       },
     });
   }
@@ -84,20 +93,25 @@ export class UserRepository {
       },
 
       include: {
-        transactions: userFilterDto.transactions,
-        upgradeOrders: userFilterDto.upgradeOrders,
         followers: userFilterDto.followers,
         followings: userFilterDto.followings,
 
         _count: {
           select: {
-            transactions: userFilterDto.transactions,
-            upgradeOrders: userFilterDto.upgradeOrders,
             followers: userFilterDto.followers,
             followings: userFilterDto.followings,
           },
         },
       },
+    });
+  }
+
+  async updateUser(userId: string, { ...user }: Partial<User>) {
+    return this.prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: user,
     });
   }
 
@@ -110,8 +124,6 @@ export class UserRepository {
         id: userFilterDto.id,
       },
       include: {
-        transactions: userFilterDto.transactions,
-        upgradeOrders: userFilterDto.upgradeOrders,
         followers: userFilterDto.followers,
         followings: userFilterDto.followings,
       },

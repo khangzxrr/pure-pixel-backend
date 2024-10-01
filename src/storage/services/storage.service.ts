@@ -4,6 +4,7 @@ import {
   GetObjectCommand,
   HeadObjectCommand,
   HeadObjectCommandOutput,
+  ObjectCannedACL,
   PutBucketCorsCommand,
   PutObjectAclCommand,
   PutObjectCommand,
@@ -78,11 +79,11 @@ export class StorageService {
     return await this.sendCommand(command);
   }
 
-  async getPresignedUploadUrl(key: string) {
+  async getPresignedUploadUrl(key: string, ACL: ObjectCannedACL) {
     const command = new PutObjectCommand({
       Key: key,
       Bucket: process.env.S3_BUCKET,
-      ACL: 'private',
+      ACL,
     });
 
     const signedUrl = await getSignedUrl(this.getS3(), command, {});
@@ -118,7 +119,7 @@ export class StorageService {
     return result;
   }
 
-  async grantObjectPublicAccess(key: string) {
+  async grantObjectPublicReadAccess(key: string) {
     const command = new PutObjectAclCommand({
       Key: key,
       Bucket: process.env.S3_BUCKET,

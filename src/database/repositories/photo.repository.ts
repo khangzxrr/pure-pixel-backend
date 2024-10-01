@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { PhotoVisibility } from '@prisma/client';
+import { PhotoVisibility, ShareStatus } from '@prisma/client';
 import { FindAllPhotoFilterDto } from 'src/photo/dtos/find-all.filter.dto';
+import { PhotoProcessDto } from 'src/photo/dtos/photo-process.dto';
 import { Photo } from 'src/photo/entities/photo.entity';
 import { PrismaService } from 'src/prisma.service';
 
@@ -28,6 +29,52 @@ export class PhotoRepository {
     });
   }
 
+  async updatePhotoWatermarkById(
+    id: string,
+    watermarkPhotoUrl: string,
+    watermarkThumbnailPhotoUrl: string,
+  ) {
+    return this.prisma.extendedClient().photo.update({
+      where: {
+        id,
+      },
+      data: {
+        watermarkPhotoUrl,
+        watermarkThumbnailPhotoUrl,
+      },
+    });
+  }
+
+  async updatePhotoShare(
+    id: string,
+    shareStatus: ShareStatus,
+    sharePayload: any,
+  ) {
+    return this.prisma.extendedClient().photo.update({
+      where: {
+        id,
+      },
+      data: {
+        sharePayload,
+        shareStatus,
+      },
+    });
+  }
+
+  batchUpdatePhotoProcess(photoProcesses: PhotoProcessDto[]) {
+    const queries = photoProcesses.map((p) => {
+      return this.prisma.extendedClient().photo.update({
+        where: {
+          id: p.id,
+        },
+        data: {
+          ...p,
+        },
+      });
+    });
+
+    return queries;
+  }
   batchUpdate(photos: Photo[]) {
     const queries = photos.map((p) => {
       return this.prisma.extendedClient().photo.update({
@@ -163,14 +210,26 @@ export class PhotoRepository {
     });
   }
 
-  async findAllIncludedPhotographer(filter: FindAllPhotoFilterDto) {
+  async count(filter: FindAllPhotoFilterDto) {
+    return this.prisma.extendedClient().photo.count({
+      where: filter.toWhere(),
+    });
+  }
+
+  async findAll(
+    filter: FindAllPhotoFilterDto,
+    skip: number,
+    take: number,
+    includePhotographer: boolean = false,
+    includeCategory: boolean = false,
+  ) {
     return this.prisma.extendedClient().photo.findMany({
       where: filter.toWhere(),
-      skip: filter.skip,
-      take: filter.take,
+      skip,
+      take,
       include: {
-        photographer: true,
-        category: true,
+        photographer: includePhotographer,
+        category: includeCategory,
       },
     });
   }

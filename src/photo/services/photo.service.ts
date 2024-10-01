@@ -33,6 +33,8 @@ import { ChoosedShareQualityIsNotFoundException } from '../exceptions/choosed-sh
 import { SharePhotoUrlIsEmptyException } from '../exceptions/share-photo-url-is-empty.exception';
 import { SharePhotoResponseDto } from '../exceptions/share-photo-response.dto';
 import { GetPhotoDetailDto } from '../dtos/get-photo-detail.dto';
+import { EmptyOriginalPhotoException } from '../exceptions/empty-original-photo.exception';
+import { PagingPaginatedResposneDto } from 'src/infrastructure/restful/paging-paginated.response.dto';
 
 @Injectable()
 export class PhotoService {
@@ -45,6 +47,8 @@ export class PhotoService {
     @Inject() private readonly photoProcessService: PhotoProcessService,
     @InjectQueue(PhotoConstant.PHOTO_PROCESS_QUEUE)
     private readonly photoProcessQueue: Queue,
+    @InjectQueue(PhotoConstant.PHOTO_WATERMARK_QUEUE)
+    private readonly photoWatermarkQueue: Queue,
   ) {}
 
   async findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
@@ -136,19 +140,39 @@ export class PhotoService {
     if (photo.photographerId != userId) {
       throw new NotBelongPhotoException();
     }
-    await this.photoProcessQueue.add(PhotoConstant.GENERATE_WATERMARK_JOB, {
-      userId,
-      generateWatermarkRequest,
-    });
+
+    await this.photoWatermarkQueue.add(
+      PhotoConstant.GENERATE_WATERMARK_JOB,
+      {
+        userId,
+        generateWatermarkRequest,
+      },
+      {
+        debounce: {
+          id: photo.id,
+          ttl: 10000,
+        },
+      },
+    );
   }
+
   async sendProcessImageToMq(
     userId: string,
     processPhotosRequest: ProcessPhotosRequest,
   ) {
-    await this.photoProcessQueue.add(PhotoConstant.PROCESS_PHOTO_JOB_NAME, {
-      userId,
-      processPhotosRequest,
-    });
+    await this.photoProcessQueue.add(
+      PhotoConstant.PROCESS_PHOTO_JOB_NAME,
+      {
+        userId,
+        processPhotosRequest,
+      },
+      {
+        debounce: {
+          id: processPhotosRequest.signedUpload.photoId,
+          ttl: 10000,
+        },
+      },
+    );
   }
 
   async signUrlFromPhotos(photo: Photo) {
@@ -164,6 +188,10 @@ export class PhotoService {
       ? photo.watermarkThumbnailPhotoUrl
       : photo.thumbnailPhotoUrl;
 
+    if (url.length == 0 || thumbnail.length == 0) {
+      console.log(`error photo without thumbnail or original: ${photo.id}`);
+      throw new EmptyOriginalPhotoException();
+    }
     const signedUrl = await this.photoProcessService.getSignedObjectUrl(url);
     const signedThumbnail =
       await this.photoProcessService.getSignedObjectUrl(thumbnail);
@@ -175,24 +203,46 @@ export class PhotoService {
     userId: string,
     photoDtos: PhotoDto[],
   ): Promise<PhotoDto[]> {
-    const photos = photoDtos.map((dto) => {
-      if (dto.photographerId != userId) {
+    const photoPromises = photoDtos.map(async (dto) => {
+      const photo =
+        await this.findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
+          userId,
+          dto.id,
+        );
+
+      if (photo.photographerId !== userId) {
         throw new NotBelongPhotoException();
       }
 
-      //set undefined to prevent update what user shouldn't
-      dto.photographerId = undefined;
-      dto.thumbnailPhotoUrl = undefined;
-      dto.originalPhotoUrl = undefined;
-      dto.watermarkPhotoUrl = undefined;
-      dto.watermarkThumbnailPhotoUrl = undefined;
-      dto.updatedAt = undefined;
-      dto.createdAt = undefined;
+      photo.exif = dto?.exif;
+      photo.categoryId = dto?.categoryId;
+      photo.title = dto?.title;
+      photo.watermark = dto?.watermark;
+      photo.showExif = dto?.showExif;
+      photo.colorGrading = dto?.colorGrading;
+      photo.location = dto?.location;
+      photo.captureTime = dto?.captureTime;
+      photo.description = dto?.description;
+      photo.photoTags = dto?.photoTags;
 
-      dto.categoryId = undefined;
+      if (dto?.photoType === 'RAW') {
+        photo.photoType = 'RAW';
+      } else if (dto?.photoType === 'EDITED') {
+        photo.photoType = 'EDITED';
+      }
 
-      return Photo.fromDto(dto);
+      if (dto?.visibility === 'PRIVATE') {
+        photo.visibility = 'PRIVATE';
+      } else if (dto?.visibility === 'PUBLIC') {
+        photo.visibility = 'PUBLIC';
+      } else {
+        photo.visibility = 'SHARE_LINK';
+      }
+
+      return photo;
     });
+
+    const photos = await Promise.all(photoPromises);
 
     const updateQueries = this.photoRepository.batchUpdate(photos);
     const updateResults =
@@ -214,9 +264,22 @@ export class PhotoService {
     );
   }
 
-  async findAll(filter: FindAllPhotoFilterDto) {
-    const photos =
-      await this.photoRepository.findAllIncludedPhotographer(filter);
+  async findAll(
+    filter: FindAllPhotoFilterDto,
+  ): Promise<PagingPaginatedResposneDto<SignedPhotoDto>> {
+    this.logger.log({
+      filter,
+    });
+
+    const count = await this.photoRepository.count(filter);
+
+    const photos = await this.photoRepository.findAll(
+      filter,
+      filter.toSkip(),
+      filter.limit,
+      true,
+      true,
+    );
 
     const signedPhotoDtoPromises = photos.map(async (p) => {
       const signedPhotoDto = new SignedPhotoDto({
@@ -231,7 +294,13 @@ export class PhotoService {
       return signedPhotoDto;
     });
 
-    return await Promise.all(signedPhotoDtoPromises);
+    const signedPhotos = await Promise.all(signedPhotoDtoPromises);
+
+    return new PagingPaginatedResposneDto<SignedPhotoDto>(
+      filter.limit,
+      count,
+      signedPhotos,
+    );
   }
 
   async deleteById(userId: string, photoId: string) {
@@ -272,13 +341,9 @@ export class PhotoService {
     const signedUrls = await this.signUrlFromPhotos(photo);
     signedPhotoDto.signedUrl = signedUrls;
 
-    console.log(query);
     if (query?.shared === true) {
-      console.log('get shared');
       signedPhotoDto.signedUrl.url = await this.getSignedSharePhotoUrl(photo);
     }
-
-    console.log('work');
 
     return signedPhotoDto;
   }
