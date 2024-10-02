@@ -11,10 +11,7 @@ import { PhotoModule } from './photo/photo.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { UpgradeModule } from './upgrade/upgrade.module';
 import { PaymentModule } from './payment/payment.module';
-import { CacheModule } from '@nestjs/cache-manager';
-import { RedisClientOptions } from 'redis';
-import { redisStore } from 'cache-manager-redis-store';
-import { StoreConfig } from 'cache-manager';
+import { CachingModule } from './caching/caching.module';
 
 @Module({
   providers: [],
@@ -33,16 +30,7 @@ import { StoreConfig } from 'cache-manager';
     PhotoModule,
     UpgradeModule,
     PaymentModule,
-    CacheModule.registerAsync<RedisClientOptions>({
-      useFactory: async () => {
-        return {
-          store: redisStore,
-          ttl: 300000,
-          host: process.env.REDIS_HOSTNAME,
-          port: process.env.REDIS_PORT,
-        } as StoreConfig;
-      },
-    }),
+    CachingModule,
   ],
   controllers: [AppController],
 })
