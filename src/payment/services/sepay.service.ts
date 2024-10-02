@@ -129,7 +129,7 @@ export class SepayService {
     amount: number,
   ): Promise<string> {
     return await QRCode.toDataURL(
-      `${process.env.FRONTEND_ORIGIN}/ipn/sepay/test?transactionid=${transactionId}&amount=${amount}`,
+      `${process.env.BACKEND_ORIGIN}/ipn/sepay/test?transactionid=${transactionId}&amount=${amount}`,
     );
   }
 }
