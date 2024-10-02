@@ -341,7 +341,7 @@ model PhotoSharing {
 
   @@unique([watermark, quality, sharePhotoUrl])
 
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(now)
   updatedAt DateTime @updatedAt
 
   originalPhoto Photo @relation(fields: [originalPhotoId], references: [id])
