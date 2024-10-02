@@ -285,14 +285,14 @@ export class PhotoController {
     res.status(200).send(result);
   }
 
-  @Get('/:id/get-shared')
+  @Get('/:sharedPhotoId/get-shared')
   @ApiOperation({
     summary: 'get shared photo detail by id',
   })
   @ApiOkResponse({
     type: SignedPhotoSharingDto,
   })
-  async getSharedPhotoDetail(@Param('id') sharedPhotoId: string) {
+  async getSharedPhotoDetail(@Param('sharedPhotoId') sharedPhotoId: string) {
     return await this.photoService.getSharedPhotoById(sharedPhotoId);
   }
 
