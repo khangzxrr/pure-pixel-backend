@@ -278,7 +278,7 @@ export class PhotoController {
     );
 
     if (result instanceof Boolean) {
-      res.status(201);
+      res.status(201).send();
       return;
     }
 
