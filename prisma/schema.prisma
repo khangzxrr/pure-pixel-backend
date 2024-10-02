@@ -318,8 +318,6 @@ model Photo {
   shareStatus  ShareStatus @default(NOT_READY)
   sharePayload Json        @default("{}")
 
-  currentSharePhotoUrl String @default("")
-
   photoTags String[]
 
   size Int @default(0)
@@ -337,7 +335,11 @@ model PhotoSharing {
   id String @id @default(uuid())
 
   watermark Boolean
+  quality String
   sharePhotoUrl String
+  originalPhotoId String
+
+  @@unique([watermark, quality, sharePhotoUrl])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
