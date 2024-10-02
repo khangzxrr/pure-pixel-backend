@@ -168,7 +168,8 @@ export class PhotoService {
           ttl: 10000,
         },
       });
-      throw new ShareStatusIsNotReadyException();
+
+      return true;
     }
 
     return this.photoProcessService.getAvailableResolution(

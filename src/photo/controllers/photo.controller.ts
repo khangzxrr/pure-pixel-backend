@@ -45,6 +45,7 @@ import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
 import { SharePhotoResponseDto } from '../dtos/share-photo-response.dto';
 import { SignedPhotoSharingDto } from '../dtos/signed-photo-sharing.dto';
+import { ResolutionDto } from '../dtos/resolution.dto';
 
 @Controller('photo')
 @ApiTags('photo')
@@ -255,13 +256,33 @@ export class PhotoController {
   @ApiOperation({
     summary: 'get photo available scaling resolution',
   })
+  @ApiResponse({
+    status: 201,
+    description:
+      'indicate server is generating share urls, using websocket to listen to finish processing event',
+  })
+  @ApiOkResponse({
+    isArray: true,
+    type: ResolutionDto,
+  })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   async getPhotoAvailableResolution(
     @AuthenticatedUser() user: ParsedUserDto,
     @Param('id') id: string,
+    @Res() res: Response,
   ) {
-    return await this.photoService.getAvailablePhotoResolution(user.sub, id);
+    const result = await this.photoService.getAvailablePhotoResolution(
+      user.sub,
+      id,
+    );
+
+    if (result instanceof Boolean) {
+      res.status(201);
+      return;
+    }
+
+    res.status(200).send(result);
   }
 
   @Get('/:id/get-shared')
