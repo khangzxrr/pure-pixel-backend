@@ -37,6 +37,7 @@ import { StoreConfig } from 'cache-manager';
       useFactory: async () => {
         return {
           store: redisStore,
+          ttl: 300000,
           host: process.env.REDIS_HOSTNAME,
           port: process.env.REDIS_PORT,
         } as StoreConfig;
