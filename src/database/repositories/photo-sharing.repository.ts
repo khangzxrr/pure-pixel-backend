@@ -5,8 +5,23 @@ import { PrismaService } from 'src/prisma.service';
 export class PhotoSharingRepository {
   constructor(@Inject() private readonly prisma: PrismaService) {}
 
+  findUniqueById(id: string) {
+    return this.prisma.extendedClient().photoSharing.findUnique({
+      where: {
+        id,
+      },
+      include: {
+        originalPhoto: {
+          include: {
+            photographer: true,
+          },
+        },
+      },
+    });
+  }
+
   findAllByOriginalPhotoId(originalPhotoId: string) {
-    return this.prisma.photoSharing.findMany({
+    return this.prisma.extendedClient().photoSharing.findMany({
       where: {
         originalPhotoId,
       },
@@ -19,7 +34,7 @@ export class PhotoSharingRepository {
     quality: string,
     sharePhotoUrl: string,
   ) {
-    return this.prisma.photoSharing.create({
+    return this.prisma.extendedClient().photoSharing.create({
       data: {
         watermark,
         sharePhotoUrl,
