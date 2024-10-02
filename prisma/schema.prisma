@@ -330,6 +330,20 @@ model Photo {
 
   comments Comment[]
   votes    Vote[]
+  photoSharings PhotoSharing[]
+}
+
+model PhotoSharing {
+  id String @id @default(uuid())
+
+  watermark Boolean
+  sharePhotoUrl String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  originalPhoto Photo @relation(fields: [originalPhotoId], references: [id])
+  originalPhotoId String
 }
 
 model Vote {
