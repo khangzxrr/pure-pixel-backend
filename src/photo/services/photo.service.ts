@@ -52,6 +52,8 @@ export class PhotoService {
     private readonly photoProcessQueue: Queue,
     @InjectQueue(PhotoConstant.PHOTO_WATERMARK_QUEUE)
     private readonly photoWatermarkQueue: Queue,
+    @InjectQueue(PhotoConstant.PHOTO_SHARE_QUEUE)
+    private readonly photoShareQueue: Queue,
   ) {}
 
   async findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
@@ -157,6 +159,18 @@ export class PhotoService {
       throw new PhotoIsPendingStateException();
     }
 
+    if (photo.shareStatus === 'NOT_READY') {
+      await this.photoShareQueue.add(PhotoConstant.GENERATE_SHARE_JOB_NAME, {
+        userId,
+        photoId: photo.id,
+        debounce: {
+          id: photo.id,
+          ttl: 10000,
+        },
+      });
+      throw new ShareStatusIsNotReadyException();
+    }
+
     return this.photoProcessService.getAvailableResolution(
       photo.originalPhotoUrl,
     );
@@ -210,6 +224,14 @@ export class PhotoService {
         },
       },
     );
+    await this.photoShareQueue.add(PhotoConstant.GENERATE_SHARE_JOB_NAME, {
+      userId,
+      photoId: processPhotosRequest.signedUpload.photoId,
+      debounce: {
+        id: processPhotosRequest.signedUpload.photoId,
+        ttl: 10000,
+      },
+    });
   }
 
   async signUrlFromPhotos(photo: Photo) {

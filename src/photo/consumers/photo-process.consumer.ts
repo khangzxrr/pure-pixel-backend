@@ -8,9 +8,6 @@ import { PhotoGateway } from '../gateways/socket.io.gateway';
 import { ProcessPhotosRequest } from '../dtos/process-images.request.dto';
 import { DatabaseService } from 'src/database/database.service';
 import { UserRepository } from 'src/database/repositories/user.repository';
-import { Sharp } from 'sharp';
-import { Photo } from '../entities/photo.entity';
-import { ShareStatus } from '@prisma/client';
 import { PhotoProcessDto } from '../dtos/photo-process.dto';
 
 @Processor(PhotoConstant.PHOTO_PROCESS_QUEUE)
@@ -42,39 +39,6 @@ export class PhotoProcessConsumer extends WorkerHost {
       this.logger.error(e);
       throw new Error(); //perform retry
     }
-  }
-
-  async generateSharePayload(sharp: Sharp, photo: Photo) {
-    const availableResolutions =
-      await this.photoProcessService.getAvailableResolution(
-        photo.originalPhotoUrl,
-      );
-
-    const sharePayload = {};
-
-    for (const r of availableResolutions) {
-      const buffer = await this.photoProcessService.resize(sharp, r.pixels);
-
-      const key = `${r.resolution}/${photo.originalPhotoUrl}`;
-      sharePayload[r.resolution] = key;
-
-      await this.photoProcessService.uploadFromBuffer(key, buffer);
-    }
-
-    photo.shareStatus = ShareStatus.READY;
-    photo.sharePayload = sharePayload;
-
-    const updatedPhoto = await this.photoRepository.updatePhotoShare(
-      photo.id,
-      ShareStatus.READY,
-      sharePayload,
-    );
-
-    await this.photoGateway.sendDataToUserId(
-      photo.photographerId,
-      'generated-multiple-share-resolutions',
-      updatedPhoto,
-    );
   }
 
   async processPhoto(userId: string, processRequest: ProcessPhotosRequest) {
@@ -109,6 +73,7 @@ export class PhotoProcessConsumer extends WorkerHost {
     const sharpJpegBuffer = await this.photoProcessService
       .convertJpeg(sharp)
       .then((s) => s.toBuffer());
+
     await this.photoProcessService.uploadFromBuffer(
       photo.originalPhotoUrl,
       sharpJpegBuffer,
@@ -155,7 +120,5 @@ export class PhotoProcessConsumer extends WorkerHost {
     ]);
 
     await this.photoGateway.sendFinishProcessPhotoEventToUserId(userId, photo);
-
-    this.generateSharePayload(sharp, photo);
   }
 }
