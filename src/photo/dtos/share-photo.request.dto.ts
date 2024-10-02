@@ -10,5 +10,11 @@ export class SharePhotoRequestDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  quality: string;
+  resolution: string;
+
+  // @ApiProperty()
+  // @IsBoolean()
+  // @ToBoolean()
+  // @IsNotEmpty()
+  // watermark: boolean;
 }
