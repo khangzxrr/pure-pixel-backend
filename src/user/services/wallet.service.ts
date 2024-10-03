@@ -14,6 +14,7 @@ import { NotEnoughBalanceException } from '../exceptions/not-enought-balance.exc
 import { WithdrawalTransactionRepository } from 'src/database/repositories/withdrawal-transaction.repository';
 import { PrismaService } from 'src/prisma.service';
 import { CreateWithdrawalResponseDto } from '../dtos/rest/create-withdrawal.response.dto';
+import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 
 @Injectable()
 export class WalletService {
@@ -24,6 +25,7 @@ export class WalletService {
     @Inject() private readonly sepayService: SepayService,
     @Inject()
     private readonly withdrawalTransactionRepository: WithdrawalTransactionRepository,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -79,7 +81,7 @@ export class WalletService {
       createDepositDto.amount,
     );
 
-    return new CreateDepositResponseDto(paymentUrl, mockQrcode);
+    return new CreateDepositResponseDto(paymentUrl, mockQrcode, transaction.id);
   }
 
   async findAllTransactionByUserId(
@@ -117,6 +119,14 @@ export class WalletService {
   }
 
   async getWalletByUserId(userId: string): Promise<WalletDto> {
+    const cachedWalletDto = await this.cacheManager.get<WalletDto>(
+      `walletdto:${userId}`,
+    );
+
+    if (cachedWalletDto) {
+      return cachedWalletDto;
+    }
+
     const transactions =
       await this.transactionRepository.findAllByUserId(userId);
 
@@ -158,6 +168,10 @@ export class WalletService {
       return acc;
     }, 0);
 
-    return new WalletDto(walletBalance);
+    const walletDto = new WalletDto(walletBalance);
+
+    await this.cacheManager.set(`walletdto:${userId}`, walletDto);
+
+    return walletDto;
   }
 }
