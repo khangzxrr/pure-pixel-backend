@@ -88,24 +88,28 @@ export class WalletService {
     userId: string,
     findAllTransactionDto: FindAllTransactionDto,
   ): Promise<PagingPaginatedResposneDto<TransactionDto>> {
-    const count = await this.transactionRepository.countAllByUserId(userId);
-    const transactions = await this.transactionRepository.findAllByUserId(
+    console.log(findAllTransactionDto);
+    const where = {
+      type: findAllTransactionDto.type,
+      status: findAllTransactionDto.status,
       userId,
-      [
-        {
-          type: findAllTransactionDto.orderByType,
-        },
-        {
-          amount: findAllTransactionDto.orderByAmount,
-        },
-        {
-          createdAt: findAllTransactionDto.orderByCreatedAt,
-        },
-        {
-          paymentMethod: findAllTransactionDto.orderByPaymentMethod,
-        },
-      ],
-    );
+    };
+
+    const count = await this.transactionRepository.countAll(where);
+    const transactions = await this.transactionRepository.findAll(where, [
+      {
+        type: findAllTransactionDto.orderByType,
+      },
+      {
+        amount: findAllTransactionDto.orderByAmount,
+      },
+      {
+        createdAt: findAllTransactionDto.orderByCreatedAt,
+      },
+      {
+        paymentMethod: findAllTransactionDto.orderByPaymentMethod,
+      },
+    ]);
 
     const transactionDtos = transactions.map((t) => new TransactionDto(t));
 
@@ -127,8 +131,9 @@ export class WalletService {
       return cachedWalletDto;
     }
 
-    const transactions =
-      await this.transactionRepository.findAllByUserId(userId);
+    const transactions = await this.transactionRepository.findAll({
+      userId,
+    });
 
     const walletBalance = transactions.reduce((acc: number, t: Transaction) => {
       //only process success transaction

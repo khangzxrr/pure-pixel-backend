@@ -6,11 +6,9 @@ import { PrismaService } from 'src/prisma.service';
 export class TransactionRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async countAllByUserId(userId: string) {
+  async countAll(where: Prisma.TransactionWhereInput) {
     return this.prisma.transaction.count({
-      where: {
-        userId,
-      },
+      where,
     });
   }
 
@@ -42,14 +40,12 @@ export class TransactionRepository {
     });
   }
 
-  async findAllByUserId(
-    userId: string,
+  async findAll(
+    where: Prisma.TransactionWhereInput,
     orderBy?: Prisma.TransactionOrderByWithRelationInput[],
   ) {
     return this.prisma.transaction.findMany({
-      where: {
-        userId,
-      },
+      where,
       include: {
         userToUserTransaction: true,
         depositTransaction: true,
