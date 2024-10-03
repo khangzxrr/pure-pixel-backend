@@ -1,8 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { App } from '@onesignal/node-onesignal';
 import OneSignal = require('@onesignal/node-onesignal');
 
 @Injectable()
 export class NotificationService {
+  private readonly logger = new Logger(NotificationService.name);
+
+  private oneSignalClient: Promise<App> = null;
+
   client() {
     const config = OneSignal.createConfiguration({
       userAuthKey: process.env.ONESIGNAL_USER_AUTH_KEY,
@@ -12,8 +17,14 @@ export class NotificationService {
     return new OneSignal.DefaultApi(config);
   }
 
-  async getApp() {
-    return this.client().getApp(process.env.ONESIGNAL_APP_ID);
+  async getApp(): Promise<App> {
+    if (this.oneSignalClient) {
+      return this.oneSignalClient;
+    }
+
+    this.oneSignalClient = this.client().getApp(process.env.ONESIGNAL_APP_ID);
+
+    return this.oneSignalClient;
   }
 
   createTextNotification(
@@ -52,6 +63,7 @@ export class NotificationService {
     const notificationResponse =
       await this.client().createNotification(notification);
 
-    console.log(notificationResponse);
+    this.logger.log(`sent notification to ${userid}`);
+    this.logger.log(notificationResponse);
   }
 }

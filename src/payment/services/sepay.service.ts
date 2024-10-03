@@ -11,6 +11,7 @@ import { ServiceTransactionRepository } from 'src/database/repositories/service-
 
 import * as QRCode from 'qrcode';
 import { Transaction } from '@prisma/client';
+import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 
 @Injectable()
 export class SepayService {
@@ -22,6 +23,7 @@ export class SepayService {
     @Inject() private readonly databaseService: DatabaseService,
     @Inject() private readonly keycloakService: KeycloakService,
     @Inject() private readonly userRepository: UserRepository,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   async handleUpgradeToPhotographer(
@@ -94,6 +96,9 @@ export class SepayService {
     if (transaction.amount.toNumber() != sepay.transferAmount) {
       throw new AmountIsNotEqualException();
     }
+
+    //clear wallet cache
+    await this.cacheManager.del(`walletdto:${transaction.userId}`);
 
     switch (transaction.type) {
       case 'UPGRADE_TO_PHOTOGRAPHER':

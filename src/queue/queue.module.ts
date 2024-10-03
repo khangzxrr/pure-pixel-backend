@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { CustomConfigModule } from 'src/customConfig/custom-config.module';
 import { BullMqConfigService } from 'src/customConfig/services/bullmq-config.service';
 import { BullMqQueueRegisterService } from 'src/customConfig/services/bullmq-queue-register.service';
+import { NotificationConstant } from 'src/notification/constants/notification.constant';
 import { PhotoConstant } from 'src/photo/constants/photo.constant';
 import { UpgradeConstant } from 'src/upgrade/constants/upgrade.constant';
 
@@ -38,6 +39,12 @@ import { UpgradeConstant } from 'src/upgrade/constants/upgrade.constant';
     BullModule.registerQueueAsync({
       imports: [CustomConfigModule],
       name: PhotoConstant.PHOTO_SHARE_QUEUE,
+      useExisting: BullMqQueueRegisterService,
+      inject: [CustomConfigModule],
+    }),
+    BullModule.registerQueueAsync({
+      imports: [CustomConfigModule],
+      name: NotificationConstant.PUSH_NOTIFICATION_QUEUE,
       useExisting: BullMqQueueRegisterService,
       inject: [CustomConfigModule],
     }),
