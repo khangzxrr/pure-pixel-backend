@@ -12,9 +12,16 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { UpgradeModule } from './upgrade/upgrade.module';
 import { PaymentModule } from './payment/payment.module';
 import { CachingModule } from './caching/caching.module';
+import { APP_FILTER } from '@nestjs/core';
+import { PrismaKnownExceptionFilter } from './infrastructure/filters/prisma-known-exception.filter';
 
 @Module({
-  providers: [],
+  providers: [
+    {
+      provide: APP_FILTER,
+      useClass: PrismaKnownExceptionFilter,
+    },
+  ],
   exports: [],
   imports: [
     ScheduleModule.forRoot(),
