@@ -11,6 +11,7 @@ import { PhotoModule } from './photo/photo.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { UpgradeModule } from './upgrade/upgrade.module';
 import { PaymentModule } from './payment/payment.module';
+import { CachingModule } from './caching/caching.module';
 
 @Module({
   providers: [],
@@ -29,6 +30,7 @@ import { PaymentModule } from './payment/payment.module';
     PhotoModule,
     UpgradeModule,
     PaymentModule,
+    CachingModule,
   ],
   controllers: [AppController],
 })

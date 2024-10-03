@@ -41,9 +41,11 @@ import { CommentEntity } from '../entities/comment.entity';
 import { ProcessPhotosRequest } from '../dtos/process-images.request.dto';
 import { GenerateWatermarkRequestDto } from '../dtos/generate-watermark.request.dto';
 import { SharePhotoRequestDto } from '../dtos/share-photo.request.dto';
-import { GetPhotoDetailDto } from '../dtos/get-photo-detail.dto';
 import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.response.dto';
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
+import { SharePhotoResponseDto } from '../dtos/share-photo-response.dto';
+import { SignedPhotoSharingDto } from '../dtos/signed-photo-sharing.dto';
+import { ResolutionDto } from '../dtos/resolution.dto';
 
 @Controller('photo')
 @ApiTags('photo')
@@ -139,14 +141,8 @@ export class PhotoController {
   async getPhoto(
     @AuthenticatedUser() user: ParsedUserDto,
     @Param('id') id: string,
-    @Query() getPhotoDetailDto: GetPhotoDetailDto,
   ) {
-    console.log(getPhotoDetailDto);
-    return await this.photoService.getSignedPhotoById(
-      user ? user.sub : '',
-      id,
-      getPhotoDetailDto,
-    );
+    return await this.photoService.getSignedPhotoById(user ? user.sub : '', id);
   }
 
   //TODO: webhook handle sftp
@@ -260,18 +256,63 @@ export class PhotoController {
   @ApiOperation({
     summary: 'get photo available scaling resolution',
   })
+  @ApiResponse({
+    status: 201,
+    description:
+      'indicate server is generating share urls, using websocket to listen to finish processing event',
+  })
+  @ApiOkResponse({
+    isArray: true,
+    type: ResolutionDto,
+  })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   async getPhotoAvailableResolution(
     @AuthenticatedUser() user: ParsedUserDto,
     @Param('id') id: string,
+    @Res() res: Response,
   ) {
-    return await this.photoService.getAvailablePhotoResolution(user.sub, id);
+    const result = await this.photoService.getAvailablePhotoResolution(
+      user.sub,
+      id,
+    );
+
+    if (result instanceof Boolean) {
+      res.status(201).send();
+      return;
+    }
+
+    res.status(200).send(result);
   }
-  //if image is sell => share image is watermarked
-  //if private => share info = selected share photo but when GET /share will throw 401
-  //if shared_link => share info = selected share photo with quality, GET /share return correct quality of image
-  //if public =>  share info = selected share photo info with quality
+
+  @Get('/:sharedPhotoId/get-shared')
+  @ApiOperation({
+    summary: 'get shared photo detail by id',
+  })
+  @ApiOkResponse({
+    type: SignedPhotoSharingDto,
+  })
+  async getSharedPhotoDetail(@Param('sharedPhotoId') sharedPhotoId: string) {
+    return await this.photoService.getSharedPhotoById(sharedPhotoId);
+  }
+
+  @Get('/:id/get-list-shared')
+  @ApiOperation({
+    summary: 'get all shared link of a photo by id',
+  })
+  @ApiOkResponse({
+    isArray: true,
+    type: SharePhotoResponseDto,
+  })
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
+  async findAllShared(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Param('id') photoId: string,
+  ) {
+    return await this.photoService.findAllShared(user.sub, photoId);
+  }
+
   @Post('/share')
   @ApiOperation({
     summary: 'generate share url by photo id',

@@ -3,6 +3,7 @@ import { SignUrl } from './sign-urls.request.dto';
 import { UserEntity } from 'src/user/entities/user.entity';
 import { JsonValue } from '@prisma/client/runtime/library';
 import { CategoryEntity } from '../entities/category.entity';
+import { Exclude, Type } from 'class-transformer';
 
 export class PhotoDto {
   @ApiProperty()
@@ -11,7 +12,7 @@ export class PhotoDto {
   @ApiProperty()
   shareStatus: string;
 
-  @ApiProperty()
+  @Exclude()
   sharePayload: JsonValue;
 
   @ApiProperty()
@@ -44,16 +45,16 @@ export class PhotoDto {
   @ApiProperty()
   description?: string;
 
-  @ApiProperty()
+  @Exclude()
   originalPhotoUrl: string;
 
-  @ApiProperty()
+  @Exclude()
   watermarkPhotoUrl: string;
 
-  @ApiProperty()
+  @Exclude()
   thumbnailPhotoUrl: string;
 
-  @ApiProperty()
+  @Exclude()
   watermarkThumbnailPhotoUrl: string;
 
   @ApiProperty()
@@ -78,6 +79,7 @@ export class PhotoDto {
   deletedAt?: Date;
 
   @ApiPropertyOptional()
+  @Type(() => UserEntity)
   photographer?: UserEntity;
 
   @ApiPropertyOptional()

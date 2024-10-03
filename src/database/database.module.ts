@@ -11,11 +11,13 @@ import { DatabaseService } from './database.service';
 import { ServiceTransactionRepository } from './repositories/service-transaction.repository';
 import { DepositTransactionRepository } from './repositories/deposit-transaction.repository';
 import { WithdrawalTransactionRepository } from './repositories/withdrawal-transaction.repository';
+import { PhotoSharingRepository } from './repositories/photo-sharing.repository';
 @Module({
   providers: [
     PrismaService,
     UserRepository,
     PhotoRepository,
+    PhotoSharingRepository,
     CategoryRepository,
     UpgradePackageRepository,
     UpgradePackageOrderRepository,
@@ -30,6 +32,7 @@ import { WithdrawalTransactionRepository } from './repositories/withdrawal-trans
     PrismaService,
     UserRepository,
     PhotoRepository,
+    PhotoSharingRepository,
     CategoryRepository,
     UpgradePackageRepository,
     UpgradePackageOrderRepository,

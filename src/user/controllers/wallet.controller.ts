@@ -6,6 +6,7 @@ import {
   Post,
   Query,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthenticatedUser, AuthGuard } from 'nest-keycloak-connect';
@@ -20,8 +21,10 @@ import { CreateDepositRequestDto } from '../dtos/rest/create-deposit.request.dto
 import { CreateDepositResponseDto } from '../dtos/rest/create-deposit.response.dto';
 import { CreateWithdrawalResponseDto } from '../dtos/rest/create-withdrawal.response.dto';
 import { CreateWithdrawalRequestDto } from '../dtos/rest/create-withdrawal.request.dto';
+import { CacheInterceptor } from '@nestjs/cache-manager';
 
 @Controller('wallet')
+@UseInterceptors(CacheInterceptor)
 @ApiTags('wallet')
 export class WalletController {
   constructor(@Inject() private readonly walletService: WalletService) {}
