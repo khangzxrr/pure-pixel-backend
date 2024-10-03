@@ -1,9 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { App } from '@onesignal/node-onesignal';
 import OneSignal = require('@onesignal/node-onesignal');
 
 @Injectable()
 export class NotificationService {
+  private readonly logger = new Logger(NotificationService.name);
+
   private oneSignalClient: Promise<App> = null;
 
   client() {
@@ -61,6 +63,7 @@ export class NotificationService {
     const notificationResponse =
       await this.client().createNotification(notification);
 
-    console.log(notificationResponse);
+    this.logger.log(`sent notification to ${userid}`);
+    this.logger.log(notificationResponse);
   }
 }

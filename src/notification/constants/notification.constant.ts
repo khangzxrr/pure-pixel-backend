@@ -1,0 +1,5 @@
+export class NotificationConstant {
+  static PUSH_NOTIFICATION_QUEUE = 'PUSH_NOTIFICATION_QUEUE';
+
+  static PUSH_NOTIFICATION_JOB = 'PUSH_NOTIFICATION_JOB';
+}
