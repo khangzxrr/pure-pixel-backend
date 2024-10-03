@@ -7,7 +7,7 @@ export class SignedUrl {
   @ApiProperty()
   thumbnail: string;
 
-  constructor(url, thumbnail) {
+  constructor(url: string, thumbnail: string) {
     this.url = url;
     this.thumbnail = thumbnail;
   }

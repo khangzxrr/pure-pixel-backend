@@ -30,11 +30,13 @@ import { PhotoProcessService } from './photo-process.service';
 import { SharePhotoRequestDto } from '../dtos/share-photo.request.dto';
 import { ShareStatusIsNotReadyException } from '../exceptions/share-status-is-not-ready.exception';
 import { ChoosedShareQualityIsNotFoundException } from '../exceptions/choosed-share-quality-is-not-found.exception';
-import { SharePhotoUrlIsEmptyException } from '../exceptions/share-photo-url-is-empty.exception';
-import { SharePhotoResponseDto } from '../exceptions/share-photo-response.dto';
-import { GetPhotoDetailDto } from '../dtos/get-photo-detail.dto';
+import { SharePhotoResponseDto } from '../dtos/share-photo-response.dto';
 import { EmptyOriginalPhotoException } from '../exceptions/empty-original-photo.exception';
 import { PagingPaginatedResposneDto } from 'src/infrastructure/restful/paging-paginated.response.dto';
+import { PhotoSharingRepository } from 'src/database/repositories/photo-sharing.repository';
+import { CreatePhotoSharingFailedException } from '../exceptions/create-photo-sharing-failed.exception';
+import { SignedPhotoSharingDto } from '../dtos/signed-photo-sharing.dto';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class PhotoService {
@@ -43,12 +45,15 @@ export class PhotoService {
   constructor(
     @Inject() private readonly databaseService: DatabaseService,
     @Inject() private readonly photoRepository: PhotoRepository,
+    @Inject() private readonly photoSharingRepository: PhotoSharingRepository,
     @Inject() private readonly userRepository: UserRepository,
     @Inject() private readonly photoProcessService: PhotoProcessService,
     @InjectQueue(PhotoConstant.PHOTO_PROCESS_QUEUE)
     private readonly photoProcessQueue: Queue,
     @InjectQueue(PhotoConstant.PHOTO_WATERMARK_QUEUE)
     private readonly photoWatermarkQueue: Queue,
+    @InjectQueue(PhotoConstant.PHOTO_SHARE_QUEUE)
+    private readonly photoShareQueue: Queue,
   ) {}
 
   async findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
@@ -68,20 +73,44 @@ export class PhotoService {
     return photo;
   }
 
-  async getSignedSharePhotoUrl(photo: Photo) {
-    if (photo.shareStatus != ShareStatus.READY) {
-      throw new ShareStatusIsNotReadyException();
+  async getSharedPhotoById(
+    sharedPhotoId: string,
+  ): Promise<SignedPhotoSharingDto> {
+    const sharedPhoto =
+      await this.photoSharingRepository.findUniqueById(sharedPhotoId);
+
+    if (!sharedPhoto) {
+      throw new PhotoNotFoundException();
     }
 
-    if (photo.currentSharePhotoUrl.trim().length === 0) {
-      throw new SharePhotoUrlIsEmptyException();
-    }
+    const signedSharePhotoUrl =
+      await this.photoProcessService.getSignedObjectUrl(
+        sharedPhoto.sharePhotoUrl,
+      );
 
-    const signedShareUrl = await this.photoProcessService.getSignedObjectUrl(
-      photo.watermark ? photo.watermarkPhotoUrl : photo.currentSharePhotoUrl,
+    sharedPhoto.sharePhotoUrl = signedSharePhotoUrl;
+
+    //using class transformer to exclude what doesnt want to show
+    return plainToInstance(SignedPhotoSharingDto, sharedPhoto, {});
+  }
+
+  async findAllShared(userId: string, photoId: string) {
+    await this.findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
+      userId,
+      photoId,
     );
 
-    return signedShareUrl;
+    const sharedPhotos =
+      await this.photoSharingRepository.findAllByOriginalPhotoId(photoId);
+
+    return sharedPhotos.map(
+      (s) =>
+        new SharePhotoResponseDto(
+          s.watermark,
+          s.quality,
+          `${process.env.FRONTEND_ORIGIN}/shared-photo/${s.id}`,
+        ),
+    );
   }
 
   async sharePhoto(userId: string, shareRequest: SharePhotoRequestDto) {
@@ -95,17 +124,27 @@ export class PhotoService {
       throw new ShareStatusIsNotReadyException();
     }
 
-    const choosedQualityPhotoUrl = photo.sharePayload[shareRequest.quality];
+    const choosedQualityPhotoUrl = photo.sharePayload[shareRequest.resolution];
 
     if (!choosedQualityPhotoUrl) {
       throw new ChoosedShareQualityIsNotFoundException();
     }
 
-    photo.currentSharePhotoUrl = choosedQualityPhotoUrl;
-    await this.photoRepository.update(photo);
+    const photoSharing = await this.photoSharingRepository.create(
+      photo.id,
+      false,
+      shareRequest.resolution,
+      choosedQualityPhotoUrl,
+    );
+
+    if (!photoSharing) {
+      throw new CreatePhotoSharingFailedException();
+    }
 
     return new SharePhotoResponseDto(
-      `${process.env.FRONTEND_ORIGIN}/${photo.id}?shared=true`,
+      false,
+      shareRequest.resolution,
+      `${process.env.FRONTEND_ORIGIN}/shared-photo/${photoSharing.id}`,
     );
   }
 
@@ -118,6 +157,19 @@ export class PhotoService {
 
     if (photo.status === 'PENDING') {
       throw new PhotoIsPendingStateException();
+    }
+
+    if (photo.shareStatus === 'NOT_READY') {
+      await this.photoShareQueue.add(PhotoConstant.GENERATE_SHARE_JOB_NAME, {
+        userId,
+        photoId: photo.id,
+        debounce: {
+          id: photo.id,
+          ttl: 10000,
+        },
+      });
+
+      return true;
     }
 
     return this.photoProcessService.getAvailableResolution(
@@ -173,6 +225,14 @@ export class PhotoService {
         },
       },
     );
+    await this.photoShareQueue.add(PhotoConstant.GENERATE_SHARE_JOB_NAME, {
+      userId,
+      photoId: processPhotosRequest.signedUpload.photoId,
+      debounce: {
+        id: processPhotosRequest.signedUpload.photoId,
+        ttl: 10000,
+      },
+    });
   }
 
   async signUrlFromPhotos(photo: Photo) {
@@ -315,11 +375,7 @@ export class PhotoService {
     return true;
   }
 
-  async getSignedPhotoById(
-    userId: string,
-    id: string,
-    query?: GetPhotoDetailDto,
-  ) {
+  async getSignedPhotoById(userId: string, id: string) {
     const photo = await this.photoRepository.getPhotoDetailById(id);
 
     if (!photo) {
@@ -340,10 +396,6 @@ export class PhotoService {
 
     const signedUrls = await this.signUrlFromPhotos(photo);
     signedPhotoDto.signedUrl = signedUrls;
-
-    if (query?.shared === true) {
-      signedPhotoDto.signedUrl.url = await this.getSignedSharePhotoUrl(photo);
-    }
 
     return signedPhotoDto;
   }

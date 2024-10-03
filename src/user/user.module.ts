@@ -8,6 +8,7 @@ import { UpgradeModule } from 'src/upgrade/upgrade.module';
 import { WalletService } from './services/wallet.service';
 import { WalletController } from './controllers/wallet.controller';
 import { PaymentModule } from 'src/payment/payment.module';
+import { CachingModule } from 'src/caching/caching.module';
 
 @Module({
   controllers: [MeController, WalletController],
@@ -17,6 +18,7 @@ import { PaymentModule } from 'src/payment/payment.module';
     AuthenModule,
     UpgradeModule,
     PaymentModule,
+    CachingModule,
   ],
   providers: [UserService, WalletService],
 })
