@@ -37,6 +37,8 @@ import { PhotoSharingRepository } from 'src/database/repositories/photo-sharing.
 import { CreatePhotoSharingFailedException } from '../exceptions/create-photo-sharing-failed.exception';
 import { SignedPhotoSharingDto } from '../dtos/signed-photo-sharing.dto';
 import { plainToInstance } from 'class-transformer';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { ShareQualityAlreadyExistException } from '../exceptions/share-quality-already-exist.exception';
 
 @Injectable()
 export class PhotoService {
@@ -129,23 +131,30 @@ export class PhotoService {
     if (!choosedQualityPhotoUrl) {
       throw new ChoosedShareQualityIsNotFoundException();
     }
+    try {
+      const photoSharing = await this.photoSharingRepository.create(
+        photo.id,
+        false,
+        shareRequest.resolution,
+        choosedQualityPhotoUrl,
+      );
 
-    const photoSharing = await this.photoSharingRepository.create(
-      photo.id,
-      false,
-      shareRequest.resolution,
-      choosedQualityPhotoUrl,
-    );
+      if (!photoSharing) {
+        throw new CreatePhotoSharingFailedException();
+      }
 
-    if (!photoSharing) {
-      throw new CreatePhotoSharingFailedException();
+      return new SharePhotoResponseDto(
+        false,
+        shareRequest.resolution,
+        `${process.env.FRONTEND_ORIGIN}/shared-photo/${photoSharing.id}`,
+      );
+    } catch (e) {
+      if (e instanceof PrismaClientKnownRequestError) {
+        if (e.code === 'P2002') {
+          throw new ShareQualityAlreadyExistException();
+        }
+      }
     }
-
-    return new SharePhotoResponseDto(
-      false,
-      shareRequest.resolution,
-      `${process.env.FRONTEND_ORIGIN}/shared-photo/${photoSharing.id}`,
-    );
   }
 
   async getAvailablePhotoResolution(userId: string, id: string) {
