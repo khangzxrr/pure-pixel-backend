@@ -28,22 +28,22 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { HttpStatusCode } from 'axios';
-import { PresignedUploadUrlRequest } from '../dtos/presigned-upload-url.request';
-import { PresignedUploadUrlResponse } from '../dtos/presigned-upload-url.response.dto';
+import { PresignedUploadUrlRequest } from '../dtos/rest/presigned-upload-url.request';
+import { PresignedUploadUrlResponse } from '../dtos/rest/presigned-upload-url.response.dto';
 import { PhotoDto, SignedPhotoDto } from '../dtos/photo.dto';
-import { PhotoUpdateRequest } from '../dtos/photo-update.request.dto';
+import { PhotoUpdateRequest } from '../dtos/rest/photo-update.request.dto';
 import { FindAllPhotoFilterDto } from '../dtos/find-all.filter.dto';
 
 import { Response } from 'express';
 import { CommentService } from '../services/comment.service';
-import { CreateCommentRequestDto } from '../dtos/create-comment.request.dto';
+import { CreateCommentRequestDto } from '../dtos/rest/create-comment.request.dto';
 import { CommentEntity } from '../entities/comment.entity';
-import { ProcessPhotosRequest } from '../dtos/process-images.request.dto';
-import { GenerateWatermarkRequestDto } from '../dtos/generate-watermark.request.dto';
-import { SharePhotoRequestDto } from '../dtos/share-photo.request.dto';
+import { ProcessPhotosRequest } from '../dtos/rest/process-images.request.dto';
+import { GenerateWatermarkRequestDto } from '../dtos/rest/generate-watermark.request.dto';
+import { SharePhotoRequestDto } from '../dtos/rest/share-photo.request.dto';
 import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.response.dto';
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
-import { SharePhotoResponseDto } from '../dtos/share-photo-response.dto';
+import { SharePhotoResponseDto } from '../dtos/rest/share-photo-response.dto';
 import { SignedPhotoSharingDto } from '../dtos/signed-photo-sharing.dto';
 import { ResolutionDto } from '../dtos/resolution.dto';
 

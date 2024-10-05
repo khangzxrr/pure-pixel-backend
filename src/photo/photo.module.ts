@@ -16,6 +16,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { CommentService } from './services/comment.service';
 import { PhotoWatermarkConsumer } from './consumers/photo-watermark.consumer';
 import { PhotoShareConsumer } from './consumers/photo-share.consumer';
+import { ImageExchangeController } from './controllers/image-exchange.controller';
 
 @Module({
   providers: [
@@ -30,7 +31,7 @@ import { PhotoShareConsumer } from './consumers/photo-share.consumer';
     CommentService,
   ],
   exports: [PhotoService, PhotoCategoryService],
-  controllers: [PhotoController, PhotoCategoryController],
+  controllers: [PhotoController, PhotoCategoryController, ImageExchangeController],
   imports: [
     HttpModule.register({
       timeout: 30000,
@@ -43,4 +44,4 @@ import { PhotoShareConsumer } from './consumers/photo-share.consumer';
     QueueModule,
   ],
 })
-export class PhotoModule {}
+export class PhotoModule { }

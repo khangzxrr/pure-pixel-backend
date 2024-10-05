@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { SignUrl } from './sign-urls.request.dto';
+import { SignUrl } from './rest/sign-urls.request.dto';
 import { UserEntity } from 'src/user/entities/user.entity';
 import { JsonValue } from '@prisma/client/runtime/library';
 import { CategoryEntity } from '../entities/category.entity';

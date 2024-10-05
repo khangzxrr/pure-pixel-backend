@@ -3,7 +3,7 @@ import { Logger, Inject } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoConstant } from '../constants/photo.constant';
-import { GenerateWatermarkRequestDto } from '../dtos/generate-watermark.request.dto';
+import { GenerateWatermarkRequestDto } from '../dtos/rest/generate-watermark.request.dto';
 import { PhotoGateway } from '../gateways/socket.io.gateway';
 import { PhotoProcessService } from '../services/photo-process.service';
 import { PhotoService } from '../services/photo.service';

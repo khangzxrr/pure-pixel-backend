@@ -2,11 +2,11 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { PhotoStatus, PhotoVisibility, ShareStatus } from '@prisma/client';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoIsPrivatedException } from '../exceptions/photo-is-private.exception';
-import { PresignedUploadUrlRequest } from '../dtos/presigned-upload-url.request';
+import { PresignedUploadUrlRequest } from '../dtos/rest/presigned-upload-url.request';
 import {
   PresignedUploadUrlResponse,
   SignedUpload,
-} from '../dtos/presigned-upload-url.response.dto';
+} from '../dtos/rest/presigned-upload-url.response.dto';
 import { Utils } from 'src/infrastructure/utils/utils';
 import { FileIsNotValidException } from '../exceptions/file-is-not-valid.exception';
 import { v4 } from 'uuid';
@@ -20,17 +20,17 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { PhotoConstant } from '../constants/photo.constant';
 import { Queue } from 'bullmq';
 import { PhotoNotFoundException } from '../exceptions/photo-not-found.exception';
-import { ProcessPhotosRequest } from '../dtos/process-images.request.dto';
-import { GenerateWatermarkRequestDto } from '../dtos/generate-watermark.request.dto';
+import { ProcessPhotosRequest } from '../dtos/rest/process-images.request.dto';
+import { GenerateWatermarkRequestDto } from '../dtos/rest/generate-watermark.request.dto';
 import { UserRepository } from 'src/database/repositories/user.repository';
 import { PhotographerNotFoundException } from 'src/photographer/exceptions/photographer-not-found.exception';
 import { RunOutPhotoQuotaException } from '../exceptions/run-out-photo-quota.exception';
 import { DatabaseService } from 'src/database/database.service';
 import { PhotoProcessService } from './photo-process.service';
-import { SharePhotoRequestDto } from '../dtos/share-photo.request.dto';
+import { SharePhotoRequestDto } from '../dtos/rest/share-photo.request.dto';
 import { ShareStatusIsNotReadyException } from '../exceptions/share-status-is-not-ready.exception';
 import { ChoosedShareQualityIsNotFoundException } from '../exceptions/choosed-share-quality-is-not-found.exception';
-import { SharePhotoResponseDto } from '../dtos/share-photo-response.dto';
+import { SharePhotoResponseDto } from '../dtos/rest/share-photo-response.dto';
 import { EmptyOriginalPhotoException } from '../exceptions/empty-original-photo.exception';
 import { PagingPaginatedResposneDto } from 'src/infrastructure/restful/paging-paginated.response.dto';
 import { PhotoSharingRepository } from 'src/database/repositories/photo-sharing.repository';
