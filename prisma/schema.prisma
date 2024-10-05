@@ -5,7 +5,7 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   previewFeatures = ["fullTextSearch", "fullTextIndex"]
 }
 
@@ -57,6 +57,8 @@ model User {
   toUserTransactions UserToUserTransaction[] @relation("toUser")
 
   transactions Transaction[]
+  PhotoSell    PhotoSell[]
+  PhotoBuy     PhotoBuy[]
 }
 
 model BankInfo {
@@ -113,6 +115,7 @@ model Transaction {
   status         TransactionStatus @default(PENDING)
 
   amount Decimal
+  fee    Decimal @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -134,6 +137,8 @@ model UserToUserTransaction {
 
   transaction   Transaction @relation(fields: [transactionId], references: [id])
   transactionId String      @unique
+
+  photoBuy PhotoBuy?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -330,6 +335,46 @@ model Photo {
   comments      Comment[]
   votes         Vote[]
   photoSharings PhotoSharing[]
+  photoSellings PhotoSell[]
+  PhotoBuy      PhotoBuy[]
+}
+
+model PhotoSell {
+  id String @id @default(uuid())
+
+  active Boolean @default(false)
+
+  price         Decimal
+  description   String
+  afterPhotoUrl String
+
+  photo     Photo      @relation(fields: [photoId], references: [id])
+  photoId   String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  User      User?      @relation(fields: [userId], references: [id])
+  userId    String?
+  PhotoBuy  PhotoBuy[]
+}
+
+model PhotoBuy {
+  id String @id @default(uuid())
+
+  photoSell   PhotoSell @relation(fields: [photoSellId], references: [id])
+  photoSellId String
+
+  userToUserTransaction   UserToUserTransaction @relation(fields: [userToUserTransactionId], references: [id])
+  userToUserTransactionId String                @unique
+
+  buyer   User   @relation(fields: [buyerId], references: [id])
+  buyerId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Photo     Photo?   @relation(fields: [photoId], references: [id])
+  photoId   String?
+
+  @@unique([photoSellId, buyerId])
 }
 
 model PhotoSharing {
