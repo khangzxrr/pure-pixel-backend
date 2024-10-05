@@ -17,7 +17,7 @@ export class PagingPaginatedResposneDto<T> {
   objects: T[];
 
   constructor(limit: number, totalRecord: number, objects: T[]) {
-    this.totalPage = Math.ceil(totalRecord / limit);
+    this.totalPage = limit === 0 ? 0 : Math.ceil(totalRecord / limit);
     this.totalRecord = totalRecord;
     this.objects = objects;
   }
