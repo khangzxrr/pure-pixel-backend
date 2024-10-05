@@ -19,9 +19,6 @@ export class LoggingInterceptor implements NestInterceptor {
   }
 
   intercept(context: ExecutionContext, next: CallHandler<any>): Observable<any> | Promise<Observable<any>> {
-    const now = Date.now();
-
-
     return next.handle().pipe(tap(() => this.printHttpLog(context)));
   }
 
