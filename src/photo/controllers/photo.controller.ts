@@ -53,7 +53,7 @@ export class PhotoController {
   constructor(
     @Inject() private readonly photoService: PhotoService,
     @Inject() private readonly commentService: CommentService,
-  ) {}
+  ) { }
 
   // @Get('/test/:key')
   // async test(@Param('key') key: string, @Res() res: Response) {

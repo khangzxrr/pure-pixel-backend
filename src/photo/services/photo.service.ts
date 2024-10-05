@@ -56,12 +56,13 @@ export class PhotoService {
     private readonly photoWatermarkQueue: Queue,
     @InjectQueue(PhotoConstant.PHOTO_SHARE_QUEUE)
     private readonly photoShareQueue: Queue,
-  ) {}
+  ) { }
 
   async findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
     userId: string,
     id: string,
   ) {
+
     const photo = await this.photoRepository.getPhotoById(id);
 
     if (!photo) {
@@ -272,6 +273,7 @@ export class PhotoService {
     userId: string,
     photoDtos: PhotoDto[],
   ): Promise<PhotoDto[]> {
+
     const photoPromises = photoDtos.map(async (dto) => {
       const photo =
         await this.findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
@@ -279,30 +281,33 @@ export class PhotoService {
           dto.id,
         );
 
+
       if (photo.photographerId !== userId) {
         throw new NotBelongPhotoException();
       }
 
-      photo.exif = dto?.exif;
-      photo.categoryId = dto?.categoryId;
-      photo.title = dto?.title;
-      photo.watermark = dto?.watermark;
-      photo.showExif = dto?.showExif;
-      photo.colorGrading = dto?.colorGrading;
-      photo.location = dto?.location;
-      photo.captureTime = dto?.captureTime;
-      photo.description = dto?.description;
-      photo.photoTags = dto?.photoTags;
+      const removedNullByteExifsString = dto.exif ? JSON.stringify(dto.exif).replaceAll('\\u0000', '') : '{}';
+      photo.exif = JSON.parse(removedNullByteExifsString);
 
-      if (dto?.photoType === 'RAW') {
+      photo.categoryId = dto.categoryId;
+      photo.title = dto.title;
+      photo.watermark = dto.watermark;
+      photo.showExif = dto.showExif;
+      photo.colorGrading = dto.colorGrading;
+      photo.location = dto.location;
+      photo.captureTime = dto.captureTime;
+      photo.description = dto.description;
+      photo.photoTags = dto.photoTags;
+
+      if (dto.photoType === 'RAW') {
         photo.photoType = 'RAW';
-      } else if (dto?.photoType === 'EDITED') {
+      } else if (dto.photoType === 'EDITED') {
         photo.photoType = 'EDITED';
       }
 
-      if (dto?.visibility === 'PRIVATE') {
+      if (dto.visibility === 'PRIVATE') {
         photo.visibility = 'PRIVATE';
-      } else if (dto?.visibility === 'PUBLIC') {
+      } else if (dto.visibility === 'PUBLIC') {
         photo.visibility = 'PUBLIC';
       } else {
         photo.visibility = 'SHARE_LINK';

@@ -6,43 +6,70 @@ import { CategoryEntity } from '../entities/category.entity';
 import { Exclude, Type } from 'class-transformer';
 
 export class PhotoDto {
-  @ApiProperty()
+  @ApiProperty({
+    required: true
+  })
   id: string;
 
-  @ApiProperty()
-  shareStatus: string;
+  @ApiProperty({
+    required: false
+  })
+  shareStatus?: string;
 
   @Exclude()
-  sharePayload: JsonValue;
+  @ApiProperty({
+    required: false,
+  })
+  sharePayload?: JsonValue;
 
-  @ApiProperty()
-  categoryId: string;
+  @ApiProperty({
+    required: false,
+  })
+  categoryId?: string;
 
-  @ApiProperty()
-  photographerId: string;
+  @ApiProperty({
+    required: false,
+  })
+  photographerId?: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    required: false,
+  })
   title?: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    required: false,
+  })
   watermark?: boolean;
 
-  @ApiProperty()
+  @ApiProperty({
+    required: false,
+  })
   showExif?: boolean;
 
-  @ApiProperty()
+  @ApiProperty({
+    required: false,
+  })
   exif?: JsonValue;
 
-  @ApiProperty()
+  @ApiProperty({
+    required: false,
+  })
   colorGrading?: JsonValue;
 
-  @ApiProperty()
+  @ApiProperty({
+    required: false,
+  })
   location?: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    required: false,
+  })
   captureTime?: Date;
 
-  @ApiProperty()
+  @ApiProperty({
+    required: false,
+  })
   description?: string;
 
   @Exclude()
@@ -57,10 +84,14 @@ export class PhotoDto {
   @Exclude()
   watermarkThumbnailPhotoUrl: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    required: false,
+  })
   photoType?: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    required: false,
+  })
   visibility?: string;
 
   @ApiProperty()
