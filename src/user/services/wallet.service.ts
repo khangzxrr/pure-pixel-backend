@@ -27,7 +27,7 @@ export class WalletService {
     private readonly withdrawalTransactionRepository: WithdrawalTransactionRepository,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private readonly prisma: PrismaService,
-  ) {}
+  ) { }
 
   async createWithdrawal(
     userId: string,
@@ -89,6 +89,7 @@ export class WalletService {
     findAllTransactionDto: FindAllTransactionDto,
   ): Promise<PagingPaginatedResposneDto<TransactionDto>> {
     console.log(findAllTransactionDto);
+
     const where = {
       type: findAllTransactionDto.type,
       status: findAllTransactionDto.status,
@@ -96,7 +97,8 @@ export class WalletService {
     };
 
     const count = await this.transactionRepository.countAll(where);
-    const transactions = await this.transactionRepository.findAll(where, [
+    const transactions = await this.transactionRepository.findAll(
+      where, findAllTransactionDto.toSkip(), findAllTransactionDto.limit, [
       {
         type: findAllTransactionDto.orderByType,
       },
