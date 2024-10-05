@@ -4,7 +4,7 @@ import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
 export class TransactionRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async countAll(where: Prisma.TransactionWhereInput) {
     return this.prisma.transaction.count({
@@ -42,10 +42,14 @@ export class TransactionRepository {
 
   async findAll(
     where: Prisma.TransactionWhereInput,
+    skip?: number,
+    take?: number,
     orderBy?: Prisma.TransactionOrderByWithRelationInput[],
   ) {
     return this.prisma.transaction.findMany({
       where,
+      skip,
+      take,
       include: {
         userToUserTransaction: true,
         depositTransaction: true,
