@@ -57,7 +57,6 @@ model User {
   toUserTransactions UserToUserTransaction[] @relation("toUser")
 
   transactions Transaction[]
-  PhotoSell    PhotoSell[]
   PhotoBuy     PhotoBuy[]
 }
 
@@ -348,13 +347,12 @@ model PhotoSell {
   description   String
   afterPhotoUrl String
 
-  photo     Photo      @relation(fields: [photoId], references: [id])
+  photo     Photo    @relation(fields: [photoId], references: [id])
   photoId   String
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  User      User?      @relation(fields: [userId], references: [id])
-  userId    String?
-  PhotoBuy  PhotoBuy[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  PhotoBuy PhotoBuy[]
 }
 
 model PhotoBuy {
