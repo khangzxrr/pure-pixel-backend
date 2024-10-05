@@ -286,8 +286,10 @@ export class PhotoService {
         throw new NotBelongPhotoException();
       }
 
-      const removedNullByteExifsString = dto.exif ? JSON.stringify(dto.exif).replaceAll('\\u0000', '') : '{}';
-      photo.exif = JSON.parse(removedNullByteExifsString);
+      if (dto.exif) {
+        const removedNullByteExifsString = JSON.stringify(dto.exif).replaceAll('\\u0000', '');
+        photo.exif = JSON.parse(removedNullByteExifsString);
+      }
 
       photo.categoryId = dto.categoryId;
       photo.title = dto.title;
