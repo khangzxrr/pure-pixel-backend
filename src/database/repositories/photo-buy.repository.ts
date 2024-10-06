@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PhotoBuy, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
@@ -11,6 +11,13 @@ export class PhotoBuyRepository {
       where: {
         photoSellId,
         buyerId,
+      },
+      include: {
+        userToUserTransaction: {
+          include: {
+            transaction: true,
+          },
+        },
       },
     });
   }
