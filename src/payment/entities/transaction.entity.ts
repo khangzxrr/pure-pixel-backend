@@ -6,6 +6,7 @@ export class TransactionEntity
   extends ApplicationEntity<TransactionEntity>
   implements Transaction
 {
+  fee: Decimal;
   id: string;
   paymentPayload: JsonValue;
   paymentMethod: $Enums.PaymentMethod;
