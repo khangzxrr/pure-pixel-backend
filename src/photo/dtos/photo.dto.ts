@@ -1,8 +1,6 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { SignUrl } from './rest/sign-urls.request.dto';
-import { UserEntity } from 'src/user/entities/user.entity';
 import { JsonValue } from '@prisma/client/runtime/library';
-import { CategoryEntity } from '../entities/category.entity';
 import { Exclude, Type } from 'class-transformer';
 import { PhotographerDTO } from 'src/photographer/dtos/photographer.dto';
 import { PhotoSellDto } from './photo-sell.dto';
