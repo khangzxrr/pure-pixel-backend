@@ -17,6 +17,7 @@ import { CommentService } from './services/comment.service';
 import { PhotoWatermarkConsumer } from './consumers/photo-watermark.consumer';
 import { PhotoShareConsumer } from './consumers/photo-share.consumer';
 import { ImageExchangeController } from './controllers/image-exchange.controller';
+import { PaymentModule } from 'src/payment/payment.module';
 
 @Module({
   providers: [
@@ -31,7 +32,11 @@ import { ImageExchangeController } from './controllers/image-exchange.controller
     CommentService,
   ],
   exports: [PhotoService, PhotoCategoryService],
-  controllers: [PhotoController, PhotoCategoryController, ImageExchangeController],
+  controllers: [
+    PhotoController,
+    PhotoCategoryController,
+    ImageExchangeController,
+  ],
   imports: [
     HttpModule.register({
       timeout: 30000,
@@ -42,6 +47,7 @@ import { ImageExchangeController } from './controllers/image-exchange.controller
     DatabaseModule,
     StorageModule,
     QueueModule,
+    PaymentModule,
   ],
 })
-export class PhotoModule { }
+export class PhotoModule {}

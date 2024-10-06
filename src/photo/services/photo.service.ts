@@ -55,6 +55,8 @@ import { PhotoBuyRepository } from 'src/database/repositories/photo-buy.reposito
 import { ExistPhotoBuyException } from '../exceptions/exist-photo-buy.exception';
 import { PhotoSellNotFoundException } from '../exceptions/photo-sell-not-found.exception';
 import { PhotoBuyResponseDto } from '../dtos/rest/buy-photo.response.dto';
+import { SepayService } from 'src/payment/services/sepay.service';
+import { NotEnoughBalanceException } from 'src/user/exceptions/not-enought-balance.exception';
 
 @Injectable()
 export class PhotoService {
@@ -62,6 +64,7 @@ export class PhotoService {
 
   constructor(
     @Inject() private readonly databaseService: DatabaseService,
+    @Inject() private readonly sepayService: SepayService,
     @Inject() private readonly photoRepository: PhotoRepository,
     @Inject() private readonly photoSharingRepository: PhotoSharingRepository,
     @Inject() private readonly userRepository: UserRepository,
@@ -550,7 +553,13 @@ export class PhotoService {
       );
 
     if (previousPhotoBuy) {
-      throw new ExistPhotoBuyException();
+      return plainToInstance(PhotoBuyResponseDto, previousPhotoBuy);
+    }
+
+    const userWallet = await this.sepayService.getWalletByUserId(userId);
+
+    if (userWallet.walletBalance < photoSell.price.toNumber()) {
+      throw new NotEnoughBalanceException();
     }
 
     const fee = photoSell.price.mul(5).div(100);
