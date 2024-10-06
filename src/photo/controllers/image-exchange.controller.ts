@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Inject, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Inject,
+  Param,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthenticatedUser, AuthGuard, Roles } from 'nest-keycloak-connect';
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
 import { CreatePhotoSellingDto } from '../dtos/rest/create-photo-selling.request.dto';
@@ -20,5 +28,15 @@ export class ImageExchangeController {
     @Body() createPhotoSellingDto: CreatePhotoSellingDto,
   ) {
     return await this.photoService.sellPhoto(user.sub, createPhotoSellingDto);
+  }
+
+  @Post('/:id/buy')
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
+  async buyPhoto(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Param('id') photoId: string,
+  ) {
+    return await this.photoService.buyPhotoRequest(user.sub, photoId);
   }
 }
