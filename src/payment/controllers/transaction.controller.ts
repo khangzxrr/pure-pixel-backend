@@ -1,10 +1,18 @@
-import { Controller, Get, Inject, Param, UseGuards } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Inject,
+  Param,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { TransactionService } from '../services/transaction.service';
 import { AuthenticatedUser, AuthGuard, Roles } from 'nest-keycloak-connect';
 import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
+import { paymentUrlDto } from '../dtos/payment-url.dto';
 
 @Controller('payment')
 @ApiTags('payment')
@@ -21,5 +29,21 @@ export class TransactionController {
     @Param('id') id: string,
   ) {
     return await this.transactionService.findById(user.sub, id);
+  }
+
+  @Post('/transaction/:id/generate-payment-url')
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
+  @ApiOkResponse({
+    type: paymentUrlDto,
+  })
+  async generatePaymentUrl(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Param('id') transactionId: string,
+  ) {
+    return await this.transactionService.generatePaymentUrl(
+      user.sub,
+      transactionId,
+    );
   }
 }

@@ -37,7 +37,6 @@ export class SepayService {
     @Inject() private readonly databaseService: DatabaseService,
     @Inject() private readonly keycloakService: KeycloakService,
     @Inject() private readonly userRepository: UserRepository,
-    @Inject() private readonly userToUserRepository: UserToUserRepository,
     @Inject()
     private readonly withdrawalTransactionRepository: WithdrawalTransactionRepository,
     @Inject()
@@ -89,8 +88,8 @@ export class SepayService {
     );
 
     const paymentUrl = this.generatePaymentUrl(
-      createDepositDto.amount,
       transaction.id,
+      createDepositDto.amount,
     );
 
     const mockQrcode = await this.generateMockIpnQrCode(
@@ -300,7 +299,7 @@ export class SepayService {
     return HttpStatus.OK;
   }
 
-  generatePaymentUrl(amount: number, transactionId: string) {
+  generatePaymentUrl(transactionId: string, amount: number) {
     const removedDashTransactionId = transactionId.trim().replaceAll('-', ' ');
 
     return `https://qr.sepay.vn/img?acc=${process.env.SEPAY_ACC}&bank=${process.env.SEPAY_BANK}&amount=${amount}&des=${encodeURIComponent(removedDashTransactionId)}&template=TEMPLATE`;
