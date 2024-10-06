@@ -18,10 +18,10 @@ export class PhotoSellRepository {
     });
   }
 
-  updateQuery(photoSell: PhotoSell) {
+  updateQuery(id: string, photoSell: Partial<PhotoSell>) {
     return this.prisma.extendedClient().photoSell.update({
       where: {
-        id: photoSell.id,
+        id: id,
       },
       data: photoSell,
     });
