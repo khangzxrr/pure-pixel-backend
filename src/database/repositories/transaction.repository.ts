@@ -4,7 +4,7 @@ import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
 export class TransactionRepository {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   async countAll(where: Prisma.TransactionWhereInput) {
     return this.prisma.transaction.count({
@@ -51,7 +51,8 @@ export class TransactionRepository {
       skip,
       take,
       include: {
-        userToUserTransaction: true,
+        toUserTransaction: true,
+        fromUserTransaction: true,
         depositTransaction: true,
         serviceTransaction: true,
         withdrawalTransaction: true,
@@ -66,7 +67,12 @@ export class TransactionRepository {
         id,
       },
       include: {
-        userToUserTransaction: {
+        toUserTransaction: {
+          select: {
+            id: true,
+          },
+        },
+        fromUserTransaction: {
           select: {
             id: true,
           },

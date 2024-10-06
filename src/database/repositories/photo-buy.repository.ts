@@ -15,7 +15,7 @@ export class PhotoBuyRepository {
       include: {
         userToUserTransaction: {
           include: {
-            transaction: true,
+            fromUserTransaction: true,
           },
         },
       },
@@ -48,7 +48,7 @@ export class PhotoBuyRepository {
                 id: toUserId,
               },
             },
-            transaction: {
+            fromUserTransaction: {
               create: {
                 type: 'IMAGE_BUY',
                 fee,
