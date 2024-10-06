@@ -25,6 +25,7 @@ import { WithdrawalTransactionRepository } from 'src/database/repositories/withd
 import { DepositTransactionRepository } from 'src/database/repositories/deposit-transaction.repository';
 import { PrismaService } from 'src/prisma.service';
 import { plainToInstance } from 'class-transformer';
+import { UserToUserRepository } from 'src/database/repositories/user-to-user-transaction.repository';
 
 @Injectable()
 export class SepayService {
@@ -36,6 +37,7 @@ export class SepayService {
     @Inject() private readonly databaseService: DatabaseService,
     @Inject() private readonly keycloakService: KeycloakService,
     @Inject() private readonly userRepository: UserRepository,
+    @Inject() private readonly userToUserRepository: UserToUserRepository,
     @Inject()
     private readonly withdrawalTransactionRepository: WithdrawalTransactionRepository,
     @Inject()
@@ -254,6 +256,24 @@ export class SepayService {
     );
   }
 
+  async handleBuy(
+    transaction: Transaction,
+    fromUserTransactionId: string,
+    sepay: SepayRequestDto,
+  ) {
+    const fromUserTransaction = await this.userToUserRepository.getById(
+      fromUserTransactionId,
+    );
+
+    await this.userToUserRepository.markSucccessAndCreateToUserTransaction(
+      fromUserTransactionId,
+      sepay,
+      fromUserTransaction.toUserId,
+      transaction.fee,
+      transaction.amount,
+    );
+  }
+
   async processTransaction(sepay: SepayRequestDto) {
     const transactionId = sepay.content.replaceAll(' ', '-');
 
@@ -265,7 +285,7 @@ export class SepayService {
     }
 
     if (transaction.status === 'SUCCESS' || transaction.status !== 'PENDING') {
-      return HttpStatus.OK;
+      return transaction;
     }
 
     if (transaction.amount.toNumber() != sepay.transferAmount) {
@@ -292,6 +312,11 @@ export class SepayService {
       case 'IMAGE_SELL':
         break;
       case 'IMAGE_BUY':
+        await this.handleBuy(
+          transaction,
+          transaction.fromUserTransaction.id,
+          sepay,
+        );
         break;
     }
 

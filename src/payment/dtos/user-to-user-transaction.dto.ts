@@ -5,6 +5,7 @@ import { TransactionDto } from 'src/user/dtos/transaction.dto';
 export class UserToUserTransactionDto {
   @ApiProperty()
   id: string;
+
   @ApiProperty()
   toUserId: string;
 
@@ -20,5 +21,9 @@ export class UserToUserTransactionDto {
 
   @ApiProperty()
   @Type(() => TransactionDto)
-  transaction: TransactionDto;
+  fromUserTransaction: TransactionDto;
+
+  @ApiProperty()
+  @Type(() => TransactionDto)
+  toUserTransaction: TransactionDto;
 }
