@@ -1,5 +1,10 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { PhotoStatus, PhotoVisibility, ShareStatus } from '@prisma/client';
+import {
+  PhotoStatus,
+  PhotoVisibility,
+  Prisma,
+  ShareStatus,
+} from '@prisma/client';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoIsPrivatedException } from '../exceptions/photo-is-private.exception';
 import { PresignedUploadUrlRequest } from '../dtos/rest/presigned-upload-url.request';
@@ -36,9 +41,20 @@ import { PagingPaginatedResposneDto } from 'src/infrastructure/restful/paging-pa
 import { PhotoSharingRepository } from 'src/database/repositories/photo-sharing.repository';
 import { CreatePhotoSharingFailedException } from '../exceptions/create-photo-sharing-failed.exception';
 import { SignedPhotoSharingDto } from '../dtos/signed-photo-sharing.dto';
-import { plainToInstance } from 'class-transformer';
+import { plainToClass, plainToInstance } from 'class-transformer';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { ShareQualityAlreadyExistException } from '../exceptions/share-quality-already-exist.exception';
+import { CreatePhotoSellingDto } from '../dtos/rest/create-photo-selling.request.dto';
+import { PhotoSellRepository } from 'src/database/repositories/photo-sell.repository';
+import { PhotoSellDto } from '../dtos/photo-sell.dto';
+
+import { PhotoSell } from '@prisma/client';
+import { PhotoSellEntity } from '../entities/photo-sell.entity';
+import { PrismaService } from 'src/prisma.service';
+import { CannotBuyOwnedPhotoException } from '../exceptions/cannot-buy-owned-photo.exception';
+import { PhotoBuyRepository } from 'src/database/repositories/photo-buy.repository';
+import { ExistPhotoBuyException } from '../exceptions/exist-photo-buy.exception';
+import { PhotoSellNotFoundException } from '../exceptions/photo-sell-not-found.exception';
 
 @Injectable()
 export class PhotoService {
@@ -50,19 +66,21 @@ export class PhotoService {
     @Inject() private readonly photoSharingRepository: PhotoSharingRepository,
     @Inject() private readonly userRepository: UserRepository,
     @Inject() private readonly photoProcessService: PhotoProcessService,
+    @Inject() private readonly photoSellRepository: PhotoSellRepository,
+    @Inject() private readonly photoBuyRepository: PhotoBuyRepository,
     @InjectQueue(PhotoConstant.PHOTO_PROCESS_QUEUE)
     private readonly photoProcessQueue: Queue,
     @InjectQueue(PhotoConstant.PHOTO_WATERMARK_QUEUE)
     private readonly photoWatermarkQueue: Queue,
     @InjectQueue(PhotoConstant.PHOTO_SHARE_QUEUE)
     private readonly photoShareQueue: Queue,
-  ) { }
+    private readonly prisma: PrismaService,
+  ) {}
 
   async findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
     userId: string,
     id: string,
   ) {
-
     const photo = await this.photoRepository.getPhotoById(id);
 
     if (!photo) {
@@ -273,7 +291,6 @@ export class PhotoService {
     userId: string,
     photoDtos: PhotoDto[],
   ): Promise<PhotoDto[]> {
-
     const photoPromises = photoDtos.map(async (dto) => {
       const photo =
         await this.findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
@@ -281,13 +298,15 @@ export class PhotoService {
           dto.id,
         );
 
-
       if (photo.photographerId !== userId) {
         throw new NotBelongPhotoException();
       }
 
       if (dto.exif) {
-        const removedNullByteExifsString = JSON.stringify(dto.exif).replaceAll('\\u0000', '');
+        const removedNullByteExifsString = JSON.stringify(dto.exif).replaceAll(
+          '\\u0000',
+          '',
+        );
         photo.exif = JSON.parse(removedNullByteExifsString);
       }
 
@@ -462,5 +481,81 @@ export class PhotoService {
     );
 
     return new PresignedUploadUrlResponse(signedUpload);
+  }
+
+  //TODO: what if photographer update visibility to private => handle deactive sell
+  //
+  async sellPhoto(userId: string, sellPhotoDto: CreatePhotoSellingDto) {
+    const photo =
+      await this.findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
+        userId,
+        sellPhotoDto.photoId,
+      );
+
+    if (photo.status !== 'PARSED') {
+      throw new PhotoIsPendingStateException();
+    }
+
+    const previousActivePhotoSell =
+      await this.photoSellRepository.getByActiveAndId(sellPhotoDto.photoId);
+
+    if (
+      previousActivePhotoSell &&
+      previousActivePhotoSell.price.toNumber() === sellPhotoDto.price &&
+      previousActivePhotoSell.description === sellPhotoDto.description &&
+      previousActivePhotoSell.afterPhotoUrl === sellPhotoDto.afterPhotoUrl
+    ) {
+      //idemponent
+      return plainToInstance(PhotoSellDto, previousActivePhotoSell, {});
+    }
+
+    previousActivePhotoSell.active = false;
+
+    photo.watermark = true;
+    photo.visibility = 'PUBLIC';
+
+    const updatePhotoQuery = this.photoRepository.updateQuery(photo);
+
+    const updatePhotoSellQuery = this.photoSellRepository.updateQuery(
+      previousActivePhotoSell,
+    );
+
+    const photoSell = plainToInstance(PhotoSellEntity, sellPhotoDto);
+    const createPhotoSellQuery =
+      this.photoSellRepository.createAndActiveByPhotoIdQuery(photoSell);
+
+    const [, newPhotoSell] = await this.prisma
+      .extendedClient()
+      .$transaction([
+        updatePhotoQuery,
+        updatePhotoSellQuery,
+        createPhotoSellQuery,
+      ]);
+
+    return plainToInstance(PhotoSellDto, newPhotoSell);
+  }
+
+  async buyPhotoRequest(userId: string, photoSellId: string) {
+    const photoSell =
+      await this.photoSellRepository.getByActiveAndId(photoSellId);
+
+    if (!photoSell) {
+      throw new PhotoSellNotFoundException();
+    }
+
+    if (photoSell.photo.photographerId === userId) {
+      throw new CannotBuyOwnedPhotoException();
+    }
+
+    const previousPhotoBuy =
+      await this.photoBuyRepository.getByPhotoSellIdAndBuyerId(
+        photoSellId,
+        userId,
+      );
+
+    if (previousPhotoBuy) {
+      throw new ExistPhotoBuyException();
+    }
+    //TODO: handle create transaction
   }
 }
