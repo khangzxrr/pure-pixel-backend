@@ -153,8 +153,8 @@ export class UpgradeOrderService {
           );
 
         const paymentUrl = this.sepayService.generatePaymentUrl(
-          calculatedPrice.toNumber(),
           newUpgradeOrder.id,
+          calculatedPrice.toNumber(),
         );
 
         const requestUpgradeResponse = new RequestUpgradeOrderResponseDto();
