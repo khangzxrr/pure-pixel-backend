@@ -342,16 +342,18 @@ model PhotoSell {
 
   active Boolean @default(false)
 
-  price         Decimal
+  price Decimal
+
   description   String
   afterPhotoUrl String
 
-  photo     Photo    @relation(fields: [photoId], references: [id])
-  photoId   String
+  photo   Photo  @relation(fields: [photoId], references: [id])
+  photoId String
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  PhotoBuy PhotoBuy[]
+  photoBuys PhotoBuy[]
 }
 
 model PhotoBuy {
