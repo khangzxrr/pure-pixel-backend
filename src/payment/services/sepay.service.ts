@@ -25,6 +25,7 @@ import { NotEnoughBalanceException } from 'src/user/exceptions/not-enought-balan
 import { WithdrawalTransactionRepository } from 'src/database/repositories/withdrawal-transaction.repository';
 import { DepositTransactionRepository } from 'src/database/repositories/deposit-transaction.repository';
 import { PrismaService } from 'src/prisma.service';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class SepayService {
@@ -133,7 +134,7 @@ export class SepayService {
       ],
     );
 
-    const transactionDtos = transactions.map((t) => new TransactionDto(t));
+    const transactionDtos = plainToInstance(TransactionDto, transactions);
 
     const response = new PagingPaginatedResposneDto<TransactionDto>(
       findAllTransactionDto.limit,
