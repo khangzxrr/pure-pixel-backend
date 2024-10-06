@@ -12,6 +12,8 @@ import { ServiceTransactionRepository } from './repositories/service-transaction
 import { DepositTransactionRepository } from './repositories/deposit-transaction.repository';
 import { WithdrawalTransactionRepository } from './repositories/withdrawal-transaction.repository';
 import { PhotoSharingRepository } from './repositories/photo-sharing.repository';
+import { PhotoSellRepository } from './repositories/photo-sell.repository';
+import { PhotoBuyRepository } from './repositories/photo-buy.repository';
 @Module({
   providers: [
     PrismaService,
@@ -27,6 +29,8 @@ import { PhotoSharingRepository } from './repositories/photo-sharing.repository'
     DatabaseService,
     DepositTransactionRepository,
     WithdrawalTransactionRepository,
+    PhotoBuyRepository,
+    PhotoSellRepository,
   ],
   exports: [
     PrismaService,
@@ -42,6 +46,8 @@ import { PhotoSharingRepository } from './repositories/photo-sharing.repository'
     DatabaseService,
     DepositTransactionRepository,
     WithdrawalTransactionRepository,
+    PhotoBuyRepository,
+    PhotoSellRepository,
   ],
 })
 export class DatabaseModule {}
