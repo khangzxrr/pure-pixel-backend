@@ -16,7 +16,4 @@ export class PhotographerProfileDto {
 
   @ApiProperty()
   commentCount: number;
-
-  @ApiProperty()
-  cover: string;
 }
