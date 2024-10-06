@@ -12,7 +12,6 @@ import { ServiceTransactionRepository } from 'src/database/repositories/service-
 import * as QRCode from 'qrcode';
 import { Transaction } from '@prisma/client';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
-import { UserToUserRepository } from 'src/database/repositories/user-to-user-transaction.repository';
 import { PagingPaginatedResposneDto } from 'src/infrastructure/restful/paging-paginated.response.dto';
 import { CreateDepositRequestDto } from 'src/user/dtos/rest/create-deposit.request.dto';
 import { CreateDepositResponseDto } from 'src/user/dtos/rest/create-deposit.response.dto';

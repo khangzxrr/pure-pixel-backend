@@ -1,10 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import {
-  PhotoStatus,
-  PhotoVisibility,
-  Prisma,
-  ShareStatus,
-} from '@prisma/client';
+import { PhotoStatus, PhotoVisibility, ShareStatus } from '@prisma/client';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoIsPrivatedException } from '../exceptions/photo-is-private.exception';
 import { PresignedUploadUrlRequest } from '../dtos/rest/presigned-upload-url.request';
@@ -52,7 +47,6 @@ import { PhotoSellEntity } from '../entities/photo-sell.entity';
 import { PrismaService } from 'src/prisma.service';
 import { CannotBuyOwnedPhotoException } from '../exceptions/cannot-buy-owned-photo.exception';
 import { PhotoBuyRepository } from 'src/database/repositories/photo-buy.repository';
-import { ExistPhotoBuyException } from '../exceptions/exist-photo-buy.exception';
 import { PhotoSellNotFoundException } from '../exceptions/photo-sell-not-found.exception';
 import { PhotoBuyResponseDto } from '../dtos/rest/buy-photo.response.dto';
 import { SepayService } from 'src/payment/services/sepay.service';
