@@ -6,7 +6,7 @@ import { PrismaService } from 'src/prisma.service';
 export class PhotoSellRepository {
   constructor(private prisma: PrismaService) {}
 
-  async getByActiveAndId(photoId: string) {
+  async getByActiveAndPhotoId(photoId: string) {
     return this.prisma.extendedClient().photoSell.findFirst({
       where: {
         active: true,

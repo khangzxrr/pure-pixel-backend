@@ -239,6 +239,11 @@ export class PhotoRepository {
       include: {
         photographer: includePhotographer,
         category: includeCategory,
+        // photoSellings: {
+        //   where: {
+        //     active: true,
+        //   },
+        // },
       },
     });
   }
