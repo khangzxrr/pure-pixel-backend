@@ -41,20 +41,20 @@ import { PagingPaginatedResposneDto } from 'src/infrastructure/restful/paging-pa
 import { PhotoSharingRepository } from 'src/database/repositories/photo-sharing.repository';
 import { CreatePhotoSharingFailedException } from '../exceptions/create-photo-sharing-failed.exception';
 import { SignedPhotoSharingDto } from '../dtos/signed-photo-sharing.dto';
-import { plainToClass, plainToInstance } from 'class-transformer';
+import { plainToInstance } from 'class-transformer';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { ShareQualityAlreadyExistException } from '../exceptions/share-quality-already-exist.exception';
 import { CreatePhotoSellingDto } from '../dtos/rest/create-photo-selling.request.dto';
 import { PhotoSellRepository } from 'src/database/repositories/photo-sell.repository';
 import { PhotoSellDto } from '../dtos/photo-sell.dto';
 
-import { PhotoSell } from '@prisma/client';
 import { PhotoSellEntity } from '../entities/photo-sell.entity';
 import { PrismaService } from 'src/prisma.service';
 import { CannotBuyOwnedPhotoException } from '../exceptions/cannot-buy-owned-photo.exception';
 import { PhotoBuyRepository } from 'src/database/repositories/photo-buy.repository';
 import { ExistPhotoBuyException } from '../exceptions/exist-photo-buy.exception';
 import { PhotoSellNotFoundException } from '../exceptions/photo-sell-not-found.exception';
+import { PhotoBuyResponseDto } from '../dtos/rest/buy-photo.response.dto';
 
 @Injectable()
 export class PhotoService {
@@ -359,9 +359,7 @@ export class PhotoService {
     );
   }
 
-  async findAll(
-    filter: FindAllPhotoFilterDto,
-  ): Promise<PagingPaginatedResposneDto<SignedPhotoDto>> {
+  async findAll(filter: FindAllPhotoFilterDto) {
     this.logger.log({
       filter,
     });
@@ -372,15 +370,10 @@ export class PhotoService {
       filter,
       filter.toSkip(),
       filter.limit,
-      true,
-      true,
     );
 
     const signedPhotoDtoPromises = photos.map(async (p) => {
-      const signedPhotoDto = new SignedPhotoDto({
-        photographer: p.photographer,
-        ...p,
-      });
+      const signedPhotoDto = plainToInstance(SignedPhotoDto, p);
 
       const signedUrls = await this.signUrlFromPhotos(p);
 
@@ -391,7 +384,7 @@ export class PhotoService {
 
     const signedPhotos = await Promise.all(signedPhotoDtoPromises);
 
-    return new PagingPaginatedResposneDto<SignedPhotoDto>(
+    return new PagingPaginatedResposneDto<PhotoDto>(
       filter.limit,
       count,
       signedPhotos,
@@ -424,10 +417,7 @@ export class PhotoService {
       throw new PhotoIsPrivatedException();
     }
 
-    const signedPhotoDto = new SignedPhotoDto({
-      photographer: photo.photographer,
-      ...photo,
-    });
+    const signedPhotoDto = plainToInstance(SignedPhotoDto, photo);
 
     const signedUrls = await this.signUrlFromPhotos(photo);
     signedPhotoDto.signedUrl = signedUrls;
@@ -497,7 +487,9 @@ export class PhotoService {
     }
 
     const previousActivePhotoSell =
-      await this.photoSellRepository.getByActiveAndId(sellPhotoDto.photoId);
+      await this.photoSellRepository.getByActiveAndPhotoId(
+        sellPhotoDto.photoId,
+      );
 
     if (
       previousActivePhotoSell &&
@@ -514,10 +506,14 @@ export class PhotoService {
     photo.watermark = true;
     photo.visibility = 'PUBLIC';
 
-    const updatePhotoQuery = this.photoRepository.updateQuery(photo);
+    const updatePhotoToPublicAndWatermarkQuery =
+      this.photoRepository.updateQuery(photo);
 
-    const updatePhotoSellQuery = this.photoSellRepository.updateQuery(
-      previousActivePhotoSell,
+    const updatePreviousPhotoSellQuery = this.photoSellRepository.updateQuery(
+      previousActivePhotoSell.id,
+      {
+        active: false,
+      },
     );
 
     const photoSell = plainToInstance(PhotoSellEntity, sellPhotoDto);
@@ -527,17 +523,17 @@ export class PhotoService {
     const [, newPhotoSell] = await this.prisma
       .extendedClient()
       .$transaction([
-        updatePhotoQuery,
-        updatePhotoSellQuery,
+        updatePhotoToPublicAndWatermarkQuery,
+        updatePreviousPhotoSellQuery,
         createPhotoSellQuery,
       ]);
 
     return plainToInstance(PhotoSellDto, newPhotoSell);
   }
 
-  async buyPhotoRequest(userId: string, photoSellId: string) {
+  async buyPhotoRequest(userId: string, photoId: string) {
     const photoSell =
-      await this.photoSellRepository.getByActiveAndId(photoSellId);
+      await this.photoSellRepository.getByActiveAndPhotoId(photoId);
 
     if (!photoSell) {
       throw new PhotoSellNotFoundException();
@@ -549,13 +545,24 @@ export class PhotoService {
 
     const previousPhotoBuy =
       await this.photoBuyRepository.getByPhotoSellIdAndBuyerId(
-        photoSellId,
+        photoSell.id,
         userId,
       );
 
     if (previousPhotoBuy) {
       throw new ExistPhotoBuyException();
     }
-    //TODO: handle create transaction
+
+    const fee = photoSell.price.mul(5).div(100);
+
+    const newPhotoBuy = await this.photoBuyRepository.createWithTransaction(
+      userId,
+      photoSell.photo.photographerId,
+      photoSell.id,
+      fee,
+      photoSell.price,
+    );
+
+    return plainToInstance(PhotoBuyResponseDto, newPhotoBuy);
   }
 }

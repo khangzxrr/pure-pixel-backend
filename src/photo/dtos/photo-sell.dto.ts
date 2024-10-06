@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose, Type } from 'class-transformer';
-import { IsNumber } from 'class-validator';
+import { Exclude, Type } from 'class-transformer';
+import { PhotoDto } from './photo.dto';
 
 export class PhotoSellDto {
   @ApiProperty()
@@ -10,8 +10,6 @@ export class PhotoSellDto {
   photoSellId: string;
 
   @ApiProperty()
-  @Expose()
-  @IsNumber()
   @Type(() => Number)
   price: number;
 
@@ -29,4 +27,7 @@ export class PhotoSellDto {
 
   @ApiProperty()
   updatedAt: Date;
+
+  @Exclude()
+  photo: PhotoDto;
 }

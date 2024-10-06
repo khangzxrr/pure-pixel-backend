@@ -4,15 +4,18 @@ import { UserEntity } from 'src/user/entities/user.entity';
 import { JsonValue } from '@prisma/client/runtime/library';
 import { CategoryEntity } from '../entities/category.entity';
 import { Exclude, Type } from 'class-transformer';
+import { PhotographerDTO } from 'src/photographer/dtos/photographer.dto';
+import { PhotoSellDto } from './photo-sell.dto';
+import { SignedUrl } from './photo-signed-url.dto';
 
 export class PhotoDto {
   @ApiProperty({
-    required: true
+    required: true,
   })
   id: string;
 
   @ApiProperty({
-    required: false
+    required: false,
   })
   shareStatus?: string;
 
@@ -22,14 +25,10 @@ export class PhotoDto {
   })
   sharePayload?: JsonValue;
 
-  @ApiProperty({
-    required: false,
-  })
+  @Exclude()
   categoryId?: string;
 
-  @ApiProperty({
-    required: false,
-  })
+  @Exclude()
   photographerId?: string;
 
   @ApiProperty({
@@ -52,9 +51,7 @@ export class PhotoDto {
   })
   exif?: JsonValue;
 
-  @ApiProperty({
-    required: false,
-  })
+  @Exclude()
   colorGrading?: JsonValue;
 
   @ApiProperty({
@@ -94,43 +91,48 @@ export class PhotoDto {
   })
   visibility?: string;
 
-  @ApiProperty()
-  status: string;
+  @ApiProperty({
+    required: false,
+  })
+  status?: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    required: false,
+  })
   photoTags?: string[];
 
-  @ApiProperty()
-  createdAt: Date;
+  @ApiProperty({
+    required: false,
+  })
+  createdAt?: Date;
 
-  @ApiProperty()
-  updatedAt: Date;
+  @ApiProperty({
+    required: false,
+  })
+  updatedAt?: Date;
 
-  @ApiProperty()
+  @ApiProperty({
+    required: false,
+  })
   deletedAt?: Date;
 
-  @ApiPropertyOptional()
-  @Type(() => UserEntity)
-  photographer?: UserEntity;
+  @ApiProperty({
+    required: false,
+  })
+  @Type(() => PhotographerDTO)
+  photographer?: PhotographerDTO;
 
-  @ApiPropertyOptional()
-  category?: CategoryEntity;
+  @ApiProperty({
+    required: false,
+    isArray: true,
+  })
+  //must specific type here
+  @Type(() => PhotoSellDto)
+  photoSellings: PhotoSellDto[];
 }
 
 export class SignedPhotoDto extends PhotoDto {
   @ApiProperty()
+  @Type(() => SignedUrl)
   signedUrl: SignUrl;
-
-  constructor({ photographer, ...data }: Partial<PhotoDto>) {
-    super();
-    Object.assign(this, data);
-
-    if (photographer) {
-      this.photographer = new UserEntity(photographer);
-    }
-
-    if (data.category) {
-      this.category = new CategoryEntity(data.category);
-    }
-  }
 }
