@@ -1,3 +1,5 @@
+import { PhotoResolution } from '../dtos/photo-resolution.dto';
+
 export class PhotoConstant {
   static PHOTO_PROCESS_QUEUE = 'PHOTO_PROCESS_QUEUE';
   static PHOTO_WATERMARK_QUEUE = 'PHOTO_WATERMARK_QUEUE';
@@ -12,7 +14,18 @@ export class PhotoConstant {
 
   static THUMBNAIL_WIDTH = 400;
 
-  static PHOTO_RESOLUTION_MAP = [
+  static SUPPORTED_RESOLUTION = [
+    '32K',
+    '16K',
+    '8K',
+    '4K',
+    '2K',
+    '1080p',
+    '720p',
+    '480p',
+  ];
+
+  static PHOTO_RESOLUTION_MAP: PhotoResolution[] = [
     {
       pixels: 17280,
       resolution: '32K',
