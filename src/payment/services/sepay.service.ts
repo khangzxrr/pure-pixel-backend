@@ -146,8 +146,9 @@ export class SepayService {
   }
 
   async getWalletByUserId(userId: string): Promise<WalletDto> {
+    //temporary disable caching
     const cachedWalletDto = await this.cacheManager.get<WalletDto>(
-      `walletdto:${userId}`,
+      `walletdto2:${userId}`,
     );
 
     if (cachedWalletDto) {
@@ -169,31 +170,20 @@ export class SepayService {
           return acc + t.amount.toNumber();
 
         case 'IMAGE_BUY':
-          if (t.paymentMethod == 'WALLET') {
-            return acc - t.amount.toNumber();
-          }
-          break;
+          return acc - t.amount.toNumber();
 
         case 'IMAGE_SELL':
-          if (t.paymentMethod == 'WALLET') {
-            return acc + t.amount.toNumber();
-          }
-          break;
+          return acc + t.amount.toNumber() - t.fee.toNumber();
 
         case 'WITHDRAWAL':
           return acc - t.amount.toNumber();
 
         case 'UPGRADE_TO_PHOTOGRAPHER':
-          if (t.paymentMethod == 'WALLET') {
-            return acc - t.amount.toNumber();
-          }
-          break;
+          return acc - t.amount.toNumber();
 
         default:
           return acc;
       }
-
-      return acc;
     }, 0);
 
     const walletDto = new WalletDto(walletBalance);
