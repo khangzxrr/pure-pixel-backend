@@ -20,6 +20,15 @@ export class PhotoSharingRepository {
     });
   }
 
+  findOneByPhotoIdAndQuality(photoId: string, quality: string) {
+    return this.prisma.extendedClient().photoSharing.findFirst({
+      where: {
+        originalPhotoId: photoId,
+        quality,
+      },
+    });
+  }
+
   findAllByOriginalPhotoId(originalPhotoId: string) {
     return this.prisma.extendedClient().photoSharing.findMany({
       where: {
