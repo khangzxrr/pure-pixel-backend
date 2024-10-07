@@ -54,5 +54,7 @@ export class PhotoExchangeController {
   async getBoughtPhoto(
     @AuthenticatedUser() user: ParsedUserDto,
     @Param('id') id: string,
-  ) {}
+  ) {
+    return await this.photoService.getPhotoBuyByPhotoId(user.sub, id);
+  }
 }

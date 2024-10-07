@@ -51,6 +51,7 @@ import { PhotoSellNotFoundException } from '../exceptions/photo-sell-not-found.e
 import { PhotoBuyResponseDto } from '../dtos/rest/buy-photo.response.dto';
 import { SepayService } from 'src/payment/services/sepay.service';
 import { NotEnoughBalanceException } from 'src/user/exceptions/not-enought-balance.exception';
+import { PhotoBuyNotFoundException } from '../exceptions/photo-buy-not-found.exception';
 
 @Injectable()
 export class PhotoService {
@@ -526,6 +527,31 @@ export class PhotoService {
       ]);
 
     return plainToInstance(PhotoSellDto, newPhotoSell);
+  }
+
+  async getPhotoBuyByPhotoId(userId: string, photoId: string) {
+    const photoSell =
+      await this.photoSellRepository.getByActiveAndPhotoId(photoId);
+
+    if (!photoSell) {
+      throw new PhotoSellNotFoundException();
+    }
+
+    if (photoSell.photo.photographerId === userId) {
+      throw new CannotBuyOwnedPhotoException();
+    }
+
+    const previousPhotoBuy =
+      await this.photoBuyRepository.getByPhotoSellIdAndBuyerId(
+        photoSell.id,
+        userId,
+      );
+
+    if (!previousPhotoBuy) {
+      throw new PhotoBuyNotFoundException();
+    }
+
+    return plainToInstance(PhotoBuyResponseDto, previousPhotoBuy);
   }
 
   async buyPhotoRequest(userId: string, photoId: string) {
