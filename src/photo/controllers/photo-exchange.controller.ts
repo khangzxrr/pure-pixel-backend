@@ -14,9 +14,10 @@ import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { PhotoService } from '../services/photo.service';
-import { PhotoBuyResponseDto } from '../dtos/rest/buy-photo.response.dto';
+import { PhotoBuyResponseDto } from '../dtos/rest/photo-buy.response.dto';
 import { PhotoSellDto } from '../dtos/photo-sell.dto';
 import { BuyPhotoRequestDto } from '../dtos/rest/buy-photo.request.dto';
+import { SignedPhotoBuyDto } from '../dtos/rest/signed-photo-buy.response.dto';
 
 @Controller('photo')
 @ApiTags('photo-exchange')
@@ -57,7 +58,7 @@ export class PhotoExchangeController {
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
   @ApiOkResponse({
     isArray: true,
-    type: PhotoBuyResponseDto,
+    type: SignedPhotoBuyDto,
   })
   async getBoughtPhoto(
     @AuthenticatedUser() user: ParsedUserDto,

@@ -53,12 +53,13 @@ import { PrismaService } from 'src/prisma.service';
 import { CannotBuyOwnedPhotoException } from '../exceptions/cannot-buy-owned-photo.exception';
 import { PhotoBuyRepository } from 'src/database/repositories/photo-buy.repository';
 import { PhotoSellNotFoundException } from '../exceptions/photo-sell-not-found.exception';
-import { PhotoBuyResponseDto } from '../dtos/rest/buy-photo.response.dto';
+import { PhotoBuyResponseDto } from '../dtos/rest/photo-buy.response.dto';
 import { SepayService } from 'src/payment/services/sepay.service';
 import { NotEnoughBalanceException } from 'src/user/exceptions/not-enought-balance.exception';
-import { PhotoBuyNotFoundException } from '../exceptions/photo-buy-not-found.exception';
 import { BuyPhotoRequestDto } from '../dtos/rest/buy-photo.request.dto';
 import { BuyQualityIsNotExistException } from '../exceptions/buy-quality-is-not-exist.exception';
+import { SignedPhotoBuyDto } from '../dtos/rest/signed-photo-buy.response.dto';
+import { ExistPhotoBuyWithChoosedResolutionException } from '../exceptions/exist-photo-buy-with-choosed-resolution.exception';
 
 @Injectable()
 export class PhotoService {
@@ -553,16 +554,30 @@ export class PhotoService {
       throw new CannotBuyOwnedPhotoException();
     }
 
-    const previousPhotoBuy = await this.photoBuyRepository.findAll(
+    const previousPhotoBuys = await this.photoBuyRepository.findAll(
       photoSell.id,
       userId,
     );
 
-    if (!previousPhotoBuy) {
-      throw new PhotoBuyNotFoundException();
-    }
+    const mappingToDtoPromises = previousPhotoBuys.map(async (photobuy) => {
+      const signedPhotoBuyDto = plainToInstance(SignedPhotoBuyDto, photobuy);
 
-    return plainToInstance(PhotoBuyResponseDto, previousPhotoBuy);
+      //signing resolution url if transaction is paid
+      if (
+        photobuy.userToUserTransaction.fromUserTransaction.status === 'SUCCESS'
+      ) {
+        signedPhotoBuyDto.signedPhotoUrl =
+          await this.photoProcessService.getSignedObjectUrl(
+            photobuy.resolutionUrl,
+          );
+      }
+
+      return signedPhotoBuyDto;
+    });
+
+    const signedPhotoBuyDtos = await Promise.all(mappingToDtoPromises);
+
+    return signedPhotoBuyDtos;
   }
 
   async buyPhotoRequest(userId: string, buyPhotoRequest: BuyPhotoRequestDto) {
@@ -592,7 +607,7 @@ export class PhotoService {
     );
 
     if (previousPhotoBuy) {
-      return plainToInstance(PhotoBuyResponseDto, previousPhotoBuy);
+      throw new ExistPhotoBuyWithChoosedResolutionException();
     }
 
     const userWallet = await this.sepayService.getWalletByUserId(userId);
