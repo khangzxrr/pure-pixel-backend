@@ -170,7 +170,9 @@ export class SepayService {
           return acc + t.amount.toNumber();
 
         case 'IMAGE_BUY':
-          return acc - t.amount.toNumber();
+          if (t.paymentMethod === 'WALLET') {
+            return acc - t.amount.toNumber();
+          }
 
         case 'IMAGE_SELL':
           return acc + t.amount.toNumber() - t.fee.toNumber();
@@ -179,7 +181,9 @@ export class SepayService {
           return acc - t.amount.toNumber();
 
         case 'UPGRADE_TO_PHOTOGRAPHER':
-          return acc - t.amount.toNumber();
+          if (t.paymentMethod === 'WALLET') {
+            return acc - t.amount.toNumber();
+          }
 
         default:
           return acc;
