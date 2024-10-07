@@ -49,6 +49,13 @@ export class PhotoBuyRepository {
     resolutionUrl: string,
   ) {
     return this.prisma.photoBuy.create({
+      include: {
+        userToUserTransaction: {
+          include: {
+            fromUserTransaction: true,
+          },
+        },
+      },
       data: {
         resolution,
         resolutionUrl,
