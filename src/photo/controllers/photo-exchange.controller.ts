@@ -19,7 +19,7 @@ import { PhotoSellDto } from '../dtos/photo-sell.dto';
 
 @Controller('photo')
 @ApiTags('photo-exchange')
-export class ImageExchangeController {
+export class PhotoExchangeController {
   constructor(@Inject() private readonly photoService: PhotoService) {}
 
   @Post('/:id/sell')

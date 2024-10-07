@@ -16,7 +16,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { CommentService } from './services/comment.service';
 import { PhotoWatermarkConsumer } from './consumers/photo-watermark.consumer';
 import { PhotoShareConsumer } from './consumers/photo-share.consumer';
-import { ImageExchangeController } from './controllers/image-exchange.controller';
+import { PhotoExchangeController } from './controllers/photo-exchange.controller';
 import { PaymentModule } from 'src/payment/payment.module';
 
 @Module({
@@ -35,7 +35,7 @@ import { PaymentModule } from 'src/payment/payment.module';
   controllers: [
     PhotoController,
     PhotoCategoryController,
-    ImageExchangeController,
+    PhotoExchangeController,
   ],
   imports: [
     HttpModule.register({
