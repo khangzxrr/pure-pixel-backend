@@ -1,5 +1,10 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { PhotoStatus, PhotoVisibility, ShareStatus } from '@prisma/client';
+import {
+  PhotoStatus,
+  PhotoVisibility,
+  PrismaPromise,
+  ShareStatus,
+} from '@prisma/client';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoIsPrivatedException } from '../exceptions/photo-is-private.exception';
 import { PresignedUploadUrlRequest } from '../dtos/rest/presigned-upload-url.request';
@@ -505,32 +510,33 @@ export class PhotoService {
       return plainToInstance(PhotoSellDto, previousActivePhotoSell, {});
     }
 
-    previousActivePhotoSell.active = false;
-
     photo.watermark = true;
     photo.visibility = 'PUBLIC';
 
+    const prismaQuery: PrismaPromise<any>[] = [];
+    if (previousActivePhotoSell) {
+      const updatePreviousPhotoSellQuery = this.photoSellRepository.updateQuery(
+        previousActivePhotoSell.id,
+        {
+          active: false,
+        },
+      );
+      prismaQuery.push(updatePreviousPhotoSellQuery);
+    }
+
     const updatePhotoToPublicAndWatermarkQuery =
       this.photoRepository.updateQuery(photo);
-
-    const updatePreviousPhotoSellQuery = this.photoSellRepository.updateQuery(
-      previousActivePhotoSell.id,
-      {
-        active: false,
-      },
-    );
+    prismaQuery.push(updatePhotoToPublicAndWatermarkQuery);
 
     const photoSell = plainToInstance(PhotoSellEntity, sellPhotoDto);
+
     const createPhotoSellQuery =
       this.photoSellRepository.createAndActiveByPhotoIdQuery(photoSell);
+    prismaQuery.push(createPhotoSellQuery);
 
     const [, newPhotoSell] = await this.prisma
       .extendedClient()
-      .$transaction([
-        updatePhotoToPublicAndWatermarkQuery,
-        updatePreviousPhotoSellQuery,
-        createPhotoSellQuery,
-      ]);
+      .$transaction([...prismaQuery]);
 
     return plainToInstance(PhotoSellDto, newPhotoSell);
   }
