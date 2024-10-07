@@ -52,6 +52,8 @@ import { PhotoBuyResponseDto } from '../dtos/rest/buy-photo.response.dto';
 import { SepayService } from 'src/payment/services/sepay.service';
 import { NotEnoughBalanceException } from 'src/user/exceptions/not-enought-balance.exception';
 import { PhotoBuyNotFoundException } from '../exceptions/photo-buy-not-found.exception';
+import { BuyPhotoRequestDto } from '../dtos/rest/buy-photo.request.dto';
+import { BuyQualityIsNotExistException } from '../exceptions/buy-quality-is-not-exist.exception';
 
 @Injectable()
 export class PhotoService {
@@ -484,6 +486,10 @@ export class PhotoService {
       throw new PhotoIsPendingStateException();
     }
 
+    if (photo.shareStatus === 'NOT_READY') {
+      throw new ShareStatusIsNotReadyException();
+    }
+
     const previousActivePhotoSell =
       await this.photoSellRepository.getByActiveAndPhotoId(
         sellPhotoDto.photoId,
@@ -541,11 +547,10 @@ export class PhotoService {
       throw new CannotBuyOwnedPhotoException();
     }
 
-    const previousPhotoBuy =
-      await this.photoBuyRepository.getByPhotoSellIdAndBuyerId(
-        photoSell.id,
-        userId,
-      );
+    const previousPhotoBuy = await this.photoBuyRepository.findAll(
+      photoSell.id,
+      userId,
+    );
 
     if (!previousPhotoBuy) {
       throw new PhotoBuyNotFoundException();
@@ -554,9 +559,10 @@ export class PhotoService {
     return plainToInstance(PhotoBuyResponseDto, previousPhotoBuy);
   }
 
-  async buyPhotoRequest(userId: string, photoId: string) {
-    const photoSell =
-      await this.photoSellRepository.getByActiveAndPhotoId(photoId);
+  async buyPhotoRequest(userId: string, buyPhotoRequest: BuyPhotoRequestDto) {
+    const photoSell = await this.photoSellRepository.getByActiveAndPhotoId(
+      buyPhotoRequest.photoId,
+    );
 
     if (!photoSell) {
       throw new PhotoSellNotFoundException();
@@ -566,11 +572,18 @@ export class PhotoService {
       throw new CannotBuyOwnedPhotoException();
     }
 
-    const previousPhotoBuy =
-      await this.photoBuyRepository.getByPhotoSellIdAndBuyerId(
-        photoSell.id,
-        userId,
-      );
+    const selectedResolutionUrl =
+      photoSell.photo.sharePayload[buyPhotoRequest.resolution];
+
+    if (!selectedResolutionUrl) {
+      throw new BuyQualityIsNotExistException();
+    }
+
+    const previousPhotoBuy = await this.photoBuyRepository.findFirst(
+      photoSell.id,
+      userId,
+      buyPhotoRequest.resolution,
+    );
 
     if (previousPhotoBuy) {
       return plainToInstance(PhotoBuyResponseDto, previousPhotoBuy);
@@ -590,6 +603,8 @@ export class PhotoService {
       photoSell.id,
       fee,
       photoSell.price,
+      buyPhotoRequest.resolution,
+      selectedResolutionUrl,
     );
 
     return plainToInstance(PhotoBuyResponseDto, newPhotoBuy);

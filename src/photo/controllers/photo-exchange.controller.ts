@@ -16,6 +16,7 @@ import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { PhotoService } from '../services/photo.service';
 import { PhotoBuyResponseDto } from '../dtos/rest/buy-photo.response.dto';
 import { PhotoSellDto } from '../dtos/photo-sell.dto';
+import { BuyPhotoRequestDto } from '../dtos/rest/buy-photo.request.dto';
 
 @Controller('photo')
 @ApiTags('photo-exchange')
@@ -43,14 +44,21 @@ export class PhotoExchangeController {
   })
   async buyPhoto(
     @AuthenticatedUser() user: ParsedUserDto,
-    @Param('id') photoId: string,
+    @Body() buyPhotoRequestDto: BuyPhotoRequestDto,
   ) {
-    return await this.photoService.buyPhotoRequest(user.sub, photoId);
+    return await this.photoService.buyPhotoRequest(
+      user.sub,
+      buyPhotoRequestDto,
+    );
   }
 
   @Get('/:id/bought')
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
+  @ApiOkResponse({
+    isArray: true,
+    type: PhotoBuyResponseDto,
+  })
   async getBoughtPhoto(
     @AuthenticatedUser() user: ParsedUserDto,
     @Param('id') id: string,
