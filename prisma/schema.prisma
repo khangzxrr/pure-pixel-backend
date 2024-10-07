@@ -370,13 +370,16 @@ model PhotoBuy {
   userToUserTransaction   UserToUserTransaction @relation(fields: [userToUserTransactionId], references: [id])
   userToUserTransactionId String                @unique
 
+  resolution    String
+  resolutionUrl String
+
   buyer   User   @relation(fields: [buyerId], references: [id])
   buyerId String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([photoSellId, buyerId])
+  @@unique([photoSellId, buyerId, resolution])
 }
 
 model PhotoSharing {
