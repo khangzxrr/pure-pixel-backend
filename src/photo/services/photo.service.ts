@@ -259,9 +259,24 @@ export class PhotoService {
         },
       },
     );
+
     await this.photoShareQueue.add(PhotoConstant.GENERATE_SHARE_JOB_NAME, {
       userId,
       photoId: processPhotosRequest.signedUpload.photoId,
+      debounce: {
+        id: processPhotosRequest.signedUpload.photoId,
+        ttl: 10000,
+      },
+    });
+
+    const generateWatermarkRequest: GenerateWatermarkRequestDto = {
+      photoId: processPhotosRequest.signedUpload.photoId,
+      text: 'PUREPIXEL',
+    };
+
+    await this.photoWatermarkQueue.add(PhotoConstant.GENERATE_WATERMARK_JOB, {
+      userId,
+      generateWatermarkRequest,
       debounce: {
         id: processPhotosRequest.signedUpload.photoId,
         ttl: 10000,
@@ -417,7 +432,7 @@ export class PhotoService {
     }
 
     if (
-      photo.visibility == PhotoVisibility.PRIVATE &&
+      photo.visibility === PhotoVisibility.PRIVATE &&
       photo.photographerId !== userId
     ) {
       throw new PhotoIsPrivatedException();
