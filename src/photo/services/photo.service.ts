@@ -353,7 +353,6 @@ export class PhotoService {
       photo.title = dto.title;
       photo.watermark = dto.watermark;
       photo.showExif = dto.showExif;
-      photo.colorGrading = dto.colorGrading;
       photo.location = dto.location;
       photo.captureTime = dto.captureTime;
       photo.description = dto.description;
@@ -517,6 +516,10 @@ export class PhotoService {
       file.buffer,
     );
 
+    if (!sidecar) {
+      throw new UnrecognizedAdobeSidecarException();
+    }
+
     const creatorTool: string = sidecar.CreatorTool;
 
     if (file.size < PhotoConstant.MIN_PHOTO_SIZE) {
@@ -524,8 +527,9 @@ export class PhotoService {
     }
 
     if (
-      creatorTool.indexOf('Photoshop') < 0 &&
-      creatorTool.indexOf('Lightroom') < 0
+      !creatorTool ||
+      (creatorTool.indexOf('Photoshop') < 0 &&
+        creatorTool.indexOf('Lightroom') < 0)
     ) {
       throw new UnrecognizedAdobeSidecarException();
     }
@@ -538,7 +542,7 @@ export class PhotoService {
     sellPhotoDto: CreatePhotoSellingDto,
     afterPhotoFile: Express.Multer.File,
   ) {
-    await this.parseAndValidateLightroomPresentFromBuffer(afterPhotoFile);
+    // await this.parseAndValidateLightroomPresentFromBuffer(afterPhotoFile);
 
     const photo =
       await this.findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
@@ -568,6 +572,31 @@ export class PhotoService {
       //idemponent
       return plainToInstance(PhotoSellDto, previousActivePhotoSell, {});
     }
+
+    const extension = Utils.regexFileExtension.exec(
+      afterPhotoFile.originalname,
+    )[1];
+
+    const watermarkAfterPhotoBuffer =
+      await this.photoProcessService.makeTextWatermark(
+        afterPhotoFile.buffer,
+        'PUREPIXEL',
+      );
+
+    const watermarkColorGradingPhotoUrl = `watermark_color_grading/${photo.id}.${extension}`;
+    await this.photoProcessService.uploadFromBuffer(
+      watermarkColorGradingPhotoUrl,
+      watermarkAfterPhotoBuffer,
+    );
+
+    const colorGradingPhotoUrl = `color_grading/${photo.id}.${extension}`;
+    await this.photoProcessService.uploadFromBuffer(
+      colorGradingPhotoUrl,
+      afterPhotoFile.buffer,
+    );
+
+    photo.colorGradingPhotoUrl = colorGradingPhotoUrl;
+    photo.colorGradingPhotoWatermarkUrl = watermarkColorGradingPhotoUrl;
 
     photo.watermark = true;
     photo.visibility = 'PUBLIC';
