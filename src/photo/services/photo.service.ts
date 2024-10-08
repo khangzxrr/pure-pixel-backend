@@ -61,6 +61,7 @@ import { BuyQualityIsNotExistException } from '../exceptions/buy-quality-is-not-
 import { SignedPhotoBuyDto } from '../dtos/rest/signed-photo-buy.response.dto';
 import { ExistPhotoBuyWithChoosedResolutionException } from '../exceptions/exist-photo-buy-with-choosed-resolution.exception';
 import { UnrecognizedAdobeSidecarException } from '../exceptions/unrecognized-adobe-sidecar.exception';
+import { PhotoMinSizeIsNotExcessException } from '../exceptions/photo-min-size-is-not-excess.exception';
 
 @Injectable()
 export class PhotoService {
@@ -517,6 +518,10 @@ export class PhotoService {
     );
 
     const creatorTool: string = sidecar.CreatorTool;
+
+    if (file.size < PhotoConstant.MIN_PHOTO_SIZE) {
+      throw new PhotoMinSizeIsNotExcessException();
+    }
 
     if (
       creatorTool.indexOf('Photoshop') < 0 &&
