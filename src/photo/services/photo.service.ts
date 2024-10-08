@@ -157,6 +157,21 @@ export class PhotoService {
     if (!choosedQualityPhotoUrl) {
       throw new ChoosedShareQualityIsNotFoundException();
     }
+
+    const previousSharePhotoWithChoosedQuality =
+      await this.photoSharingRepository.findOneByPhotoIdAndQuality(
+        photo.id,
+        shareRequest.resolution,
+      );
+
+    if (previousSharePhotoWithChoosedQuality) {
+      return new SharePhotoResponseDto(
+        false,
+        shareRequest.resolution,
+        `${process.env.FRONTEND_ORIGIN}/shared-photo/${previousSharePhotoWithChoosedQuality.id}`,
+      );
+    }
+
     try {
       const photoSharing = await this.photoSharingRepository.create(
         photo.id,
@@ -176,6 +191,7 @@ export class PhotoService {
       );
     } catch (e) {
       if (e instanceof PrismaClientKnownRequestError) {
+        //share photo exist
         if (e.code === 'P2002') {
           throw new ShareQualityAlreadyExistException();
         }
