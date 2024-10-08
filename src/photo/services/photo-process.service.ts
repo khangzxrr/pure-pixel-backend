@@ -68,6 +68,14 @@ export class PhotoProcessService {
     return sharp.clone().resize(PhotoConstant.THUMBNAIL_WIDTH);
   }
 
+  async makeTextWatermark(buffer: Buffer, text: string) {
+    const sharp = await this.sharpInitFromBuffer(buffer);
+
+    const watermarkPhoto = await this.makeWatermark(sharp, text);
+
+    return watermarkPhoto.toBuffer();
+  }
+
   async makeWatermark(sharp: SharpLib.Sharp, watermarkText: string) {
     const metadata = await sharp.metadata();
 
