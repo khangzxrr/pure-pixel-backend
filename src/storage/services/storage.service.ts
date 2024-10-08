@@ -13,12 +13,48 @@ import {
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Injectable, Logger } from '@nestjs/common';
 import { S3FailedUploadException } from '../exceptions/s3-failed-upload.exception';
+import {
+  CloudFrontClient,
+  ListCachePoliciesCommand,
+} from '@aws-sdk/client-cloudfront';
+import { Signer } from 'aws-sdk/clients/cloudfront';
 
 @Injectable()
 export class StorageService {
   private logger: Logger = new Logger(StorageService.name);
 
   private s3: S3Client;
+  private cfClient: CloudFrontClient;
+  private signer: Signer;
+
+  getSigner() {
+    if (this.signer) {
+      return this.signer;
+    }
+
+    this.signer = new Signer(
+      process.env.AWS_CLOUDFRONT_ACCESS_KEY,
+      process.env.AWS_CLOUDFRONT_PRIVATE_KEY.replace(/\\n/g, '\n'),
+    );
+
+    return this.signer;
+  }
+
+  getCloudfront() {
+    if (this.cfClient) {
+      return this.cfClient;
+    }
+
+    this.cfClient = new CloudFrontClient({
+      region: 'us-east-1',
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY,
+        secretAccessKey: process.env.AWS_SECRET_KEY,
+      },
+    });
+
+    return this.cfClient;
+  }
 
   getS3() {
     if (this.s3) {
@@ -37,17 +73,28 @@ export class StorageService {
     return this.s3;
   }
 
+  async listCachePolicies() {
+    const command = new ListCachePoliciesCommand();
+
+    return await this.getCloudfront().send(command);
+  }
+
   async sendCommand(command) {
     return this.getS3().send(command);
   }
 
   async getSignedGetUrl(key: string) {
-    const command = new GetObjectCommand({
-      Key: key,
-      Bucket: process.env.S3_BUCKET,
-    });
+    // const command = new GetObjectCommand({
+    //   Key: key,
+    //   Bucket: process.env.S3_BUCKET,
+    // });
+    //
+    // const signedUrlFromS3 = await getSignedUrl(this.getS3(), command, {});
 
-    const signedUrl = await getSignedUrl(this.getS3(), command, {});
+    const signedUrl = this.getSigner().getSignedUrl({
+      url: `${process.env.AWS_CLOUDFRONT_S3_ORIGIN}/${key}`,
+      expires: 1799405895,
+    });
 
     return signedUrl;
   }
