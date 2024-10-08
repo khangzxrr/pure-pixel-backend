@@ -305,8 +305,10 @@ model Photo {
   watermark Boolean @default(false)
   showExif  Boolean @default(false)
 
-  exif         Json
-  colorGrading Json
+  exif Json
+
+  colorGradingPhotoUrl          String @default("")
+  colorGradingPhotoWatermarkUrl String @default("")
 
   location    String
   captureTime DateTime

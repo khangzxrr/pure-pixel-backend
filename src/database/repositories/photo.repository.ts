@@ -148,7 +148,6 @@ export class PhotoRepository {
     photo.watermarkPhotoUrl = '';
     photo.description = '';
     photo.captureTime = new Date();
-    photo.colorGrading = {};
     photo.exif = {};
     photo.showExif = false;
     photo.watermark = false;

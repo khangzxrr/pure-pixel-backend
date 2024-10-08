@@ -16,7 +16,6 @@ export class Photo implements PrismaPhotoEntity {
   watermark: boolean;
   showExif: boolean;
   exif: Prisma.JsonValue;
-  colorGrading: Prisma.JsonValue;
   location: string;
   captureTime: Date;
   description: string;
@@ -39,7 +38,11 @@ export class Photo implements PrismaPhotoEntity {
   shareStatus: $Enums.ShareStatus;
   sharePayload: Prisma.JsonValue;
 
+  colorGradingPhotoUrl: string;
+  colorGradingPhotoWatermarkUrl: string;
+
   constructor() {}
+
   static fromDto(photoDto: PhotoDto) {
     const photo = new Photo();
 
@@ -60,7 +63,6 @@ export class Photo implements PrismaPhotoEntity {
     photo.watermark = photoDto.watermark;
     photo.showExif = photoDto.showExif;
     photo.exif = photoDto.exif;
-    photo.colorGrading = photoDto.colorGrading;
     photo.location = photoDto.location;
     photo.captureTime = photoDto.captureTime;
     photo.description = photoDto.description;

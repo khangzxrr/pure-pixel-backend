@@ -49,9 +49,6 @@ export class PhotoDto {
   })
   exif?: JsonValue;
 
-  @Exclude()
-  colorGrading?: JsonValue;
-
   @ApiProperty({
     required: false,
   })
