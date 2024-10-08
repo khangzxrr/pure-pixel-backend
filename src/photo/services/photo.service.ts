@@ -60,6 +60,7 @@ import { BuyPhotoRequestDto } from '../dtos/rest/buy-photo.request.dto';
 import { BuyQualityIsNotExistException } from '../exceptions/buy-quality-is-not-exist.exception';
 import { SignedPhotoBuyDto } from '../dtos/rest/signed-photo-buy.response.dto';
 import { ExistPhotoBuyWithChoosedResolutionException } from '../exceptions/exist-photo-buy-with-choosed-resolution.exception';
+import { UnrecognizedAdobeSidecarException } from '../exceptions/unrecognized-adobe-sidecar.exception';
 
 @Injectable()
 export class PhotoService {
@@ -494,9 +495,30 @@ export class PhotoService {
     return new PresignedUploadUrlResponse(signedUpload);
   }
 
+  async parseAndValidateLightroomPresentFromBuffer(file: Express.Multer.File) {
+    const sidecar = await this.photoProcessService.parseXmpFromBuffer(
+      file.buffer,
+    );
+
+    const creatorTool: string = sidecar.CreatorTool;
+
+    if (
+      creatorTool.indexOf('Photoshop') < 0 &&
+      creatorTool.indexOf('Lightroom') < 0
+    ) {
+      throw new UnrecognizedAdobeSidecarException();
+    }
+  }
+
   //TODO: what if photographer update visibility to private => handle deactive sell
   //
-  async sellPhoto(userId: string, sellPhotoDto: CreatePhotoSellingDto) {
+  async sellPhoto(
+    userId: string,
+    sellPhotoDto: CreatePhotoSellingDto,
+    afterPhotoFile: Express.Multer.File,
+  ) {
+    await this.parseAndValidateLightroomPresentFromBuffer(afterPhotoFile);
+
     const photo =
       await this.findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
         userId,

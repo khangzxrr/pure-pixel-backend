@@ -1,23 +1,30 @@
 import {
   Body,
   Controller,
+  FileTypeValidator,
   Get,
   Inject,
+  MaxFileSizeValidator,
   Param,
+  ParseFilePipe,
   Post,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { AuthenticatedUser, AuthGuard, Roles } from 'nest-keycloak-connect';
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
 import { CreatePhotoSellingDto } from '../dtos/rest/create-photo-selling.request.dto';
 import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
-import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { PhotoService } from '../services/photo.service';
 import { PhotoBuyResponseDto } from '../dtos/rest/photo-buy.response.dto';
 import { PhotoSellDto } from '../dtos/photo-sell.dto';
 import { BuyPhotoRequestDto } from '../dtos/rest/buy-photo.request.dto';
 import { SignedPhotoBuyDto } from '../dtos/rest/signed-photo-buy.response.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { PhotoConstant } from '../constants/photo.constant';
 
 @Controller('photo')
 @ApiTags('photo-exchange')
@@ -30,11 +37,25 @@ export class PhotoExchangeController {
   @ApiOkResponse({
     type: PhotoSellDto,
   })
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('afterPhotoFile'))
   async sellPhoto(
     @AuthenticatedUser() user: ParsedUserDto,
     @Body() createPhotoSellingDto: CreatePhotoSellingDto,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new FileTypeValidator({ fileType: '.(png|jpeg|jpg|PNG|JPG|JPEG)' }),
+        ],
+      }),
+    )
+    afterPhotoFile: Express.Multer.File,
   ) {
-    return await this.photoService.sellPhoto(user.sub, createPhotoSellingDto);
+    return await this.photoService.sellPhoto(
+      user.sub,
+      createPhotoSellingDto,
+      afterPhotoFile,
+    );
   }
 
   @Post('/:id/buy')

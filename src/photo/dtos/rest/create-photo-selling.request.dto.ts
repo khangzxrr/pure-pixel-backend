@@ -1,7 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
   IsNotEmpty,
   IsNumber,
+  IsNumberString,
   IsString,
   IsUrl,
   Max,
@@ -9,24 +11,40 @@ import {
 } from 'class-validator';
 
 export class CreatePhotoSellingDto {
-  @ApiProperty()
+  @ApiProperty({
+    required: true,
+  })
   @IsNotEmpty()
   @IsString()
   photoId: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    required: true,
+  })
   @IsUrl()
   @IsNotEmpty()
   afterPhotoUrl: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    required: true,
+  })
   @IsNumber()
+  @Type(() => Number)
   @Min(10000)
-  @Max(99999999999)
+  @Max(999999999)
   price: number;
 
-  @ApiProperty()
+  @ApiProperty({
+    required: true,
+  })
   @IsString()
   @IsNotEmpty()
   description: string;
+
+  @ApiProperty({
+    type: 'string',
+    format: 'binary',
+    required: true,
+  })
+  afterPhotoFile: Express.Multer.File;
 }

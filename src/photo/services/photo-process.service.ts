@@ -96,6 +96,20 @@ export class PhotoProcessService {
     return sharp.keepExif().clone().jpeg();
   }
 
+  async parseXmpFromBuffer(buffer: Buffer) {
+    return exifr.parse(buffer, {
+      exif: false,
+      xmp: true,
+    });
+  }
+
+  async parseExifFromBuffer(buffer: Buffer) {
+    return exifr.parse(buffer, {
+      exif: true,
+      xmp: false,
+    });
+  }
+
   async makeExif(sharp: SharpLib.Sharp) {
     return exifr.parse(await sharp.keepExif().toBuffer(), {
       exif: true,

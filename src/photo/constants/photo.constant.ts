@@ -14,6 +14,8 @@ export class PhotoConstant {
 
   static THUMBNAIL_WIDTH = 400;
 
+  static MIN_PHOTO_SIZE = 4000000;
+
   static SUPPORTED_RESOLUTION = [
     '32K',
     '16K',
