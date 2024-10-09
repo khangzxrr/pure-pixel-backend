@@ -652,16 +652,16 @@ export class PhotoService {
   }
 
   async getPhotoBuyByPhotoId(userId: string, photoId: string) {
-    const previousPhotoBuys = await this.photoBuyRepository.findAll(userId);
+    const previousPhotoBuys =
+      await this.photoBuyRepository.findAllByBuyerIdAndPhotoId(userId, photoId);
 
     const mappingToDtoPromises = previousPhotoBuys.map(async (photobuy) => {
       const signedPhotoBuyDto = plainToInstance(SignedPhotoBuyDto, photobuy);
 
-      //signing resolution url if transaction is paid
       if (
         photobuy.userToUserTransaction.fromUserTransaction.status === 'SUCCESS'
       ) {
-        signedPhotoBuyDto.signedPhotoUrl = `${process.env.BACKEND_ORIGIN}/photo/${photoId}/resolution/${photobuy.resolution}/download-colorgrading`;
+        signedPhotoBuyDto.signedPhotoUrl = `${process.env.BACKEND_ORIGIN}/photo/photo-buy/${photobuy.id}/download-colorgrading`;
       }
 
       return signedPhotoBuyDto;
@@ -740,7 +740,7 @@ export class PhotoService {
     userId: string,
     photobuyId: string,
   ) {
-    const photobuy = await this.photoBuyRepository.findFistById(
+    const photobuy = await this.photoBuyRepository.findFirstById(
       photobuyId,
       userId,
     );
