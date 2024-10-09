@@ -205,7 +205,7 @@ export class PhotoService {
     const cacheResolutionKey = `PHOTO_RESOLUTION:${id}`;
 
     const cachedResolution =
-      this.cacheManager.get<string[]>(cacheResolutionKey);
+      await this.cacheManager.get<string[]>(cacheResolutionKey);
 
     if (cachedResolution) {
       return cachedResolution;
@@ -232,7 +232,9 @@ export class PhotoService {
     }
 
     const availableResolutions =
-      this.photoProcessService.getAvailableResolution(photo.originalPhotoUrl);
+      await this.photoProcessService.getAvailableResolution(
+        photo.originalPhotoUrl,
+      );
 
     this.cacheManager.set(cacheResolutionKey, availableResolutions);
 
@@ -716,20 +718,19 @@ export class PhotoService {
     //[4k 2k 1080p 720p]
     //              x <-- index = 3 => +1 = 4 => price = base / 4
     const priceOfSelectedRes = photoSell.price.div(indexOfChoosedRes + 1);
+    const fee = priceOfSelectedRes.mul(10).div(100);
 
     await this.sepayService.validateWalletBalanceIsEnough(
       userId,
       priceOfSelectedRes.toNumber(),
     );
 
-    const fee = photoSell.price.mul(5).div(100);
-
     const newPhotoBuy = await this.photoBuyRepository.createWithTransaction(
       userId,
       photoSell.photo.photographerId,
       photoSell.id,
       fee,
-      photoSell.price,
+      priceOfSelectedRes,
       buyPhotoRequest.resolution,
     );
 
@@ -755,10 +756,11 @@ export class PhotoService {
       throw new PhotoBuyTransactionIsNotSuccessException();
     }
 
-    const resolution =
-      PhotoConstant.PHOTO_RESOLUTION_BIMAP[photobuy.resolution];
+    const resPixels = PhotoConstant.PHOTO_RESOLUTION_BIMAP.getValue(
+      photobuy.resolution,
+    );
 
-    if (!resolution) {
+    if (!resPixels) {
       throw new BuyQualityIsNotExistException();
     }
 
@@ -768,7 +770,7 @@ export class PhotoService {
 
     const resizedBuffer = await this.photoProcessService.resizeWithMetadata(
       sharp,
-      resolution.pixels,
+      resPixels,
     );
 
     return resizedBuffer;
