@@ -256,6 +256,8 @@ model UpgradePackage {
 
   status UpgradePackageStatus
 
+  deletedAt DateTime?
+
   upgradePackageHistories UpgradePackageHistory[]
 }
 
