@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Inject, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Inject,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UpgradeService } from '../services/upgrade.service';
 import { UpgradePackageDto } from '../dtos/upgrade-package.dto';
@@ -9,6 +17,8 @@ import { RequestUpgradeDto } from '../dtos/request-upgrade.dto';
 import { UpgradeOrderService } from '../services/upgrade-order.service';
 import { RequestUpgradeOrderResponseDto } from '../dtos/request-upgrade-order.response.dto';
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
+import { FindAllDto } from '../dtos/rest/find-all.request.dto';
+import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.response.dto';
 
 @Controller('upgrade')
 @ApiTags('upgrade')
@@ -22,13 +32,9 @@ export class UpgradeController {
   @ApiOperation({
     summary: 'get all avaiable upgrade packages',
   })
-  @ApiResponse({
-    status: HttpStatusCode.Ok,
-    type: UpgradePackageDto,
-    isArray: true,
-  })
-  async findAll(): Promise<UpgradePackageDto[]> {
-    return await this.upgradeService.getEnableUpgradePackages();
+  @ApiOkResponsePaginated(UpgradePackageDto)
+  async findAll(@Query() findAllDto: FindAllDto) {
+    return await this.upgradeService.getEnableUpgradePackages(findAllDto);
   }
 
   @Post()

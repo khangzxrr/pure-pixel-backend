@@ -1,7 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { UpgradePackageRepository } from 'src/database/repositories/upgrade-package.repository';
 import { UpgradePackageDto } from '../dtos/upgrade-package.dto';
-import { UpgradePackageFilterDto } from '../dtos/upgrade-package.filter.dto';
+import { PagingPaginatedResposneDto } from 'src/infrastructure/restful/paging-paginated.response.dto';
+import { plainToInstance } from 'class-transformer';
+import { FindAllDto } from '../dtos/rest/find-all.request.dto';
 
 @Injectable()
 export class UpgradeService {
@@ -10,14 +12,24 @@ export class UpgradeService {
     private readonly upgradePackageRepository: UpgradePackageRepository,
   ) {}
 
-  async getEnableUpgradePackages(): Promise<UpgradePackageDto[]> {
-    const filter = new UpgradePackageFilterDto();
-    filter.status = 'ENABLED';
+  async getEnableUpgradePackages(
+    findAll: FindAllDto,
+  ): Promise<PagingPaginatedResposneDto<UpgradePackageDto>> {
+    console.log(findAll.toWhere());
 
-    const upgradePackages = await this.upgradePackageRepository.findAll(filter);
+    const upgradePackages = await this.upgradePackageRepository.findAll(
+      findAll.toWhere(),
+      findAll.toOrderBy(),
+    );
 
-    const dtos = upgradePackages.map((up) => new UpgradePackageDto(up));
+    const count = await this.upgradePackageRepository.count(findAll.toWhere());
 
-    return dtos;
+    const objects = plainToInstance(UpgradePackageDto, upgradePackages);
+
+    return new PagingPaginatedResposneDto<UpgradePackageDto>(
+      findAll.limit,
+      count,
+      objects,
+    );
   }
 }

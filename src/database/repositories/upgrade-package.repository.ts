@@ -1,25 +1,44 @@
 import { Injectable } from '@nestjs/common';
-import { UpgradePackageStatus } from '@prisma/client';
+import { Prisma, UpgradePackage, UpgradePackageStatus } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
-import { UpgradePackageFilterDto } from 'src/upgrade/dtos/upgrade-package.filter.dto';
 
 @Injectable()
 export class UpgradePackageRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(upgradePackageFilterDto: UpgradePackageFilterDto) {
-    return this.prisma.upgradePackage.findMany({
+  async create(upgradePackage: UpgradePackage) {
+    return this.prisma.extendedClient().upgradePackage.create({
+      data: upgradePackage,
+    });
+  }
+
+  async updateById(id: string, upgradePackage: Partial<UpgradePackage>) {
+    return this.prisma.extendedClient().upgradePackage.update({
       where: {
-        status: upgradePackageFilterDto.status,
+        id,
       },
-      orderBy: {
-        price: 'asc',
-      },
+      data: upgradePackage,
+    });
+  }
+
+  count(where: Prisma.UpgradePackageWhereInput) {
+    return this.prisma.extendedClient().upgradePackage.count({
+      where,
+    });
+  }
+
+  async findAll(
+    where: Prisma.UpgradePackageWhereInput,
+    orderBy: Prisma.UpgradePackageOrderByWithRelationInput,
+  ) {
+    return this.prisma.extendedClient().upgradePackage.findMany({
+      where,
+      orderBy,
     });
   }
 
   async findById(id: string, status?: UpgradePackageStatus) {
-    return this.prisma.upgradePackage.findFirst({
+    return this.prisma.extendedClient().upgradePackage.findFirst({
       where: {
         id,
         status,
