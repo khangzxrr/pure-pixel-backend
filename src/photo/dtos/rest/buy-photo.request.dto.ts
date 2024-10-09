@@ -7,6 +7,6 @@ export class BuyPhotoRequestDto {
   photoId: string;
 
   @ApiProperty()
-  @IsIn(PhotoConstant.SUPPORTED_RESOLUTION)
+  @IsIn(PhotoConstant.SUPPORTED_PHOTO_RESOLUTION)
   resolution: string;
 }
