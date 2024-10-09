@@ -33,11 +33,7 @@ export class PhotoBuyRepository {
             fromUserTransaction: true,
           },
         },
-        photoSell: {
-          include: {
-            photo: true,
-          },
-        },
+        photoSell: true,
       },
     });
   }

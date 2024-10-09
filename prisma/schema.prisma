@@ -307,9 +307,6 @@ model Photo {
 
   exif Json
 
-  colorGradingPhotoUrl          String @default("")
-  colorGradingPhotoWatermarkUrl String @default("")
-
   location    String
   captureTime DateTime
 
@@ -353,6 +350,9 @@ model PhotoSell {
 
   description String
 
+  colorGradingPhotoUrl          String @default("")
+  colorGradingPhotoWatermarkUrl String @default("")
+
   photo   Photo  @relation(fields: [photoId], references: [id])
   photoId String
 
@@ -371,7 +371,7 @@ model PhotoBuy {
   userToUserTransaction   UserToUserTransaction @relation(fields: [userToUserTransactionId], references: [id])
   userToUserTransactionId String                @unique
 
-  resolution    String
+  resolution String
 
   buyer   User   @relation(fields: [buyerId], references: [id])
   buyerId String

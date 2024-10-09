@@ -35,8 +35,11 @@ export class PhotoSellRepository {
             id: photoSell.photoId,
           },
         },
+        id: photoSell.id,
         price: photoSell.price,
         description: photoSell.description,
+        colorGradingPhotoUrl: photoSell.colorGradingPhotoUrl,
+        colorGradingPhotoWatermarkUrl: photoSell.colorGradingPhotoWatermarkUrl,
         active: true,
       },
     });

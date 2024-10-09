@@ -38,9 +38,6 @@ export class Photo implements PrismaPhotoEntity {
   shareStatus: $Enums.ShareStatus;
   sharePayload: Prisma.JsonValue;
 
-  colorGradingPhotoUrl: string;
-  colorGradingPhotoWatermarkUrl: string;
-
   constructor() {}
 
   static fromDto(photoDto: PhotoDto) {

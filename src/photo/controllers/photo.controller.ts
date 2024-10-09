@@ -243,14 +243,10 @@ export class PhotoController {
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
   async getPhotoAvailableResolution(
-    @AuthenticatedUser() user: ParsedUserDto,
     @Param('id') id: string,
     @Res() res: Response,
   ) {
-    const result = await this.photoService.getAvailablePhotoResolution(
-      user.sub,
-      id,
-    );
+    const result = await this.photoService.getAvailablePhotoResolution(id);
 
     if (result instanceof Boolean) {
       res.status(201).send();

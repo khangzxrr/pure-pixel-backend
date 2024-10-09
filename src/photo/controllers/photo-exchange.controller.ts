@@ -7,7 +7,7 @@ import {
   Param,
   ParseFilePipe,
   Post,
-  StreamableFile,
+  Res,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -24,6 +24,7 @@ import { PhotoSellDto } from '../dtos/photo-sell.dto';
 import { BuyPhotoRequestDto } from '../dtos/rest/buy-photo.request.dto';
 import { SignedPhotoBuyDto } from '../dtos/rest/signed-photo-buy.response.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Response } from 'express';
 
 @Controller('photo')
 @ApiTags('photo-exchange')
@@ -93,6 +94,7 @@ export class PhotoExchangeController {
   async downloadColorGrading(
     @AuthenticatedUser() user: ParsedUserDto,
     @Param('photobuyid') id: string,
+    @Res() res: Response,
   ) {
     const buffer =
       await this.photoService.getPhotoWithScaledResolutionFromPhotoBuyId(
@@ -100,6 +102,7 @@ export class PhotoExchangeController {
         id,
       );
 
-    return new StreamableFile(buffer);
+    res.set({ 'Content-Type': 'image/jpeg' });
+    res.end(buffer, 'binary');
   }
 }

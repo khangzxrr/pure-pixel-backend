@@ -203,7 +203,7 @@ export class PhotoService {
     }
   }
 
-  async getAvailablePhotoResolution(userId: string, id: string) {
+  async getAvailablePhotoResolution(id: string) {
     const photo = await this.photoRepository.getPhotoById(id);
 
     if (!photo) {
@@ -216,7 +216,6 @@ export class PhotoService {
 
     if (photo.shareStatus === 'NOT_READY') {
       await this.photoShareQueue.add(PhotoConstant.GENERATE_SHARE_JOB_NAME, {
-        userId,
         photoId: photo.id,
         debounce: {
           id: photo.id,
@@ -326,20 +325,20 @@ export class PhotoService {
     const signedUrl = await this.photoProcessService.getSignedObjectUrl(url);
     const signedThumbnail =
       await this.photoProcessService.getSignedObjectUrl(thumbnail);
-
-    if (photo.colorGradingPhotoWatermarkUrl.length > 0) {
-      const signedColorGradingWatermark =
-        await this.photoProcessService.getSignedObjectUrl(
-          photo.colorGradingPhotoWatermarkUrl,
-        );
-
-      return {
-        url: signedUrl,
-        thumbnail: signedThumbnail,
-        colorGradingWatermark: signedColorGradingWatermark,
-      };
-    }
-
+    //
+    //  if (photo.colorGradingPhotoWatermarkUrl.length > 0) {
+    //    const signedColorGradingWatermark =
+    //      await this.photoProcessService.getSignedObjectUrl(
+    //        photo.colorGradingPhotoWatermarkUrl,
+    //      );
+    //
+    //   return {
+    //     url: signedUrl,
+    //     thumbnail: signedThumbnail,
+    //     colorGradingWatermark: signedThumbnail,
+    //   };
+    // }
+    //
     return {
       url: signedUrl,
       thumbnail: signedThumbnail,
@@ -592,7 +591,9 @@ export class PhotoService {
       afterPhotoFile.originalname,
     )[1];
 
-    const colorGradingPhotoUrl = `color_grading/${photo.id}.${extension}`;
+    const newPhotoSellId = v4();
+
+    const colorGradingPhotoUrl = `color_grading/${newPhotoSellId}/${photo.id}.${extension}`;
     await this.photoProcessService.uploadFromBuffer(
       colorGradingPhotoUrl,
       afterPhotoFile.buffer,
@@ -606,14 +607,11 @@ export class PhotoService {
         'PUREPIXEL',
       );
 
-    const watermarkColorGradingPhotoUrl = `watermark_color_grading/${photo.id}.${extension}`;
+    const watermarkColorGradingPhotoUrl = `watermark_color_grading/${newPhotoSellId}/${photo.id}.${extension}`;
     await this.photoProcessService.uploadFromBuffer(
       watermarkColorGradingPhotoUrl,
       watermarkAfterPhotoBuffer,
     );
-
-    photo.colorGradingPhotoUrl = colorGradingPhotoUrl;
-    photo.colorGradingPhotoWatermarkUrl = watermarkColorGradingPhotoUrl;
 
     photo.watermark = true;
     photo.visibility = 'PUBLIC';
@@ -634,6 +632,9 @@ export class PhotoService {
     prismaQuery.push(updatePhotoToPublicAndWatermarkQuery);
 
     const photoSell = plainToInstance(PhotoSellEntity, sellPhotoDto);
+    photoSell.id = newPhotoSellId;
+    photoSell.colorGradingPhotoUrl = colorGradingPhotoUrl;
+    photoSell.colorGradingPhotoWatermarkUrl = watermarkColorGradingPhotoUrl;
 
     const createPhotoSellQuery =
       this.photoSellRepository.createAndActiveByPhotoIdQuery(photoSell);
@@ -686,6 +687,18 @@ export class PhotoService {
     if (!selectedResolutionUrl) {
       throw new BuyQualityIsNotExistException();
     }
+
+    const availableResolutions = await this.getAvailablePhotoResolution(
+      buyPhotoRequest.photoId,
+    );
+
+    if (availableResolutions instanceof Boolean) {
+      throw new PhotoIsPendingStateException();
+    }
+
+    const resolutionArrays = availableResolutions as PhotoResolution[];
+
+    console.log(resolutionArrays);
 
     const previousPhotoBuy = await this.photoBuyRepository.findFirst(
       photoSell.id,
@@ -752,7 +765,7 @@ export class PhotoService {
     }
 
     const sharp = await this.photoProcessService.sharpInitFromObjectKey(
-      photobuy.photoSell.photo.colorGradingPhotoUrl,
+      photobuy.photoSell.colorGradingPhotoUrl,
     );
 
     const resizedBuffer = await this.photoProcessService.resizeWithMetadata(
