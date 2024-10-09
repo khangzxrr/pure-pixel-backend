@@ -4,10 +4,10 @@ import {
   FileTypeValidator,
   Get,
   Inject,
-  MaxFileSizeValidator,
   Param,
   ParseFilePipe,
   Post,
+  StreamableFile,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -17,14 +17,13 @@ import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
 import { CreatePhotoSellingDto } from '../dtos/rest/create-photo-selling.request.dto';
 import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
-import { ApiBody, ApiConsumes, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiConsumes, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { PhotoService } from '../services/photo.service';
 import { PhotoBuyResponseDto } from '../dtos/rest/photo-buy.response.dto';
 import { PhotoSellDto } from '../dtos/photo-sell.dto';
 import { BuyPhotoRequestDto } from '../dtos/rest/buy-photo.request.dto';
 import { SignedPhotoBuyDto } from '../dtos/rest/signed-photo-buy.response.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { PhotoConstant } from '../constants/photo.constant';
 
 @Controller('photo')
 @ApiTags('photo-exchange')
@@ -86,5 +85,21 @@ export class PhotoExchangeController {
     @Param('id') id: string,
   ) {
     return await this.photoService.getPhotoBuyByPhotoId(user.sub, id);
+  }
+
+  @Get('/photo-buy/:photobuyid/download-colorgrading')
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
+  async downloadColorGrading(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Param('photobuyid') id: string,
+  ) {
+    const buffer =
+      await this.photoService.getPhotoWithScaledResolutionFromPhotoBuyId(
+        user.sub,
+        id,
+      );
+
+    return new StreamableFile(buffer);
   }
 }

@@ -6,16 +6,36 @@ import { PrismaService } from 'src/prisma.service';
 export class PhotoBuyRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(photoSellId: string, buyerId: string) {
+  async findAll(buyerId: string) {
     return this.prisma.photoBuy.findMany({
       where: {
-        photoSellId,
         buyerId,
       },
       include: {
         userToUserTransaction: {
           include: {
             fromUserTransaction: true,
+          },
+        },
+      },
+    });
+  }
+
+  async findFistById(id: string, buyerId: string) {
+    return this.prisma.photoBuy.findFirst({
+      where: {
+        id,
+        buyerId,
+      },
+      include: {
+        userToUserTransaction: {
+          include: {
+            fromUserTransaction: true,
+          },
+        },
+        photoSell: {
+          include: {
+            photo: true,
           },
         },
       },
@@ -46,7 +66,6 @@ export class PhotoBuyRepository {
     fee: Prisma.Decimal,
     amount: Prisma.Decimal,
     resolution: string,
-    resolutionUrl: string,
   ) {
     return this.prisma.photoBuy.create({
       include: {
@@ -58,7 +77,6 @@ export class PhotoBuyRepository {
       },
       data: {
         resolution,
-        resolutionUrl,
 
         buyer: {
           connect: {

@@ -52,6 +52,16 @@ export class PhotoProcessService {
     return availableRes;
   }
 
+  async resizeWithMetadata(sharp: SharpLib.Sharp, heightRequired: number) {
+    return sharp
+      .clone()
+      .withMetadata()
+      .resize({
+        height: heightRequired,
+      })
+      .toBuffer();
+  }
+
   async resize(sharp: SharpLib.Sharp, heightRequired: number) {
     //this resize will take orientation from exif
     //to determine resize width or height

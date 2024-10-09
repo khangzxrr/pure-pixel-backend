@@ -62,6 +62,9 @@ import { SignedPhotoBuyDto } from '../dtos/rest/signed-photo-buy.response.dto';
 import { ExistPhotoBuyWithChoosedResolutionException } from '../exceptions/exist-photo-buy-with-choosed-resolution.exception';
 import { UnrecognizedAdobeSidecarException } from '../exceptions/unrecognized-adobe-sidecar.exception';
 import { PhotoMinSizeIsNotExcessException } from '../exceptions/photo-min-size-is-not-excess.exception';
+import { PhotoBuyNotFoundException } from '../exceptions/photo-buy-not-found.exception';
+import { PhotoBuyTransactionIsNotSuccessException } from '../exceptions/photo-buy-transaction-is-not-success.exception';
+import { PhotoResolution } from '../dtos/photo-resolution.dto';
 
 @Injectable()
 export class PhotoService {
@@ -589,6 +592,14 @@ export class PhotoService {
       afterPhotoFile.originalname,
     )[1];
 
+    const colorGradingPhotoUrl = `color_grading/${photo.id}.${extension}`;
+    await this.photoProcessService.uploadFromBuffer(
+      colorGradingPhotoUrl,
+      afterPhotoFile.buffer,
+    );
+
+    //upload colorGrading first because watermark will replace buffer
+
     const watermarkAfterPhotoBuffer =
       await this.photoProcessService.makeTextWatermark(
         afterPhotoFile.buffer,
@@ -599,12 +610,6 @@ export class PhotoService {
     await this.photoProcessService.uploadFromBuffer(
       watermarkColorGradingPhotoUrl,
       watermarkAfterPhotoBuffer,
-    );
-
-    const colorGradingPhotoUrl = `color_grading/${photo.id}.${extension}`;
-    await this.photoProcessService.uploadFromBuffer(
-      colorGradingPhotoUrl,
-      afterPhotoFile.buffer,
     );
 
     photo.colorGradingPhotoUrl = colorGradingPhotoUrl;
@@ -642,21 +647,7 @@ export class PhotoService {
   }
 
   async getPhotoBuyByPhotoId(userId: string, photoId: string) {
-    const photoSell =
-      await this.photoSellRepository.getByActiveAndPhotoId(photoId);
-
-    if (!photoSell) {
-      throw new PhotoSellNotFoundException();
-    }
-
-    if (photoSell.photo.photographerId === userId) {
-      throw new CannotBuyOwnedPhotoException();
-    }
-
-    const previousPhotoBuys = await this.photoBuyRepository.findAll(
-      photoSell.id,
-      userId,
-    );
+    const previousPhotoBuys = await this.photoBuyRepository.findAll(userId);
 
     const mappingToDtoPromises = previousPhotoBuys.map(async (photobuy) => {
       const signedPhotoBuyDto = plainToInstance(SignedPhotoBuyDto, photobuy);
@@ -665,10 +656,7 @@ export class PhotoService {
       if (
         photobuy.userToUserTransaction.fromUserTransaction.status === 'SUCCESS'
       ) {
-        signedPhotoBuyDto.signedPhotoUrl =
-          await this.photoProcessService.getSignedObjectUrl(
-            photobuy.resolutionUrl,
-          );
+        signedPhotoBuyDto.signedPhotoUrl = `${process.env.BACKEND_ORIGIN}/photo/${photoId}/resolution/${photobuy.resolution}/download-colorgrading`;
       }
 
       return signedPhotoBuyDto;
@@ -724,9 +712,54 @@ export class PhotoService {
       fee,
       photoSell.price,
       buyPhotoRequest.resolution,
-      selectedResolutionUrl,
     );
 
     return plainToInstance(PhotoBuyResponseDto, newPhotoBuy);
+  }
+
+  async getPhotoWithScaledResolutionFromPhotoBuyId(
+    userId: string,
+    photobuyId: string,
+  ) {
+    const photobuy = await this.photoBuyRepository.findFistById(
+      photobuyId,
+      userId,
+    );
+
+    if (!photobuy) {
+      throw new PhotoBuyNotFoundException();
+    }
+
+    if (
+      photobuy.userToUserTransaction.fromUserTransaction.status !== 'SUCCESS'
+    ) {
+      throw new PhotoBuyTransactionIsNotSuccessException();
+    }
+
+    let resolution: PhotoResolution;
+
+    for (let i = 0; i < PhotoConstant.PHOTO_RESOLUTION_MAP.length; i++) {
+      if (
+        PhotoConstant.PHOTO_RESOLUTION_MAP[i].resolution === photobuy.resolution
+      ) {
+        resolution = PhotoConstant.PHOTO_RESOLUTION_MAP[i];
+        break;
+      }
+    }
+
+    if (!resolution) {
+      throw new BuyQualityIsNotExistException();
+    }
+
+    const sharp = await this.photoProcessService.sharpInitFromObjectKey(
+      photobuy.photoSell.photo.colorGradingPhotoUrl,
+    );
+
+    const resizedBuffer = await this.photoProcessService.resizeWithMetadata(
+      sharp,
+      resolution.pixels,
+    );
+
+    return resizedBuffer;
   }
 }
