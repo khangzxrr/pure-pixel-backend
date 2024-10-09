@@ -696,9 +696,11 @@ export class PhotoService {
       throw new PhotoIsPendingStateException();
     }
 
-    const resolutionArrays = availableResolutions as PhotoResolution[];
+    //TODO: price ratio calculating
+    //
+    // const resolutionArrays = availableResolutions as PhotoResolution[];
 
-    console.log(resolutionArrays);
+    // console.log(resolutionArrays);
 
     const previousPhotoBuy = await this.photoBuyRepository.findFirst(
       photoSell.id,

@@ -11,6 +11,11 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     return this.$extends({
       query: {
         photo: {
+          async count({ args, query }) {
+            args.where = { ...args.where, deletedAt: null };
+
+            return query(args);
+          },
           async findFirst({ args, query }) {
             args.where = { ...args.where, deletedAt: null };
 
