@@ -385,7 +385,6 @@ model PhotoBuy {
 model PhotoSharing {
   id String @id @default(uuid())
 
-  watermark     Boolean
   quality       String
   sharePhotoUrl String
 
@@ -395,7 +394,7 @@ model PhotoSharing {
   originalPhoto   Photo  @relation(fields: [originalPhotoId], references: [id])
   originalPhotoId String
 
-  @@unique([watermark, quality, sharePhotoUrl, originalPhotoId])
+  @@unique([quality, sharePhotoUrl, originalPhotoId])
 }
 
 model Vote {
