@@ -65,7 +65,7 @@ import { UnrecognizedAdobeSidecarException } from '../exceptions/unrecognized-ad
 import { PhotoMinSizeIsNotExcessException } from '../exceptions/photo-min-size-is-not-excess.exception';
 import { PhotoBuyNotFoundException } from '../exceptions/photo-buy-not-found.exception';
 import { PhotoBuyTransactionIsNotSuccessException } from '../exceptions/photo-buy-transaction-is-not-success.exception';
-import { PhotoResolution } from '../dtos/photo-resolution.dto';
+import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 
 @Injectable()
 export class PhotoService {
@@ -87,6 +87,8 @@ export class PhotoService {
     @InjectQueue(PhotoConstant.PHOTO_SHARE_QUEUE)
     private readonly photoShareQueue: Queue,
     private readonly prisma: PrismaService,
+    @Inject(CACHE_MANAGER)
+    private readonly cacheManager: Cache,
   ) {}
 
   async findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
@@ -205,6 +207,15 @@ export class PhotoService {
   }
 
   async getAvailablePhotoResolution(id: string) {
+    const cacheResolutionKey = `PHOTO_RESOLUTION:${id}`;
+
+    const cachedResolution =
+      this.cacheManager.get<string[]>(cacheResolutionKey);
+
+    if (cachedResolution) {
+      return cachedResolution;
+    }
+
     const photo = await this.photoRepository.getPhotoById(id);
 
     if (!photo) {
@@ -229,6 +240,8 @@ export class PhotoService {
 
     const availableResolutions =
       this.photoProcessService.getAvailableResolution(photo.originalPhotoUrl);
+
+    this.cacheManager.set(cacheResolutionKey, availableResolutions);
 
     return availableResolutions;
   }
@@ -755,16 +768,8 @@ export class PhotoService {
       throw new PhotoBuyTransactionIsNotSuccessException();
     }
 
-    let resolution: PhotoResolution;
-
-    for (let i = 0; i < PhotoConstant.PHOTO_RESOLUTION_MAP.length; i++) {
-      if (
-        PhotoConstant.PHOTO_RESOLUTION_MAP[i].resolution === photobuy.resolution
-      ) {
-        resolution = PhotoConstant.PHOTO_RESOLUTION_MAP[i];
-        break;
-      }
-    }
+    const resolution =
+      PhotoConstant.PHOTO_RESOLUTION_BIMAP[photobuy.resolution];
 
     if (!resolution) {
       throw new BuyQualityIsNotExistException();

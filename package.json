@@ -41,6 +41,7 @@
     "@nestjs/websockets": "^10.4.2",
     "@onesignal/node-onesignal": "^5.0.0-alpha-01",
     "@prisma/client": "^5.19.1",
+    "@rimbu/bimap": "^2.0.3",
     "@s3pweb/keycloak-admin-client-cjs": "^25.0.4",
     "@types/qrcode": "^1.5.5",
     "@types/uuid": "^10.0.0",

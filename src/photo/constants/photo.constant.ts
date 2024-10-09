@@ -1,4 +1,4 @@
-import { PhotoResolution } from '../dtos/photo-resolution.dto';
+import { BiMap } from '@rimbu/bimap';
 
 export class PhotoConstant {
   static PHOTO_PROCESS_QUEUE = 'PHOTO_PROCESS_QUEUE';
@@ -16,7 +16,7 @@ export class PhotoConstant {
 
   static MIN_PHOTO_SIZE = 4000000;
 
-  static SUPPORTED_RESOLUTION = [
+  static SUPPORTED_PHOTO_RESOLUTION = [
     '32K',
     '16K',
     '8K',
@@ -27,38 +27,14 @@ export class PhotoConstant {
     '480p',
   ];
 
-  static PHOTO_RESOLUTION_MAP: PhotoResolution[] = [
-    {
-      pixels: 17280,
-      resolution: '32K',
-    },
-    {
-      pixels: 8640,
-      resolution: '16K',
-    },
-    {
-      pixels: 4320,
-      resolution: '8K',
-    },
-    {
-      pixels: 2160,
-      resolution: '4K',
-    },
-    {
-      pixels: 1440,
-      resolution: '2K',
-    },
-    {
-      pixels: 1080,
-      resolution: '1080p',
-    },
-    {
-      pixels: 720,
-      resolution: '720p',
-    },
-    {
-      pixels: 480,
-      resolution: '480p',
-    },
-  ];
+  static PHOTO_RESOLUTION_BIMAP = BiMap.of(
+    ['32K', 17280],
+    ['16K', 8640],
+    ['8K', 4320],
+    ['4K', 2160],
+    ['2K', 1440],
+    ['1080p', 1080],
+    ['720p', 720],
+    ['480p', 480],
+  );
 }
