@@ -145,6 +145,14 @@ export class SepayService {
     return response;
   }
 
+  async validateWalletBalanceIsEnough(userId: string, amount: number) {
+    const userWallet = await this.getWalletByUserId(userId);
+
+    if (userWallet.walletBalance < amount) {
+      throw new NotEnoughBalanceException();
+    }
+  }
+
   async getWalletByUserId(userId: string): Promise<WalletDto> {
     //temporary disable caching
     const cachedWalletDto = await this.cacheManager.get<WalletDto>(

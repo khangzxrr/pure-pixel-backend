@@ -56,7 +56,6 @@ import { PhotoBuyRepository } from 'src/database/repositories/photo-buy.reposito
 import { PhotoSellNotFoundException } from '../exceptions/photo-sell-not-found.exception';
 import { PhotoBuyResponseDto } from '../dtos/rest/photo-buy.response.dto';
 import { SepayService } from 'src/payment/services/sepay.service';
-import { NotEnoughBalanceException } from 'src/user/exceptions/not-enought-balance.exception';
 import { BuyPhotoRequestDto } from '../dtos/rest/buy-photo.request.dto';
 import { BuyQualityIsNotExistException } from '../exceptions/buy-quality-is-not-exist.exception';
 import { SignedPhotoBuyDto } from '../dtos/rest/signed-photo-buy.response.dto';
@@ -141,7 +140,6 @@ export class PhotoService {
     return sharedPhotos.map(
       (s) =>
         new SharePhotoResponseDto(
-          s.watermark,
           s.quality,
           `${process.env.FRONTEND_ORIGIN}/shared-photo/${s.id}`,
         ),
@@ -173,7 +171,6 @@ export class PhotoService {
 
     if (previousSharePhotoWithChoosedQuality) {
       return new SharePhotoResponseDto(
-        false,
         shareRequest.resolution,
         `${process.env.FRONTEND_ORIGIN}/shared-photo/${previousSharePhotoWithChoosedQuality.id}`,
       );
@@ -182,7 +179,6 @@ export class PhotoService {
     try {
       const photoSharing = await this.photoSharingRepository.create(
         photo.id,
-        false,
         shareRequest.resolution,
         choosedQualityPhotoUrl,
       );
@@ -192,7 +188,6 @@ export class PhotoService {
       }
 
       return new SharePhotoResponseDto(
-        false,
         shareRequest.resolution,
         `${process.env.FRONTEND_ORIGIN}/shared-photo/${photoSharing.id}`,
       );
@@ -234,8 +229,6 @@ export class PhotoService {
           ttl: 10000,
         },
       });
-
-      return true;
     }
 
     const availableResolutions =
@@ -339,6 +332,7 @@ export class PhotoService {
       console.log(`error photo without thumbnail or original: ${photo.id}`);
       throw new EmptyOriginalPhotoException();
     }
+
     const signedUrl = await this.photoProcessService.getSignedObjectUrl(url);
     const signedThumbnail =
       await this.photoProcessService.getSignedObjectUrl(thumbnail);
@@ -698,26 +692,14 @@ export class PhotoService {
       throw new CannotBuyOwnedPhotoException();
     }
 
-    const selectedResolutionUrl =
-      photoSell.photo.sharePayload[buyPhotoRequest.resolution];
-
-    if (!selectedResolutionUrl) {
-      throw new BuyQualityIsNotExistException();
-    }
-
-    const availableResolutions = await this.getAvailablePhotoResolution(
+    const availableRes = await this.getAvailablePhotoResolution(
       buyPhotoRequest.photoId,
     );
 
-    if (availableResolutions instanceof Boolean) {
-      throw new PhotoIsPendingStateException();
+    const indexOfChoosedRes = availableRes.indexOf(buyPhotoRequest.resolution);
+    if (indexOfChoosedRes < 0) {
+      throw new BuyQualityIsNotExistException();
     }
-
-    //TODO: price ratio calculating
-    //
-    // const resolutionArrays = availableResolutions as PhotoResolution[];
-
-    // console.log(resolutionArrays);
 
     const previousPhotoBuy = await this.photoBuyRepository.findFirst(
       photoSell.id,
@@ -729,11 +711,16 @@ export class PhotoService {
       throw new ExistPhotoBuyWithChoosedResolutionException();
     }
 
-    const userWallet = await this.sepayService.getWalletByUserId(userId);
+    //4 resolutions
+    //2
+    //[4k 2k 1080p 720p]
+    //              x <-- index = 3 => +1 = 4 => price = base / 4
+    const priceOfSelectedRes = photoSell.price.div(indexOfChoosedRes + 1);
 
-    if (userWallet.walletBalance < photoSell.price.toNumber()) {
-      throw new NotEnoughBalanceException();
-    }
+    await this.sepayService.validateWalletBalanceIsEnough(
+      userId,
+      priceOfSelectedRes.toNumber(),
+    );
 
     const fee = photoSell.price.mul(5).div(100);
 
