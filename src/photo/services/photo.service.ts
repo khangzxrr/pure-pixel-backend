@@ -1,5 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import {
+  Photo,
+  PhotoSell,
   PhotoStatus,
   PhotoVisibility,
   PrismaPromise,
@@ -16,7 +18,6 @@ import { Utils } from 'src/infrastructure/utils/utils';
 import { FileIsNotValidException } from '../exceptions/file-is-not-valid.exception';
 import { v4 } from 'uuid';
 import { PhotoDto, SignedPhotoDto } from '../dtos/photo.dto';
-import { Photo } from '../entities/photo.entity';
 import { NotBelongPhotoException } from '../exceptions/not-belong-photo.exception';
 import { PhotoIsPendingStateException } from '../exceptions/photo-is-pending-state.exception';
 import { SignedUrl } from '../dtos/photo-signed-url.dto';
@@ -305,7 +306,10 @@ export class PhotoService {
     });
   }
 
-  async signUrlFromPhotos(photo: Photo): Promise<SignedUrl> {
+  async signUrlFromPhotos(
+    photo: Photo,
+    photoSell?: PhotoSell,
+  ): Promise<SignedUrl> {
     if (photo.status == 'PENDING') {
       throw new PhotoIsPendingStateException();
     }
@@ -325,20 +329,20 @@ export class PhotoService {
     const signedUrl = await this.photoProcessService.getSignedObjectUrl(url);
     const signedThumbnail =
       await this.photoProcessService.getSignedObjectUrl(thumbnail);
-    //
-    //  if (photo.colorGradingPhotoWatermarkUrl.length > 0) {
-    //    const signedColorGradingWatermark =
-    //      await this.photoProcessService.getSignedObjectUrl(
-    //        photo.colorGradingPhotoWatermarkUrl,
-    //      );
-    //
-    //   return {
-    //     url: signedUrl,
-    //     thumbnail: signedThumbnail,
-    //     colorGradingWatermark: signedThumbnail,
-    //   };
-    // }
-    //
+
+    if (photoSell) {
+      const signedColorGradingWatermark =
+        await this.photoProcessService.getSignedObjectUrl(
+          photoSell.colorGradingPhotoWatermarkUrl,
+        );
+
+      return {
+        url: signedUrl,
+        thumbnail: signedThumbnail,
+        colorGradingWatermark: signedColorGradingWatermark,
+      };
+    }
+
     return {
       url: signedUrl,
       thumbnail: signedThumbnail,
@@ -428,7 +432,7 @@ export class PhotoService {
     const signedPhotoDtoPromises = photos.map(async (p) => {
       const signedPhotoDto = plainToInstance(SignedPhotoDto, p);
 
-      const signedUrls = await this.signUrlFromPhotos(p);
+      const signedUrls = await this.signUrlFromPhotos(p, p.photoSellings[0]);
 
       signedPhotoDto.signedUrl = signedUrls;
 
