@@ -1,6 +1,50 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { User } from '@prisma/client';
+import { Exclude } from 'class-transformer';
 
-export class PhotographerDTO {
+export class PhotographerDTO implements User {
+  @Exclude()
+  maxPhotoQuota: bigint;
+
+  @Exclude()
+  maxPackageCount: bigint;
+
+  @Exclude()
+  maxBookingPhotoQuota: bigint;
+
+  @Exclude()
+  maxBookingVideoQuota: bigint;
+
+  @Exclude()
+  photoQuotaUsage: bigint;
+
+  @Exclude()
+  packageCount: bigint;
+
+  @Exclude()
+  bookingPhotoQuotaUsage: bigint;
+
+  @Exclude()
+  bookingVideoQuotaUsage: bigint;
+
+  @ApiProperty()
+  mail: string;
+
+  @ApiProperty()
+  phonenumber: string;
+
+  @ApiProperty()
+  socialLinks: string[];
+
+  @ApiProperty()
+  expertises: string[];
+
+  @Exclude()
+  ftpUsername: string;
+
+  @Exclude()
+  ftpPassword: string;
+
   @ApiProperty()
   id: string;
 
@@ -9,6 +53,9 @@ export class PhotographerDTO {
 
   @ApiProperty()
   avatar: string;
+
+  @ApiProperty()
+  cover: string;
 
   @ApiProperty()
   quote: string;
@@ -21,8 +68,4 @@ export class PhotographerDTO {
 
   @ApiProperty()
   updatedAt: Date;
-
-  constructor({ ...data }: Partial<PhotographerDTO>) {
-    Object.assign(this, data);
-  }
 }

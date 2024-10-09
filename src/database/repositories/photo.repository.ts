@@ -1,15 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { PhotoVisibility, ShareStatus } from '@prisma/client';
+import { Photo, PhotoVisibility, ShareStatus } from '@prisma/client';
 import { FindAllPhotoFilterDto } from 'src/photo/dtos/find-all.filter.dto';
 import { PhotoProcessDto } from 'src/photo/dtos/photo-process.dto';
-import { Photo } from 'src/photo/entities/photo.entity';
 import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
 export class PhotoRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async delete(photoId: string) {
+  deleteQuery(photoId: string) {
     return this.prisma.extendedClient().photo.update({
       where: {
         id: photoId,
@@ -17,6 +16,15 @@ export class PhotoRepository {
       data: {
         deletedAt: new Date(),
       },
+    });
+  }
+
+  updateQuery(photo: Photo) {
+    return this.prisma.extendedClient().photo.update({
+      where: {
+        id: photo.id,
+      },
+      data: photo,
     });
   }
 
@@ -128,28 +136,34 @@ export class PhotoRepository {
       },
     });
 
-    const photo = new Photo();
-    photo.photographerId = userId;
-    photo.originalPhotoUrl = originalPhotoUrl;
-    photo.categoryId = category.id;
-    photo.location = '';
-    photo.photoType = 'RAW';
-    photo.watermarkThumbnailPhotoUrl = '';
-    photo.thumbnailPhotoUrl = '';
-    photo.watermarkPhotoUrl = '';
-    photo.description = '';
-    photo.captureTime = new Date();
-    photo.colorGrading = {};
-    photo.exif = {};
-    photo.showExif = false;
-    photo.watermark = false;
-    photo.visibility = 'PRIVATE';
-    photo.status = 'PENDING';
-    photo.title = '';
-    photo.photoTags = [];
-
     return this.prisma.extendedClient().photo.create({
-      data: photo,
+      data: {
+        photographer: {
+          connect: {
+            id: userId,
+          },
+        },
+        originalPhotoUrl,
+        category: {
+          connect: {
+            id: category.id,
+          },
+        },
+        location: '',
+        photoType: 'RAW',
+        watermarkThumbnailPhotoUrl: '',
+        thumbnailPhotoUrl: '',
+        watermarkPhotoUrl: '',
+        description: '',
+        captureTime: new Date(),
+        exif: {},
+        showExif: false,
+        watermark: false,
+        visibility: 'PRIVATE',
+        status: 'PENDING',
+        title: '',
+        photoTags: [],
+      },
 
       select: {
         id: true,
@@ -216,20 +230,19 @@ export class PhotoRepository {
     });
   }
 
-  async findAll(
-    filter: FindAllPhotoFilterDto,
-    skip: number,
-    take: number,
-    includePhotographer: boolean = false,
-    includeCategory: boolean = false,
-  ) {
+  async findAll(filter: FindAllPhotoFilterDto, skip: number, take: number) {
     return this.prisma.extendedClient().photo.findMany({
       where: filter.toWhere(),
       skip,
       take,
       include: {
-        photographer: includePhotographer,
-        category: includeCategory,
+        photographer: true,
+        category: true,
+        photoSellings: {
+          where: {
+            active: true,
+          },
+        },
       },
     });
   }

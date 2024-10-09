@@ -14,6 +14,7 @@ import { PaymentModule } from './payment/payment.module';
 import { CachingModule } from './caching/caching.module';
 import { APP_FILTER } from '@nestjs/core';
 import { PrismaKnownExceptionFilter } from './infrastructure/filters/prisma-known-exception.filter';
+import { QueueModule } from './queue/queue.module';
 
 @Module({
   providers: [
@@ -31,6 +32,7 @@ import { PrismaKnownExceptionFilter } from './infrastructure/filters/prisma-know
     }),
     StorageModule,
     AuthenModule,
+    QueueModule,
     UserModule,
     PhotographerModule,
     DatabaseModule,
@@ -41,4 +43,4 @@ import { PrismaKnownExceptionFilter } from './infrastructure/filters/prisma-know
   ],
   controllers: [AppController],
 })
-export class AppModule {}
+export class AppModule { }

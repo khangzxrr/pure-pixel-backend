@@ -10,7 +10,6 @@ import {
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthenticatedUser, AuthGuard, Roles } from 'nest-keycloak-connect';
 import { ParsedUserDto } from '../dtos/parsed-user.dto';
-import { WalletService } from '../services/wallet.service';
 import { WalletDto } from '../dtos/wallet.dto';
 import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.response.dto';
@@ -21,11 +20,12 @@ import { CreateDepositResponseDto } from '../dtos/rest/create-deposit.response.d
 import { CreateWithdrawalResponseDto } from '../dtos/rest/create-withdrawal.response.dto';
 import { CreateWithdrawalRequestDto } from '../dtos/rest/create-withdrawal.request.dto';
 import { Constants } from 'src/infrastructure/utils/constants';
+import { SepayService } from 'src/payment/services/sepay.service';
 
 @Controller('wallet')
 @ApiTags('wallet')
 export class WalletController {
-  constructor(@Inject() private readonly walletService: WalletService) {}
+  constructor(@Inject() private readonly sepayService: SepayService) {}
 
   @Get()
   @ApiOperation({
@@ -37,7 +37,7 @@ export class WalletController {
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
   async getWallet(@AuthenticatedUser() user: ParsedUserDto) {
-    return await this.walletService.getWalletByUserId(user.sub);
+    return await this.sepayService.getWalletByUserId(user.sub);
   }
 
   @Post('/withdrawal')
@@ -52,7 +52,7 @@ export class WalletController {
     @AuthenticatedUser() user: ParsedUserDto,
     @Body() createWithdrawlDto: CreateWithdrawalRequestDto,
   ) {
-    return await this.walletService.createWithdrawal(
+    return await this.sepayService.createWithdrawal(
       user.sub,
       createWithdrawlDto,
     );
@@ -71,7 +71,7 @@ export class WalletController {
     @AuthenticatedUser() user: ParsedUserDto,
     @Body() createDepositDto: CreateDepositRequestDto,
   ) {
-    return await this.walletService.createDeposit(user.sub, createDepositDto);
+    return await this.sepayService.createDeposit(user.sub, createDepositDto);
   }
 
   @Get('/transaction')
@@ -85,7 +85,7 @@ export class WalletController {
     @AuthenticatedUser() user: ParsedUserDto,
     @Query() findAllTransactionDto: FindAllTransactionDto,
   ) {
-    return await this.walletService.findAllTransactionByUserId(
+    return await this.sepayService.findAllTransactionByUserId(
       user.sub,
       findAllTransactionDto,
     );

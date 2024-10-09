@@ -1,3 +1,4 @@
+import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { UserRepository } from 'src/database/repositories/user.repository';
@@ -14,13 +15,19 @@ export class AuthenService {
   constructor(
     @Inject() private userRepository: UserRepository,
     @Inject() private sftpService: SftpService,
+    @Inject(CACHE_MANAGER) private cache: Cache,
     private prisma: PrismaService,
-  ) {}
+  ) { }
   async createUserIfNotExist(userId: string, username: string, email: string) {
     await this.prisma.$transaction(
       async (tx) => {
         const userFilterDto = new UserFilterDto();
         userFilterDto.id = userId;
+
+        if (await this.cache.get<UserEntity>(`user:${userFilterDto.id}`)) {
+          this.logger.log(`user is exist in cache, skip creation`)
+          return;
+        }
 
         const existUser = await this.userRepository.findOneTransaction(
           userFilterDto,
@@ -28,6 +35,8 @@ export class AuthenService {
         );
 
         if (existUser != null) {
+          this.cache.set(`user:${userId}`, existUser);
+
           this.logger.log(`user is exist in DB, skip creation`);
           return;
         }

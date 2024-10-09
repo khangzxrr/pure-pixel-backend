@@ -12,6 +12,7 @@ import { UserRepository } from 'src/database/repositories/user.repository';
 import { PhotographerNotFoundException } from '../exceptions/photographer-not-found.exception';
 import { PhotographerProfileDto } from '../dtos/photographer-profile.dto';
 import { UserFilterDto } from 'src/user/dtos/user-filter.dto';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class PhotographerService {
@@ -48,15 +49,7 @@ export class PhotographerService {
         return null;
       }
 
-      return new PhotographerDTO({
-        id: p.id,
-        quote: applicationUser.quote,
-        avatar: applicationUser.avatar,
-        name: applicationUser.name,
-        location: applicationUser.location,
-        createdAt: applicationUser.createdAt,
-        updatedAt: applicationUser.updatedAt,
-      });
+      return plainToInstance(PhotographerDTO, applicationUser);
     });
 
     const photographerDtos = await Promise.all(photographerDtoPromises);
@@ -91,17 +84,7 @@ export class PhotographerService {
       await this.photoService.findAllWithUpvoteAndCommentCountByUserId(id);
 
     const profile = new PhotographerProfileDto();
-    profile.photographer = new PhotographerDTO({
-      id: id,
-      quote: photographer.quote,
-      name: photographer.name,
-      avatar: photographer.avatar,
-      location: photographer.location,
-      createdAt: photographer.createdAt,
-      updatedAt: photographer.updatedAt,
-    });
-
-    profile.cover = photographer.cover;
+    profile.photographer = plainToInstance(PhotographerDTO, photographer);
 
     profile.upvoteCount = 0;
     profile.commentCount = 0;

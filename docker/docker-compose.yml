@@ -1,18 +1,6 @@
 # Use postgres/example user/password credentials
 
 services:
-  imaginary:
-    image: h2non/imaginary:latest
-    restart: always
-    # optionally mount a volume as local image source
-    volumes:
-      - ./images:/mnt/data
-    environment:
-      PORT: 9000
-    command: -enable-url-source -mount /mnt/data -http-cache-ttl 86400
-    ports:
-      - '9000:9000'
-
   redis:
     image: redis
     ports:

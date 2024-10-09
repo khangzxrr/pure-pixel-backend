@@ -42,12 +42,17 @@ export class TransactionRepository {
 
   async findAll(
     where: Prisma.TransactionWhereInput,
+    skip?: number,
+    take?: number,
     orderBy?: Prisma.TransactionOrderByWithRelationInput[],
   ) {
     return this.prisma.transaction.findMany({
       where,
+      skip,
+      take,
       include: {
-        userToUserTransaction: true,
+        toUserTransaction: true,
+        fromUserTransaction: true,
         depositTransaction: true,
         serviceTransaction: true,
         withdrawalTransaction: true,
@@ -62,7 +67,12 @@ export class TransactionRepository {
         id,
       },
       include: {
-        userToUserTransaction: {
+        toUserTransaction: {
+          select: {
+            id: true,
+          },
+        },
+        fromUserTransaction: {
           select: {
             id: true,
           },

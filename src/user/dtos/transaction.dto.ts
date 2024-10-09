@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Transaction } from '@prisma/client';
+import { Type } from 'class-transformer';
 
 export class TransactionDto {
   @ApiProperty()
@@ -18,19 +18,16 @@ export class TransactionDto {
   status: string;
 
   @ApiProperty()
+  @Type(() => Number)
   amount: number;
+
+  @ApiProperty()
+  @Type(() => Number)
+  fee: number;
 
   @ApiProperty()
   createdAt: Date;
 
   @ApiProperty()
   updatedAt: Date;
-
-  constructor({ ...data }: Partial<Transaction>) {
-    Object.assign(this, data);
-
-    if (data.amount) {
-      this.amount = data.amount.toNumber();
-    }
-  }
 }

@@ -1,48 +1,66 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { SignUrl } from './sign-urls.request.dto';
-import { UserEntity } from 'src/user/entities/user.entity';
+import { ApiProperty } from '@nestjs/swagger';
 import { JsonValue } from '@prisma/client/runtime/library';
-import { CategoryEntity } from '../entities/category.entity';
 import { Exclude, Type } from 'class-transformer';
+import { PhotographerDTO } from 'src/photographer/dtos/photographer.dto';
+import { PhotoSellDto } from './photo-sell.dto';
+import { SignedUrl } from './photo-signed-url.dto';
 
 export class PhotoDto {
-  @ApiProperty()
+  @ApiProperty({
+    required: true,
+  })
   id: string;
 
-  @ApiProperty()
-  shareStatus: string;
+  @ApiProperty({
+    required: false,
+  })
+  shareStatus?: string;
 
   @Exclude()
-  sharePayload: JsonValue;
+  @ApiProperty({
+    required: false,
+  })
+  sharePayload?: JsonValue;
 
-  @ApiProperty()
-  categoryId: string;
+  @Exclude()
+  categoryId?: string;
 
-  @ApiProperty()
-  photographerId: string;
+  @Exclude()
+  photographerId?: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    required: false,
+  })
   title?: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    required: false,
+  })
   watermark?: boolean;
 
-  @ApiProperty()
+  @ApiProperty({
+    required: false,
+  })
   showExif?: boolean;
 
-  @ApiProperty()
+  @ApiProperty({
+    required: false,
+  })
   exif?: JsonValue;
 
-  @ApiProperty()
-  colorGrading?: JsonValue;
-
-  @ApiProperty()
+  @ApiProperty({
+    required: false,
+  })
   location?: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    required: false,
+  })
   captureTime?: Date;
 
-  @ApiProperty()
+  @ApiProperty({
+    required: false,
+  })
   description?: string;
 
   @Exclude()
@@ -57,49 +75,58 @@ export class PhotoDto {
   @Exclude()
   watermarkThumbnailPhotoUrl: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    required: false,
+  })
   photoType?: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    required: false,
+  })
   visibility?: string;
 
-  @ApiProperty()
-  status: string;
+  @ApiProperty({
+    required: false,
+  })
+  status?: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    required: false,
+  })
   photoTags?: string[];
 
-  @ApiProperty()
-  createdAt: Date;
+  @ApiProperty({
+    required: false,
+  })
+  createdAt?: Date;
 
-  @ApiProperty()
-  updatedAt: Date;
+  @ApiProperty({
+    required: false,
+  })
+  updatedAt?: Date;
 
-  @ApiProperty()
+  @ApiProperty({
+    required: false,
+  })
   deletedAt?: Date;
 
-  @ApiPropertyOptional()
-  @Type(() => UserEntity)
-  photographer?: UserEntity;
+  @ApiProperty({
+    required: false,
+  })
+  @Type(() => PhotographerDTO)
+  photographer?: PhotographerDTO;
 
-  @ApiPropertyOptional()
-  category?: CategoryEntity;
+  @ApiProperty({
+    required: false,
+    isArray: true,
+  })
+  //must specific type here
+  @Type(() => PhotoSellDto)
+  photoSellings: PhotoSellDto[];
 }
 
 export class SignedPhotoDto extends PhotoDto {
   @ApiProperty()
-  signedUrl: SignUrl;
-
-  constructor({ photographer, ...data }: Partial<PhotoDto>) {
-    super();
-    Object.assign(this, data);
-
-    if (photographer) {
-      this.photographer = new UserEntity(photographer);
-    }
-
-    if (data.category) {
-      this.category = new CategoryEntity(data.category);
-    }
-  }
+  @Type(() => SignedUrl)
+  signedUrl: SignedUrl;
 }

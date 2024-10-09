@@ -20,6 +20,15 @@ export class PhotoSharingRepository {
     });
   }
 
+  findOneByPhotoIdAndQuality(photoId: string, quality: string) {
+    return this.prisma.extendedClient().photoSharing.findFirst({
+      where: {
+        originalPhotoId: photoId,
+        quality,
+      },
+    });
+  }
+
   findAllByOriginalPhotoId(originalPhotoId: string) {
     return this.prisma.extendedClient().photoSharing.findMany({
       where: {
@@ -28,15 +37,9 @@ export class PhotoSharingRepository {
     });
   }
 
-  create(
-    originalPhotoId: string,
-    watermark: boolean,
-    quality: string,
-    sharePhotoUrl: string,
-  ) {
+  create(originalPhotoId: string, quality: string, sharePhotoUrl: string) {
     return this.prisma.extendedClient().photoSharing.create({
       data: {
-        watermark,
         sharePhotoUrl,
         quality,
         originalPhoto: {

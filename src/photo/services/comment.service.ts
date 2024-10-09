@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { CommentRepository } from 'src/database/repositories/comment.repository';
-import { CreateCommentRequestDto } from '../dtos/create-comment.request.dto';
+import { CreateCommentRequestDto } from '../dtos/rest/create-comment.request.dto';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoNotFoundException } from '../exceptions/photo-not-found.exception';
 import { PhotoIsPrivatedException } from '../exceptions/photo-is-private.exception';
@@ -12,7 +12,7 @@ export class CommentService {
   constructor(
     @Inject() private readonly commentRepository: CommentRepository,
     @Inject() private readonly photoRepository: PhotoRepository,
-  ) {}
+  ) { }
 
   async validatePhotoByIdAndVisibility(
     photoId: string,

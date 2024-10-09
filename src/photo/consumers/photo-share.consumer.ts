@@ -49,11 +49,14 @@ export class PhotoShareConsumer extends WorkerHost {
 
     const sharePayload = {};
 
-    for (const r of availableResolutions) {
-      const buffer = await this.photoProcessService.resize(sharp, r.pixels);
+    for (const res of availableResolutions) {
+      const buffer = await this.photoProcessService.resize(
+        sharp,
+        PhotoConstant.PHOTO_RESOLUTION_BIMAP[res],
+      );
 
-      const key = `${r.resolution}/${photo.originalPhotoUrl}`;
-      sharePayload[r.resolution] = key;
+      const key = `${res}/${photo.originalPhotoUrl}`;
+      sharePayload[res] = key;
 
       await this.photoProcessService.uploadFromBuffer(key, buffer);
     }

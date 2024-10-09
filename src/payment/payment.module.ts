@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { VietQrBasicStrategy } from './strategies/viet-qr.basic-strategy';
-import { VietQrController } from './controllers/vietqr.controller';
 import { SepayController } from './controllers/sepay.controller';
 import { SepayService } from './services/sepay.service';
 import { DatabaseModule } from 'src/database/database.module';
@@ -13,6 +12,6 @@ import { StorageModule } from 'src/storage/storage.module';
   imports: [DatabaseModule, AuthenModule, StorageModule],
   providers: [VietQrBasicStrategy, SepayService, TransactionService],
   exports: [SepayService],
-  controllers: [VietQrController, SepayController, TransactionController],
+  controllers: [SepayController, TransactionController],
 })
 export class PaymentModule {}

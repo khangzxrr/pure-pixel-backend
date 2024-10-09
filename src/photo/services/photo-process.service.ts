@@ -17,6 +17,10 @@ export class PhotoProcessService {
     @Inject() private readonly storageService: StorageService,
   ) {}
 
+  async deleteKeys(keys: string[]) {
+    return await this.storageService.deleteKeys(keys);
+  }
+
   async getPresignUploadUrl(key: string) {
     return this.storageService.getPresignedUploadUrl(key, 'private');
   }
@@ -26,7 +30,7 @@ export class PhotoProcessService {
   }
 
   async sharpInitFromObjectKey(key: string) {
-    const signedGetUrl = await this.storageService.getSignedGetUrl(key);
+    const signedGetUrl = await this.storageService.getS3SignedUrl(key);
 
     const buffer = await this.getBufferImageFromUrl(signedGetUrl);
     const photo = SharpLib(buffer);
@@ -34,15 +38,19 @@ export class PhotoProcessService {
     return photo;
   }
 
-  async getAvailableResolution(key: string) {
+  async getAvailableResolution(key: string): Promise<string[]> {
     const sharp = await this.sharpInitFromObjectKey(key);
 
     const metadata = await sharp.metadata();
 
-    const availableRes = [...PhotoConstant.PHOTO_RESOLUTION_MAP];
+    const availableRes = [...PhotoConstant.SUPPORTED_PHOTO_RESOLUTION];
 
-    for (let i = 0; i < PhotoConstant.PHOTO_RESOLUTION_MAP.length; i++) {
-      if (metadata.height >= PhotoConstant.PHOTO_RESOLUTION_MAP[i].pixels) {
+    for (let i = 0; i < PhotoConstant.SUPPORTED_PHOTO_RESOLUTION.length; i++) {
+      const pixelOfRes = PhotoConstant.PHOTO_RESOLUTION_BIMAP.getValue(
+        PhotoConstant.SUPPORTED_PHOTO_RESOLUTION[i],
+      );
+
+      if (metadata.height >= pixelOfRes) {
         break;
       }
 
@@ -50,6 +58,16 @@ export class PhotoProcessService {
     }
 
     return availableRes;
+  }
+
+  async resizeWithMetadata(sharp: SharpLib.Sharp, heightRequired: number) {
+    return sharp
+      .clone()
+      .withMetadata()
+      .resize({
+        height: heightRequired,
+      })
+      .toBuffer();
   }
 
   async resize(sharp: SharpLib.Sharp, heightRequired: number) {
@@ -66,6 +84,14 @@ export class PhotoProcessService {
 
   async makeThumbnail(sharp: SharpLib.Sharp) {
     return sharp.clone().resize(PhotoConstant.THUMBNAIL_WIDTH);
+  }
+
+  async makeTextWatermark(buffer: Buffer, text: string) {
+    const sharp = await this.sharpInitFromBuffer(buffer);
+
+    const watermarkPhoto = await this.makeWatermark(sharp, text);
+
+    return watermarkPhoto.toBuffer();
   }
 
   async makeWatermark(sharp: SharpLib.Sharp, watermarkText: string) {
@@ -96,6 +122,20 @@ export class PhotoProcessService {
     return sharp.keepExif().clone().jpeg();
   }
 
+  async parseXmpFromBuffer(buffer: Buffer) {
+    return exifr.parse(buffer, {
+      exif: false,
+      xmp: true,
+    });
+  }
+
+  async parseExifFromBuffer(buffer: Buffer) {
+    return exifr.parse(buffer, {
+      exif: true,
+      xmp: false,
+    });
+  }
+
   async makeExif(sharp: SharpLib.Sharp) {
     return exifr.parse(await sharp.keepExif().toBuffer(), {
       exif: true,
@@ -104,7 +144,7 @@ export class PhotoProcessService {
 
   async getEncodedSignedGetObjectUrl(originalImageKey: string) {
     const imagePublicUrl =
-      await this.storageService.getSignedGetUrl(originalImageKey);
+      await this.storageService.getCloudfrontSignedUrl(originalImageKey);
 
     const encodedImageUrl = encodeURIComponent(imagePublicUrl);
 
@@ -112,7 +152,7 @@ export class PhotoProcessService {
   }
 
   async getSignedObjectUrl(key: string) {
-    return this.storageService.getSignedGetUrl(key);
+    return this.storageService.getCloudfrontSignedUrl(key);
   }
 
   async getBufferImageFromUrl(url: string) {

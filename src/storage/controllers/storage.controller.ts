@@ -1,20 +1,18 @@
 import { Controller, Get, Inject, Param } from '@nestjs/common';
 import { Public } from 'nest-keycloak-connect';
 import { StorageService } from '../services/storage.service';
-import { ListBucketsCommand, PutObjectCommand } from '@aws-sdk/client-s3';
+import {
+  GetBucketPolicyCommand,
+  ListBucketsCommand,
+  PutBucketPolicyCommand,
+  PutObjectCommand,
+} from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { ApiTags } from '@nestjs/swagger';
-
 @Controller('storage')
 @ApiTags('storage')
 export class StorageController {
   constructor(@Inject() private readonly storageService: StorageService) {}
-
-  @Get()
-  @Public()
-  getStorage() {
-    return this.storageService.getS3();
-  }
 
   @Get('/cors')
   @Public()
@@ -54,6 +52,58 @@ export class StorageController {
       );
 
       return presignedUrl;
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
+  @Get('/:key/sign-url')
+  @Public()
+  async signUrl(@Param('key') key: string) {
+    const signed = this.storageService.getSigner().getSignedUrl({
+      url: `${process.env.AWS_CLOUDFRONT_S3_ORIGIN}/${key}`,
+      expires: 1798411442231,
+    });
+
+    return signed;
+  }
+
+  @Get('/bucket/:id/policy')
+  @Public()
+  async getBucketPolicy(@Param('id') id: string) {
+    try {
+      const cloudfrontPolicy = {
+        Version: '2012-10-17',
+        Statement: {
+          Sid: 'AllowCloudFrontServicePrincipalReadOnly',
+          Effect: 'Allow',
+          Principal: '*',
+          Action: ['s3:*'],
+          Resource: 'arn:aws:s3:::sftpgo/*',
+          Condition: {
+            StringLike: {
+              'aws:Referer': '9vzeMAVjTKCWXjbBNFsCnNRsPKqMYk6achgLXu5S',
+            },
+          },
+        },
+      };
+
+      const buckets = await this.storageService.getS3().send(
+        new PutBucketPolicyCommand({
+          Bucket: id,
+          Policy: JSON.stringify(cloudfrontPolicy),
+        }),
+      );
+
+      const policy = await this.storageService.getS3().send(
+        new GetBucketPolicyCommand({
+          Bucket: id,
+        }),
+      );
+
+      console.log(policy);
+
+      return buckets;
     } catch (e) {
       console.log(e);
     }
