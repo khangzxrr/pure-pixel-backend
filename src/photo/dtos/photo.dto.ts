@@ -1,5 +1,4 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { SignUrl } from './rest/sign-urls.request.dto';
 import { JsonValue } from '@prisma/client/runtime/library';
 import { Exclude, Type } from 'class-transformer';
 import { PhotographerDTO } from 'src/photographer/dtos/photographer.dto';
@@ -129,5 +128,5 @@ export class PhotoDto {
 export class SignedPhotoDto extends PhotoDto {
   @ApiProperty()
   @Type(() => SignedUrl)
-  signedUrl: SignUrl;
+  signedUrl: SignedUrl;
 }

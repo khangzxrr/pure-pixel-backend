@@ -241,7 +241,7 @@ export class PhotoController {
     type: ResolutionDto,
   })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
   async getPhotoAvailableResolution(
     @AuthenticatedUser() user: ParsedUserDto,
     @Param('id') id: string,

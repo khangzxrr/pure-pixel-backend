@@ -1,14 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import {
-  IsNotEmpty,
-  IsNumber,
-  IsNumberString,
-  IsString,
-  IsUrl,
-  Max,
-  Min,
-} from 'class-validator';
+import { IsNotEmpty, IsNumber, IsString, Max, Min } from 'class-validator';
 
 export class CreatePhotoSellingDto {
   @ApiProperty({
@@ -17,13 +9,6 @@ export class CreatePhotoSellingDto {
   @IsNotEmpty()
   @IsString()
   photoId: string;
-
-  @ApiProperty({
-    required: true,
-  })
-  @IsUrl()
-  @IsNotEmpty()
-  afterPhotoUrl: string;
 
   @ApiProperty({
     required: true,

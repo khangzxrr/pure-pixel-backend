@@ -36,7 +36,6 @@ export class PhotoSellRepository {
           },
         },
         price: photoSell.price,
-        afterPhotoUrl: photoSell.afterPhotoUrl,
         description: photoSell.description,
         active: true,
       },

@@ -39,7 +39,7 @@ describe('StorageService', () => {
     const mockSignedUrl = 'https://example.com/signed-url';
     (getSignedUrl as jest.Mock).mockResolvedValue(mockSignedUrl);
 
-    const result = await service.getSignedGetUrl('test-key');
+    const result = await service.getCloudfrontSignedUrl('test-key');
 
     expect(GetObjectCommand).toHaveBeenCalledWith({
       Key: 'test-key',

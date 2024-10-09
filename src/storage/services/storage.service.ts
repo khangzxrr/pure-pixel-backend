@@ -83,14 +83,16 @@ export class StorageService {
     return this.getS3().send(command);
   }
 
-  async getSignedGetUrl(key: string) {
-    // const command = new GetObjectCommand({
-    //   Key: key,
-    //   Bucket: process.env.S3_BUCKET,
-    // });
-    //
-    // const signedUrlFromS3 = await getSignedUrl(this.getS3(), command, {});
+  async getS3SignedUrl(key: string) {
+    const command = new GetObjectCommand({
+      Key: key,
+      Bucket: process.env.S3_BUCKET,
+    });
 
+    return await getSignedUrl(this.getS3(), command, {});
+  }
+
+  async getCloudfrontSignedUrl(key: string) {
     const signedUrl = this.getSigner().getSignedUrl({
       url: `${process.env.AWS_CLOUDFRONT_S3_ORIGIN}/${key}`,
       expires: 1799405895,
@@ -129,6 +131,7 @@ export class StorageService {
   async getPresignedUploadUrl(key: string, ACL: ObjectCannedACL) {
     const command = new PutObjectCommand({
       Key: key,
+      ContentType: 'image/jpeg',
       Bucket: process.env.S3_BUCKET,
       ACL,
     });

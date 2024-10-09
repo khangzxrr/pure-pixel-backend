@@ -26,7 +26,7 @@ export class PhotoProcessService {
   }
 
   async sharpInitFromObjectKey(key: string) {
-    const signedGetUrl = await this.storageService.getSignedGetUrl(key);
+    const signedGetUrl = await this.storageService.getS3SignedUrl(key);
 
     const buffer = await this.getBufferImageFromUrl(signedGetUrl);
     const photo = SharpLib(buffer);
@@ -126,7 +126,7 @@ export class PhotoProcessService {
 
   async getEncodedSignedGetObjectUrl(originalImageKey: string) {
     const imagePublicUrl =
-      await this.storageService.getSignedGetUrl(originalImageKey);
+      await this.storageService.getCloudfrontSignedUrl(originalImageKey);
 
     const encodedImageUrl = encodeURIComponent(imagePublicUrl);
 
@@ -134,7 +134,7 @@ export class PhotoProcessService {
   }
 
   async getSignedObjectUrl(key: string) {
-    return this.storageService.getSignedGetUrl(key);
+    return this.storageService.getCloudfrontSignedUrl(key);
   }
 
   async getBufferImageFromUrl(url: string) {

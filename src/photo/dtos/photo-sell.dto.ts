@@ -17,9 +17,6 @@ export class PhotoSellDto {
   description: string;
 
   @ApiProperty()
-  afterPhotoUrl: string;
-
-  @ApiProperty()
   active: string;
 
   @ApiProperty()

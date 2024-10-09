@@ -201,11 +201,11 @@ export class PhotoService {
   }
 
   async getAvailablePhotoResolution(userId: string, id: string) {
-    const photo =
-      await this.findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
-        userId,
-        id,
-      );
+    const photo = await this.photoRepository.getPhotoById(id);
+
+    if (!photo) {
+      throw new PhotoNotFoundException();
+    }
 
     if (photo.status === 'PENDING') {
       throw new PhotoIsPendingStateException();
@@ -224,9 +224,10 @@ export class PhotoService {
       return true;
     }
 
-    return this.photoProcessService.getAvailableResolution(
-      photo.originalPhotoUrl,
-    );
+    const availableResolutions =
+      this.photoProcessService.getAvailableResolution(photo.originalPhotoUrl);
+
+    return availableResolutions;
   }
 
   async sendWatermarkRequest(
@@ -302,7 +303,7 @@ export class PhotoService {
     });
   }
 
-  async signUrlFromPhotos(photo: Photo) {
+  async signUrlFromPhotos(photo: Photo): Promise<SignedUrl> {
     if (photo.status == 'PENDING') {
       throw new PhotoIsPendingStateException();
     }
@@ -323,7 +324,23 @@ export class PhotoService {
     const signedThumbnail =
       await this.photoProcessService.getSignedObjectUrl(thumbnail);
 
-    return new SignedUrl(signedUrl, signedThumbnail);
+    if (photo.colorGradingPhotoWatermarkUrl.length > 0) {
+      const signedColorGradingWatermark =
+        await this.photoProcessService.getSignedObjectUrl(
+          photo.colorGradingPhotoWatermarkUrl,
+        );
+
+      return {
+        url: signedUrl,
+        thumbnail: signedThumbnail,
+        colorGradingWatermark: signedColorGradingWatermark,
+      };
+    }
+
+    return {
+      url: signedUrl,
+      thumbnail: signedThumbnail,
+    };
   }
 
   async updatePhotos(
@@ -398,10 +415,6 @@ export class PhotoService {
   }
 
   async findAll(filter: FindAllPhotoFilterDto) {
-    this.logger.log({
-      filter,
-    });
-
     const count = await this.photoRepository.count(filter);
 
     const photos = await this.photoRepository.findAll(
@@ -542,7 +555,7 @@ export class PhotoService {
     sellPhotoDto: CreatePhotoSellingDto,
     afterPhotoFile: Express.Multer.File,
   ) {
-    // await this.parseAndValidateLightroomPresentFromBuffer(afterPhotoFile);
+    await this.parseAndValidateLightroomPresentFromBuffer(afterPhotoFile);
 
     const photo =
       await this.findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
@@ -566,8 +579,7 @@ export class PhotoService {
     if (
       previousActivePhotoSell &&
       previousActivePhotoSell.price.toNumber() === sellPhotoDto.price &&
-      previousActivePhotoSell.description === sellPhotoDto.description &&
-      previousActivePhotoSell.afterPhotoUrl === sellPhotoDto.afterPhotoUrl
+      previousActivePhotoSell.description === sellPhotoDto.description
     ) {
       //idemponent
       return plainToInstance(PhotoSellDto, previousActivePhotoSell, {});
