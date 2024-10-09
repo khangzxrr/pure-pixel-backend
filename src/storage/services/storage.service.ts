@@ -1,4 +1,5 @@
 import {
+  DeleteObjectsCommand,
   GetBucketCorsCommand,
   GetObjectAclCommand,
   GetObjectCommand,
@@ -99,6 +100,21 @@ export class StorageService {
     });
 
     return signedUrl;
+  }
+
+  async deleteKeys(keys: string[]) {
+    const keyToObjIdentifers = keys.map((k) => ({
+      Key: k,
+    }));
+
+    const command = new DeleteObjectsCommand({
+      Bucket: process.env.S3_BUCKET,
+      Delete: {
+        Objects: keyToObjIdentifers,
+      },
+    });
+
+    return this.sendCommand(command);
   }
 
   async getBucketCors() {

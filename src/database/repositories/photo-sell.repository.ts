@@ -18,6 +18,17 @@ export class PhotoSellRepository {
     });
   }
 
+  deactivatePhotoSellByPhotoIdQuery(photoId: string) {
+    return this.prisma.extendedClient().photoSell.updateMany({
+      where: {
+        photoId,
+      },
+      data: {
+        active: false,
+      },
+    });
+  }
+
   updateQuery(id: string, photoSell: Partial<PhotoSell>) {
     return this.prisma.extendedClient().photoSell.update({
       where: {

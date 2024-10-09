@@ -8,7 +8,7 @@ import { PrismaService } from 'src/prisma.service';
 export class PhotoRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async delete(photoId: string) {
+  deleteQuery(photoId: string) {
     return this.prisma.extendedClient().photo.update({
       where: {
         id: photoId,

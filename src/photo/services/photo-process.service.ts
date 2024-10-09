@@ -17,6 +17,10 @@ export class PhotoProcessService {
     @Inject() private readonly storageService: StorageService,
   ) {}
 
+  async deleteKeys(keys: string[]) {
+    return await this.storageService.deleteKeys(keys);
+  }
+
   async getPresignUploadUrl(key: string) {
     return this.storageService.getPresignedUploadUrl(key, 'private');
   }
