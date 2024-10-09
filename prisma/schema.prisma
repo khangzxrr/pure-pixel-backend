@@ -351,8 +351,7 @@ model PhotoSell {
 
   price Decimal
 
-  description   String
-  afterPhotoUrl String
+  description String
 
   photo   Photo  @relation(fields: [photoId], references: [id])
   photoId String
