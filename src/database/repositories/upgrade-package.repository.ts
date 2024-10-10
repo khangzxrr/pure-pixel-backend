@@ -63,7 +63,7 @@ export class UpgradePackageRepository {
     take: number,
     where: Prisma.UpgradePackageWhereInput,
     orderBy: Prisma.UpgradePackageOrderByWithRelationInput,
-  ) {
+  ): Promise<UpgradePackage[]> {
     return this.prisma.extendedClient().upgradePackage.findMany({
       skip,
       take,
