@@ -63,7 +63,10 @@ async function main() {
   //insert signaure package
   await prisma.upgradePackage.upsert({
     where: {
-      name: signatureUpgradePackage.name,
+      name_deletedAt: {
+        name: signatureUpgradePackage.name,
+        deletedAt: null,
+      },
     },
     update: {
       ...signatureUpgradePackage,
@@ -72,7 +75,10 @@ async function main() {
   });
   await prisma.upgradePackage.upsert({
     where: {
-      name: premiumUpgradePackage.name,
+      name_deletedAt: {
+        name: premiumUpgradePackage.name,
+        deletedAt: null,
+      },
     },
     update: {
       ...premiumUpgradePackage,
@@ -81,7 +87,10 @@ async function main() {
   });
   await prisma.upgradePackage.upsert({
     where: {
-      name: basicUpgradePackage.name,
+      name_deletedAt: {
+        name: basicUpgradePackage.name,
+        deletedAt: null,
+      },
     },
     update: {
       ...basicUpgradePackage,
