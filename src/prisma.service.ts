@@ -17,7 +17,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
               operation === 'findMany' ||
               operation === 'findUnique' ||
               operation === 'findFirstOrThrow' ||
-              operation === 'findUniqueOrThrow'
+              operation === 'findUniqueOrThrow' ||
+              operation === 'count'
             ) {
               args.where = { ...args.where, deletedAt: null };
             }
