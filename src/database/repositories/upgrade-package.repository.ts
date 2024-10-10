@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, UpgradePackage, UpgradePackageStatus } from '@prisma/client';
+import { Prisma, UpgradePackage } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
@@ -21,8 +21,30 @@ export class UpgradePackageRepository {
     });
   }
 
+  async findById(id: string) {
+    return this.prisma.extendedClient().upgradePackage.findUnique({
+      where: {
+        id,
+      },
+    });
+  }
+
+  async delete(id: string) {
+    return this.prisma.extendedClient().upgradePackage.delete({
+      where: {
+        id,
+      },
+    });
+  }
+
   count(where: Prisma.UpgradePackageWhereInput) {
     return this.prisma.extendedClient().upgradePackage.count({
+      where,
+    });
+  }
+
+  async findUnique(where: Prisma.UpgradePackageWhereUniqueInput) {
+    return this.prisma.extendedClient().upgradePackage.findUnique({
       where,
     });
   }
@@ -38,15 +60,6 @@ export class UpgradePackageRepository {
       take,
       where,
       orderBy,
-    });
-  }
-
-  async findById(id: string, status?: UpgradePackageStatus) {
-    return this.prisma.extendedClient().upgradePackage.findFirst({
-      where: {
-        id,
-        status,
-      },
     });
   }
 }

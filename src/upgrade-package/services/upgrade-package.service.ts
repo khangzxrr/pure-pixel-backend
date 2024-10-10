@@ -4,6 +4,10 @@ import { UpgradePackageFindAllDto } from '../dtos/rest/upgrade-package-find-all.
 import { plainToInstance } from 'class-transformer';
 import { UpgradePackageDto } from '../dtos/upgrade-package.dto';
 import { UpgradePackageFindAllResposneDto } from '../dtos/rest/upgrade-package-find-all.response';
+import { CreateUpgradePackageDto } from '../dtos/rest/create-upgrade-package.request.dto';
+import { UpgradePackageEntity } from '../entities/upgrade-package.entity';
+import { ExistUpgradePackageWithSameNameException } from '../exceptions/exist-upgrade-package-with-same-name.exception';
+import { UpgradePackageNotFoundException } from '../exceptions/upgrade-package-not-found.exception';
 
 @Injectable()
 export class UpgradePackageService {
@@ -27,5 +31,36 @@ export class UpgradePackageService {
     );
 
     return new UpgradePackageFindAllResposneDto(findAllDto.limit, count, dtos);
+  }
+
+  async delete(id: string) {
+    const upgradePackage = await this.upgradePackageRepository.findById(id);
+
+    if (!upgradePackage) {
+      throw new UpgradePackageNotFoundException();
+    }
+
+    const d = await this.upgradePackageRepository.delete(id);
+
+    return plainToInstance(UpgradePackageDto, d);
+  }
+
+  async create(createUpgradePackageDto: CreateUpgradePackageDto) {
+    const existByName = await this.upgradePackageRepository.findUnique({
+      name: createUpgradePackageDto.name,
+    });
+    if (existByName) {
+      throw new ExistUpgradePackageWithSameNameException();
+    }
+
+    const upgradePackage = plainToInstance(
+      UpgradePackageEntity,
+      createUpgradePackageDto,
+    );
+
+    const newUpgradePackage =
+      await this.upgradePackageRepository.create(upgradePackage);
+
+    return plainToInstance(UpgradePackageDto, newUpgradePackage);
   }
 }
