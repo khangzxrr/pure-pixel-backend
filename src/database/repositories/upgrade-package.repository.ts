@@ -29,6 +29,15 @@ export class UpgradePackageRepository {
     });
   }
 
+  async update(id: string, upgradePackage: Partial<UpgradePackage>) {
+    return this.prisma.extendedClient().upgradePackage.update({
+      where: {
+        id,
+      },
+      data: upgradePackage,
+    });
+  }
+
   async delete(id: string) {
     return this.prisma.extendedClient().upgradePackage.delete({
       where: {
@@ -43,8 +52,8 @@ export class UpgradePackageRepository {
     });
   }
 
-  async findUnique(where: Prisma.UpgradePackageWhereUniqueInput) {
-    return this.prisma.extendedClient().upgradePackage.findUnique({
+  async findFirst(where: Prisma.UpgradePackageWhereInput) {
+    return this.prisma.extendedClient().upgradePackage.findFirst({
       where,
     });
   }

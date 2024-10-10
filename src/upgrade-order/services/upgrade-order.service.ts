@@ -57,7 +57,7 @@ export class UpgradeOrderService {
   private async checkUpgradePackageMustExist(
     requestUpgrade: RequestUpgradeDto,
   ) {
-    const upgradePackage = await this.upgradePackageRepository.findUnique({
+    const upgradePackage = await this.upgradePackageRepository.findFirst({
       id: requestUpgrade.upgradePackageId,
       status: 'ENABLED',
     });

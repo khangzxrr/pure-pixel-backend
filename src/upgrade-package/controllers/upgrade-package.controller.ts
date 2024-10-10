@@ -5,7 +5,9 @@ import {
   Get,
   Inject,
   Param,
+  Patch,
   Post,
+  Put,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -18,6 +20,8 @@ import { CreateUpgradePackageDto } from '../dtos/rest/create-upgrade-package.req
 import { AuthGuard, Roles } from 'nest-keycloak-connect';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
+import { PatchUpdateUpgradePackageDto } from '../dtos/rest/patch-update-upgrade-package.request.dto';
+import { PutUpdateUpgradePackageDto } from '../dtos/rest/put-update-upgrade-package.request.dto';
 
 @Controller('upgrade-package')
 @ApiTags('upgrade-package')
@@ -61,5 +65,43 @@ export class UpgradePackageController {
     @Body() createUpgradePackageDto: CreateUpgradePackageDto,
   ) {
     return await this.upgradePackageService.create(createUpgradePackageDto);
+  }
+
+  @Patch(':id')
+  @ApiOperation({
+    summary: 'update one or more fields of upgrade package by id',
+  })
+  @ApiOkResponse({
+    type: UpgradePackageDto,
+  })
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.MANAGER_ROLE] })
+  async patchUpdatePackage(
+    @Param('id') id: string,
+    @Body() patchUpdateUpgradePackageDto: PatchUpdateUpgradePackageDto,
+  ) {
+    return await this.upgradePackageService.update(
+      id,
+      patchUpdateUpgradePackageDto,
+    );
+  }
+
+  @Put(':id')
+  @ApiOperation({
+    summary: 'replace all fields of upgrade package by id',
+  })
+  @ApiOkResponse({
+    type: UpgradePackageDto,
+  })
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.MANAGER_ROLE] })
+  async putUpdatePackage(
+    @Param('id') id: string,
+    @Body() putUpdateUpgradePackageDto: PutUpdateUpgradePackageDto,
+  ) {
+    return await this.upgradePackageService.replace(
+      id,
+      putUpdateUpgradePackageDto,
+    );
   }
 }
