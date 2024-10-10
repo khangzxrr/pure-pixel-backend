@@ -28,10 +28,14 @@ export class UpgradePackageRepository {
   }
 
   async findAll(
+    skip: number,
+    take: number,
     where: Prisma.UpgradePackageWhereInput,
     orderBy: Prisma.UpgradePackageOrderByWithRelationInput,
   ) {
     return this.prisma.extendedClient().upgradePackage.findMany({
+      skip,
+      take,
       where,
       orderBy,
     });

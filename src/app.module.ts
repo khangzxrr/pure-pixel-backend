@@ -9,12 +9,13 @@ import { AuthenModule } from './authen/authen.module';
 import { DatabaseModule } from './database/database.module';
 import { PhotoModule } from './photo/photo.module';
 import { ScheduleModule } from '@nestjs/schedule';
-import { UpgradeModule } from './upgrade/upgrade.module';
+import { UpgradePackageModule } from './upgrade-package/upgrade-package.module';
 import { PaymentModule } from './payment/payment.module';
 import { CachingModule } from './caching/caching.module';
 import { APP_FILTER } from '@nestjs/core';
 import { PrismaKnownExceptionFilter } from './infrastructure/filters/prisma-known-exception.filter';
 import { QueueModule } from './queue/queue.module';
+import { UpgradeOrderModule } from './upgrade-order/upgrade-order.module';
 
 @Module({
   providers: [
@@ -37,10 +38,11 @@ import { QueueModule } from './queue/queue.module';
     PhotographerModule,
     DatabaseModule,
     PhotoModule,
-    UpgradeModule,
     PaymentModule,
     CachingModule,
+    UpgradeOrderModule,
+    UpgradePackageModule,
   ],
   controllers: [AppController],
 })
-export class AppModule { }
+export class AppModule {}

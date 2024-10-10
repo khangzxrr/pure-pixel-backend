@@ -10,7 +10,7 @@ import {
 } from 'class-validator';
 import { PagingPaginatedRequestDto } from 'src/infrastructure/restful/paging-paginated.request.dto';
 
-export class FindAllDto extends PagingPaginatedRequestDto {
+export class UpgradePackageFindAllDto extends PagingPaginatedRequestDto {
   @ApiProperty({
     required: false,
   })

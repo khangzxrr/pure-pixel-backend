@@ -3,7 +3,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Queue } from 'bullmq';
 import { UpgradePackageOrderRepository } from 'src/database/repositories/upgrade-package-order.repository';
-import { UpgradeConstant } from '../constants/upgrade.constant';
+import { UpgradeConstant } from '../../upgrade-package/constants/upgrade.constant';
 import { KeycloakService } from 'src/authen/services/keycloak.service';
 import { Constants } from 'src/infrastructure/utils/constants';
 

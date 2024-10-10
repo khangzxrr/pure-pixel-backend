@@ -18,14 +18,14 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { UserFilterDto } from '../dtos/user-filter.dto';
-import { UpgradeOrderService } from 'src/upgrade/services/upgrade-order.service';
 import { ParsedUserDto } from '../dtos/parsed-user.dto';
 import { MeDto } from '../dtos/me.dto';
 
 import { Response } from 'express';
-import { UpgradeOrderDto } from 'src/upgrade/dtos/upgrade-order.dto';
 import { PresignedUploadMediaDto } from '../dtos/presigned-upload-media.dto';
 import { UpdateProfileDto } from '../dtos/rest/update-profile.request.dto';
+import { UpgradeOrderDto } from 'src/upgrade-order/dtos/upgrade-order.dto';
+import { UpgradeOrderService } from 'src/upgrade-order/services/upgrade-order.service';
 
 @Controller('me')
 @ApiTags('user')
