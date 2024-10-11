@@ -93,13 +93,11 @@ export class UserRepository {
       },
 
       include: {
-        followers: userFilterDto.followers,
-        followings: userFilterDto.followings,
-
         _count: {
           select: {
-            followers: userFilterDto.followers,
-            followings: userFilterDto.followings,
+            followers: true,
+            followings: true,
+            photos: true,
           },
         },
       },
