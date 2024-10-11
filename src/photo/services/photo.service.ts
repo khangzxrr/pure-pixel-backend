@@ -312,8 +312,6 @@ export class PhotoService {
         ttl: 10000,
       },
     });
-
-    console.log('call all queue');
   }
 
   async signUrlFromPhotos(
