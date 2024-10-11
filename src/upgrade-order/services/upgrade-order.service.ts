@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { UpgradePackageOrderRepository } from 'src/database/repositories/upgrade-package-order.repository';
 import { RequestUpgradeDto } from '../dtos/request-upgrade.dto';
 import { UserHasActivatedUpgradePackage } from '../exceptions/user-has-activated-upgrade-package-exception';
-import { Prisma, UpgradePackageStatus } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { UpgradePackageNotFoundException } from '../exceptions/upgrade-package-not-found-exception';
 import { UpgradePackageRepository } from 'src/database/repositories/upgrade-package.repository';
 import { PrismaService } from 'src/prisma.service';
@@ -57,10 +57,10 @@ export class UpgradeOrderService {
   private async checkUpgradePackageMustExist(
     requestUpgrade: RequestUpgradeDto,
   ) {
-    const upgradePackage = await this.upgradePackageRepository.findById(
-      requestUpgrade.upgradePackageId,
-      UpgradePackageStatus.ENABLED,
-    );
+    const upgradePackage = await this.upgradePackageRepository.findFirst({
+      id: requestUpgrade.upgradePackageId,
+      status: 'ENABLED',
+    });
 
     if (upgradePackage == null) {
       throw new UpgradePackageNotFoundException();

@@ -1,6 +1,6 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
-import { UpgradeConstant } from '../constants/upgrade.constant';
+import { UpgradeConstant } from '../../upgrade-package/constants/upgrade.constant';
 import { Inject, Logger } from '@nestjs/common';
 import { NotificationService } from 'src/notification/services/notification.service';
 import { UpgradeOrder } from '@prisma/client';

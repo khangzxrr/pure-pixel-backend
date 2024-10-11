@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { UpgradePackageEntity } from '../entities/upgrade-package.entity';
+import { Type } from 'class-transformer';
 
 export class UpgradePackageDto {
   @ApiProperty()
@@ -9,6 +9,7 @@ export class UpgradePackageDto {
   name: string;
 
   @ApiProperty()
+  @Type(() => Number)
   price: number;
 
   @ApiProperty()
@@ -31,12 +32,4 @@ export class UpgradePackageDto {
 
   @ApiProperty()
   maxBookingVideoQuota: number;
-
-  constructor({ ...data }: Partial<UpgradePackageEntity>) {
-    Object.assign(this, data);
-
-    if (data.price) {
-      this.price = data.price.toNumber();
-    }
-  }
 }
