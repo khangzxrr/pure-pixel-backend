@@ -1,29 +1,165 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import { PhotoStatus, PhotoVisibility } from '@prisma/client';
+import { ApiProperty } from '@nestjs/swagger';
+import { PhotoStatus, PhotoVisibility, Prisma } from '@prisma/client';
+import { Exclude } from 'class-transformer';
+import {
+  IsArray,
+  IsBoolean,
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import { PagingPaginatedRequestDto } from 'src/infrastructure/restful/paging-paginated.request.dto';
+import { ToBoolean } from 'src/infrastructure/transforms/to-boolean';
 
 export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
-  @ApiPropertyOptional()
-  id: string;
+  @ApiProperty({
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  categoryName?: string;
 
-  @ApiPropertyOptional()
-  photographerId: string;
+  @ApiProperty({
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  photographerId?: string;
 
-  @ApiPropertyOptional()
+  @ApiProperty({
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  photographerName?: string;
+
+  @ApiProperty({
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  title?: string;
+
+  @ApiProperty({
+    required: false,
+  })
+  @IsOptional()
+  @IsNotEmpty()
+  @ToBoolean()
+  @IsBoolean()
+  watermark?: boolean;
+
+  @ApiProperty({
+    required: false,
+  })
+  @IsOptional()
+  @IsNotEmpty()
+  @ToBoolean()
+  @IsBoolean()
+  selling?: boolean;
+
+  @Exclude()
   visibility: PhotoVisibility;
 
-  @ApiPropertyOptional()
+  @Exclude()
   status: PhotoStatus;
 
-  @ApiPropertyOptional()
-  cursorId: string;
+  @ApiProperty({
+    required: false,
+    isArray: true,
+  })
+  @IsOptional()
+  @IsArray({})
+  @IsString({ each: true })
+  @IsNotEmpty({ each: true })
+  tags?: string[];
 
-  toWhere() {
+  @ApiProperty({
+    required: false,
+    enum: Prisma.SortOrder,
+  })
+  @IsOptional()
+  @IsEnum(Prisma.SortOrder)
+  orderByCreatedAt?: Prisma.SortOrder;
+
+  @ApiProperty({
+    required: false,
+    enum: Prisma.SortOrder,
+  })
+  @IsOptional()
+  @IsEnum(Prisma.SortOrder)
+  orderByUpdatedAt?: Prisma.SortOrder;
+
+  @ApiProperty({
+    required: false,
+    enum: Prisma.SortOrder,
+  })
+  @IsOptional()
+  @IsEnum(Prisma.SortOrder)
+  orderByUpvote?: Prisma.SortOrder;
+
+  toOrderBy(): Prisma.PhotoOrderByWithRelationInput[] {
+    const orderBys: Prisma.PhotoOrderByWithRelationInput[] = [];
+
+    if (this.orderByCreatedAt) {
+      orderBys.push({
+        createdAt: this.orderByCreatedAt,
+      });
+    }
+
+    if (this.orderByUpdatedAt) {
+      orderBys.push({
+        updatedAt: this.orderByUpdatedAt,
+      });
+    }
+
+    if (this.orderByUpvote) {
+      orderBys.push({
+        votes: {
+          _count: this.orderByUpvote,
+        },
+      });
+    }
+
+    return orderBys;
+  }
+
+  toWhere(): Prisma.PhotoWhereInput {
     return {
-      id: this.id,
-      photographerId: this.photographerId,
-      visibility: this.visibility,
-      status: this.status,
+      photoSellings: {
+        some: {
+          active: this.selling,
+        },
+      },
+      category: {
+        name: {
+          search: this.categoryName,
+        },
+      },
+      photographer: {
+        name: {
+          search: this.photographerName,
+        },
+        id: {
+          search: this.photographerId,
+        },
+      },
+      title: {
+        search: this.title,
+      },
+      watermark: this.watermark,
+      tags: {
+        some: {
+          name: {
+            in: this.tags,
+          },
+        },
+      },
     };
   }
 }

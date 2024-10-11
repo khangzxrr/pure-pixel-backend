@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Photo, PhotoVisibility } from '@prisma/client';
+import { Photo, PhotoVisibility, Prisma } from '@prisma/client';
 import { PhotoConstant } from 'src/photo/constants/photo.constant';
 import { FindAllPhotoFilterDto } from 'src/photo/dtos/find-all.filter.dto';
 import { PrismaService } from 'src/prisma.service';
@@ -181,12 +181,23 @@ export class PhotoRepository {
     });
   }
 
-  async findAll(filter: FindAllPhotoFilterDto, skip: number, take: number) {
+  async findAll(
+    where: Prisma.PhotoWhereInput,
+    orderBy: Prisma.PhotoOrderByWithRelationInput[],
+    skip: number,
+    take: number,
+  ) {
     return this.prisma.extendedClient().photo.findMany({
-      where: filter.toWhere(),
+      where,
       skip,
       take,
+      orderBy,
       include: {
+        _count: {
+          select: {
+            votes: true,
+          },
+        },
         photographer: true,
         category: true,
         photoSellings: {
@@ -194,6 +205,7 @@ export class PhotoRepository {
             active: true,
           },
         },
+        tags: true,
       },
     });
   }

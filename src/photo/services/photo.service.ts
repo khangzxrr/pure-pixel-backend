@@ -2,7 +2,6 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import {
   Photo,
   PhotoSell,
-  PhotoStatus,
   PhotoVisibility,
   PrismaPromise,
   ShareStatus,
@@ -385,10 +384,7 @@ export class PhotoService {
       photo.title = dto.title;
       photo.watermark = dto.watermark;
       photo.showExif = dto.showExif;
-      photo.location = dto.location;
-      photo.captureTime = dto.captureTime;
       photo.description = dto.description;
-      photo.photoTags = dto.photoTags;
 
       if (dto.photoType === 'RAW') {
         photo.photoType = 'RAW';
@@ -417,8 +413,8 @@ export class PhotoService {
   }
 
   async findPublicPhotos(filter: FindAllPhotoFilterDto) {
-    filter.visibility = PhotoVisibility.PUBLIC;
-    filter.status = PhotoStatus.PARSED;
+    filter.visibility = 'PUBLIC';
+    filter.status = 'PARSED';
 
     return await this.findAll(filter);
   }
@@ -433,7 +429,8 @@ export class PhotoService {
     const count = await this.photoRepository.count(filter);
 
     const photos = await this.photoRepository.findAll(
-      filter,
+      filter.toWhere(),
+      filter.toOrderBy(),
       filter.toSkip(),
       filter.limit,
     );

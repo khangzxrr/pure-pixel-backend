@@ -51,16 +51,6 @@ export class PhotoDto {
   @ApiProperty({
     required: false,
   })
-  location?: string;
-
-  @ApiProperty({
-    required: false,
-  })
-  captureTime?: Date;
-
-  @ApiProperty({
-    required: false,
-  })
   description?: string;
 
   @Exclude()
