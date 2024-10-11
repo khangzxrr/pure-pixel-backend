@@ -1,57 +1,38 @@
-import { Processor, WorkerHost } from '@nestjs/bullmq';
-import { Logger, Inject } from '@nestjs/common';
-import { Job } from 'bullmq';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
-import { PhotoConstant } from '../constants/photo.constant';
 import { GenerateWatermarkRequestDto } from '../dtos/rest/generate-watermark.request.dto';
 import { PhotoGateway } from '../gateways/socket.io.gateway';
-import { PhotoProcessService } from '../services/photo-process.service';
+import { PhotoProcessService } from './photo-process.service';
 
-@Processor(PhotoConstant.PHOTO_WATERMARK_QUEUE, {
-  concurrency: 2,
-})
-export class PhotoWatermarkConsumer extends WorkerHost {
-  private readonly logger = new Logger(PhotoWatermarkConsumer.name);
+@Injectable()
+export class PhotoGenerateWatermarkService {
+  private readonly logger = new Logger(PhotoGenerateWatermarkService.name);
 
   constructor(
     @Inject() private readonly photoGateway: PhotoGateway,
     @Inject() private readonly photoRepository: PhotoRepository,
     @Inject() private readonly photoProcessService: PhotoProcessService,
-  ) {
-    super();
-  }
-
-  async process(job: Job): Promise<any> {
-    try {
-      switch (job.name) {
-        case PhotoConstant.GENERATE_WATERMARK_JOB:
-          await this.processWatermark(
-            job.data.userId,
-            job.data.generateWatermarkRequest,
-          );
-          break;
-      }
-    } catch (e) {
-      console.log(e);
-      this.logger.error(e);
-      throw new Error(); //perform retry
-    }
-  }
+  ) {}
 
   async processWatermark(
     userId: string,
     generateWatermarkRequest: GenerateWatermarkRequestDto,
+    buffer: Buffer,
   ) {
     this.logger.log(`generate watermark`);
     this.logger.log(generateWatermarkRequest);
 
-    const photo = await this.generateWatermark(generateWatermarkRequest);
+    const photo = await this.generateWatermark(
+      generateWatermarkRequest,
+      buffer,
+    );
 
     await this.photoGateway.sendFinishWatermarkEventToUserId(userId, photo);
   }
 
   async generateWatermark(
     generateWatermarkRequest: GenerateWatermarkRequestDto,
+    buffer: Buffer,
   ) {
     const photo = await this.photoRepository.getPhotoById(
       generateWatermarkRequest.photoId,
@@ -59,9 +40,7 @@ export class PhotoWatermarkConsumer extends WorkerHost {
 
     const flagTime1 = new Date();
 
-    const sharp = await this.photoProcessService.sharpInitFromObjectKey(
-      photo.originalPhotoUrl,
-    );
+    const sharp = await this.photoProcessService.sharpInitFromBuffer(buffer);
 
     const watermark = await this.photoProcessService.makeWatermark(
       sharp,
@@ -101,9 +80,7 @@ export class PhotoWatermarkConsumer extends WorkerHost {
     });
 
     this.logger.log(
-      `created watermark:
-${photo.watermarkPhotoUrl}
-${photo.watermarkThumbnailPhotoUrl}`,
+      `created watermark: ${photo.watermarkPhotoUrl}\n${photo.watermarkThumbnailPhotoUrl}`,
     );
 
     return photo;

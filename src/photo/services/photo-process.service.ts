@@ -30,12 +30,9 @@ export class PhotoProcessService {
   }
 
   async sharpInitFromObjectKey(key: string) {
-    // const signedGetUrl = await this.storageService.getS3SignedUrl(key);
-
     const buffer = await this.getObjectToBuffer(key);
 
     const photo = SharpLib(buffer);
-
     return photo;
   }
 

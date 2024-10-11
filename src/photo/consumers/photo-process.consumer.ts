@@ -1,6 +1,6 @@
-import { InjectQueue, Processor, WorkerHost } from '@nestjs/bullmq';
+import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { PhotoConstant } from '../constants/photo.constant';
-import { Job, Queue } from 'bullmq';
+import { Job } from 'bullmq';
 import { Inject, Logger } from '@nestjs/common';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoProcessService } from '../services/photo-process.service';
@@ -8,11 +8,11 @@ import { PhotoGateway } from '../gateways/socket.io.gateway';
 import { ProcessPhotosRequest } from '../dtos/rest/process-images.request.dto';
 import { DatabaseService } from 'src/database/database.service';
 import { UserRepository } from 'src/database/repositories/user.repository';
-import { PhotoProcessDto } from '../dtos/photo-process.dto';
-import { GenerateWatermarkRequestDto } from '../dtos/rest/generate-watermark.request.dto';
+import { PhotoGenerateShareService } from '../services/photo-generate-share.service';
+import { PhotoGenerateWatermarkService } from '../services/photo-generate-watermark.service';
 
 @Processor(PhotoConstant.PHOTO_PROCESS_QUEUE, {
-  concurrency: 2,
+  concurrency: 10,
 })
 export class PhotoProcessConsumer extends WorkerHost {
   private readonly logger = new Logger(PhotoProcessConsumer.name);
@@ -23,10 +23,10 @@ export class PhotoProcessConsumer extends WorkerHost {
     @Inject() private readonly userRepository: UserRepository,
     @Inject() private readonly photoProcessService: PhotoProcessService,
     @Inject() private readonly databaseService: DatabaseService,
-    @InjectQueue(PhotoConstant.PHOTO_WATERMARK_QUEUE)
-    private readonly photoWatermarkQueue: Queue,
-    @InjectQueue(PhotoConstant.PHOTO_SHARE_QUEUE)
-    private readonly photoShareQueue: Queue,
+    @Inject()
+    private readonly photoGenerateShareService: PhotoGenerateShareService,
+    @Inject()
+    private readonly photoGenerateWatermarkService: PhotoGenerateWatermarkService,
   ) {
     super();
   }
@@ -53,29 +53,6 @@ export class PhotoProcessConsumer extends WorkerHost {
     this.logger.log(processRequest);
 
     await this.convertAndEmitProcessEvents(userId, processRequest);
-    //
-    // await this.photoShareQueue.add(PhotoConstant.GENERATE_SHARE_JOB_NAME, {
-    //   userId,
-    //   photoId: processRequest.signedUpload.photoId,
-    //   debounce: {
-    //     id: processRequest.signedUpload.photoId,
-    //     ttl: 10000,
-    //   },
-    // });
-    //
-    // const generateWatermarkRequest: GenerateWatermarkRequestDto = {
-    //   photoId: processRequest.signedUpload.photoId,
-    //   text: 'PPX',
-    // };
-    //
-    // await this.photoWatermarkQueue.add(PhotoConstant.GENERATE_WATERMARK_JOB, {
-    //   userId,
-    //   generateWatermarkRequest,
-    //   debounce: {
-    //     id: processRequest.signedUpload.photoId,
-    //     ttl: 10000,
-    //   },
-    // });
   }
 
   async convertAndEmitProcessEvents(
@@ -102,13 +79,6 @@ export class PhotoProcessConsumer extends WorkerHost {
       photo.originalPhotoUrl,
     );
 
-    const currentTime2nd = new Date();
-
-    console.log(
-      'time to convert photo: ',
-      currentTime2nd.valueOf() - currentTime.valueOf(),
-    );
-
     const metadata = await sharp.metadata();
     photo.size = metadata.size;
 
@@ -132,33 +102,49 @@ export class PhotoProcessConsumer extends WorkerHost {
     );
 
     photo.watermarkThumbnailPhotoUrl = photo.thumbnailPhotoUrl;
-
     photo.watermarkPhotoUrl = photo.originalPhotoUrl;
-    photo.status = 'PARSED';
 
-    const photoProcess = new PhotoProcessDto(
-      photo.id,
-      photo.originalPhotoUrl,
-      photo.thumbnailPhotoUrl,
-      photo.watermarkPhotoUrl,
-      photo.watermarkThumbnailPhotoUrl,
-      photo.status,
-      photo.size,
-    );
+    const updateQuery = this.photoRepository.updateQuery({
+      id: photo.id,
+      originalPhotoUrl: photo.originalPhotoUrl,
+      thumbnailPhotoUrl: photo.thumbnailPhotoUrl,
+      watermarkPhotoUrl: photo.watermarkPhotoUrl,
+      watermarkThumbnailPhotoUrl: photo.watermarkThumbnailPhotoUrl,
+      status: 'PARSED',
+      size: photo.size,
+    });
 
-    const updateQueries = this.photoRepository.batchUpdatePhotoProcess([
-      photoProcess,
-    ]);
     const updateQuotaQuery = this.userRepository.increasePhotoQuotaUsageById(
       userId,
       photo.size,
     );
 
     await this.databaseService.applyTransactionMultipleQueries([
-      ...updateQueries,
+      updateQuery,
       updateQuotaQuery,
     ]);
 
     await this.photoGateway.sendFinishProcessPhotoEventToUserId(userId, photo);
+
+    const currentTime2nd = new Date();
+
+    console.log(
+      'time to convert photo: ',
+      currentTime2nd.valueOf() - currentTime.valueOf(),
+    );
+
+    await this.photoGenerateWatermarkService.processWatermark(
+      userId,
+      {
+        text: 'PPX',
+        photoId: photo.id,
+      },
+      sharpJpegBuffer,
+    );
+
+    await this.photoGenerateShareService.generateSharePayload(
+      photo.id,
+      sharpJpegBuffer,
+    );
   }
 }
