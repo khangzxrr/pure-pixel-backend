@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Photo, PhotoVisibility } from '@prisma/client';
+import { PhotoConstant } from 'src/photo/constants/photo.constant';
 import { FindAllPhotoFilterDto } from 'src/photo/dtos/find-all.filter.dto';
 import { PrismaService } from 'src/prisma.service';
 
@@ -86,16 +87,6 @@ export class PhotoRepository {
   }
 
   async createTemporaryPhotos(userId: string, originalPhotoUrl: string) {
-    //find a better way to do this
-    const category = await this.prisma.category.findFirstOrThrow({
-      where: {
-        name: 'khác',
-      },
-      select: {
-        id: true,
-      },
-    });
-
     return this.prisma.extendedClient().photo.create({
       data: {
         photographer: {
@@ -105,24 +96,24 @@ export class PhotoRepository {
         },
         originalPhotoUrl,
         category: {
-          connect: {
-            id: category.id,
+          connectOrCreate: {
+            where: {
+              name: PhotoConstant.DEFAULT_CATEGORY.name,
+            },
+            create: PhotoConstant.DEFAULT_CATEGORY,
           },
         },
-        location: '',
         photoType: 'RAW',
         watermarkThumbnailPhotoUrl: '',
         thumbnailPhotoUrl: '',
         watermarkPhotoUrl: '',
         description: '',
-        captureTime: new Date(),
         exif: {},
         showExif: false,
         watermark: false,
         visibility: 'PRIVATE',
         status: 'PENDING',
         title: '',
-        photoTags: [],
       },
 
       select: {
