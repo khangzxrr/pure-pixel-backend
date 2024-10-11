@@ -130,36 +130,56 @@ export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
   }
 
   toWhere(): Prisma.PhotoWhereInput {
-    return {
-      photoSellings: {
+    const where: Prisma.PhotoWhereInput = {};
+
+    if (this.selling) {
+      where.photoSellings = {
         some: {
           active: this.selling,
         },
-      },
-      category: {
+      };
+    }
+
+    if (this.categoryName) {
+      where.category = {
         name: {
           search: this.categoryName,
         },
-      },
-      photographer: {
+      };
+    }
+
+    if (this.photographerId) {
+      where.photographerId = this.photographerId;
+    }
+
+    if (this.photographerName) {
+      where.photographer = {
         name: {
           search: this.photographerName,
         },
-        id: {
-          search: this.photographerId,
-        },
-      },
-      title: {
+      };
+    }
+
+    if (this.title) {
+      where.title = {
         search: this.title,
-      },
-      watermark: this.watermark,
-      tags: {
+      };
+    }
+
+    if (this.watermark) {
+      where.watermark = this.watermark;
+    }
+
+    if (this.tags) {
+      where.tags = {
         some: {
           name: {
             in: this.tags,
           },
         },
-      },
-    };
+      };
+    }
+
+    return where;
   }
 }

@@ -16,6 +16,7 @@ import { APP_FILTER } from '@nestjs/core';
 import { PrismaKnownExceptionFilter } from './infrastructure/filters/prisma-known-exception.filter';
 import { QueueModule } from './queue/queue.module';
 import { UpgradeOrderModule } from './upgrade-order/upgrade-order.module';
+import { ReportModule } from './report/report.module';
 
 @Module({
   providers: [
@@ -42,6 +43,7 @@ import { UpgradeOrderModule } from './upgrade-order/upgrade-order.module';
     CachingModule,
     UpgradeOrderModule,
     UpgradePackageModule,
+    ReportModule,
   ],
   controllers: [AppController],
 })
