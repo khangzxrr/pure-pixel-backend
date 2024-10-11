@@ -7,7 +7,9 @@ import { PhotoProcessService } from '../services/photo-process.service';
 import { PhotoGateway } from '../gateways/socket.io.gateway';
 import { ShareStatus } from '@prisma/client';
 
-@Processor(PhotoConstant.PHOTO_SHARE_QUEUE)
+@Processor(PhotoConstant.PHOTO_SHARE_QUEUE, {
+  concurrency: 2,
+})
 export class PhotoShareConsumer extends WorkerHost {
   private readonly logger = new Logger(PhotoShareConsumer.name);
 

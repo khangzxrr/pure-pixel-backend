@@ -8,7 +8,9 @@ import { PhotoGateway } from '../gateways/socket.io.gateway';
 import { PhotoProcessService } from '../services/photo-process.service';
 import { PhotoService } from '../services/photo.service';
 
-@Processor(PhotoConstant.PHOTO_WATERMARK_QUEUE)
+@Processor(PhotoConstant.PHOTO_WATERMARK_QUEUE, {
+  concurrency: 2,
+})
 export class PhotoWatermarkConsumer extends WorkerHost {
   private readonly logger = new Logger(PhotoWatermarkConsumer.name);
 

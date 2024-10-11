@@ -11,7 +11,9 @@ import { UserRepository } from 'src/database/repositories/user.repository';
 import { PhotoProcessDto } from '../dtos/photo-process.dto';
 import { GenerateWatermarkRequestDto } from '../dtos/rest/generate-watermark.request.dto';
 
-@Processor(PhotoConstant.PHOTO_PROCESS_QUEUE)
+@Processor(PhotoConstant.PHOTO_PROCESS_QUEUE, {
+  concurrency: 2,
+})
 export class PhotoProcessConsumer extends WorkerHost {
   private readonly logger = new Logger(PhotoProcessConsumer.name);
 
