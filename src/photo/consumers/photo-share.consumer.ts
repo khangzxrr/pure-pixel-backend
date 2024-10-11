@@ -66,16 +66,15 @@ export class PhotoShareConsumer extends WorkerHost {
     photo.shareStatus = ShareStatus.READY;
     photo.sharePayload = sharePayload;
 
-    const updatedPhoto = await this.photoRepository.updatePhotoShare(
-      photo.id,
-      ShareStatus.READY,
+    await this.photoRepository.updateById(photo.id, {
+      shareStatus: 'READY',
       sharePayload,
-    );
+    });
 
     await this.photoGateway.sendDataToUserId(
       photo.photographerId,
       'generated-multiple-share-resolutions',
-      updatedPhoto,
+      photo,
     );
   }
 }

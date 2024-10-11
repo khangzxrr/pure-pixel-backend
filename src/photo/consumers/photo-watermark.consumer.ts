@@ -47,12 +47,7 @@ export class PhotoWatermarkConsumer extends WorkerHost {
     this.logger.log(`generate watermark`);
     this.logger.log(generateWatermarkRequest);
 
-    await this.generateWatermark(generateWatermarkRequest);
-
-    const photo = await this.photoService.getSignedPhotoById(
-      userId,
-      generateWatermarkRequest.photoId,
-    );
+    const photo = await this.generateWatermark(generateWatermarkRequest);
 
     await this.photoGateway.sendFinishWatermarkEventToUserId(userId, photo);
   }
@@ -64,6 +59,8 @@ export class PhotoWatermarkConsumer extends WorkerHost {
       generateWatermarkRequest.photoId,
     );
 
+    const flagTime1 = new Date();
+
     const sharp = await this.photoProcessService.sharpInitFromObjectKey(
       photo.originalPhotoUrl,
     );
@@ -71,6 +68,12 @@ export class PhotoWatermarkConsumer extends WorkerHost {
     const watermark = await this.photoProcessService.makeWatermark(
       sharp,
       generateWatermarkRequest.text,
+    );
+
+    const flagTime2 = new Date();
+
+    console.log(
+      `time diff of watermark: ${flagTime2.valueOf() - flagTime1.valueOf()}`,
     );
 
     const watermarkBuffer = await watermark.toBuffer();
@@ -94,16 +97,17 @@ export class PhotoWatermarkConsumer extends WorkerHost {
       watermarkThumbnailBuffer,
     );
 
-    await this.photoRepository.updatePhotoWatermarkById(
-      photo.id,
-      photo.watermarkPhotoUrl,
-      photo.watermarkThumbnailPhotoUrl,
-    );
+    await this.photoRepository.updateById(photo.id, {
+      watermarkPhotoUrl: photo.watermarkPhotoUrl,
+      watermarkThumbnailPhotoUrl: photo.watermarkThumbnailPhotoUrl,
+    });
 
     this.logger.log(
       `created watermark:
 ${photo.watermarkPhotoUrl}
 ${photo.watermarkThumbnailPhotoUrl}`,
     );
+
+    return photo;
   }
 }

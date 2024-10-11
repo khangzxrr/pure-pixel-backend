@@ -53,29 +53,29 @@ export class PhotoProcessConsumer extends WorkerHost {
     this.logger.log(processRequest);
 
     await this.convertAndEmitProcessEvents(userId, processRequest);
-
-    await this.photoShareQueue.add(PhotoConstant.GENERATE_SHARE_JOB_NAME, {
-      userId,
-      photoId: processRequest.signedUpload.photoId,
-      debounce: {
-        id: processRequest.signedUpload.photoId,
-        ttl: 10000,
-      },
-    });
-
-    const generateWatermarkRequest: GenerateWatermarkRequestDto = {
-      photoId: processRequest.signedUpload.photoId,
-      text: 'PPX',
-    };
-
-    await this.photoWatermarkQueue.add(PhotoConstant.GENERATE_WATERMARK_JOB, {
-      userId,
-      generateWatermarkRequest,
-      debounce: {
-        id: processRequest.signedUpload.photoId,
-        ttl: 10000,
-      },
-    });
+    //
+    // await this.photoShareQueue.add(PhotoConstant.GENERATE_SHARE_JOB_NAME, {
+    //   userId,
+    //   photoId: processRequest.signedUpload.photoId,
+    //   debounce: {
+    //     id: processRequest.signedUpload.photoId,
+    //     ttl: 10000,
+    //   },
+    // });
+    //
+    // const generateWatermarkRequest: GenerateWatermarkRequestDto = {
+    //   photoId: processRequest.signedUpload.photoId,
+    //   text: 'PPX',
+    // };
+    //
+    // await this.photoWatermarkQueue.add(PhotoConstant.GENERATE_WATERMARK_JOB, {
+    //   userId,
+    //   generateWatermarkRequest,
+    //   debounce: {
+    //     id: processRequest.signedUpload.photoId,
+    //     ttl: 10000,
+    //   },
+    // });
   }
 
   async convertAndEmitProcessEvents(
@@ -96,17 +96,17 @@ export class PhotoProcessConsumer extends WorkerHost {
       return;
     }
 
+    const currentTime = new Date();
+
     const sharp = await this.photoProcessService.sharpInitFromObjectKey(
       photo.originalPhotoUrl,
     );
 
-    const sharpJpegBuffer = await this.photoProcessService
-      .convertJpeg(sharp)
-      .then((s) => s.toBuffer());
+    const currentTime2nd = new Date();
 
-    await this.photoProcessService.uploadFromBuffer(
-      photo.originalPhotoUrl,
-      sharpJpegBuffer,
+    console.log(
+      'time to convert photo: ',
+      currentTime2nd.valueOf() - currentTime.valueOf(),
     );
 
     const metadata = await sharp.metadata();
@@ -116,9 +116,19 @@ export class PhotoProcessConsumer extends WorkerHost {
       .makeThumbnail(sharp)
       .then((s) => s.toBuffer());
     photo.thumbnailPhotoUrl = `thumbnail/${photo.originalPhotoUrl}`;
+
     await this.photoProcessService.uploadFromBuffer(
       photo.thumbnailPhotoUrl,
       thumbnailBuffer,
+    );
+
+    const sharpJpegBuffer = await this.photoProcessService
+      .convertJpeg(sharp)
+      .then((s) => s.toBuffer());
+
+    await this.photoProcessService.uploadFromBuffer(
+      photo.originalPhotoUrl,
+      sharpJpegBuffer,
     );
 
     photo.watermarkThumbnailPhotoUrl = photo.thumbnailPhotoUrl;

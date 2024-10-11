@@ -86,10 +86,10 @@ export class UserRepository {
     });
   }
 
-  async findOneWithCount(userFilterDto: UserFilterDto) {
+  async findOneWithCount(id: string) {
     return this.prisma.user.findUnique({
       where: {
-        id: userFilterDto.id,
+        id,
       },
 
       include: {
