@@ -14,11 +14,6 @@ import {
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Injectable, Logger } from '@nestjs/common';
 import { S3FailedUploadException } from '../exceptions/s3-failed-upload.exception';
-import {
-  CloudFrontClient,
-  ListCachePoliciesCommand,
-} from '@aws-sdk/client-cloudfront';
-import { Signer } from 'aws-sdk/clients/cloudfront';
 
 @Injectable()
 export class StorageService {
@@ -34,6 +29,7 @@ export class StorageService {
     this.s3 = new S3Client({
       region: process.env.S3_REGION,
       endpoint: process.env.S3_URL,
+      forcePathStyle: true,
       credentials: {
         accessKeyId: process.env.S3_ACCESS_KEY_ID,
         secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
