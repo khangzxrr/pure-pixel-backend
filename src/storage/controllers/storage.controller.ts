@@ -57,17 +57,6 @@ export class StorageController {
     }
   }
 
-  @Get('/:key/sign-url')
-  @Public()
-  async signUrl(@Param('key') key: string) {
-    const signed = this.storageService.getSigner().getSignedUrl({
-      url: `${process.env.AWS_CLOUDFRONT_S3_ORIGIN}/${key}`,
-      expires: 1798411442231,
-    });
-
-    return signed;
-  }
-
   @Get('/bucket/:id/policy')
   @Public()
   async getBucketPolicy(@Param('id') id: string) {

@@ -144,7 +144,7 @@ export class PhotoProcessService {
 
   async getEncodedSignedGetObjectUrl(originalImageKey: string) {
     const imagePublicUrl =
-      await this.storageService.getCloudfrontSignedUrl(originalImageKey);
+      await this.storageService.signUrlUsingCDN(originalImageKey);
 
     const encodedImageUrl = encodeURIComponent(imagePublicUrl);
 
@@ -152,7 +152,7 @@ export class PhotoProcessService {
   }
 
   async getSignedObjectUrl(key: string) {
-    return this.storageService.getCloudfrontSignedUrl(key);
+    return this.storageService.signUrlUsingCDN(key);
   }
 
   async getBufferImageFromUrl(url: string) {
