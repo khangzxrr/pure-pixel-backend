@@ -1,6 +1,6 @@
-import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { InjectQueue, Processor, WorkerHost } from '@nestjs/bullmq';
 import { PhotoConstant } from '../constants/photo.constant';
-import { Job } from 'bullmq';
+import { Job, Queue } from 'bullmq';
 import { Inject, Logger } from '@nestjs/common';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoProcessService } from '../services/photo-process.service';
@@ -9,6 +9,7 @@ import { ProcessPhotosRequest } from '../dtos/rest/process-images.request.dto';
 import { DatabaseService } from 'src/database/database.service';
 import { UserRepository } from 'src/database/repositories/user.repository';
 import { PhotoProcessDto } from '../dtos/photo-process.dto';
+import { GenerateWatermarkRequestDto } from '../dtos/rest/generate-watermark.request.dto';
 
 @Processor(PhotoConstant.PHOTO_PROCESS_QUEUE)
 export class PhotoProcessConsumer extends WorkerHost {
@@ -20,6 +21,10 @@ export class PhotoProcessConsumer extends WorkerHost {
     @Inject() private readonly userRepository: UserRepository,
     @Inject() private readonly photoProcessService: PhotoProcessService,
     @Inject() private readonly databaseService: DatabaseService,
+    @InjectQueue(PhotoConstant.PHOTO_WATERMARK_QUEUE)
+    private readonly photoWatermarkQueue: Queue,
+    @InjectQueue(PhotoConstant.PHOTO_SHARE_QUEUE)
+    private readonly photoShareQueue: Queue,
   ) {
     super();
   }
@@ -46,6 +51,29 @@ export class PhotoProcessConsumer extends WorkerHost {
     this.logger.log(processRequest);
 
     await this.convertAndEmitProcessEvents(userId, processRequest);
+
+    await this.photoShareQueue.add(PhotoConstant.GENERATE_SHARE_JOB_NAME, {
+      userId,
+      photoId: processRequest.signedUpload.photoId,
+      debounce: {
+        id: processRequest.signedUpload.photoId,
+        ttl: 10000,
+      },
+    });
+
+    const generateWatermarkRequest: GenerateWatermarkRequestDto = {
+      photoId: processRequest.signedUpload.photoId,
+      text: 'PPX',
+    };
+
+    await this.photoWatermarkQueue.add(PhotoConstant.GENERATE_WATERMARK_JOB, {
+      userId,
+      generateWatermarkRequest,
+      debounce: {
+        id: processRequest.signedUpload.photoId,
+        ttl: 10000,
+      },
+    });
   }
 
   async convertAndEmitProcessEvents(

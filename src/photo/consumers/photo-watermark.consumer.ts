@@ -86,7 +86,7 @@ export class PhotoWatermarkConsumer extends WorkerHost {
       await this.photoProcessService.makeThumbnail(watermarkFromBuffer);
 
     const watermarkThumbnailBuffer = await watermarkThumbnail.toBuffer();
-    photo.watermarkThumbnailPhotoUrl = `thumbnail/${photo.originalPhotoUrl}`;
+    photo.watermarkThumbnailPhotoUrl = `watermark/thumbnail/${photo.originalPhotoUrl}`;
     await this.photoProcessService.uploadFromBuffer(
       photo.watermarkThumbnailPhotoUrl,
       watermarkThumbnailBuffer,

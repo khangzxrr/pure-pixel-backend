@@ -12,14 +12,19 @@ import {
   S3Client,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+
+import { getSignedUrl as getSignedUrlByCloudfront } from '@aws-sdk/cloudfront-signer';
+
 import { Injectable, Logger } from '@nestjs/common';
 import { S3FailedUploadException } from '../exceptions/s3-failed-upload.exception';
+import { CloudFrontClient } from '@aws-sdk/client-cloudfront';
 
 @Injectable()
 export class StorageService {
   private logger: Logger = new Logger(StorageService.name);
 
   private s3: S3Client;
+  private cfClient: CloudFrontClient;
 
   getS3() {
     if (this.s3) {
@@ -28,8 +33,6 @@ export class StorageService {
 
     this.s3 = new S3Client({
       region: process.env.S3_REGION,
-      endpoint: process.env.S3_URL,
-      forcePathStyle: true,
       credentials: {
         accessKeyId: process.env.S3_ACCESS_KEY_ID,
         secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
@@ -37,6 +40,23 @@ export class StorageService {
     });
 
     return this.s3;
+  }
+
+  getCloudfront() {
+    if (this.cfClient) {
+      return this.cfClient;
+    }
+
+    this.cfClient = new CloudFrontClient({});
+  }
+
+  async signUrlByCloudfront(key: string) {
+    return getSignedUrlByCloudfront({
+      url: `${process.env.AWS_CLOUDFRONT_S3_ORIGIN}/${key}`,
+      keyPairId: process.env.AWS_CLOUDFRONT_ACCESS_KEY,
+      privateKey: process.env.AWS_CLOUDFRONT_PRIVATE_KEY.replace(/\\n/g, '\n'),
+      dateLessThan: '2025-01-01',
+    });
   }
 
   async sendCommand(command) {
@@ -53,7 +73,9 @@ export class StorageService {
   }
 
   async signUrlUsingCDN(key: string) {
-    return `${process.env.S3_CDN}/${key}`;
+    // return this.getS3SignedUrl(key);
+
+    return this.signUrlByCloudfront(key);
   }
 
   async deleteKeys(keys: string[]) {

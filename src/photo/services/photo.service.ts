@@ -289,29 +289,6 @@ export class PhotoService {
         },
       },
     );
-
-    await this.photoShareQueue.add(PhotoConstant.GENERATE_SHARE_JOB_NAME, {
-      userId,
-      photoId: processPhotosRequest.signedUpload.photoId,
-      debounce: {
-        id: processPhotosRequest.signedUpload.photoId,
-        ttl: 10000,
-      },
-    });
-
-    const generateWatermarkRequest: GenerateWatermarkRequestDto = {
-      photoId: processPhotosRequest.signedUpload.photoId,
-      text: 'PUREPIXEL',
-    };
-
-    await this.photoWatermarkQueue.add(PhotoConstant.GENERATE_WATERMARK_JOB, {
-      userId,
-      generateWatermarkRequest,
-      debounce: {
-        id: processPhotosRequest.signedUpload.photoId,
-        ttl: 10000,
-      },
-    });
   }
 
   async signUrlFromPhotos(
@@ -510,9 +487,9 @@ export class PhotoService {
       throw new RunOutPhotoQuotaException();
     }
 
-    const extension = Utils.regexFileExtension.exec(
-      presignedUploadUrlRequest.filename,
-    )[1];
+    const extension = Utils.regexFileExtension
+      .exec(presignedUploadUrlRequest.filename)[1]
+      .toLowerCase();
 
     if (
       extension !== 'jpg' &&
