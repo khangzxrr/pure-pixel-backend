@@ -5,7 +5,7 @@ import { BullMqConfigService } from 'src/customConfig/services/bullmq-config.ser
 import { BullMqQueueRegisterService } from 'src/customConfig/services/bullmq-queue-register.service';
 import { NotificationConstant } from 'src/notification/constants/notification.constant';
 import { PhotoConstant } from 'src/photo/constants/photo.constant';
-import { UpgradeConstant } from 'src/upgrade/constants/upgrade.constant';
+import { UpgradeConstant } from 'src/upgrade-package/constants/upgrade.constant';
 
 @Module({
   exports: [BullModule],
