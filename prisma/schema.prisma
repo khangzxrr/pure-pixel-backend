@@ -311,9 +311,6 @@ model Photo {
 
   exif Json
 
-  location    String
-  captureTime DateTime
-
   description String
 
   originalPhotoUrl  String
@@ -331,8 +328,6 @@ model Photo {
   shareStatus  ShareStatus @default(NOT_READY)
   sharePayload Json        @default("{}")
 
-  photoTags String[]
-
   size Int @default(0)
 
   createdAt DateTime  @default(now())
@@ -343,7 +338,17 @@ model Photo {
   votes         Vote[]
   photoSharings PhotoSharing[]
   photoSellings PhotoSell[]
+  tags Tag[]
 }
+
+model Tag {
+    name String
+
+    photophoto  Photo @relation(fields: [photoId], references: [id])
+    photoId String
+
+    @@unique([name, photoId])
+  }
 
 model PhotoSell {
   id String @id @default(uuid())
