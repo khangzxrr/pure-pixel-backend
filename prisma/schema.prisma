@@ -453,6 +453,7 @@ enum ReportType {
   COMMENT
 }
 
+
 model Report {
   id String @id @default(uuid())
 
@@ -466,6 +467,8 @@ model Report {
   content String
 
   referenceId String
+
+  archived Boolean
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
