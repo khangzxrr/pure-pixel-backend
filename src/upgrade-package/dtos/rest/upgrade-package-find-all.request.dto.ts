@@ -96,22 +96,6 @@ export class UpgradePackageFindAllDto extends PagingPaginatedRequestDto {
   @IsEnum(Prisma.SortOrder)
   orderByMaxPackageCount?: Prisma.SortOrder;
 
-  @ApiProperty({
-    required: false,
-    enum: Prisma.SortOrder,
-  })
-  @IsOptional()
-  @IsEnum(Prisma.SortOrder)
-  orderByMaxBookingPhotoQuota?: Prisma.SortOrder;
-
-  @ApiProperty({
-    required: false,
-    enum: Prisma.SortOrder,
-  })
-  @IsOptional()
-  @IsEnum(Prisma.SortOrder)
-  orderByMaxBookingVideoQuota?: Prisma.SortOrder;
-
   toWhere(): Prisma.UpgradePackageWhereInput {
     return {
       id: {
@@ -134,8 +118,6 @@ export class UpgradePackageFindAllDto extends PagingPaginatedRequestDto {
       updatedAt: this.orderByUpdatedAt,
       maxPhotoQuota: this.orderByMaxPhotoQuota,
       maxPackageCount: this.orderByMaxPackageCount,
-      maxBookingPhotoQuota: this.orderByMaxBookingPhotoQuota,
-      maxBookingVideoQuota: this.orderByMaxBookingVideoQuota,
     };
   }
 }

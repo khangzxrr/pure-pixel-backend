@@ -55,22 +55,6 @@ export class PatchUpdateUpgradePackageDto {
 
   @ApiProperty({
     required: false,
-  })
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  maxBookingPhotoQuota?: number;
-
-  @ApiProperty({
-    required: false,
-  })
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  maxBookingVideoQuota?: number;
-
-  @ApiProperty({
-    required: false,
     isArray: true,
     type: String,
   })
