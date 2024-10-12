@@ -1,7 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 
-export class ReferencedIdIsNotFoundException extends NotFoundException {
+export class ReferenceIdNotFoundException extends NotFoundException {
   constructor() {
-    super(ReferencedIdIsNotFoundException.name);
+    super(ReferenceIdNotFoundException.name);
   }
 }
