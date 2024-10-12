@@ -10,8 +10,9 @@ import { ReportNotFoundException } from '../exceptions/report-not-found.exceptio
 import { UserRepository } from 'src/database/repositories/user.repository';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { CommentRepository } from 'src/database/repositories/comment.repository';
-import { ReferencedIdIsNotFoundException } from '../exceptions/referenced-id-is-not-found.exception';
+import { ReferenceIdNotFoundException } from '../exceptions/referenced-id-is-not-found.exception';
 import { ReportType } from '@prisma/client';
+import { ReportPutUpdateRequestDto } from '../dtos/rest/report-put-update.request.dto';
 
 @Injectable()
 export class ReportService {
@@ -42,7 +43,7 @@ export class ReportService {
     }
 
     if (!obj) {
-      throw new ReferencedIdIsNotFoundException();
+      throw new ReferenceIdNotFoundException();
     }
   }
 
@@ -56,6 +57,30 @@ export class ReportService {
     const deletedReport = await this.reportRepository.delete(id);
 
     return plainToInstance(ReportDto, deletedReport);
+  }
+
+  async replace(
+    id: string,
+    userId: string,
+    reportPutUpdateDto: ReportPutUpdateRequestDto,
+  ) {
+    const report = await this.reportRepository.findById(id);
+
+    if (!report) {
+      throw new ReportNotFoundException();
+    }
+
+    await this.validateReferenceId(
+      reportPutUpdateDto.reportType,
+      reportPutUpdateDto.referenceId,
+    );
+
+    const replacedReport = await this.reportRepository.updateById(
+      id,
+      reportPutUpdateDto,
+    );
+
+    return plainToInstance(ReportDto, replacedReport);
   }
 
   async create(userId, reportCreateRequestDto: ReportCreateRequestDto) {
@@ -83,7 +108,7 @@ export class ReportService {
     }
 
     if (reportUpdateDto.referenceId) {
-      this.validateReferenceId(
+      await this.validateReferenceId(
         reportUpdateDto.reportType
           ? reportUpdateDto.reportType
           : report.reportType,

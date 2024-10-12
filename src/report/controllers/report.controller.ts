@@ -7,6 +7,8 @@ import {
   Param,
   Patch,
   Post,
+  Put,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
@@ -20,6 +22,7 @@ import { AuthenticatedUser, AuthGuard, Roles } from 'nest-keycloak-connect';
 import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
+import { ReportPutUpdateRequestDto } from '../dtos/rest/report-put-update.request.dto';
 
 @Controller('report')
 @ApiTags('manager-report')
@@ -28,7 +31,9 @@ export class ReportController {
 
   @Get()
   @ApiOkResponsePaginated(ReportDto)
-  async getReports(@Param() reportFindAllDto: ReportFindAllRequestDto) {
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.MANAGER_ROLE] })
+  async getReports(@Query() reportFindAllDto: ReportFindAllRequestDto) {
     return await this.reportService.findAll(reportFindAllDto);
   }
 
@@ -66,5 +71,19 @@ export class ReportController {
   @Roles({ roles: [Constants.MANAGER_ROLE] })
   async deleteReport(@Param('id') id: string) {
     return await this.reportService.delete(id);
+  }
+
+  @Put(':id')
+  @ApiOkResponse({
+    type: ReportDto,
+  })
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.MANAGER_ROLE] })
+  async putUpdateReport(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Param('id') id: string,
+    @Body() updateDto: ReportPutUpdateRequestDto,
+  ) {
+    return await this.reportService.replace(id, user.sub, updateDto);
   }
 }
