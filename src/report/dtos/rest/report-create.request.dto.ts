@@ -12,8 +12,5 @@ export class ReportCreateRequestDto {
   reportType: ReportType;
 
   @ApiProperty()
-  userId: string;
-
-  @ApiProperty()
   referenceId: string;
 }

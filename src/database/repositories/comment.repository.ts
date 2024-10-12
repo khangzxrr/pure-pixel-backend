@@ -6,6 +6,14 @@ import { PrismaService } from 'src/prisma.service';
 export class CommentRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  async findById(id: string) {
+    return this.prisma.comment.findUnique({
+      where: {
+        id,
+      },
+    });
+  }
+
   async findAllCommentByPhotoId(photoId: string) {
     return this.prisma.comment.findMany({
       where: {

@@ -1,10 +1,26 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, Report } from '@prisma/client';
+import { Prisma, Report, ReportStatus, ReportType } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
 export class ReportRepository {
   constructor(private readonly prisma: PrismaService) {}
+
+  async delete(id: string) {
+    return this.prisma.report.delete({
+      where: {
+        id,
+      },
+    });
+  }
+
+  async findById(id: string) {
+    return this.prisma.report.findUnique({
+      where: {
+        id,
+      },
+    });
+  }
 
   async count(where: Prisma.ReportWhereInput) {
     return this.prisma.report.count({
@@ -26,9 +42,27 @@ export class ReportRepository {
     });
   }
 
-  async create(report: Report) {
+  async create(
+    userId: string,
+    content: string,
+    reportType: ReportType,
+    reportStatus: ReportStatus,
+    referenceId: string,
+  ) {
     return this.prisma.report.create({
-      data: report,
+      data: {
+        referenceId,
+        reportStatus,
+        reportType,
+        content,
+        archived: false,
+
+        user: {
+          connect: {
+            id: userId,
+          },
+        },
+      },
     });
   }
 
