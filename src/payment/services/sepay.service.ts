@@ -225,10 +225,6 @@ export class SepayService {
       userId,
       serviceTransaction.upgradeOrder.upgradePackageHistory.maxPhotoQuota,
       serviceTransaction.upgradeOrder.upgradePackageHistory.maxPackageCount,
-      serviceTransaction.upgradeOrder.upgradePackageHistory
-        .maxBookingPhotoQuota,
-      serviceTransaction.upgradeOrder.upgradePackageHistory
-        .maxBookingVideoQuota,
     );
 
     await this.databaseService.applyTransactionMultipleQueries([

@@ -11,22 +11,10 @@ export class MeDto extends ResponseBaseDto {
   packageCount: string;
 
   @ApiProperty()
-  bookingPhotoQuotaUsage: string;
-
-  @ApiProperty()
-  bookingVideoQuotaUsage: string;
-
-  @ApiProperty()
   maxPhotoQuota: string;
 
   @ApiProperty()
   maxPackageCount: string;
-
-  @ApiProperty()
-  maxBookingPhotoQuota: string;
-
-  @ApiProperty()
-  maxBookingVideoQuota: string;
 
   @ApiProperty()
   ftpUsername: string;
@@ -91,14 +79,10 @@ export class MeDto extends ResponseBaseDto {
 
   mapAsPhotographer(user: UserEntity) {
     this.photoQuotaUsage = user.photoQuotaUsage.toString();
-    this.packageCount = user.packageCount.toString();
-    this.bookingPhotoQuotaUsage = user.bookingPhotoQuotaUsage.toString();
-    this.bookingVideoQuotaUsage = user.bookingVideoQuotaUsage.toString();
 
+    this.packageCount = user.packageCount.toString();
     this.maxPhotoQuota = user.maxPhotoQuota.toString();
     this.maxPackageCount = user.maxPackageCount.toString();
-    this.maxBookingPhotoQuota = user.maxBookingPhotoQuota.toString();
-    this.maxBookingVideoQuota = user.maxBookingVideoQuota.toString();
 
     this.ftpUsername = user.ftpUsername;
     this.ftpPassword = user.ftpPassword;

@@ -18,22 +18,10 @@ export class UserEntity extends ApplicationEntity<UserEntity> implements User {
   maxPackageCount: bigint;
 
   @Exclude()
-  maxBookingPhotoQuota: bigint;
-
-  @Exclude()
-  maxBookingVideoQuota: bigint;
-
-  @Exclude()
   photoQuotaUsage: bigint;
 
   @Exclude()
   packageCount: bigint;
-
-  @Exclude()
-  bookingPhotoQuotaUsage: bigint;
-
-  @Exclude()
-  bookingVideoQuotaUsage: bigint;
 
   @Exclude()
   createdAt: Date;

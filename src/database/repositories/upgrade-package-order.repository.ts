@@ -143,8 +143,6 @@ export class UpgradePackageOrderRepository {
             maxPhotoQuota: upgradePackage.maxPhotoQuota,
             minOrderMonth: upgradePackage.minOrderMonth,
             maxPackageCount: upgradePackage.maxPackageCount,
-            maxBookingPhotoQuota: upgradePackage.maxBookingPhotoQuota,
-            maxBookingVideoQuota: upgradePackage.maxBookingVideoQuota,
           },
         },
         serviceTransaction: {
