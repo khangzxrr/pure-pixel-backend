@@ -26,10 +26,4 @@ export class UpgradePackageDto {
 
   @ApiProperty()
   maxPackageCount: number;
-
-  @ApiProperty()
-  maxBookingPhotoQuota: number;
-
-  @ApiProperty()
-  maxBookingVideoQuota: number;
 }

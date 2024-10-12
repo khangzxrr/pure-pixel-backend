@@ -57,15 +57,45 @@ export class StorageController {
     }
   }
 
-  @Get('/:key/sign-url')
+  @Get('/bucket/policy')
   @Public()
-  async signUrl(@Param('key') key: string) {
-    const signed = this.storageService.getSigner().getSignedUrl({
-      url: `${process.env.AWS_CLOUDFRONT_S3_ORIGIN}/${key}`,
-      expires: 1798411442231,
-    });
+  async setBucketPolicy() {
+    const policy = {
+      Version: '2008-10-17',
+      Id: 'PolicyForCloudFrontPrivateContent',
+      Statement: [
+        {
+          Sid: 'AllowCloudFrontServicePrincipal',
+          Effect: 'Allow',
+          Principal: {
+            Service: 'cloudfront.amazonaws.com',
+          },
+          Action: 's3:GetObject',
+          Resource: 'arn:aws:s3:::*',
+          Condition: {
+            StringEquals: {
+              'AWS:SourceArn':
+                'arn:aws:cloudfront::975050314545:distribution/E90LKADP3UMMC',
+            },
+          },
+        },
+      ],
+    };
 
-    return signed;
+    const buckets = await this.storageService.getS3().send(
+      new PutBucketPolicyCommand({
+        Bucket: process.env.S3_BUCKET,
+        Policy: JSON.stringify(policy),
+      }),
+    );
+
+    console.log(policy);
+  }
+
+  @Get('/object/:key/sign')
+  @Public()
+  async getObject(@Param('key') key: string) {
+    return await this.storageService.signUrlByCloudfront(key);
   }
 
   @Get('/bucket/:id/policy')

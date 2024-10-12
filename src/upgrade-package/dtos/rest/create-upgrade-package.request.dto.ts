@@ -37,16 +37,6 @@ export class CreateUpgradePackageDto {
   @Min(0)
   maxPackageCount: number;
 
-  @ApiProperty()
-  @IsNumber()
-  @Min(0)
-  maxBookingPhotoQuota: number;
-
-  @ApiProperty()
-  @IsNumber()
-  @Min(0)
-  maxBookingVideoQuota: number;
-
   @ApiProperty({
     isArray: true,
     type: String,

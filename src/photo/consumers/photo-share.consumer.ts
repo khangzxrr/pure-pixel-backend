@@ -7,7 +7,9 @@ import { PhotoProcessService } from '../services/photo-process.service';
 import { PhotoGateway } from '../gateways/socket.io.gateway';
 import { ShareStatus } from '@prisma/client';
 
-@Processor(PhotoConstant.PHOTO_SHARE_QUEUE)
+@Processor(PhotoConstant.PHOTO_SHARE_QUEUE, {
+  concurrency: 2,
+})
 export class PhotoShareConsumer extends WorkerHost {
   private readonly logger = new Logger(PhotoShareConsumer.name);
 
@@ -64,16 +66,15 @@ export class PhotoShareConsumer extends WorkerHost {
     photo.shareStatus = ShareStatus.READY;
     photo.sharePayload = sharePayload;
 
-    const updatedPhoto = await this.photoRepository.updatePhotoShare(
-      photo.id,
-      ShareStatus.READY,
+    await this.photoRepository.updateById(photo.id, {
+      shareStatus: 'READY',
       sharePayload,
-    );
+    });
 
     await this.photoGateway.sendDataToUserId(
       photo.photographerId,
       'generated-multiple-share-resolutions',
-      updatedPhoto,
+      photo,
     );
   }
 }

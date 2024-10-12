@@ -15,8 +15,6 @@ export class UserRepository {
     id: string,
     maxPhotoQuota: bigint,
     maxPackageCount: bigint,
-    maxBookingPhotoQuota: bigint,
-    maxBookingVideoQuota: bigint,
   ) {
     return this.prisma.extendedClient().user.update({
       where: {
@@ -25,8 +23,6 @@ export class UserRepository {
       data: {
         maxPhotoQuota,
         maxPackageCount,
-        maxBookingPhotoQuota,
-        maxBookingVideoQuota,
       },
     });
   }
@@ -51,13 +47,9 @@ export class UserRepository {
       },
       select: {
         maxPhotoQuota: true,
-        maxBookingPhotoQuota: true,
-        maxBookingVideoQuota: true,
         maxPackageCount: true,
 
         photoQuotaUsage: true,
-        bookingPhotoQuotaUsage: true,
-        bookingVideoQuotaUsage: true,
         packageCount: true,
       },
     });
@@ -86,20 +78,18 @@ export class UserRepository {
     });
   }
 
-  async findOneWithCount(userFilterDto: UserFilterDto) {
+  async findOneWithCount(id: string) {
     return this.prisma.user.findUnique({
       where: {
-        id: userFilterDto.id,
+        id,
       },
 
       include: {
-        followers: userFilterDto.followers,
-        followings: userFilterDto.followings,
-
         _count: {
           select: {
-            followers: userFilterDto.followers,
-            followings: userFilterDto.followings,
+            followers: true,
+            followings: true,
+            photos: true,
           },
         },
       },

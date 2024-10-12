@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { Photo, PhotoVisibility, ShareStatus } from '@prisma/client';
+import { Photo, PhotoVisibility, Prisma } from '@prisma/client';
+import { PhotoConstant } from 'src/photo/constants/photo.constant';
 import { FindAllPhotoFilterDto } from 'src/photo/dtos/find-all.filter.dto';
-import { PhotoProcessDto } from 'src/photo/dtos/photo-process.dto';
 import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
@@ -19,7 +19,18 @@ export class PhotoRepository {
     });
   }
 
-  updateQuery(photo: Photo) {
+  batchUpdate(photo: Photo[]) {
+    return photo.map((p) =>
+      this.prisma.extendedClient().photo.update({
+        where: {
+          id: p.id,
+        },
+        data: p,
+      }),
+    );
+  }
+
+  updateQuery(photo: Partial<Photo>) {
     return this.prisma.extendedClient().photo.update({
       where: {
         id: photo.id,
@@ -37,63 +48,13 @@ export class PhotoRepository {
     });
   }
 
-  async updatePhotoWatermarkById(
-    id: string,
-    watermarkPhotoUrl: string,
-    watermarkThumbnailPhotoUrl: string,
-  ) {
+  async updateById(id: string, photo: Partial<Photo>) {
     return this.prisma.extendedClient().photo.update({
       where: {
         id,
       },
-      data: {
-        watermarkPhotoUrl,
-        watermarkThumbnailPhotoUrl,
-      },
+      data: photo,
     });
-  }
-
-  async updatePhotoShare(
-    id: string,
-    shareStatus: ShareStatus,
-    sharePayload: any,
-  ) {
-    return this.prisma.extendedClient().photo.update({
-      where: {
-        id,
-      },
-      data: {
-        sharePayload,
-        shareStatus,
-      },
-    });
-  }
-
-  batchUpdatePhotoProcess(photoProcesses: PhotoProcessDto[]) {
-    const queries = photoProcesses.map((p) => {
-      return this.prisma.extendedClient().photo.update({
-        where: {
-          id: p.id,
-        },
-        data: {
-          ...p,
-        },
-      });
-    });
-
-    return queries;
-  }
-  batchUpdate(photos: Photo[]) {
-    const queries = photos.map((p) => {
-      return this.prisma.extendedClient().photo.update({
-        where: {
-          id: p.id,
-        },
-        data: p,
-      });
-    });
-
-    return queries;
   }
 
   async getPhotoByIdAndStatusAndUserId(
@@ -126,16 +87,6 @@ export class PhotoRepository {
   }
 
   async createTemporaryPhotos(userId: string, originalPhotoUrl: string) {
-    //find a better way to do this
-    const category = await this.prisma.category.findFirstOrThrow({
-      where: {
-        name: 'khác',
-      },
-      select: {
-        id: true,
-      },
-    });
-
     return this.prisma.extendedClient().photo.create({
       data: {
         photographer: {
@@ -145,24 +96,24 @@ export class PhotoRepository {
         },
         originalPhotoUrl,
         category: {
-          connect: {
-            id: category.id,
+          connectOrCreate: {
+            where: {
+              name: PhotoConstant.DEFAULT_CATEGORY.name,
+            },
+            create: PhotoConstant.DEFAULT_CATEGORY,
           },
         },
-        location: '',
         photoType: 'RAW',
         watermarkThumbnailPhotoUrl: '',
         thumbnailPhotoUrl: '',
         watermarkPhotoUrl: '',
         description: '',
-        captureTime: new Date(),
         exif: {},
         showExif: false,
         watermark: false,
         visibility: 'PRIVATE',
         status: 'PENDING',
         title: '',
-        photoTags: [],
       },
 
       select: {
@@ -230,12 +181,23 @@ export class PhotoRepository {
     });
   }
 
-  async findAll(filter: FindAllPhotoFilterDto, skip: number, take: number) {
+  async findAll(
+    where: Prisma.PhotoWhereInput,
+    orderBy: Prisma.PhotoOrderByWithRelationInput[],
+    skip: number,
+    take: number,
+  ) {
     return this.prisma.extendedClient().photo.findMany({
-      where: filter.toWhere(),
+      where,
       skip,
       take,
+      orderBy,
       include: {
+        _count: {
+          select: {
+            votes: true,
+          },
+        },
         photographer: true,
         category: true,
         photoSellings: {
@@ -243,6 +205,7 @@ export class PhotoRepository {
             active: true,
           },
         },
+        tags: true,
       },
     });
   }

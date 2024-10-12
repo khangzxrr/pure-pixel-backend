@@ -1,3 +1,4 @@
+import { Category } from '@prisma/client';
 import { BiMap } from '@rimbu/bimap';
 
 export class PhotoConstant {
@@ -37,4 +38,12 @@ export class PhotoConstant {
     ['720p', 720],
     ['480p', 480],
   );
+
+  static DEFAULT_CATEGORY: Category = {
+    id: 'ab654b33-c79f-4988-b477-6e816ef590d3',
+    description: 'Chưa được phân loại',
+    name: 'Khác',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
 }

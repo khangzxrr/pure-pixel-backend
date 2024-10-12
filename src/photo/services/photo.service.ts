@@ -2,7 +2,6 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import {
   Photo,
   PhotoSell,
-  PhotoStatus,
   PhotoVisibility,
   PrismaPromise,
   ShareStatus,
@@ -290,28 +289,28 @@ export class PhotoService {
       },
     );
 
-    await this.photoShareQueue.add(PhotoConstant.GENERATE_SHARE_JOB_NAME, {
-      userId,
-      photoId: processPhotosRequest.signedUpload.photoId,
-      debounce: {
-        id: processPhotosRequest.signedUpload.photoId,
-        ttl: 10000,
-      },
-    });
-
-    const generateWatermarkRequest: GenerateWatermarkRequestDto = {
-      photoId: processPhotosRequest.signedUpload.photoId,
-      text: 'PUREPIXEL',
-    };
-
-    await this.photoWatermarkQueue.add(PhotoConstant.GENERATE_WATERMARK_JOB, {
-      userId,
-      generateWatermarkRequest,
-      debounce: {
-        id: processPhotosRequest.signedUpload.photoId,
-        ttl: 10000,
-      },
-    });
+    // await this.photoShareQueue.add(PhotoConstant.GENERATE_SHARE_JOB_NAME, {
+    //   userId,
+    //   photoId: processPhotosRequest.signedUpload.photoId,
+    //   debounce: {
+    //     id: processPhotosRequest.signedUpload.photoId,
+    //     ttl: 10000,
+    //   },
+    // });
+    //
+    // const generateWatermarkRequest: GenerateWatermarkRequestDto = {
+    //   photoId: processPhotosRequest.signedUpload.photoId,
+    //   text: 'PPX',
+    // };
+    //
+    // await this.photoWatermarkQueue.add(PhotoConstant.GENERATE_WATERMARK_JOB, {
+    //   userId,
+    //   generateWatermarkRequest,
+    //   debounce: {
+    //     id: processPhotosRequest.signedUpload.photoId,
+    //     ttl: 10000,
+    //   },
+    // });
   }
 
   async signUrlFromPhotos(
@@ -385,10 +384,7 @@ export class PhotoService {
       photo.title = dto.title;
       photo.watermark = dto.watermark;
       photo.showExif = dto.showExif;
-      photo.location = dto.location;
-      photo.captureTime = dto.captureTime;
       photo.description = dto.description;
-      photo.photoTags = dto.photoTags;
 
       if (dto.photoType === 'RAW') {
         photo.photoType = 'RAW';
@@ -417,8 +413,8 @@ export class PhotoService {
   }
 
   async findPublicPhotos(filter: FindAllPhotoFilterDto) {
-    filter.visibility = PhotoVisibility.PUBLIC;
-    filter.status = PhotoStatus.PARSED;
+    filter.visibility = 'PUBLIC';
+    filter.status = 'PARSED';
 
     return await this.findAll(filter);
   }
@@ -433,7 +429,8 @@ export class PhotoService {
     const count = await this.photoRepository.count(filter);
 
     const photos = await this.photoRepository.findAll(
-      filter,
+      filter.toWhere(),
+      filter.toOrderBy(),
       filter.toSkip(),
       filter.limit,
     );
@@ -510,9 +507,9 @@ export class PhotoService {
       throw new RunOutPhotoQuotaException();
     }
 
-    const extension = Utils.regexFileExtension.exec(
-      presignedUploadUrlRequest.filename,
-    )[1];
+    const extension = Utils.regexFileExtension
+      .exec(presignedUploadUrlRequest.filename)[1]
+      .toLowerCase();
 
     if (
       extension !== 'jpg' &&

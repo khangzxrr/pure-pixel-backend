@@ -18,6 +18,8 @@ import { PhotoWatermarkConsumer } from './consumers/photo-watermark.consumer';
 import { PhotoShareConsumer } from './consumers/photo-share.consumer';
 import { PhotoExchangeController } from './controllers/photo-exchange.controller';
 import { PaymentModule } from 'src/payment/payment.module';
+import { PhotoGenerateWatermarkService } from './services/photo-generate-watermark.service';
+import { PhotoGenerateShareService } from './services/photo-generate-share.service';
 
 @Module({
   providers: [
@@ -30,6 +32,8 @@ import { PaymentModule } from 'src/payment/payment.module';
     PhotoWatermarkConsumer,
     PhotoShareConsumer,
     CommentService,
+    PhotoGenerateWatermarkService,
+    PhotoGenerateShareService,
   ],
   exports: [PhotoService, PhotoCategoryService],
   controllers: [

@@ -6,9 +6,10 @@ import { PhotoConstant } from '../constants/photo.constant';
 import { GenerateWatermarkRequestDto } from '../dtos/rest/generate-watermark.request.dto';
 import { PhotoGateway } from '../gateways/socket.io.gateway';
 import { PhotoProcessService } from '../services/photo-process.service';
-import { PhotoService } from '../services/photo.service';
 
-@Processor(PhotoConstant.PHOTO_WATERMARK_QUEUE)
+@Processor(PhotoConstant.PHOTO_WATERMARK_QUEUE, {
+  concurrency: 2,
+})
 export class PhotoWatermarkConsumer extends WorkerHost {
   private readonly logger = new Logger(PhotoWatermarkConsumer.name);
 
@@ -16,7 +17,6 @@ export class PhotoWatermarkConsumer extends WorkerHost {
     @Inject() private readonly photoGateway: PhotoGateway,
     @Inject() private readonly photoRepository: PhotoRepository,
     @Inject() private readonly photoProcessService: PhotoProcessService,
-    @Inject() private readonly photoService: PhotoService,
   ) {
     super();
   }
@@ -45,12 +45,7 @@ export class PhotoWatermarkConsumer extends WorkerHost {
     this.logger.log(`generate watermark`);
     this.logger.log(generateWatermarkRequest);
 
-    await this.generateWatermark(generateWatermarkRequest);
-
-    const photo = await this.photoService.getSignedPhotoById(
-      userId,
-      generateWatermarkRequest.photoId,
-    );
+    const photo = await this.generateWatermark(generateWatermarkRequest);
 
     await this.photoGateway.sendFinishWatermarkEventToUserId(userId, photo);
   }
@@ -62,6 +57,8 @@ export class PhotoWatermarkConsumer extends WorkerHost {
       generateWatermarkRequest.photoId,
     );
 
+    const flagTime1 = new Date();
+
     const sharp = await this.photoProcessService.sharpInitFromObjectKey(
       photo.originalPhotoUrl,
     );
@@ -69,6 +66,12 @@ export class PhotoWatermarkConsumer extends WorkerHost {
     const watermark = await this.photoProcessService.makeWatermark(
       sharp,
       generateWatermarkRequest.text,
+    );
+
+    const flagTime2 = new Date();
+
+    console.log(
+      `time diff of watermark: ${flagTime2.valueOf() - flagTime1.valueOf()}`,
     );
 
     const watermarkBuffer = await watermark.toBuffer();
@@ -86,22 +89,23 @@ export class PhotoWatermarkConsumer extends WorkerHost {
       await this.photoProcessService.makeThumbnail(watermarkFromBuffer);
 
     const watermarkThumbnailBuffer = await watermarkThumbnail.toBuffer();
-    photo.watermarkThumbnailPhotoUrl = `thumbnail/${photo.originalPhotoUrl}`;
+    photo.watermarkThumbnailPhotoUrl = `watermark/thumbnail/${photo.originalPhotoUrl}`;
     await this.photoProcessService.uploadFromBuffer(
       photo.watermarkThumbnailPhotoUrl,
       watermarkThumbnailBuffer,
     );
 
-    await this.photoRepository.updatePhotoWatermarkById(
-      photo.id,
-      photo.watermarkPhotoUrl,
-      photo.watermarkThumbnailPhotoUrl,
-    );
+    await this.photoRepository.updateById(photo.id, {
+      watermarkPhotoUrl: photo.watermarkPhotoUrl,
+      watermarkThumbnailPhotoUrl: photo.watermarkThumbnailPhotoUrl,
+    });
 
     this.logger.log(
       `created watermark:
 ${photo.watermarkPhotoUrl}
 ${photo.watermarkThumbnailPhotoUrl}`,
     );
+
+    return photo;
   }
 }
