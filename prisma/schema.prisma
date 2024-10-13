@@ -338,7 +338,7 @@ model Photo {
 model Tag {
   name String
 
-  photophoto Photo  @relation(fields: [photoId], references: [id])
+  photo Photo  @relation(fields: [photoId], references: [id])
   photoId    String
 
   @@unique([name, photoId])
