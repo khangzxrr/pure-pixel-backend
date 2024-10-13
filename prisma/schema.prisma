@@ -19,11 +19,11 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  maxPhotoQuota        BigInt @default(0)
-  maxPackageCount      BigInt @default(0)
+  maxPhotoQuota   BigInt @default(0)
+  maxPackageCount BigInt @default(0)
 
-  photoQuotaUsage        BigInt @default(0)
-  packageCount           BigInt @default(0)
+  photoQuotaUsage BigInt @default(0)
+  packageCount    BigInt @default(0)
 
   avatar String @default("https://s3-hcm-r1.s3cloud.vn/sftpgo/avatar%2Favatar.png")
   cover  String @default("https://s3-hcm-r1.s3cloud.vn/sftpgo/avatar%2Fcover.jpg")
@@ -52,8 +52,8 @@ model User {
 
   toUserTransactions UserToUserTransaction[] @relation("toUser")
 
-  transactions   Transaction[]
-  PhotoBuy       PhotoBuy[]
+  transactions Transaction[]
+  PhotoBuy     PhotoBuy[]
 
   Report         Report[]
   ReportResponse ReportResponse[]
@@ -218,8 +218,8 @@ model UpgradePackageHistory {
 
   minOrderMonth Int @default(0)
 
-  maxPhotoQuota        BigInt @default(0)
-  maxPackageCount      BigInt @default(0)
+  maxPhotoQuota   BigInt @default(0)
+  maxPackageCount BigInt @default(0)
 
   descriptions String[]
 
@@ -244,8 +244,8 @@ model UpgradePackage {
 
   minOrderMonth Int @default(0)
 
-  maxPhotoQuota        BigInt @default(0)
-  maxPackageCount      BigInt @default(0)
+  maxPhotoQuota   BigInt @default(0)
+  maxPackageCount BigInt @default(0)
 
   descriptions String[]
 
@@ -332,7 +332,7 @@ model Photo {
   votes         Vote[]
   photoSharings PhotoSharing[]
   photoSellings PhotoSell[]
-  tags          PhotoTag[]
+  photoTags     PhotoTag[]
 }
 
 model PhotoTag {
@@ -340,8 +340,8 @@ model PhotoTag {
 
   name String
 
-  photo Photo  @relation(fields: [photoId], references: [id])
-  photoId    String
+  photo   Photo  @relation(fields: [photoId], references: [id])
+  photoId String
 
   @@unique([name, photoId])
 }
@@ -445,7 +445,6 @@ enum ReportType {
   BOOKING
   COMMENT
 }
-
 
 model Report {
   id String @id @default(uuid())
