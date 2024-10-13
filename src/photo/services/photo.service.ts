@@ -16,7 +16,6 @@ import {
 import { Utils } from 'src/infrastructure/utils/utils';
 import { FileIsNotValidException } from '../exceptions/file-is-not-valid.exception';
 import { v4 } from 'uuid';
-import { PhotoDto, SignedPhotoDto } from '../dtos/photo.dto';
 import { NotBelongPhotoException } from '../exceptions/not-belong-photo.exception';
 import { PhotoIsPendingStateException } from '../exceptions/photo-is-pending-state.exception';
 import { SignedUrl } from '../dtos/photo-signed-url.dto';
@@ -30,7 +29,6 @@ import { GenerateWatermarkRequestDto } from '../dtos/rest/generate-watermark.req
 import { UserRepository } from 'src/database/repositories/user.repository';
 import { PhotographerNotFoundException } from 'src/photographer/exceptions/photographer-not-found.exception';
 import { RunOutPhotoQuotaException } from '../exceptions/run-out-photo-quota.exception';
-import { DatabaseService } from 'src/database/database.service';
 import { PhotoProcessService } from './photo-process.service';
 import { SharePhotoRequestDto } from '../dtos/rest/share-photo.request.dto';
 import { ShareStatusIsNotReadyException } from '../exceptions/share-status-is-not-ready.exception';
@@ -64,19 +62,25 @@ import { PhotoMinSizeIsNotExcessException } from '../exceptions/photo-min-size-i
 import { PhotoBuyNotFoundException } from '../exceptions/photo-buy-not-found.exception';
 import { PhotoBuyTransactionIsNotSuccessException } from '../exceptions/photo-buy-transaction-is-not-success.exception';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
-
+import { PhotoUpdateRequestDto } from '../dtos/rest/photo-update.request.dto';
+import { SignedPhotoDto } from '../dtos/signed-photo.dto';
+import { DuplicatedTagFoundException } from '../exceptions/duplicated-tag-found.exception';
+import { CategoryRepository } from 'src/database/repositories/category.repository';
+import { CategoryNotFoundException } from '../exceptions/category-not-found.exception';
+import { PhotoTagRepository } from 'src/database/repositories/photo-tag.repository';
 @Injectable()
 export class PhotoService {
   private readonly logger = new Logger(PhotoService.name);
 
   constructor(
-    @Inject() private readonly databaseService: DatabaseService,
     @Inject() private readonly sepayService: SepayService,
     @Inject() private readonly photoRepository: PhotoRepository,
     @Inject() private readonly photoSharingRepository: PhotoSharingRepository,
     @Inject() private readonly userRepository: UserRepository,
     @Inject() private readonly photoProcessService: PhotoProcessService,
     @Inject() private readonly photoSellRepository: PhotoSellRepository,
+    @Inject() private readonly photoTagRepository: PhotoTagRepository,
+    @Inject() private readonly categoryRepository: CategoryRepository,
     @Inject() private readonly photoBuyRepository: PhotoBuyRepository,
     @InjectQueue(PhotoConstant.PHOTO_PROCESS_QUEUE)
     private readonly photoProcessQueue: Queue,
@@ -357,59 +361,68 @@ export class PhotoService {
     };
   }
 
-  async updatePhotos(
+  async updatePhoto(
     userId: string,
-    photoDtos: PhotoDto[],
-  ): Promise<PhotoDto[]> {
-    const photoPromises = photoDtos.map(async (dto) => {
-      const photo =
-        await this.findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
-          userId,
-          dto.id,
-        );
+    id: string,
+    photoUpdateDto: PhotoUpdateRequestDto,
+  ): Promise<SignedPhotoDto> {
+    const photo =
+      await this.findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
+        userId,
+        id,
+      );
 
-      if (photo.photographerId !== userId) {
-        throw new NotBelongPhotoException();
+    const prismaPromises: PrismaPromise<any>[] = [];
+
+    if (photo.photographerId !== userId) {
+      throw new NotBelongPhotoException();
+    }
+
+    if (photoUpdateDto.categoryId) {
+      const category = await this.categoryRepository.findById(
+        photoUpdateDto.categoryId,
+      );
+      if (!category) {
+        throw new CategoryNotFoundException();
+      }
+    }
+
+    if (photoUpdateDto.exif) {
+      const removedNullByteExifsString = JSON.stringify(
+        photoUpdateDto.exif,
+      ).replaceAll('\\u0000', '');
+      photo.exif = JSON.parse(removedNullByteExifsString);
+    }
+
+    if (photoUpdateDto.photoTags) {
+      const setOftags = new Set(photoUpdateDto.photoTags);
+
+      if (photoUpdateDto.photoTags.length !== setOftags.size) {
+        throw new DuplicatedTagFoundException();
       }
 
-      if (dto.exif) {
-        const removedNullByteExifsString = JSON.stringify(dto.exif).replaceAll(
-          '\\u0000',
-          '',
-        );
-        photo.exif = JSON.parse(removedNullByteExifsString);
-      }
+      prismaPromises.push(this.photoTagRepository.deleteByPhotoId(id));
 
-      photo.categoryId = dto.categoryId;
-      photo.title = dto.title;
-      photo.watermark = dto.watermark;
-      photo.showExif = dto.showExif;
-      photo.description = dto.description;
+      setOftags.forEach((tag) =>
+        prismaPromises.push(this.photoTagRepository.create(id, tag)),
+      );
+    }
 
-      if (dto.photoType === 'RAW') {
-        photo.photoType = 'RAW';
-      } else if (dto.photoType === 'EDITED') {
-        photo.photoType = 'EDITED';
-      }
+    prismaPromises.push(
+      this.photoRepository.updateByIdQuery(id, {
+        categoryId: photoUpdateDto.categoryId,
+        title: photoUpdateDto.title,
+        watermark: photoUpdateDto.watermark,
+        description: photoUpdateDto.description,
+        exif: photoUpdateDto.exif,
+        photoType: photoUpdateDto.photoType,
+        visibility: photoUpdateDto.visibility,
+      }),
+    );
 
-      if (dto.visibility === 'PRIVATE') {
-        photo.visibility = 'PRIVATE';
-      } else if (dto.visibility === 'PUBLIC') {
-        photo.visibility = 'PUBLIC';
-      } else {
-        photo.visibility = 'SHARE_LINK';
-      }
+    this.prisma.extendedClient().$transaction(prismaPromises);
 
-      return photo;
-    });
-
-    const photos = await Promise.all(photoPromises);
-
-    const updateQueries = this.photoRepository.batchUpdate(photos);
-    const updateResults =
-      await this.databaseService.applyTransactionMultipleQueries(updateQueries);
-
-    return updateResults.map((p) => p as PhotoDto);
+    return await this.getSignedPhotoById(userId, id);
   }
 
   async findPublicPhotos(filter: FindAllPhotoFilterDto) {
@@ -447,7 +460,7 @@ export class PhotoService {
 
     const signedPhotos = await Promise.all(signedPhotoDtoPromises);
 
-    return new PagingPaginatedResposneDto<PhotoDto>(
+    return new PagingPaginatedResposneDto<SignedPhotoDto>(
       filter.limit,
       count,
       signedPhotos,
@@ -528,6 +541,7 @@ export class PhotoService {
 
     const photo = await this.photoRepository.createTemporaryPhotos(
       userId,
+      presignedUploadUrlRequest.filename,
       storageObjectKey,
     );
 

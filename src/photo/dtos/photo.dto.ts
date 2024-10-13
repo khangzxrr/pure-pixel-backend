@@ -3,55 +3,35 @@ import { JsonValue } from '@prisma/client/runtime/library';
 import { Exclude, Type } from 'class-transformer';
 import { PhotographerDTO } from 'src/photographer/dtos/photographer.dto';
 import { PhotoSellDto } from './photo-sell.dto';
-import { SignedUrl } from './photo-signed-url.dto';
+import { PhotoTagDto } from './photo-tag.dto';
 
 export class PhotoDto {
-  @ApiProperty({
-    required: true,
-  })
+  @ApiProperty()
   id: string;
 
-  @ApiProperty({
-    required: false,
-  })
-  shareStatus?: string;
+  @ApiProperty({})
+  shareStatus: string;
 
   @Exclude()
-  @ApiProperty({
-    required: false,
-  })
-  sharePayload?: JsonValue;
+  sharePayload: JsonValue;
 
   @Exclude()
-  categoryId?: string;
+  categoryId: string;
 
   @Exclude()
-  photographerId?: string;
+  photographerId: string;
 
-  @ApiProperty({
-    required: false,
-  })
-  title?: string;
+  @ApiProperty({})
+  title: string;
 
-  @ApiProperty({
-    required: false,
-  })
-  watermark?: boolean;
+  @ApiProperty({})
+  watermark: boolean;
 
-  @ApiProperty({
-    required: false,
-  })
-  showExif?: boolean;
+  @ApiProperty({})
+  exif: JsonValue;
 
-  @ApiProperty({
-    required: false,
-  })
-  exif?: JsonValue;
-
-  @ApiProperty({
-    required: false,
-  })
-  description?: string;
+  @ApiProperty({})
+  description: string;
 
   @Exclude()
   originalPhotoUrl: string;
@@ -65,46 +45,27 @@ export class PhotoDto {
   @Exclude()
   watermarkThumbnailPhotoUrl: string;
 
-  @ApiProperty({
-    required: false,
-  })
-  photoType?: string;
+  @ApiProperty({})
+  photoType: string;
 
-  @ApiProperty({
-    required: false,
-  })
-  visibility?: string;
+  @ApiProperty({})
+  visibility: string;
 
-  @ApiProperty({
-    required: false,
-  })
-  status?: string;
+  @ApiProperty({})
+  status: string;
 
-  @ApiProperty({
-    required: false,
-  })
-  photoTags?: string[];
+  @ApiProperty({})
+  createdAt: Date;
 
-  @ApiProperty({
-    required: false,
-  })
-  createdAt?: Date;
+  @ApiProperty({})
+  updatedAt: Date;
 
-  @ApiProperty({
-    required: false,
-  })
-  updatedAt?: Date;
+  @ApiProperty({})
+  deletedAt: Date;
 
-  @ApiProperty({
-    required: false,
-  })
-  deletedAt?: Date;
-
-  @ApiProperty({
-    required: false,
-  })
+  @ApiProperty({})
   @Type(() => PhotographerDTO)
-  photographer?: PhotographerDTO;
+  photographer: PhotographerDTO;
 
   @ApiProperty({
     required: false,
@@ -113,10 +74,10 @@ export class PhotoDto {
   //must specific type here
   @Type(() => PhotoSellDto)
   photoSellings: PhotoSellDto[];
-}
 
-export class SignedPhotoDto extends PhotoDto {
-  @ApiProperty()
-  @Type(() => SignedUrl)
-  signedUrl: SignedUrl;
+  @ApiProperty({
+    isArray: true,
+  })
+  @Type(() => PhotoTagDto)
+  photoTags: PhotoTagDto[];
 }

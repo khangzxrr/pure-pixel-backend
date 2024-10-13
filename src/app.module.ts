@@ -17,6 +17,7 @@ import { PrismaKnownExceptionFilter } from './infrastructure/filters/prisma-know
 import { QueueModule } from './queue/queue.module';
 import { UpgradeOrderModule } from './upgrade-order/upgrade-order.module';
 import { ReportModule } from './report/report.module';
+import { PhotoTagModule } from './photo-tag/photo-tag.module';
 
 @Module({
   providers: [
@@ -44,6 +45,7 @@ import { ReportModule } from './report/report.module';
     UpgradeOrderModule,
     UpgradePackageModule,
     ReportModule,
+    PhotoTagModule,
   ],
   controllers: [AppController],
 })

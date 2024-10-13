@@ -1,15 +1,81 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { PhotoDto } from '../photo.dto';
-import { ArrayNotEmpty, IsArray } from 'class-validator';
-import { Type } from 'class-transformer';
+import { PhotoType, PhotoVisibility } from '@prisma/client';
+import {
+  IsBoolean,
+  IsEnum,
+  IsJSON,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
+import { ToBoolean } from 'src/infrastructure/transforms/to-boolean';
 
-export class PhotoUpdateRequest {
+export class PhotoUpdateRequestDto {
   @ApiProperty({
-    type: PhotoDto,
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  categoryId?: string;
+
+  @ApiProperty({
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  title?: string;
+
+  @ApiProperty({
+    required: false,
+  })
+  @IsOptional()
+  @ToBoolean()
+  @IsBoolean()
+  watermark?: boolean;
+
+  @ApiProperty({
+    required: false,
+  })
+  @IsOptional()
+  @IsJSON()
+  exif?: string;
+
+  @ApiProperty({
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  description?: string;
+
+  @ApiProperty({
+    required: false,
+    enum: PhotoType,
+  })
+  @IsOptional()
+  @IsEnum(PhotoType)
+  photoType?: PhotoType;
+
+  @ApiProperty({
+    required: false,
+    enum: PhotoVisibility,
+  })
+  @IsOptional()
+  @IsEnum(PhotoVisibility)
+  visibility?: PhotoVisibility;
+
+  @ApiProperty({
+    required: false,
     isArray: true,
   })
-  @IsArray()
-  @ArrayNotEmpty()
-  @Type(() => PhotoDto)
-  photos: PhotoDto[];
+  @IsOptional()
+  @IsString({
+    each: true,
+  })
+  @IsNotEmpty({
+    each: true,
+  })
+  photoTags?: string[];
 }

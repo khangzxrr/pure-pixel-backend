@@ -30,8 +30,8 @@ import {
 import { HttpStatusCode } from 'axios';
 import { PresignedUploadUrlRequest } from '../dtos/rest/presigned-upload-url.request';
 import { PresignedUploadUrlResponse } from '../dtos/rest/presigned-upload-url.response.dto';
-import { PhotoDto, SignedPhotoDto } from '../dtos/photo.dto';
-import { PhotoUpdateRequest } from '../dtos/rest/photo-update.request.dto';
+import { PhotoDto } from '../dtos/photo.dto';
+import { PhotoUpdateRequestDto } from '../dtos/rest/photo-update.request.dto';
 import { FindAllPhotoFilterDto } from '../dtos/find-all.filter.dto';
 
 import { Response } from 'express';
@@ -46,6 +46,7 @@ import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
 import { SharePhotoResponseDto } from '../dtos/rest/share-photo-response.dto';
 import { SignedPhotoSharingDto } from '../dtos/signed-photo-sharing.dto';
 import { ResolutionDto } from '../dtos/resolution.dto';
+import { SignedPhotoDto } from '../dtos/signed-photo.dto';
 
 @Controller('photo')
 @ApiTags('photo')
@@ -189,7 +190,7 @@ export class PhotoController {
     return await this.photoService.deleteById(user.sub, id);
   }
 
-  @Patch('/update')
+  @Patch(':id')
   @ApiOperation({
     summary: 'update one or more fields of photos',
   })
@@ -202,9 +203,10 @@ export class PhotoController {
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   async updatePhotos(
     @AuthenticatedUser() user: ParsedUserDto,
-    @Body() body: PhotoUpdateRequest,
+    @Param('id') id: string,
+    @Body() photoUpdateDto: PhotoUpdateRequestDto,
   ) {
-    return await this.photoService.updatePhotos(user.sub, body.photos);
+    return await this.photoService.updatePhoto(user.sub, id, photoUpdateDto);
   }
 
   @Post('/upload')
