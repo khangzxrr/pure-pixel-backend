@@ -41,7 +41,7 @@ export class PhotoUpdateRequestDto {
   })
   @IsOptional()
   @IsJSON()
-  exif?: JsonValue;
+  exif?: string;
 
   @ApiProperty({
     required: false,

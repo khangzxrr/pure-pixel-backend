@@ -6,15 +6,17 @@ export class PhotoTagRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   deleteByPhotoId(photoId: string) {
-    return this.prisma.photoTag.deleteMany({
+    return this.prisma.extendedClient().photoTag.deleteMany({
       where: {
-        photoId,
+        photo: {
+          id: photoId,
+        },
       },
     });
   }
 
   create(photoId: string, name: string) {
-    return this.prisma.photoTag.create({
+    return this.prisma.extendedClient().photoTag.create({
       data: {
         photoId,
         name,

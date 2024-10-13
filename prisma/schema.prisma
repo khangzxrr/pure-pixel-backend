@@ -336,6 +336,8 @@ model Photo {
 }
 
 model PhotoTag {
+  id String @id @default(uuid())
+
   name String
 
   photo Photo  @relation(fields: [photoId], references: [id])
