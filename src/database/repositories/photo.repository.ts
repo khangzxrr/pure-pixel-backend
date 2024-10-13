@@ -48,6 +48,15 @@ export class PhotoRepository {
     });
   }
 
+  updateByIdQuery(id: string, photo: Partial<Photo>) {
+    return this.prisma.extendedClient().photo.update({
+      where: {
+        id,
+      },
+      data: photo,
+    });
+  }
+
   async updateById(id: string, photo: Partial<Photo>) {
     return this.prisma.extendedClient().photo.update({
       where: {
@@ -86,7 +95,11 @@ export class PhotoRepository {
     });
   }
 
-  async createTemporaryPhotos(userId: string, originalPhotoUrl: string) {
+  async createTemporaryPhotos(
+    userId: string,
+    title: string,
+    originalPhotoUrl: string,
+  ) {
     return this.prisma.extendedClient().photo.create({
       data: {
         photographer: {
@@ -109,11 +122,10 @@ export class PhotoRepository {
         watermarkPhotoUrl: '',
         description: '',
         exif: {},
-        showExif: false,
         watermark: false,
         visibility: 'PRIVATE',
         status: 'PENDING',
-        title: '',
+        title,
       },
 
       select: {

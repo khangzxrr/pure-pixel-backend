@@ -64,6 +64,8 @@ import { PhotoBuyTransactionIsNotSuccessException } from '../exceptions/photo-bu
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { PhotoUpdateRequestDto } from '../dtos/rest/photo-update.request.dto';
 import { SignedPhotoDto } from '../dtos/signed-photo.dto';
+import { DuplicatedTagFoundException } from '../exceptions/duplicated-tag-found.exception';
+import { PhotoTagRepository } from 'src/database/repositories/tag.repository';
 
 @Injectable()
 export class PhotoService {
@@ -76,6 +78,7 @@ export class PhotoService {
     @Inject() private readonly userRepository: UserRepository,
     @Inject() private readonly photoProcessService: PhotoProcessService,
     @Inject() private readonly photoSellRepository: PhotoSellRepository,
+    @Inject() private readonly photoTagRepository: PhotoTagRepository,
     @Inject() private readonly photoBuyRepository: PhotoBuyRepository,
     @InjectQueue(PhotoConstant.PHOTO_PROCESS_QUEUE)
     private readonly photoProcessQueue: Queue,
@@ -367,6 +370,8 @@ export class PhotoService {
         id,
       );
 
+    const prismaPromises: PrismaPromise<any>[] = [];
+
     if (photo.photographerId !== userId) {
       throw new NotBelongPhotoException();
     }
@@ -378,7 +383,25 @@ export class PhotoService {
       photo.exif = JSON.parse(removedNullByteExifsString);
     }
 
-    await this.photoRepository.updateById(id, photoUpdateDto);
+    if (photoUpdateDto.photoTags) {
+      const setOftags = new Set(photoUpdateDto.photoTags);
+
+      if (photoUpdateDto.photoTags.length !== setOftags.size) {
+        throw new DuplicatedTagFoundException();
+      }
+
+      prismaPromises.push(this.photoTagRepository.deleteByPhotoId(id));
+
+      setOftags.forEach((tag) =>
+        prismaPromises.push(this.photoTagRepository.create(id, tag)),
+      );
+    }
+
+    prismaPromises.push(
+      this.photoRepository.updateByIdQuery(id, photoUpdateDto),
+    );
+
+    await this.prisma.$transaction(prismaPromises);
 
     return await this.getSignedPhotoById(userId, id);
   }
@@ -499,6 +522,7 @@ export class PhotoService {
 
     const photo = await this.photoRepository.createTemporaryPhotos(
       userId,
+      presignedUploadUrlRequest.filename,
       storageObjectKey,
     );
 
