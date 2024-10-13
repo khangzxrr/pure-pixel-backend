@@ -57,6 +57,7 @@ model User {
 
   Report         Report[]
   ReportResponse ReportResponse[]
+  Blog           Blog[]
 }
 
 model BankInfo {
@@ -415,6 +416,8 @@ model Vote {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([userId, photoId])
 }
 
 model Comment {
@@ -473,6 +476,26 @@ model ReportResponse {
   userId String
 
   content String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum BlogStatus {
+  ENABLED
+  DISABLED
+}
+
+model Blog {
+  id String @id @default(uuid())
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  status BlogStatus @default(ENABLED)
+
+  content   String
+  thumbnail String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

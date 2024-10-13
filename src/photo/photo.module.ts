@@ -20,6 +20,7 @@ import { PhotoExchangeController } from './controllers/photo-exchange.controller
 import { PaymentModule } from 'src/payment/payment.module';
 import { PhotoGenerateWatermarkService } from './services/photo-generate-watermark.service';
 import { PhotoGenerateShareService } from './services/photo-generate-share.service';
+import { PhotoVoteController } from './controllers/photo-vote.controller';
 
 @Module({
   providers: [
@@ -40,6 +41,7 @@ import { PhotoGenerateShareService } from './services/photo-generate-share.servi
     PhotoController,
     PhotoCategoryController,
     PhotoExchangeController,
+    PhotoVoteController,
   ],
   imports: [
     HttpModule.register({

@@ -22,7 +22,7 @@ export class PhotoProcessService {
   }
 
   async getPresignUploadUrl(key: string) {
-    return this.storageService.getPresignedUploadUrl(key, 'private');
+    return this.storageService.getPresignedUploadUrl(key);
   }
 
   async sharpInitFromBuffer(buffer: Buffer) {

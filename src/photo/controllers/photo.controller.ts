@@ -103,6 +103,19 @@ export class PhotoController {
     );
   }
 
+  @Delete(':id')
+  @ApiOperation({
+    summary: 'delete a photo by id',
+  })
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
+  async deletePhoto(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Param('id') id: string,
+  ) {
+    return await this.photoService.deleteById(user.sub, id);
+  }
+
   @Get('/:id')
   @ApiOperation({
     summary: 'get photo by id',
@@ -174,20 +187,6 @@ export class PhotoController {
     );
 
     res.status(HttpStatus.ACCEPTED).send();
-  }
-
-  @Delete('/:id')
-  @ApiOperation({
-    summary: 'delete photo by id',
-  })
-  @ApiOkResponse({})
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
-  async deletePhotoById(
-    @AuthenticatedUser() user: ParsedUserDto,
-    @Param('id') id: string,
-  ) {
-    return await this.photoService.deleteById(user.sub, id);
   }
 
   @Patch(':id')

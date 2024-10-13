@@ -19,10 +19,14 @@ export class PrismaKnownExceptionFilter implements ExceptionFilter {
     const responseBody = {
       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
       timestamp: new Date().toString(),
-      code: exception.code,
-      meta: exception.meta,
-      stacktrace: exception.stack,
+      message: exception.message,
     };
+
+    if (exception.code === 'P2025') {
+      responseBody.statusCode = HttpStatus.NOT_FOUND;
+    } else {
+      console.log(exception);
+    }
 
     httpAdapter.reply(ctx.getResponse(), responseBody, responseBody.statusCode);
   }

@@ -5,7 +5,6 @@ import {
   GetObjectCommand,
   HeadObjectCommand,
   HeadObjectCommandOutput,
-  ObjectCannedACL,
   PutBucketCorsCommand,
   PutObjectAclCommand,
   PutObjectCommand,
@@ -53,7 +52,10 @@ export class StorageService {
 
   async signUrlByCloudfront(key: string) {
     const currentDate = new Date();
-    const oneHourAfterCurrentDate = new Date(currentDate.getTime() + 60 * 60);
+    const oneHourAfterCurrentDate = new Date(
+      currentDate.getTime() + 60 * 60 * 1000,
+    );
+
     return getSignedUrlByCloudfront({
       url: `${process.env.AWS_CLOUDFRONT_S3_ORIGIN}/${key}`,
       keyPairId: process.env.AWS_CLOUDFRONT_ACCESS_KEY,
@@ -134,12 +136,11 @@ export class StorageService {
     return await this.sendCommand(command);
   }
 
-  async getPresignedUploadUrl(key: string, ACL: ObjectCannedACL) {
+  async getPresignedUploadUrl(key: string) {
     const command = new PutObjectCommand({
       Key: key,
       ContentType: 'image/jpeg',
       Bucket: process.env.S3_BUCKET,
-      ACL,
     });
 
     const signedUrl = await getSignedUrl(this.getS3(), command, {});

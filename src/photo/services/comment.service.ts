@@ -12,7 +12,7 @@ export class CommentService {
   constructor(
     @Inject() private readonly commentRepository: CommentRepository,
     @Inject() private readonly photoRepository: PhotoRepository,
-  ) { }
+  ) {}
 
   async validatePhotoByIdAndVisibility(
     photoId: string,
