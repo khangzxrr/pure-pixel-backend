@@ -69,6 +69,7 @@ export class PhotoUpdateRequestDto {
   @ApiProperty({
     required: false,
     isArray: true,
+    example: ['tag'],
   })
   @IsOptional()
   @IsString({
