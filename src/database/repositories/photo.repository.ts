@@ -217,7 +217,7 @@ export class PhotoRepository {
             active: true,
           },
         },
-        tags: true,
+        photoTags: true,
       },
     });
   }
