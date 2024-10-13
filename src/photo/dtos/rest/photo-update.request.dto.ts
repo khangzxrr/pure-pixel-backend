@@ -16,7 +16,7 @@ import {
 } from 'class-validator';
 import { ToBoolean } from 'src/infrastructure/transforms/to-boolean';
 
-export class PhotoUpdateRequest {
+export class PhotoUpdateRequestDto {
   @ApiProperty({
     required: false,
     enum: ShareStatus,
