@@ -10,7 +10,7 @@ export class CategoryRepository {
   }
 
   async findById(id: string) {
-    return this.prisma.category.findFirstOrThrow({
+    return this.prisma.category.findFirst({
       where: {
         id,
       },
