@@ -1,10 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  PhotoStatus,
-  PhotoType,
-  PhotoVisibility,
-  ShareStatus,
-} from '@prisma/client';
+import { PhotoType, PhotoVisibility } from '@prisma/client';
 import { JsonValue } from '@prisma/client/runtime/library';
 import {
   IsBoolean,
@@ -17,14 +12,6 @@ import {
 import { ToBoolean } from 'src/infrastructure/transforms/to-boolean';
 
 export class PhotoUpdateRequestDto {
-  @ApiProperty({
-    required: false,
-    enum: ShareStatus,
-  })
-  @IsOptional()
-  @IsEnum(ShareStatus)
-  shareStatus?: ShareStatus;
-
   @ApiProperty({
     required: false,
   })
@@ -79,14 +66,6 @@ export class PhotoUpdateRequestDto {
   @IsOptional()
   @IsEnum(PhotoVisibility)
   visibility?: PhotoVisibility;
-
-  @ApiProperty({
-    required: false,
-    enum: PhotoStatus,
-  })
-  @IsOptional()
-  @IsEnum(PhotoStatus)
-  status?: PhotoStatus;
 
   @ApiProperty({
     required: false,
