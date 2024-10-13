@@ -47,7 +47,6 @@ import { SharePhotoResponseDto } from '../dtos/rest/share-photo-response.dto';
 import { SignedPhotoSharingDto } from '../dtos/signed-photo-sharing.dto';
 import { ResolutionDto } from '../dtos/resolution.dto';
 import { SignedPhotoDto } from '../dtos/signed-photo.dto';
-import { PhotoVoteRequestDto } from '../dtos/rest/photo-vote.request.dto';
 
 @Controller('photo')
 @ApiTags('photo')
@@ -102,6 +101,19 @@ export class PhotoController {
       user.sub,
       createCommentRequestDto,
     );
+  }
+
+  @Delete(':id')
+  @ApiOperation({
+    summary: 'delete a photo by id',
+  })
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
+  async deletePhoto(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Param('id') id: string,
+  ) {
+    return await this.photoService.deleteById(user.sub, id);
   }
 
   @Get('/:id')
