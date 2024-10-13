@@ -65,10 +65,9 @@ import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { PhotoUpdateRequestDto } from '../dtos/rest/photo-update.request.dto';
 import { SignedPhotoDto } from '../dtos/signed-photo.dto';
 import { DuplicatedTagFoundException } from '../exceptions/duplicated-tag-found.exception';
-import { PhotoTagRepository } from 'src/database/repositories/tag.repository';
 import { CategoryRepository } from 'src/database/repositories/category.repository';
 import { CategoryNotFoundException } from '../exceptions/category-not-found.exception';
-
+import { PhotoTagRepository } from 'src/database/repositories/photo-tag.repository';
 @Injectable()
 export class PhotoService {
   private readonly logger = new Logger(PhotoService.name);
@@ -410,10 +409,18 @@ export class PhotoService {
     }
 
     prismaPromises.push(
-      this.photoRepository.updateByIdQuery(id, photoUpdateDto),
+      this.photoRepository.updateByIdQuery(id, {
+        categoryId: photoUpdateDto.categoryId,
+        title: photoUpdateDto.title,
+        watermark: photoUpdateDto.watermark,
+        description: photoUpdateDto.description,
+        exif: photoUpdateDto.exif,
+        photoType: photoUpdateDto.photoType,
+        visibility: photoUpdateDto.visibility,
+      }),
     );
 
-    await this.prisma.$transaction(prismaPromises);
+    this.prisma.extendedClient().$transaction(prismaPromises);
 
     return await this.getSignedPhotoById(userId, id);
   }

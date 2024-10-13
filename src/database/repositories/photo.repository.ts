@@ -165,6 +165,7 @@ export class PhotoRepository {
       include: {
         photographer: true,
         category: true,
+        photoTags: true,
         _count: {
           select: {
             votes: {

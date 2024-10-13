@@ -3,6 +3,7 @@ import { JsonValue } from '@prisma/client/runtime/library';
 import { Exclude, Type } from 'class-transformer';
 import { PhotographerDTO } from 'src/photographer/dtos/photographer.dto';
 import { PhotoSellDto } from './photo-sell.dto';
+import { PhotoTagDto } from './photo-tag.dto';
 
 export class PhotoDto {
   @ApiProperty()
@@ -25,9 +26,6 @@ export class PhotoDto {
 
   @ApiProperty({})
   watermark: boolean;
-
-  @ApiProperty({})
-  showExif: boolean;
 
   @ApiProperty({})
   exif: JsonValue;
@@ -57,9 +55,6 @@ export class PhotoDto {
   status: string;
 
   @ApiProperty({})
-  photoTags: string[];
-
-  @ApiProperty({})
   createdAt: Date;
 
   @ApiProperty({})
@@ -79,4 +74,10 @@ export class PhotoDto {
   //must specific type here
   @Type(() => PhotoSellDto)
   photoSellings: PhotoSellDto[];
+
+  @ApiProperty({
+    isArray: true,
+  })
+  @Type(() => PhotoTagDto)
+  photoTags: PhotoTagDto[];
 }

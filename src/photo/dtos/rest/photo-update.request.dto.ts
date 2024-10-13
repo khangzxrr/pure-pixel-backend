@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { PhotoType, PhotoVisibility } from '@prisma/client';
-import { JsonValue } from '@prisma/client/runtime/library';
 import {
   IsBoolean,
   IsEnum,

@@ -16,10 +16,14 @@ export class PhotoTagRepository {
   }
 
   create(photoId: string, name: string) {
-    return this.prisma.extendedClient().photoTag.create({
+    return this.prisma.photoTag.create({
       data: {
-        photoId,
         name,
+        photo: {
+          connect: {
+            id: photoId,
+          },
+        },
       },
     });
   }
