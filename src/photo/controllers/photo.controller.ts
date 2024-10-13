@@ -177,34 +177,6 @@ export class PhotoController {
     res.status(HttpStatus.ACCEPTED).send();
   }
 
-  @Post(':id/vote')
-  @ApiOperation({
-    summary: 'upvote/downvote an photo',
-  })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
-  async upvoteAnPhoto(
-    @AuthenticatedUser() user: ParsedUserDto,
-    @Param('id') id: string,
-    @Body() voteRequestDto: PhotoVoteRequestDto,
-  ) {
-    return await this.photoService.vote(user.sub, id, voteRequestDto);
-  }
-
-  @Delete('/:id')
-  @ApiOperation({
-    summary: 'delete photo by id',
-  })
-  @ApiOkResponse({})
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
-  async deletePhotoById(
-    @AuthenticatedUser() user: ParsedUserDto,
-    @Param('id') id: string,
-  ) {
-    return await this.photoService.deleteById(user.sub, id);
-  }
-
   @Patch(':id')
   @ApiOperation({
     summary: 'update one or more fields of photos',

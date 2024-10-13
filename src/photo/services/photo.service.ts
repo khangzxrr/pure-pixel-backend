@@ -299,6 +299,18 @@ export class PhotoService {
     return plainToInstance(PhotoVoteDto, vote);
   }
 
+  async deleteVote(userId: string, photoId: string) {
+    const photo = await this.photoRepository.getPhotoById(photoId);
+
+    if (!photo) {
+      throw new PhotoNotFoundException();
+    }
+
+    await this.photoVoteRepository.delete(userId, photoId);
+
+    return 'deleted';
+  }
+
   async sendProcessImageToMq(
     userId: string,
     processPhotosRequest: ProcessPhotosRequest,
