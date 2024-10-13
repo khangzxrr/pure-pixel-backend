@@ -302,7 +302,6 @@ model Photo {
   title String
 
   watermark Boolean @default(false)
-  showExif  Boolean @default(false)
 
   exif Json
 
