@@ -53,7 +53,10 @@ export class StorageService {
 
   async signUrlByCloudfront(key: string) {
     const currentDate = new Date();
-    const oneHourAfterCurrentDate = new Date(currentDate.getTime() + 60 * 60);
+    const oneHourAfterCurrentDate = new Date(
+      currentDate.getTime() + 60 * 60 * 1000,
+    );
+
     return getSignedUrlByCloudfront({
       url: `${process.env.AWS_CLOUDFRONT_S3_ORIGIN}/${key}`,
       keyPairId: process.env.AWS_CLOUDFRONT_ACCESS_KEY,
