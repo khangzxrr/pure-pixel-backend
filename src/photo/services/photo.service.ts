@@ -66,6 +66,8 @@ import { PhotoUpdateRequestDto } from '../dtos/rest/photo-update.request.dto';
 import { SignedPhotoDto } from '../dtos/signed-photo.dto';
 import { DuplicatedTagFoundException } from '../exceptions/duplicated-tag-found.exception';
 import { PhotoTagRepository } from 'src/database/repositories/tag.repository';
+import { CategoryRepository } from 'src/database/repositories/category.repository';
+import { CategoryNotFoundException } from '../exceptions/category-not-found.exception';
 
 @Injectable()
 export class PhotoService {
@@ -79,6 +81,7 @@ export class PhotoService {
     @Inject() private readonly photoProcessService: PhotoProcessService,
     @Inject() private readonly photoSellRepository: PhotoSellRepository,
     @Inject() private readonly photoTagRepository: PhotoTagRepository,
+    @Inject() private readonly categoryRepository: CategoryRepository,
     @Inject() private readonly photoBuyRepository: PhotoBuyRepository,
     @InjectQueue(PhotoConstant.PHOTO_PROCESS_QUEUE)
     private readonly photoProcessQueue: Queue,
@@ -374,6 +377,15 @@ export class PhotoService {
 
     if (photo.photographerId !== userId) {
       throw new NotBelongPhotoException();
+    }
+
+    if (photoUpdateDto.categoryId) {
+      const category = await this.categoryRepository.findById(
+        photoUpdateDto.categoryId,
+      );
+      if (!category) {
+        throw new CategoryNotFoundException();
+      }
     }
 
     if (photoUpdateDto.exif) {
