@@ -413,6 +413,8 @@ model Vote {
 
   isUpvote Boolean
 
+  @@unique([userId, photoId])
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
