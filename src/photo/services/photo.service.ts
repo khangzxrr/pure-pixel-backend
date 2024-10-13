@@ -420,7 +420,7 @@ export class PhotoService {
       }),
     );
 
-    this.prisma.extendedClient().$transaction(prismaPromises);
+    await this.prisma.extendedClient().$transaction(prismaPromises);
 
     return await this.getSignedPhotoById(userId, id);
   }
