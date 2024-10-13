@@ -5,6 +5,21 @@ import { PrismaService } from 'src/prisma.service';
 export class PhotoTagRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  groupBy(take: number) {
+    return this.prisma.extendedClient().photoTag.groupBy({
+      by: ['name'],
+      take,
+      _count: {
+        photoId: true,
+      },
+      orderBy: {
+        _count: {
+          photoId: 'desc',
+        },
+      },
+    });
+  }
+
   deleteByPhotoId(photoId: string) {
     return this.prisma.extendedClient().photoTag.deleteMany({
       where: {
