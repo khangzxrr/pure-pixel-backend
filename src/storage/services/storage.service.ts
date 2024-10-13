@@ -5,7 +5,6 @@ import {
   GetObjectCommand,
   HeadObjectCommand,
   HeadObjectCommandOutput,
-  ObjectCannedACL,
   PutBucketCorsCommand,
   PutObjectAclCommand,
   PutObjectCommand,
@@ -78,6 +77,10 @@ export class StorageService {
     return await getSignedUrl(this.getS3(), command, {});
   }
 
+  async getPublicUrlUsingCDN(key: string) {
+    return `${process.env.AWS_CLOUDFRONT_S3_ORIGIN}/${key}`;
+  }
+
   async signUrlUsingCDN(key: string) {
     // return this.getS3SignedUrl(key);
 
@@ -137,12 +140,11 @@ export class StorageService {
     return await this.sendCommand(command);
   }
 
-  async getPresignedUploadUrl(key: string, ACL: ObjectCannedACL) {
+  async getPresignedUploadUrl(key: string) {
     const command = new PutObjectCommand({
       Key: key,
       ContentType: 'image/jpeg',
       Bucket: process.env.S3_BUCKET,
-      ACL,
     });
 
     const signedUrl = await getSignedUrl(this.getS3(), command, {});

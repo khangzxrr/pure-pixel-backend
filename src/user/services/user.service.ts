@@ -28,9 +28,9 @@ export class UserService {
     const coverKey = `cover/${user.id}.jpg`;
 
     const presignedUploadAvatar =
-      await this.storageService.getPresignedUploadUrl(avatarKey, 'public-read');
+      await this.storageService.getPresignedUploadUrl(avatarKey);
     const presignedUploadCover =
-      await this.storageService.getPresignedUploadUrl(coverKey, 'public-read');
+      await this.storageService.getPresignedUploadUrl(coverKey);
 
     return new PresignedUploadMediaDto(
       avatarKey,
