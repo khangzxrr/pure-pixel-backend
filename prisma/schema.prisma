@@ -332,10 +332,10 @@ model Photo {
   votes         Vote[]
   photoSharings PhotoSharing[]
   photoSellings PhotoSell[]
-  tags          Tag[]
+  tags          PhotoTag[]
 }
 
-model Tag {
+model PhotoTag {
   name String
 
   photo Photo  @relation(fields: [photoId], references: [id])
