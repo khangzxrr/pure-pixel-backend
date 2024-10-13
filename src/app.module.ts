@@ -18,6 +18,7 @@ import { QueueModule } from './queue/queue.module';
 import { UpgradeOrderModule } from './upgrade-order/upgrade-order.module';
 import { ReportModule } from './report/report.module';
 import { PhotoTagModule } from './photo-tag/photo-tag.module';
+import { BlogModule } from './blog/blog.module';
 
 @Module({
   providers: [
@@ -46,6 +47,7 @@ import { PhotoTagModule } from './photo-tag/photo-tag.module';
     UpgradePackageModule,
     ReportModule,
     PhotoTagModule,
+    BlogModule,
   ],
   controllers: [AppController],
 })
