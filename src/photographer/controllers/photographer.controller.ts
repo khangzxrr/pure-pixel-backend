@@ -9,7 +9,6 @@ import {
 } from '@nestjs/common';
 import { PhotographerService } from '../services/photographer.service';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { SignedPhotoDto } from 'src/photo/dtos/photo.dto';
 import {
   AuthenticatedUser,
   AuthGuard,
@@ -25,6 +24,7 @@ import { PhotographerDTO } from '../dtos/photographer.dto';
 import { PagingPaginatedResposneDto } from 'src/infrastructure/restful/paging-paginated.response.dto';
 import { PhotographerProfileDto } from '../dtos/photographer-profile.dto';
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
+import { SignedPhotoDto } from 'src/photo/dtos/signed-photo.dto';
 
 @Controller('photographer')
 @ApiTags('photographer')
