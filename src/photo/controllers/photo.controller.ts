@@ -47,6 +47,7 @@ import { SharePhotoResponseDto } from '../dtos/rest/share-photo-response.dto';
 import { SignedPhotoSharingDto } from '../dtos/signed-photo-sharing.dto';
 import { ResolutionDto } from '../dtos/resolution.dto';
 import { SignedPhotoDto } from '../dtos/signed-photo.dto';
+import { PhotoVoteRequestDto } from '../dtos/rest/photo-vote.request.dto';
 
 @Controller('photo')
 @ApiTags('photo')
@@ -174,6 +175,20 @@ export class PhotoController {
     );
 
     res.status(HttpStatus.ACCEPTED).send();
+  }
+
+  @Post(':id/vote')
+  @ApiOperation({
+    summary: 'upvote/downvote an photo',
+  })
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
+  async upvoteAnPhoto(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Param('id') id: string,
+    @Body() voteRequestDto: PhotoVoteRequestDto,
+  ) {
+    return await this.photoService.vote(user.sub, id, voteRequestDto);
   }
 
   @Delete('/:id')

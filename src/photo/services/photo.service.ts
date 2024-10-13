@@ -68,6 +68,9 @@ import { DuplicatedTagFoundException } from '../exceptions/duplicated-tag-found.
 import { CategoryRepository } from 'src/database/repositories/category.repository';
 import { CategoryNotFoundException } from '../exceptions/category-not-found.exception';
 import { PhotoTagRepository } from 'src/database/repositories/photo-tag.repository';
+import { PhotoVoteRequestDto } from '../dtos/rest/photo-vote.request.dto';
+import { PhotoVoteRepository } from 'src/database/repositories/photo-vote.repository';
+import { PhotoVoteDto } from '../dtos/photo-vote.dto';
 @Injectable()
 export class PhotoService {
   private readonly logger = new Logger(PhotoService.name);
@@ -82,6 +85,7 @@ export class PhotoService {
     @Inject() private readonly photoTagRepository: PhotoTagRepository,
     @Inject() private readonly categoryRepository: CategoryRepository,
     @Inject() private readonly photoBuyRepository: PhotoBuyRepository,
+    @Inject() private readonly photoVoteRepository: PhotoVoteRepository,
     @InjectQueue(PhotoConstant.PHOTO_PROCESS_QUEUE)
     private readonly photoProcessQueue: Queue,
     @InjectQueue(PhotoConstant.PHOTO_WATERMARK_QUEUE)
@@ -273,6 +277,26 @@ export class PhotoService {
         },
       },
     );
+  }
+
+  async vote(
+    userId: string,
+    photoId: string,
+    photoVoteRequestDto: PhotoVoteRequestDto,
+  ) {
+    const photo = await this.photoRepository.getPhotoById(photoId);
+
+    if (!photo) {
+      throw new PhotoNotFoundException();
+    }
+
+    const vote = await this.photoVoteRepository.vote(
+      userId,
+      photoVoteRequestDto.isUpvote,
+      photoId,
+    );
+
+    return plainToInstance(PhotoVoteDto, vote);
   }
 
   async sendProcessImageToMq(
