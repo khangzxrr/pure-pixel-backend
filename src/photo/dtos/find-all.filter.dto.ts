@@ -171,7 +171,7 @@ export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
     }
 
     if (this.tags) {
-      where.tags = {
+      where.photoTags = {
         some: {
           name: {
             in: this.tags,
