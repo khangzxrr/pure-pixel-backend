@@ -10,7 +10,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { BlogService } from '../services/blog.service';
 import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.response.dto';
 import { BlogDto } from '../dtos/blog.dto';
@@ -61,6 +61,17 @@ export class BlogController {
     @Body() blog: BlogCreateRequestDto,
   ) {
     return await this.blogService.create(user.sub, blog);
+  }
+
+  @Post(':id/thumbnail')
+  @ApiOkResponse({
+    type: BlogDto,
+  })
+  @ApiOperation({
+    summary: 'create presigned upload thumbnail URL for blog by id',
+  })
+  async createPresignedThumbnailPutUrl(@Param('id') id: string) {
+    return this.blogService.createPresignedUploadThumbnail(id);
   }
 
   @Patch(':id')

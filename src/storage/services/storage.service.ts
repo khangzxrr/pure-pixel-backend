@@ -77,10 +77,6 @@ export class StorageService {
     return await getSignedUrl(this.getS3(), command, {});
   }
 
-  async getPublicUrlUsingCDN(key: string) {
-    return `${process.env.AWS_CLOUDFRONT_S3_ORIGIN}/${key}`;
-  }
-
   async signUrlUsingCDN(key: string) {
     // return this.getS3SignedUrl(key);
 
