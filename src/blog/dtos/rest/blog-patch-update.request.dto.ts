@@ -8,7 +8,7 @@ import {
   IsUrl,
 } from 'class-validator';
 
-export class BlogUpdateRequestDto {
+export class BlogPatchUpdateRequestDto {
   @ApiProperty({
     required: false,
     enum: BlogStatus,

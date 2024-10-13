@@ -5,7 +5,8 @@ import { BlogFindAllResponseDto } from '../dtos/rest/blog-find-all.response.dto'
 import { plainToInstance } from 'class-transformer';
 import { BlogDto } from '../dtos/blog.dto';
 import { BlogCreateRequestDto } from '../dtos/rest/blog-create.request.dto';
-import { BlogUpdateRequestDto } from '../dtos/rest/blog-update.request.dto';
+import { BlogPatchUpdateRequestDto } from '../dtos/rest/blog-patch-update.request.dto';
+import { BlogPutUpdateRequestDto } from '../dtos/rest/blog-put-update.request.dto';
 
 @Injectable()
 export class BlogService {
@@ -38,7 +39,18 @@ export class BlogService {
     return 'deleted';
   }
 
-  async update(id: string, blogUpdateRequestDto: BlogUpdateRequestDto) {
+  async replace(id: string, blogPutUpdateRequestDto: BlogPutUpdateRequestDto) {
+    await this.blogRepository.findByIdOrThrow(id);
+
+    const blog = await this.blogRepository.updateById(
+      id,
+      blogPutUpdateRequestDto,
+    );
+
+    return plainToInstance(BlogDto, blog);
+  }
+
+  async update(id: string, blogUpdateRequestDto: BlogPatchUpdateRequestDto) {
     await this.blogRepository.findByIdOrThrow(id);
 
     const blog = await this.blogRepository.updateById(id, blogUpdateRequestDto);

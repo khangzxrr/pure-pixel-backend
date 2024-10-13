@@ -1,4 +1,13 @@
 import { Module } from '@nestjs/common';
+import { DatabaseModule } from 'src/database/database.module';
+import { StorageModule } from 'src/storage/storage.module';
+import { BlogService } from './services/blog.service';
+import { BlogController } from './controllers/blog.controller';
+import { AuthenModule } from 'src/authen/authen.module';
 
-@Module({})
+@Module({
+  imports: [DatabaseModule, StorageModule, AuthenModule],
+  providers: [BlogService],
+  controllers: [BlogController],
+})
 export class BlogModule {}
