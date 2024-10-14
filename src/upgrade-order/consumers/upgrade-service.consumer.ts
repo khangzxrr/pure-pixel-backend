@@ -18,13 +18,11 @@ export class UpgradeServiceConsumer extends WorkerHost {
     try {
       const notification = this.notificationService.createTextNotification(
         UpgradeConstant.SOON_EXPIRED_ORDER_NOTIFY,
-        'Your upgrade package will be expired soon!',
         'Gói nâng cấp của bạn sắp hết hạn!',
-        'Please consider to extend your upgrade package to prevent any loss',
         'Vui lòng cân nhắc gia hạn gói nâng cấp để tiếp tục nhận được lợi ích của gói',
       );
 
-      await this.notificationService.sendToSpecificUserByUserId(
+      await this.notificationService.sendPushNotification(
         order.userId,
         notification,
       );
@@ -37,13 +35,11 @@ export class UpgradeServiceConsumer extends WorkerHost {
     try {
       const notification = this.notificationService.createTextNotification(
         UpgradeConstant.EXPIRED_ORDER_NOTIFY,
-        'Your upgrade package is expired',
         'Gói nâng cấp của bạn đã hết hạn',
-        'Please consider to upgrade again to remain benefits from upgrade package',
         'Vui lòng gia hạn lại để được nhận các ưu đãi từ gói nâng cấp!',
       );
 
-      await this.notificationService.sendToSpecificUserByUserId(
+      await this.notificationService.sendPushNotification(
         order.userId,
         notification,
       );
