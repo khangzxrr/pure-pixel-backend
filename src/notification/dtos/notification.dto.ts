@@ -26,8 +26,8 @@ export class NotificationDto {
   type: NotificationType;
 
   @ApiProperty()
-  createdAt: string;
+  createdAt: Date;
 
   @ApiProperty()
-  updatedAt: string;
+  updatedAt: Date;
 }

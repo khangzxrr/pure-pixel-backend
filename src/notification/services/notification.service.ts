@@ -4,6 +4,10 @@ import { App } from '@onesignal/node-onesignal';
 import OneSignal = require('@onesignal/node-onesignal');
 import { NotificationCreateDto } from '../dtos/rest/notification-create.dto';
 import { NotificationRepository } from 'src/database/repositories/notification.repository';
+import { NotificationFindAllDto } from '../dtos/rest/notification-find-all.request.dto';
+import { NotificationFindAllResponseDto } from '../dtos/rest/notification-find-all.response.dto';
+import { plainToInstance } from 'class-transformer';
+import { NotificationDto } from '../dtos/notification.dto';
 
 @Injectable()
 export class NotificationService {
@@ -33,6 +37,31 @@ export class NotificationService {
     this.oneSignalClient = this.client().getApp(process.env.ONESIGNAL_APP_ID);
 
     return this.oneSignalClient;
+  }
+
+  async findAll(
+    userId: string,
+    notificationFindAllDto: NotificationFindAllDto,
+  ) {
+    const count = await this.notificationRepository.count({
+      userId,
+    });
+
+    const notifications = await this.notificationRepository.findAll(
+      notificationFindAllDto.toSkip(),
+      notificationFindAllDto.limit,
+      {
+        userId,
+      },
+    );
+
+    const notificationDtos = plainToInstance(NotificationDto, notifications);
+
+    return new NotificationFindAllResponseDto(
+      notificationFindAllDto.limit,
+      count,
+      notificationDtos,
+    );
   }
 
   async saveNotification(notificationCreateDto: NotificationCreateDto) {
@@ -86,10 +115,6 @@ export class NotificationService {
 
     notification.target_channel = 'push';
 
-    const notificationResponse =
-      await this.client().createNotification(notification);
-
-    this.logger.log(`sent notification to ${userId}`);
-    this.logger.log(notificationResponse);
+    await this.client().createNotification(notification);
   }
 }
