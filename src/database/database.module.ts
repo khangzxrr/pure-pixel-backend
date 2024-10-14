@@ -19,6 +19,7 @@ import { ReportRepository } from './repositories/report.repository';
 import { PhotoTagRepository } from './repositories/photo-tag.repository';
 import { PhotoVoteRepository } from './repositories/photo-vote.repository';
 import { BlogRepository } from './repositories/blog.repository';
+import { NotificationRepository } from './repositories/notification.repository';
 @Module({
   providers: [
     PrismaService,
@@ -41,6 +42,7 @@ import { BlogRepository } from './repositories/blog.repository';
     PhotoTagRepository,
     PhotoVoteRepository,
     BlogRepository,
+    NotificationRepository,
   ],
   exports: [
     PrismaService,
@@ -63,6 +65,7 @@ import { BlogRepository } from './repositories/blog.repository';
     PhotoTagRepository,
     PhotoVoteRepository,
     BlogRepository,
+    NotificationRepository,
   ],
 })
 export class DatabaseModule {}
