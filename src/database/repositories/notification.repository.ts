@@ -6,6 +6,27 @@ import { PrismaService } from 'src/prisma.service';
 export class NotificationRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  async count(where: Prisma.NotificationWhereInput) {
+    return this.prisma.notification.count({
+      where,
+    });
+  }
+
+  async findAll(
+    skip: number,
+    take: number,
+    where: Prisma.NotificationWhereInput,
+  ) {
+    return this.prisma.notification.findMany({
+      where,
+      skip,
+      take,
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+  }
+
   async create(data: Prisma.NotificationCreateInput) {
     return this.prisma.notification.create({
       data,
