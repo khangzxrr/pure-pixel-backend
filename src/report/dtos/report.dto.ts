@@ -1,5 +1,8 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ReportStatus, ReportType } from '@prisma/client';
+import { PhotoDto } from 'src/photo/dtos/photo.dto';
+import { CommentEntity } from 'src/photo/entities/comment.entity';
+import { MeDto } from 'src/user/dtos/me.dto';
 
 export class ReportDto {
   @ApiProperty()
@@ -25,4 +28,13 @@ export class ReportDto {
 
   @ApiProperty()
   updatedAt: Date;
+
+  @ApiPropertyOptional()
+  user?: MeDto;
+
+  @ApiPropertyOptional()
+  photo?: PhotoDto;
+
+  @ApiPropertyOptional()
+  comment?: CommentEntity;
 }

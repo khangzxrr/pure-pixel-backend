@@ -520,7 +520,11 @@ export class PhotoService {
     return true;
   }
 
-  async getSignedPhotoById(userId: string, id: string) {
+  async getSignedPhotoById(
+    userId: string,
+    id: string,
+    validateOwnership: boolean = true,
+  ) {
     const photo = await this.photoRepository.getPhotoDetailById(id);
 
     if (!photo) {
@@ -528,6 +532,7 @@ export class PhotoService {
     }
 
     if (
+      validateOwnership &&
       photo.visibility === PhotoVisibility.PRIVATE &&
       photo.photographerId !== userId
     ) {
