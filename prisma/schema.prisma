@@ -55,9 +55,10 @@ model User {
   transactions Transaction[]
   PhotoBuy     PhotoBuy[]
 
-  Report         Report[]
-  ReportResponse ReportResponse[]
-  Blog           Blog[]
+  reports         Report[]
+  reportResponses ReportResponse[]
+  blogs           Blog[]
+  notifications   Notification[]
 }
 
 model BankInfo {
@@ -496,6 +497,33 @@ model Blog {
 
   content   String
   thumbnail String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum NotificationStatus {
+  SHOW
+  HIDE
+}
+
+enum NotificationType {
+  IN_APP
+  EMAIL
+  BOTH_INAPP_EMAIL
+}
+
+model Notification {
+  id String @id @default(uuid())
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  status NotificationStatus @default(SHOW)
+  type   NotificationType   @default(IN_APP)
+
+  title   String
+  content String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
