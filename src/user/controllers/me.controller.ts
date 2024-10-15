@@ -28,7 +28,7 @@ import { UpgradeOrderDto } from 'src/upgrade-order/dtos/upgrade-order.dto';
 import { UpgradeOrderService } from 'src/upgrade-order/services/upgrade-order.service';
 
 @Controller('me')
-@ApiTags('user')
+@ApiTags('me')
 export class MeController {
   constructor(
     @Inject() private readonly userService: UserService,

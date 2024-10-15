@@ -8,9 +8,10 @@ import { WalletController } from './controllers/wallet.controller';
 import { PaymentModule } from 'src/payment/payment.module';
 import { CachingModule } from 'src/caching/caching.module';
 import { UpgradeOrderModule } from 'src/upgrade-order/upgrade-order.module';
+import { UserController } from './controllers/user.controller';
 
 @Module({
-  controllers: [MeController, WalletController],
+  controllers: [MeController, WalletController, UserController],
   imports: [
     StorageModule,
     DatabaseModule,
