@@ -4,9 +4,17 @@ import { PhotoShootPackageController } from './controllers/photoshoot-package.co
 import { PhotoshootPackageService } from './services/photoshoot-package.service';
 import { AuthenModule } from 'src/authen/authen.module';
 import { StorageModule } from 'src/storage/storage.module';
+import { NestjsFormDataModule } from 'nestjs-form-data';
+import { PhotoModule } from 'src/photo/photo.module';
 
 @Module({
-  imports: [DatabaseModule, AuthenModule, StorageModule],
+  imports: [
+    NestjsFormDataModule,
+    DatabaseModule,
+    AuthenModule,
+    StorageModule,
+    PhotoModule,
+  ],
   controllers: [PhotoShootPackageController],
   providers: [PhotoshootPackageService],
 })

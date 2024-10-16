@@ -6,28 +6,32 @@ import { PhotoshootPackageDto } from '../dtos/photoshoot-package.dto';
 import { PhotoshootPackageFindAllResponseDto } from '../dtos/rest/photoshoot-package-find-all.response.dto';
 import { PhotoshootPackageCreateRequestDto } from '../dtos/rest/photoshoot-package-create.request.dto';
 import { UserRepository } from 'src/database/repositories/user.repository';
-import { UserNotFoundException } from 'src/user/exceptions/user-not-found.exception';
-import { RunOutOfPacakgeQuotaException } from '../exceptions/run-out-of-package-quota.exception';
+import { RunOutOfPackageQuotaException } from '../exceptions/run-out-of-package-quota.exception';
 import { PrismaService } from 'src/prisma.service';
-import { PrismaPromise } from '@prisma/client';
+import { PhotoProcessService } from 'src/photo/services/photo-process.service';
+import { v4 } from 'uuid';
 
 @Injectable()
 export class PhotoshootPackageService {
   constructor(
     @Inject() private readonly photoshootRepository: PhotoshootRepository,
     @Inject() private readonly userRepository: UserRepository,
+    @Inject() private readonly photoProcessService: PhotoProcessService,
     private readonly prisma: PrismaService,
   ) {}
 
   async create(userId: string, createDto: PhotoshootPackageCreateRequestDto) {
-    const user = await this.userRepository.findOneById(userId);
-    if (!user) {
-      throw new UserNotFoundException();
-    }
+    const user = await this.userRepository.findUniqueOrThrow(userId);
 
     if (user.packageCount >= user.maxPackageCount) {
-      throw new RunOutOfPacakgeQuotaException();
+      throw new RunOutOfPackageQuotaException();
     }
+
+    const thumbnailKey = `photoshoot_thumbnail/${v4()}.jpg`;
+    await this.photoProcessService.makeThumbnailAndUploadFromBuffer(
+      thumbnailKey,
+      createDto.thumbnail.buffer,
+    );
 
     const photoshootPackageCreateQuery = this.photoshootRepository.create({
       user: {
@@ -39,10 +43,10 @@ export class PhotoshootPackageService {
       price: createDto.price,
       title: createDto.title,
       subtitle: createDto.subtitle,
-      thumbnail: createDto.thumbnail,
+      thumbnail: thumbnailKey,
       details: {
         createMany: {
-          data: createDto.details,
+          data: [],
         },
       },
     });
@@ -60,6 +64,13 @@ export class PhotoshootPackageService {
     return plainToInstance(PhotoshootPackageDto, photoshootPackage);
   }
 
+  async getById(id: string) {
+    const photoshootPackage =
+      await this.photoshootRepository.getByIdOrThrow(id);
+
+    return plainToInstance(PhotoshootPackageDto, photoshootPackage);
+  }
+
   async findAll(findAllDto: PhotoshootPackageFindAllDto) {
     const count = await this.photoshootRepository.count(findAllDto.toWhere());
 
@@ -69,7 +80,7 @@ export class PhotoshootPackageService {
       findAllDto.toWhere(),
     );
 
-    const packageDtos = plainToInstance(PhotoshootPackageDto, packages);
+    const packageDtos = plainToInstance(PhotoshootPackageDto, packages, {});
 
     return new PhotoshootPackageFindAllResponseDto(
       findAllDto.limit,

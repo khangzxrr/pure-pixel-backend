@@ -1,5 +1,10 @@
 import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiConsumes,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { PhotoshootPackageService } from '../services/photoshoot-package.service';
 import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.response.dto';
 import { PhotoshootPackageDto } from '../dtos/photoshoot-package.dto';
@@ -9,6 +14,7 @@ import { PhotoshootPackageCreateRequestDto } from '../dtos/rest/photoshoot-packa
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
 import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
+import { FormDataRequest } from 'nestjs-form-data';
 
 @Controller('photoshoot-package')
 @ApiTags('photoshoot-package')
@@ -30,6 +36,8 @@ export class PhotoShootPackageController {
   @ApiOperation({
     summary: 'create new photoshoot package',
   })
+  @ApiConsumes('multipart/form-data')
+  @FormDataRequest()
   @ApiOkResponse({
     type: PhotoshootPackageDto,
   })

@@ -1,6 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { PhotoshootPackageStatus } from '@prisma/client';
-import { Type } from 'class-transformer';
+import { Exclude, Type } from 'class-transformer';
+import { PhotoshootPackageDetailDto } from './photoshoot-package-detail.dto';
+import { UserDto } from 'src/user/dtos/me.dto';
 
 export class PhotoshootPackageDto {
   @ApiProperty()
@@ -21,4 +23,17 @@ export class PhotoshootPackageDto {
 
   @ApiProperty()
   status: PhotoshootPackageStatus;
+
+  @Exclude()
+  userId: string;
+
+  @ApiProperty({
+    isArray: true,
+  })
+  @Type(() => PhotoshootPackageDetailDto)
+  details: PhotoshootPackageDetailDto[];
+
+  @ApiProperty()
+  @Type(() => UserDto)
+  user: UserDto;
 }

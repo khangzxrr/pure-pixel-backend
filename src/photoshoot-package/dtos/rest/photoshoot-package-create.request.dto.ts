@@ -1,7 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsString, IsUrl, Min } from 'class-validator';
-import { PhotoshootPackageDetailCreateDto } from './photoshoot-package-detail.create.request.dto';
+import { IsNotEmpty, IsNumber, IsString, Min } from 'class-validator';
 import { Type } from 'class-transformer';
+import {
+  HasMimeType,
+  IsFile,
+  MaxFileSize,
+  MemoryStoredFile,
+} from 'nestjs-form-data';
 
 export class PhotoshootPackageCreateRequestDto {
   @ApiProperty()
@@ -14,20 +19,19 @@ export class PhotoshootPackageCreateRequestDto {
   @IsNotEmpty()
   subtitle: string;
 
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  @IsUrl()
-  thumbnail: string;
-
-  @ApiProperty()
+  @ApiProperty({
+    example: 10000,
+  })
+  @Type(() => Number)
   @IsNumber()
   @Min(10000)
   price: number;
 
   @ApiProperty({
-    isArray: true,
+    type: 'file',
   })
-  @Type(() => PhotoshootPackageDetailCreateDto)
-  details: PhotoshootPackageDetailCreateDto[];
+  @IsFile()
+  @MaxFileSize(5e7)
+  @HasMimeType(['image/*'])
+  thumbnail: MemoryStoredFile;
 }

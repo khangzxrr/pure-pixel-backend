@@ -1,10 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  ArrayMinSize,
-  IsNotEmpty,
-  IsString,
-  ValidateNested,
-} from 'class-validator';
+import { ArrayNotEmpty, IsNotEmpty, IsString } from 'class-validator';
 
 export class PhotoshootPackageDetailCreateDto {
   @ApiProperty()
@@ -14,10 +9,14 @@ export class PhotoshootPackageDetailCreateDto {
 
   @ApiProperty({
     isArray: true,
+    type: String,
   })
-  @ValidateNested({})
-  @IsString({})
-  @IsNotEmpty()
-  @ArrayMinSize(1)
+  @ArrayNotEmpty()
+  @IsString({
+    each: true,
+  })
+  @IsNotEmpty({
+    each: true,
+  })
   descriptions: string[];
 }

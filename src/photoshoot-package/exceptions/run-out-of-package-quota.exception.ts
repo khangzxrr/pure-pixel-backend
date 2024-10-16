@@ -1,7 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 
-export class RunOutOfPacakgeQuotaException extends BadRequestException {
+export class RunOutOfPackageQuotaException extends BadRequestException {
   constructor() {
-    super(RunOutOfPacakgeQuotaException.name);
+    super(RunOutOfPackageQuotaException.name);
   }
 }
