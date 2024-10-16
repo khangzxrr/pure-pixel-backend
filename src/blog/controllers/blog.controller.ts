@@ -125,7 +125,9 @@ export class BlogController {
       }),
     )
     thumbnailFile: Express.Multer.File,
-  ) {}
+  ) {
+    return await this.blogService.updateThumbnail(id, thumbnailFile);
+  }
 
   @Patch(':id')
   @ApiOkResponse({
