@@ -6,6 +6,7 @@ import { AuthenModule } from 'src/authen/authen.module';
 import { StorageModule } from 'src/storage/storage.module';
 import { NestjsFormDataModule } from 'nestjs-form-data';
 import { PhotoModule } from 'src/photo/photo.module';
+import { PhotoshootPackageDetailController } from './controllers/photoshoot-package-detail.controller';
 
 @Module({
   imports: [
@@ -15,7 +16,7 @@ import { PhotoModule } from 'src/photo/photo.module';
     StorageModule,
     PhotoModule,
   ],
-  controllers: [PhotoShootPackageController],
+  controllers: [PhotoShootPackageController, PhotoshootPackageDetailController],
   providers: [PhotoshootPackageService],
 })
 export class PhotoshootPackageModule {}

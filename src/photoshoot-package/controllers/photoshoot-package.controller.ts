@@ -1,9 +1,12 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
+  Patch,
   Post,
+  Put,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -23,8 +26,8 @@ import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
 import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { FormDataRequest } from 'nestjs-form-data';
-import { PhotoshootPackageDetailDto } from '../dtos/photoshoot-package-detail.dto';
-import { PhotoshootPackageDetailCreateDto } from '../dtos/rest/photoshoot-package-detail.create.request.dto';
+import { PhotoshootPackageUpdateRequestDto } from '../dtos/rest/photoshoot-package-update.request.dto';
+import { PhotoshootPackageReplaceRequestDto } from '../dtos/rest/photoshoot-package-replace.request.dto';
 
 @Controller('photoshoot-package')
 @ApiTags('photoshoot-package')
@@ -38,8 +41,16 @@ export class PhotoShootPackageController {
     summary: 'get all photoshoot package of a photographer by userid',
   })
   @ApiOkResponsePaginated(PhotoshootPackageDto)
-  async findAll(@Query() findAllDto: PhotoshootPackageFindAllDto) {
-    return await this.photoshootPackageService.findAll(findAllDto);
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
+  async findAll(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Query() findAllDto: PhotoshootPackageFindAllDto,
+  ) {
+    return await this.photoshootPackageService.findAllByUserId(
+      user.sub,
+      findAllDto,
+    );
   }
 
   @Post()
@@ -60,24 +71,61 @@ export class PhotoShootPackageController {
     return await this.photoshootPackageService.create(user.sub, createDto);
   }
 
-  @Post(':id/detail')
+  @Patch(':id')
   @ApiOperation({
-    summary: 'create detail for a photoshoot package by photoshootPackageId',
+    summary: 'update photoshoot package by id',
   })
+  @ApiConsumes('multipart/form-data')
+  @FormDataRequest()
   @ApiOkResponse({
-    type: PhotoshootPackageDetailDto,
+    type: PhotoshootPackageDto,
   })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
-  async createDetail(
+  async updatePhotoshoot(
     @AuthenticatedUser() user: ParsedUserDto,
+    @Body() updateDto: PhotoshootPackageUpdateRequestDto,
     @Param('id') id: string,
-    @Body() createDto: PhotoshootPackageDetailCreateDto,
   ) {
-    return await this.photoshootPackageService.createDetail(
+    return await this.photoshootPackageService.update(user.sub, id, updateDto);
+  }
+
+  @Put(':id')
+  @ApiOperation({
+    summary: 'replace photoshoot package by id',
+  })
+  @ApiConsumes('multipart/form-data')
+  @FormDataRequest()
+  @ApiOkResponse({
+    type: PhotoshootPackageDto,
+  })
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
+  async replacePhotoshoot(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Body() replaceDto: PhotoshootPackageReplaceRequestDto,
+    @Param('id') id: string,
+  ) {
+    return await this.photoshootPackageService.replace(
       user.sub,
       id,
-      createDto,
+      replaceDto,
     );
+  }
+
+  @Delete(':packageId')
+  @ApiOperation({
+    summary: 'delete a photoshoot package  by packageId',
+  })
+  @ApiOkResponse({
+    type: PhotoshootPackageDto,
+  })
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
+  async deletePhotoshootPackage(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Param('packageId') packageId: string,
+  ) {
+    return await this.photoshootPackageService.delete(user.sub, packageId);
   }
 }
