@@ -6,6 +6,18 @@ import { PrismaService } from 'src/prisma.service';
 export class PhotoshootRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  getByIdOrThrow(id: string) {
+    return this.prisma.extendedClient().photoshootPackage.findUniqueOrThrow({
+      where: {
+        id,
+      },
+      include: {
+        user: true,
+        details: true,
+      },
+    });
+  }
+
   async delete(id: string) {
     return this.prisma.extendedClient().photoshootPackage.delete({
       where: {
@@ -49,6 +61,7 @@ export class PhotoshootRepository {
       where,
       include: {
         details: true,
+        user: true,
       },
     });
   }
