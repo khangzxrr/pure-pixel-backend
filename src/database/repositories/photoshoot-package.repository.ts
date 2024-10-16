@@ -14,6 +14,18 @@ export class PhotoshootRepository {
     });
   }
 
+  async updateById(
+    id: string,
+    photoshootPackage: Prisma.PhotoshootPackageUpdateInput,
+  ) {
+    this.prisma.photoshootPackage.update({
+      where: {
+        id,
+      },
+      data: photoshootPackage,
+    });
+  }
+
   async create(photoshootPackage: Prisma.PhotoshootPackageCreateInput) {
     return this.prisma.photoshootPackage.create({
       data: photoshootPackage,
