@@ -526,12 +526,19 @@ model PhotoshootReview {
   photoshootPackageId String
 }
 
+enum PhotoshootPackageStatus {
+  ENABLED
+  DISABLED
+}
+
 model PhotoshootPackage {
   id        String  @id @default(uuid())
   title     String
   subtitle  String
   price     Decimal
   thumbnail String
+
+  status PhotoshootPackageStatus
 
   user   User   @relation(fields: [userId], references: [id])
   userId String
