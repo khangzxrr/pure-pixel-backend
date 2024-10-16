@@ -9,6 +9,7 @@ import { BlogPatchUpdateRequestDto } from '../dtos/rest/blog-patch-update.reques
 import { BlogPutUpdateRequestDto } from '../dtos/rest/blog-put-update.request.dto';
 import { StorageService } from 'src/storage/services/storage.service';
 import { BlogCreatePresignedUploadThumbnailDto } from '../dtos/rest/blog-create-presigned-upload-thumbnail.response.dto';
+import { v4 } from 'uuid';
 
 @Injectable()
 export class BlogService {
@@ -51,32 +52,6 @@ export class BlogService {
 
     return 'deleted';
   }
-
-  async createPresignedUploadThumbnail(id: string) {
-    await this.blogRepository.findByIdOrThrow(id);
-
-    const key = `blog_thumbnail/${id}.jpg`;
-    const presignedUploadUrl =
-      await this.storageService.getPresignedUploadUrl(key);
-
-    await this.blogRepository.updateById(id, {
-      thumbnail: key,
-    });
-
-    return new BlogCreatePresignedUploadThumbnailDto(presignedUploadUrl);
-  }
-
-  async replace(id: string, blogPutUpdateRequestDto: BlogPutUpdateRequestDto) {
-    await this.blogRepository.findByIdOrThrow(id);
-
-    const blog = await this.blogRepository.updateById(
-      id,
-      blogPutUpdateRequestDto,
-    );
-
-    return plainToInstance(BlogDto, blog);
-  }
-
   async update(id: string, blogUpdateRequestDto: BlogPatchUpdateRequestDto) {
     await this.blogRepository.findByIdOrThrow(id);
 
@@ -85,10 +60,32 @@ export class BlogService {
     return plainToInstance(BlogDto, blog);
   }
 
-  async create(userId: string, blogCreateRequestDto: BlogCreateRequestDto) {
+  async create(
+    userId: string,
+    blogCreateRequestDto: BlogCreateRequestDto,
+    thumbnailFile: Express.Multer.File,
+  ) {
+    const blogId = v4();
+
+    let extension = 'jpg';
+    const splitByDot = thumbnailFile.originalname.split('.');
+    if (splitByDot.length > 0) {
+      extension = splitByDot[splitByDot.length - 1];
+    }
+
+    const thumbnailPath = `blog_thumbnail/${blogId}.${extension}`;
+
+    await this.storageService.uploadFromBytes(
+      thumbnailPath,
+      thumbnailFile.buffer,
+    );
+
     const blog = await this.blogRepository.create({
-      ...blogCreateRequestDto,
-      thumbnail: '',
+      id: blogId,
+      content: blogCreateRequestDto.content,
+      title: blogCreateRequestDto.title,
+      status: 'ENABLED',
+      thumbnail: thumbnailPath,
       user: {
         connect: {
           id: userId,

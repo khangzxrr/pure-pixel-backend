@@ -6,6 +6,9 @@ export class BlogDto implements Blog {
   @ApiProperty()
   id: string;
 
+  @ApiProperty()
+  title: string;
+
   @Exclude()
   userId: string;
 

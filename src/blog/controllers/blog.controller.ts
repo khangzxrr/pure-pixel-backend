@@ -2,15 +2,24 @@ import {
   Body,
   Controller,
   Delete,
+  FileTypeValidator,
   Get,
   Param,
+  ParseFilePipe,
   Patch,
   Post,
   Put,
   Query,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
-import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiConsumes,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { BlogService } from '../services/blog.service';
 import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.response.dto';
 import { BlogDto } from '../dtos/blog.dto';
@@ -27,6 +36,7 @@ import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { BlogCreateRequestDto } from '../dtos/rest/blog-create.request.dto';
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('blog')
 @ApiTags('blog')
@@ -51,6 +61,8 @@ export class BlogController {
   }
 
   @Post()
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('thumbnailFile'))
   @ApiOkResponse({
     type: BlogDto,
   })
@@ -59,19 +71,16 @@ export class BlogController {
   async createBlog(
     @AuthenticatedUser() user: ParsedUserDto,
     @Body() blog: BlogCreateRequestDto,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new FileTypeValidator({ fileType: '.(png|jpeg|jpg|PNG|JPG|JPEG)' }),
+        ],
+      }),
+    )
+    thumbnailFile: Express.Multer.File,
   ) {
-    return await this.blogService.create(user.sub, blog);
-  }
-
-  @Post(':id/thumbnail')
-  @ApiOkResponse({
-    type: BlogDto,
-  })
-  @ApiOperation({
-    summary: 'create presigned upload thumbnail URL for blog by id',
-  })
-  async createPresignedThumbnailPutUrl(@Param('id') id: string) {
-    return this.blogService.createPresignedUploadThumbnail(id);
+    return await this.blogService.create(user.sub, blog, thumbnailFile);
   }
 
   @Patch(':id')
