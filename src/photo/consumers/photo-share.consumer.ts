@@ -25,7 +25,7 @@ export class PhotoShareConsumer extends WorkerHost {
     try {
       switch (job.name) {
         case PhotoConstant.GENERATE_SHARE_JOB_NAME:
-          this.generateSharePayload(job.data.photoId);
+          await this.generateSharePayload(job.data.photoId);
           break;
       }
     } catch (e) {

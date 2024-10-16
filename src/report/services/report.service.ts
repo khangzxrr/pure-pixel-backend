@@ -13,6 +13,11 @@ import { CommentRepository } from 'src/database/repositories/comment.repository'
 import { ReferenceIdNotFoundException } from '../exceptions/referenced-id-is-not-found.exception';
 import { ReportType } from '@prisma/client';
 import { ReportPutUpdateRequestDto } from '../dtos/rest/report-put-update.request.dto';
+import { MeDto } from 'src/user/dtos/me.dto';
+import { PhotoDto } from 'src/photo/dtos/photo.dto';
+import { CommentEntity } from 'src/photo/entities/comment.entity';
+import { Constants } from 'src/infrastructure/utils/constants';
+import { PhotoService } from 'src/photo/services/photo.service';
 
 @Injectable()
 export class ReportService {
@@ -21,6 +26,7 @@ export class ReportService {
     @Inject() private readonly userRepository: UserRepository,
     @Inject() private readonly photoRepository: PhotoRepository,
     @Inject() private readonly commentRepository: CommentRepository,
+    @Inject() private readonly photoService: PhotoService,
   ) {}
 
   async validateReferenceId(reportType: ReportType, referenceId: string) {
@@ -83,11 +89,13 @@ export class ReportService {
     return plainToInstance(ReportDto, replacedReport);
   }
 
-  async create(userId, reportCreateRequestDto: ReportCreateRequestDto) {
+  async create(userId: string, reportCreateRequestDto: ReportCreateRequestDto) {
     await this.validateReferenceId(
       reportCreateRequestDto.reportType,
       reportCreateRequestDto.referenceId,
     );
+
+    console.log(reportCreateRequestDto);
 
     const report = await this.reportRepository.create(
       userId,
@@ -135,10 +143,44 @@ export class ReportService {
 
     const reportDtos = plainToInstance(ReportDto, reports);
 
+    const reportWithReferenceEntityPromises = reportDtos.map(async (r) => {
+      switch (r.reportType) {
+        case 'USER':
+          const user = await this.userRepository.findOneById(r.referenceId);
+          console.log(user);
+          r.user = new MeDto(user, Constants.PHOTOGRAPHER_ROLE);
+          break;
+        case 'PHOTO':
+          const photo = await this.photoService.getSignedPhotoById(
+            '',
+            r.referenceId,
+            false,
+          );
+
+          r.photo = plainToInstance(PhotoDto, photo);
+          break;
+        case 'COMMENT':
+          const comment = await this.commentRepository.findById(r.referenceId);
+          r.comment = plainToInstance(CommentEntity, comment);
+          break;
+        case 'BOOKING':
+          throw new NotImplementedException();
+
+        default:
+          break;
+      }
+
+      return r;
+    });
+
+    const reportWithEntities = await Promise.all(
+      reportWithReferenceEntityPromises,
+    );
+
     return new ReportFindAllResponseDto(
       reportFindAllDto.limit,
       count,
-      reportDtos,
+      reportWithEntities,
     );
   }
 }
