@@ -21,6 +21,7 @@ import { PhotoVoteRepository } from './repositories/photo-vote.repository';
 import { BlogRepository } from './repositories/blog.repository';
 import { PhotoshootRepository } from './repositories/photoshoot-package.repository';
 import { NotificationRepository } from './repositories/notification.repository';
+import { PhotoshootPackageDetailRepository } from './repositories/photoshoot-package-detail.repository';
 @Module({
   providers: [
     PrismaService,
@@ -45,6 +46,7 @@ import { NotificationRepository } from './repositories/notification.repository';
     BlogRepository,
     PhotoshootRepository,
     NotificationRepository,
+    PhotoshootPackageDetailRepository,
   ],
   exports: [
     PrismaService,
@@ -69,6 +71,7 @@ import { NotificationRepository } from './repositories/notification.repository';
     BlogRepository,
     PhotoshootRepository,
     NotificationRepository,
+    PhotoshootPackageDetailRepository,
   ],
 })
 export class DatabaseModule {}

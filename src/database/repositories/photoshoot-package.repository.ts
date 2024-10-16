@@ -6,7 +6,7 @@ import { PrismaService } from 'src/prisma.service';
 export class PhotoshootRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  getByIdOrThrow(id: string) {
+  findUniqueOrThrow(id: string) {
     return this.prisma.extendedClient().photoshootPackage.findUniqueOrThrow({
       where: {
         id,
