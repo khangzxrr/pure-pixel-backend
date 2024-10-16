@@ -6,16 +6,16 @@ import { plainToInstance } from 'class-transformer';
 import { BlogDto } from '../dtos/blog.dto';
 import { BlogCreateRequestDto } from '../dtos/rest/blog-create.request.dto';
 import { BlogPatchUpdateRequestDto } from '../dtos/rest/blog-patch-update.request.dto';
-import { BlogPutUpdateRequestDto } from '../dtos/rest/blog-put-update.request.dto';
 import { StorageService } from 'src/storage/services/storage.service';
-import { BlogCreatePresignedUploadThumbnailDto } from '../dtos/rest/blog-create-presigned-upload-thumbnail.response.dto';
 import { v4 } from 'uuid';
+import { PhotoProcessService } from 'src/photo/services/photo-process.service';
 
 @Injectable()
 export class BlogService {
   constructor(
     @Inject() private readonly blogRepository: BlogRepository,
     @Inject() private readonly storageService: StorageService,
+    @Inject() private readonly photoProcessService: PhotoProcessService,
   ) {}
 
   async findAll(blogFindAllRequest: BlogFindAllRequestDto) {
@@ -75,10 +75,14 @@ export class BlogService {
 
     const thumbnailPath = `blog_thumbnail/${blogId}.${extension}`;
 
-    await this.storageService.uploadFromBytes(
-      thumbnailPath,
+    const sharp = await this.photoProcessService.sharpInitFromBuffer(
       thumbnailFile.buffer,
     );
+    const thumbnailBuffer = await this.photoProcessService
+      .makeThumbnail(sharp)
+      .then((s) => s.toBuffer());
+
+    await this.storageService.uploadFromBytes(thumbnailPath, thumbnailBuffer);
 
     const blog = await this.blogRepository.create({
       id: blogId,

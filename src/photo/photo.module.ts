@@ -36,7 +36,7 @@ import { PhotoVoteController } from './controllers/photo-vote.controller';
     PhotoGenerateWatermarkService,
     PhotoGenerateShareService,
   ],
-  exports: [PhotoService, PhotoCategoryService],
+  exports: [PhotoService, PhotoProcessService, PhotoCategoryService],
   controllers: [
     PhotoController,
     PhotoCategoryController,

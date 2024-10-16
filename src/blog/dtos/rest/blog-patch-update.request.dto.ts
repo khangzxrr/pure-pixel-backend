@@ -29,7 +29,7 @@ export class BlogPatchUpdateRequestDto {
     required: false,
   })
   @IsOptional()
+  @IsString()
   @IsNotEmpty()
-  @IsUrl()
-  thumbnail?: string;
+  title?: string;
 }
