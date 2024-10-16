@@ -34,7 +34,7 @@ export class ReportService {
 
     switch (reportType) {
       case 'USER':
-        obj = await this.userRepository.findOneById(referenceId);
+        obj = await this.userRepository.findUnique(referenceId);
         break;
       case 'PHOTO':
         obj = await this.photoRepository.getPhotoById(referenceId);
@@ -146,7 +146,7 @@ export class ReportService {
     const reportWithReferenceEntityPromises = reportDtos.map(async (r) => {
       switch (r.reportType) {
         case 'USER':
-          const user = await this.userRepository.findOneById(r.referenceId);
+          const user = await this.userRepository.findUnique(r.referenceId);
           r.referencedUser = plainToInstance(UserDto, user);
           break;
         case 'PHOTO':
