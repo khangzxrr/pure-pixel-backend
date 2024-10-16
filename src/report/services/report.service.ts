@@ -13,11 +13,11 @@ import { CommentRepository } from 'src/database/repositories/comment.repository'
 import { ReferenceIdNotFoundException } from '../exceptions/referenced-id-is-not-found.exception';
 import { ReportType } from '@prisma/client';
 import { ReportPutUpdateRequestDto } from '../dtos/rest/report-put-update.request.dto';
-import { MeDto } from 'src/user/dtos/me.dto';
 import { PhotoDto } from 'src/photo/dtos/photo.dto';
 import { CommentEntity } from 'src/photo/entities/comment.entity';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { PhotoService } from 'src/photo/services/photo.service';
+import { UserDto } from 'src/user/dtos/me.dto';
 
 @Injectable()
 export class ReportService {
@@ -147,8 +147,7 @@ export class ReportService {
       switch (r.reportType) {
         case 'USER':
           const user = await this.userRepository.findOneById(r.referenceId);
-          console.log(user);
-          r.user = new MeDto(user, Constants.PHOTOGRAPHER_ROLE);
+          r.referencedUser = plainToInstance(UserDto, user);
           break;
         case 'PHOTO':
           const photo = await this.photoService.getSignedPhotoById(
@@ -157,11 +156,11 @@ export class ReportService {
             false,
           );
 
-          r.photo = plainToInstance(PhotoDto, photo);
+          r.referencedPhoto = plainToInstance(PhotoDto, photo);
           break;
         case 'COMMENT':
           const comment = await this.commentRepository.findById(r.referenceId);
-          r.comment = plainToInstance(CommentEntity, comment);
+          r.referencedComment = plainToInstance(CommentEntity, comment);
           break;
         case 'BOOKING':
           throw new NotImplementedException();
