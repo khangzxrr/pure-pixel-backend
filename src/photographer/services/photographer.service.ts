@@ -43,7 +43,7 @@ export class PhotographerService {
       );
 
     const photographerDtoPromises = keycloakPhotographers.map(async (p) => {
-      const applicationUser = await this.userRepository.findOneById(p.id);
+      const applicationUser = await this.userRepository.findUnique(p.id);
 
       if (!applicationUser) {
         return null;
