@@ -150,12 +150,22 @@ export class BlogController {
   @ApiOperation({
     summary: 'replace blog info by blogId',
   })
+  @UseInterceptors(FileInterceptor('thumbnailFile'))
+  @ApiConsumes('multipart/form-data')
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.MANAGER_ROLE] })
   async putUpdateById(
     @Param('id') id: string,
     @Body() blogPutUpdateDto: BlogPutUpdateRequestDto,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new FileTypeValidator({ fileType: '.(png|jpeg|jpg|PNG|JPG|JPEG)' }),
+        ],
+      }),
+    )
+    thumbnailFile: Express.Multer.File,
   ) {
-    return await this.blogService.update(id, blogPutUpdateDto);
+    return await this.blogService.replace(id, blogPutUpdateDto, thumbnailFile);
   }
 }

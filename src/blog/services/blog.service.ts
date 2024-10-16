@@ -10,6 +10,7 @@ import { StorageService } from 'src/storage/services/storage.service';
 import { v4 } from 'uuid';
 import { PhotoProcessService } from 'src/photo/services/photo-process.service';
 import { Blog } from '@prisma/client';
+import { BlogPutUpdateRequestDto } from '../dtos/rest/blog-put-update.request.dto';
 
 @Injectable()
 export class BlogService {
@@ -66,6 +67,20 @@ export class BlogService {
     return 'deleted';
   }
 
+  async replace(
+    id: string,
+    blogUpdateRequestDto: BlogPutUpdateRequestDto,
+    thumbnailFile: Express.Multer.File,
+  ) {
+    await this.blogRepository.findByIdOrThrow(id);
+
+    await this.updateThumbnail(id, thumbnailFile);
+
+    const blog = await this.blogRepository.updateById(id, blogUpdateRequestDto);
+
+    return this.signBlogThumbnail(blog);
+  }
+
   async update(id: string, blogUpdateRequestDto: BlogPatchUpdateRequestDto) {
     await this.blogRepository.findByIdOrThrow(id);
 
@@ -75,7 +90,7 @@ export class BlogService {
   }
 
   async updateThumbnail(id: string, thumbnailFile: Express.Multer.File) {
-    await this.blogRepository.findByIdOrThrow(id);
+    const blog = await this.blogRepository.findByIdOrThrow(id);
 
     let extension = 'jpg';
     const splitByDot = thumbnailFile.originalname.split('.');
@@ -93,6 +108,8 @@ export class BlogService {
       .then((s) => s.toBuffer());
 
     await this.storageService.uploadFromBytes(thumbnailPath, thumbnailBuffer);
+
+    return this.signBlogThumbnail(blog);
   }
 
   async create(
