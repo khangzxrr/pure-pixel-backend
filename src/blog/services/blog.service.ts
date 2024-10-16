@@ -9,6 +9,7 @@ import { BlogPatchUpdateRequestDto } from '../dtos/rest/blog-patch-update.reques
 import { StorageService } from 'src/storage/services/storage.service';
 import { v4 } from 'uuid';
 import { PhotoProcessService } from 'src/photo/services/photo-process.service';
+import { Blog } from '@prisma/client';
 
 @Injectable()
 export class BlogService {
@@ -17,6 +18,22 @@ export class BlogService {
     @Inject() private readonly storageService: StorageService,
     @Inject() private readonly photoProcessService: PhotoProcessService,
   ) {}
+
+  async signBlogThumbnail(blog: Blog) {
+    const blogDto = plainToInstance(BlogDto, blog);
+
+    blogDto.thumbnail = await this.storageService.signUrlUsingCDN(
+      blog.thumbnail,
+    );
+
+    return blogDto;
+  }
+
+  async findById(id: string) {
+    const blog = await this.blogRepository.findByIdOrThrow(id);
+
+    return this.signBlogThumbnail(blog);
+  }
 
   async findAll(blogFindAllRequest: BlogFindAllRequestDto) {
     const count = await this.blogRepository.count(blogFindAllRequest.toWhere());
@@ -28,15 +45,9 @@ export class BlogService {
       orderBy: blogFindAllRequest.toOrderBy(),
     });
 
-    const blogDtoPromises = plainToInstance(BlogDto, blogs).map(async (b) => {
-      if (b.thumbnail.length > 0) {
-        b.thumbnail = await this.storageService.signUrlUsingCDN(b.thumbnail);
-      }
+    const signedBlogDtoPromises = blogs.map((b) => this.signBlogThumbnail(b));
 
-      return b;
-    });
-
-    const blogDtos = await Promise.all(blogDtoPromises);
+    const blogDtos = await Promise.all(signedBlogDtoPromises);
 
     return new BlogFindAllResponseDto(
       blogFindAllRequest.limit,
