@@ -69,6 +69,9 @@ export class BlogController {
   @ApiOkResponse({
     description: 'deleted',
   })
+  @ApiOperation({
+    summary: 'delete a specific blog by blogId',
+  })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.MANAGER_ROLE] })
   async deleteById(@Param('id') id: string) {
@@ -77,6 +80,9 @@ export class BlogController {
 
   @Post()
   @ApiConsumes('multipart/form-data')
+  @ApiOperation({
+    summary: 'create a new blog',
+  })
   @UseInterceptors(FileInterceptor('thumbnailFile'))
   @ApiOkResponse({
     type: BlogDto,
@@ -103,6 +109,9 @@ export class BlogController {
     type: BlogDto,
   })
   @ApiConsumes('multipart/form-data')
+  @ApiOperation({
+    summary: 'update blog thumbnail by blogId',
+  })
   @UseInterceptors(FileInterceptor('thumbnailFile'))
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.MANAGER_ROLE] })
@@ -122,6 +131,9 @@ export class BlogController {
   @ApiOkResponse({
     type: BlogDto,
   })
+  @ApiOperation({
+    summary: 'update blog info by blogId',
+  })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.MANAGER_ROLE] })
   async updateById(
@@ -134,6 +146,9 @@ export class BlogController {
   @Put(':id')
   @ApiOkResponse({
     type: BlogDto,
+  })
+  @ApiOperation({
+    summary: 'replace blog info by blogId',
   })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.MANAGER_ROLE] })
