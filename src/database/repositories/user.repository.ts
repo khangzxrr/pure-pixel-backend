@@ -70,7 +70,15 @@ export class UserRepository {
       },
     });
   }
-  async findOneById(userId: string) {
+
+  async findUniqueOrThrow(id: string) {
+    return this.prisma.user.findUniqueOrThrow({
+      where: {
+        id,
+      },
+    });
+  }
+  async findUnique(userId: string) {
     return this.prisma.user.findUnique({
       where: {
         id: userId,
