@@ -3,7 +3,7 @@ import { UserEntity } from '../entities/user.entity';
 import { ResponseBaseDto } from 'src/infrastructure/restful/base.response.dto';
 import { Constants } from 'src/infrastructure/utils/constants';
 
-export class MeDto extends ResponseBaseDto {
+export class UserDto extends ResponseBaseDto {
   @ApiProperty()
   photoQuotaUsage: string;
 

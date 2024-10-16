@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { UserRepository } from 'src/database/repositories/user.repository';
 import { UserFilterDto } from '../dtos/user-filter.dto';
-import { MeDto } from '../dtos/me.dto';
+import { UserDto } from '../dtos/me.dto';
 import { KeycloakService } from 'src/authen/services/keycloak.service';
 import { UserNotFoundException } from '../exceptions/user-not-found.exception';
 import { Constants } from 'src/infrastructure/utils/constants';
@@ -57,7 +57,7 @@ export class UserService {
       updateProfileDto,
     );
 
-    const meDto = new MeDto(
+    const meDto = new UserDto(
       updatedUser,
       isPhotographer ? Constants.PHOTOGRAPHER_ROLE : Constants.CUSTOMER_ROLE,
     );
@@ -76,7 +76,7 @@ export class UserService {
       Constants.PHOTOGRAPHER_ROLE,
     );
 
-    const meDto = new MeDto(
+    const meDto = new UserDto(
       user,
       isPhotographer ? Constants.PHOTOGRAPHER_ROLE : Constants.CUSTOMER_ROLE,
     );
