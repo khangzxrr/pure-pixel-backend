@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ResponseBaseDto } from 'src/infrastructure/restful/base.response.dto';
-import { Exclude, Expose } from 'class-transformer';
+import { Exclude } from 'class-transformer';
 
 export class UserDto extends ResponseBaseDto {
   @Exclude()
