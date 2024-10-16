@@ -8,6 +8,7 @@ import { Constants } from 'src/infrastructure/utils/constants';
 import { StorageService } from 'src/storage/services/storage.service';
 import { PresignedUploadMediaDto } from '../dtos/presigned-upload-media.dto';
 import { UpdateProfileDto } from '../dtos/rest/update-profile.request.dto';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class UserService {
@@ -47,22 +48,12 @@ export class UserService {
       throw new UserNotFoundException();
     }
 
-    const isPhotographer = await this.keycloakService.isUserHasRole(
-      userId,
-      Constants.PHOTOGRAPHER_ROLE,
-    );
-
     const updatedUser = await this.userRepository.updateUser(
       userId,
       updateProfileDto,
     );
 
-    const meDto = new UserDto(
-      updatedUser,
-      isPhotographer ? Constants.PHOTOGRAPHER_ROLE : Constants.CUSTOMER_ROLE,
-    );
-
-    return meDto;
+    return plainToInstance(UserDto, updatedUser);
   }
 
   async findOne(userFilterDto: UserFilterDto) {
@@ -71,16 +62,7 @@ export class UserService {
     if (!user) {
       throw new UserNotFoundException();
     }
-    const isPhotographer = await this.keycloakService.isUserHasRole(
-      user.id,
-      Constants.PHOTOGRAPHER_ROLE,
-    );
 
-    const meDto = new UserDto(
-      user,
-      isPhotographer ? Constants.PHOTOGRAPHER_ROLE : Constants.CUSTOMER_ROLE,
-    );
-
-    return meDto;
+    return plainToInstance(UserDto, user);
   }
 }
