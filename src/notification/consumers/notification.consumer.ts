@@ -31,7 +31,7 @@ export class NotificationConsumer extends WorkerHost {
   }
 
   async sendNotification(notificationCreateDto: NotificationCreateDto) {
-    const user = await this.userRepository.findOneById(
+    const user = await this.userRepository.findUnique(
       notificationCreateDto.userId,
     );
 
