@@ -1,5 +1,7 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ReportStatus, ReportType } from '@prisma/client';
+import { Exclude, Type } from 'class-transformer';
+import { UserDto } from 'src/user/dtos/me.dto';
 
 export class ReportDto {
   @ApiProperty()
@@ -14,11 +16,15 @@ export class ReportDto {
   @ApiProperty()
   reportType: ReportType;
 
-  @ApiProperty()
+  @Exclude()
   userId: string;
 
   @ApiProperty()
   referenceId: string;
+
+  @ApiProperty()
+  @Type(() => UserDto)
+  user: UserDto;
 
   @ApiProperty()
   createdAt: Date;
