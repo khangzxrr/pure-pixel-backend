@@ -194,6 +194,10 @@ export class PhotoRepository {
     });
   }
 
+  // async unaccentFindAll() {
+  //   await this.prisma.$queryRaw(`SELECT unaccent(lower(title)) FROM "photo"`);
+  // }
+
   async findAll(
     where: Prisma.PhotoWhereInput,
     orderBy: Prisma.PhotoOrderByWithRelationInput[],
