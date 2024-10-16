@@ -10,6 +10,57 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
   extendedClient() {
     const prisma = this.$extends({
       query: {
+        photoshootPackage: {
+          async count({ args, query }) {
+            args.where = { ...args.where, deletedAt: null };
+
+            return query(args);
+          },
+          async findFirst({ args, query }) {
+            args.where = { ...args.where, deletedAt: null };
+
+            return query(args);
+          },
+          async findMany({ args, query }) {
+            args.where = { ...args.where, deletedAt: null };
+
+            return query(args);
+          },
+          async findUnique({ args, query }) {
+            args.where = { ...args.where, deletedAt: null };
+
+            return query(args);
+          },
+          async findFirstOrThrow({ args, query }) {
+            args.where = { ...args.where, deletedAt: null };
+
+            return query(args);
+          },
+          async findUniqueOrThrow({ args, query }) {
+            args.where = { ...args.where, deletedAt: null };
+
+            return query(args);
+          },
+          async delete({ args }) {
+            return prisma.photoshootPackage.update({
+              where: args.where,
+              data: {
+                deletedAt: new Date(),
+              },
+            });
+          },
+          async update({ args, query }) {
+            args.where = { ...args.where, deletedAt: null };
+
+            return query(args);
+          },
+          async updateMany({ args, query }) {
+            args.where = { ...args.where, deletedAt: null };
+
+            return query(args);
+          },
+        },
+
         upgradePackage: {
           async count({ args, query }) {
             args.where = { ...args.where, deletedAt: null };
