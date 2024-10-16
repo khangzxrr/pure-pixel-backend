@@ -48,16 +48,40 @@ export class BlogService {
   async delete(id: string) {
     await this.blogRepository.findByIdOrThrow(id);
 
-    await this.blogRepository.deleteById(id);
+    const deletedBlog = await this.blogRepository.deleteById(id);
+
+    await this.storageService.deleteKeys([deletedBlog.thumbnail]);
 
     return 'deleted';
   }
+
   async update(id: string, blogUpdateRequestDto: BlogPatchUpdateRequestDto) {
     await this.blogRepository.findByIdOrThrow(id);
 
     const blog = await this.blogRepository.updateById(id, blogUpdateRequestDto);
 
     return plainToInstance(BlogDto, blog);
+  }
+
+  async updateThumbnail(id: string, thumbnailFile: Express.Multer.File) {
+    await this.blogRepository.findByIdOrThrow(id);
+
+    let extension = 'jpg';
+    const splitByDot = thumbnailFile.originalname.split('.');
+    if (splitByDot.length > 0) {
+      extension = splitByDot[splitByDot.length - 1];
+    }
+
+    const thumbnailPath = `blog_thumbnail/${id}.${extension}`;
+
+    const sharp = await this.photoProcessService.sharpInitFromBuffer(
+      thumbnailFile.buffer,
+    );
+    const thumbnailBuffer = await this.photoProcessService
+      .makeThumbnail(sharp)
+      .then((s) => s.toBuffer());
+
+    await this.storageService.uploadFromBytes(thumbnailPath, thumbnailBuffer);
   }
 
   async create(

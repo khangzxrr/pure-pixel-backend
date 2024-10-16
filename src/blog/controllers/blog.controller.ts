@@ -83,6 +83,26 @@ export class BlogController {
     return await this.blogService.create(user.sub, blog, thumbnailFile);
   }
 
+  @Patch(':id/thumbnail')
+  @ApiOkResponse({
+    type: BlogDto,
+  })
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('thumbnailFile'))
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.MANAGER_ROLE] })
+  async updateThumbnail(
+    @Param('id') id: string,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new FileTypeValidator({ fileType: '.(png|jpeg|jpg|PNG|JPG|JPEG)' }),
+        ],
+      }),
+    )
+    thumbnailFile: Express.Multer.File,
+  ) {}
+
   @Patch(':id')
   @ApiOkResponse({
     type: BlogDto,
