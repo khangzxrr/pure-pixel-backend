@@ -6,7 +6,7 @@ import { PrismaService } from 'src/prisma.service';
 export class PhotoshootRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  findUniqueOrThrow(id: string) {
+  async findUniqueOrThrow(id: string) {
     return this.prisma.extendedClient().photoshootPackage.findUniqueOrThrow({
       where: {
         id,
@@ -30,7 +30,7 @@ export class PhotoshootRepository {
     id: string,
     photoshootPackage: Prisma.PhotoshootPackageUpdateInput,
   ) {
-    this.prisma.photoshootPackage.update({
+    this.prisma.extendedClient().photoshootPackage.update({
       where: {
         id,
       },
@@ -55,7 +55,7 @@ export class PhotoshootRepository {
     skip: number,
     where: Prisma.PhotoshootPackageWhereInput,
   ) {
-    return this.prisma.photoshootPackage.findMany({
+    return this.prisma.extendedClient().photoshootPackage.findMany({
       take,
       skip,
       where,
