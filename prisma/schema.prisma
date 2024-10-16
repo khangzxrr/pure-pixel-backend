@@ -497,6 +497,7 @@ model Blog {
 
   status BlogStatus @default(ENABLED)
 
+  title String
   content   String
   thumbnail String
 
