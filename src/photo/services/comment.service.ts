@@ -6,12 +6,18 @@ import { PhotoNotFoundException } from '../exceptions/photo-not-found.exception'
 import { PhotoIsPrivatedException } from '../exceptions/photo-is-private.exception';
 import { Photo, PhotoVisibility } from '@prisma/client';
 import { CommentEntity } from '../entities/comment.entity';
+import { NotificationCreateDto } from 'src/notification/dtos/rest/notification-create.dto';
+import { NotificationConstant } from 'src/notification/constants/notification.constant';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 
 @Injectable()
 export class CommentService {
   constructor(
     @Inject() private readonly commentRepository: CommentRepository,
     @Inject() private readonly photoRepository: PhotoRepository,
+    @InjectQueue(NotificationConstant.NOTIFICATION_QUEUE)
+    private readonly notificationQueue: Queue,
   ) {}
 
   async validatePhotoByIdAndVisibility(
@@ -53,6 +59,17 @@ export class CommentService {
       userId: userId,
       photoId: photo.id,
     });
+
+    const notificationDto: NotificationCreateDto = {
+      userId,
+      title: 'Bình luận mới!',
+      content: `Ảnh <title>${photo.title}</title><id>${photo.id}</id> của bạn vừa nhận được một bình luận mới!`,
+      type: 'IN_APP',
+    };
+    await this.notificationQueue.add(
+      NotificationConstant.TEXT_NOTIFICATION_JOB,
+      notificationDto,
+    );
 
     return await this.commentRepository.createComment(comment);
   }

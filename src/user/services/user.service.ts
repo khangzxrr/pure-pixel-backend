@@ -1,13 +1,14 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { UserRepository } from 'src/database/repositories/user.repository';
 import { UserFilterDto } from '../dtos/user-filter.dto';
-import { MeDto } from '../dtos/me.dto';
+import { UserDto } from '../dtos/me.dto';
 import { KeycloakService } from 'src/authen/services/keycloak.service';
 import { UserNotFoundException } from '../exceptions/user-not-found.exception';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { StorageService } from 'src/storage/services/storage.service';
 import { PresignedUploadMediaDto } from '../dtos/presigned-upload-media.dto';
 import { UpdateProfileDto } from '../dtos/rest/update-profile.request.dto';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class UserService {
@@ -18,7 +19,7 @@ export class UserService {
   ) {}
 
   async generatePresignedUploadMedia(userId: string) {
-    const user = await this.userRepository.findOneById(userId);
+    const user = await this.userRepository.findUnique(userId);
 
     if (!user) {
       throw new UserNotFoundException();
@@ -41,28 +42,18 @@ export class UserService {
   }
 
   async updateProfile(userId: string, updateProfileDto: UpdateProfileDto) {
-    const user = await this.userRepository.findOneById(userId);
+    const user = await this.userRepository.findUnique(userId);
 
     if (!user) {
       throw new UserNotFoundException();
     }
-
-    const isPhotographer = await this.keycloakService.isUserHasRole(
-      userId,
-      Constants.PHOTOGRAPHER_ROLE,
-    );
 
     const updatedUser = await this.userRepository.updateUser(
       userId,
       updateProfileDto,
     );
 
-    const meDto = new MeDto(
-      updatedUser,
-      isPhotographer ? Constants.PHOTOGRAPHER_ROLE : Constants.CUSTOMER_ROLE,
-    );
-
-    return meDto;
+    return plainToInstance(UserDto, updatedUser);
   }
 
   async findOne(userFilterDto: UserFilterDto) {
@@ -71,16 +62,7 @@ export class UserService {
     if (!user) {
       throw new UserNotFoundException();
     }
-    const isPhotographer = await this.keycloakService.isUserHasRole(
-      user.id,
-      Constants.PHOTOGRAPHER_ROLE,
-    );
 
-    const meDto = new MeDto(
-      user,
-      isPhotographer ? Constants.PHOTOGRAPHER_ROLE : Constants.CUSTOMER_ROLE,
-    );
-
-    return meDto;
+    return plainToInstance(UserDto, user);
   }
 }

@@ -6,16 +6,35 @@ import { plainToInstance } from 'class-transformer';
 import { BlogDto } from '../dtos/blog.dto';
 import { BlogCreateRequestDto } from '../dtos/rest/blog-create.request.dto';
 import { BlogPatchUpdateRequestDto } from '../dtos/rest/blog-patch-update.request.dto';
-import { BlogPutUpdateRequestDto } from '../dtos/rest/blog-put-update.request.dto';
 import { StorageService } from 'src/storage/services/storage.service';
-import { BlogCreatePresignedUploadThumbnailDto } from '../dtos/rest/blog-create-presigned-upload-thumbnail.response.dto';
+import { v4 } from 'uuid';
+import { PhotoProcessService } from 'src/photo/services/photo-process.service';
+import { Blog } from '@prisma/client';
+import { BlogPutUpdateRequestDto } from '../dtos/rest/blog-put-update.request.dto';
 
 @Injectable()
 export class BlogService {
   constructor(
     @Inject() private readonly blogRepository: BlogRepository,
     @Inject() private readonly storageService: StorageService,
+    @Inject() private readonly photoProcessService: PhotoProcessService,
   ) {}
+
+  async signBlogThumbnail(blog: Blog) {
+    const blogDto = plainToInstance(BlogDto, blog);
+
+    blogDto.thumbnail = await this.storageService.signUrlUsingCDN(
+      blog.thumbnail,
+    );
+
+    return blogDto;
+  }
+
+  async findById(id: string) {
+    const blog = await this.blogRepository.findByIdOrThrow(id);
+
+    return this.signBlogThumbnail(blog);
+  }
 
   async findAll(blogFindAllRequest: BlogFindAllRequestDto) {
     const count = await this.blogRepository.count(blogFindAllRequest.toWhere());
@@ -27,15 +46,9 @@ export class BlogService {
       orderBy: blogFindAllRequest.toOrderBy(),
     });
 
-    const blogDtoPromises = plainToInstance(BlogDto, blogs).map(async (b) => {
-      if (b.thumbnail.length > 0) {
-        b.thumbnail = await this.storageService.signUrlUsingCDN(b.thumbnail);
-      }
+    const signedBlogDtoPromises = blogs.map((b) => this.signBlogThumbnail(b));
 
-      return b;
-    });
-
-    const blogDtos = await Promise.all(blogDtoPromises);
+    const blogDtos = await Promise.all(signedBlogDtoPromises);
 
     return new BlogFindAllResponseDto(
       blogFindAllRequest.limit,
@@ -47,34 +60,25 @@ export class BlogService {
   async delete(id: string) {
     await this.blogRepository.findByIdOrThrow(id);
 
-    await this.blogRepository.deleteById(id);
+    const deletedBlog = await this.blogRepository.deleteById(id);
+
+    await this.storageService.deleteKeys([deletedBlog.thumbnail]);
 
     return 'deleted';
   }
 
-  async createPresignedUploadThumbnail(id: string) {
+  async replace(
+    id: string,
+    blogUpdateRequestDto: BlogPutUpdateRequestDto,
+    thumbnailFile: Express.Multer.File,
+  ) {
     await this.blogRepository.findByIdOrThrow(id);
 
-    const key = `blog_thumbnail/${id}.jpg`;
-    const presignedUploadUrl =
-      await this.storageService.getPresignedUploadUrl(key);
+    await this.updateThumbnail(id, thumbnailFile);
 
-    await this.blogRepository.updateById(id, {
-      thumbnail: key,
-    });
+    const blog = await this.blogRepository.updateById(id, blogUpdateRequestDto);
 
-    return new BlogCreatePresignedUploadThumbnailDto(presignedUploadUrl);
-  }
-
-  async replace(id: string, blogPutUpdateRequestDto: BlogPutUpdateRequestDto) {
-    await this.blogRepository.findByIdOrThrow(id);
-
-    const blog = await this.blogRepository.updateById(
-      id,
-      blogPutUpdateRequestDto,
-    );
-
-    return plainToInstance(BlogDto, blog);
+    return await this.signBlogThumbnail(blog);
   }
 
   async update(id: string, blogUpdateRequestDto: BlogPatchUpdateRequestDto) {
@@ -82,13 +86,62 @@ export class BlogService {
 
     const blog = await this.blogRepository.updateById(id, blogUpdateRequestDto);
 
-    return plainToInstance(BlogDto, blog);
+    return await this.signBlogThumbnail(blog);
   }
 
-  async create(userId: string, blogCreateRequestDto: BlogCreateRequestDto) {
+  async updateThumbnail(id: string, thumbnailFile: Express.Multer.File) {
+    const blog = await this.blogRepository.findByIdOrThrow(id);
+
+    let extension = 'jpg';
+    const splitByDot = thumbnailFile.originalname.split('.');
+    if (splitByDot.length > 0) {
+      extension = splitByDot[splitByDot.length - 1];
+    }
+
+    const thumbnailPath = `blog_thumbnail/${id}.${extension}`;
+
+    const sharp = await this.photoProcessService.sharpInitFromBuffer(
+      thumbnailFile.buffer,
+    );
+    const thumbnailBuffer = await this.photoProcessService
+      .makeThumbnail(sharp)
+      .then((s) => s.toBuffer());
+
+    await this.storageService.uploadFromBytes(thumbnailPath, thumbnailBuffer);
+
+    return await this.signBlogThumbnail(blog);
+  }
+
+  async create(
+    userId: string,
+    blogCreateRequestDto: BlogCreateRequestDto,
+    thumbnailFile: Express.Multer.File,
+  ) {
+    const blogId = v4();
+
+    let extension = 'jpg';
+    const splitByDot = thumbnailFile.originalname.split('.');
+    if (splitByDot.length > 0) {
+      extension = splitByDot[splitByDot.length - 1];
+    }
+
+    const thumbnailPath = `blog_thumbnail/${blogId}.${extension}`;
+
+    const sharp = await this.photoProcessService.sharpInitFromBuffer(
+      thumbnailFile.buffer,
+    );
+    const thumbnailBuffer = await this.photoProcessService
+      .makeThumbnail(sharp)
+      .then((s) => s.toBuffer());
+
+    await this.storageService.uploadFromBytes(thumbnailPath, thumbnailBuffer);
+
     const blog = await this.blogRepository.create({
-      ...blogCreateRequestDto,
-      thumbnail: '',
+      id: blogId,
+      content: blogCreateRequestDto.content,
+      title: blogCreateRequestDto.title,
+      status: 'ENABLED',
+      thumbnail: thumbnailPath,
       user: {
         connect: {
           id: userId,
@@ -96,6 +149,6 @@ export class BlogService {
       },
     });
 
-    return plainToInstance(BlogDto, blog);
+    return await this.signBlogThumbnail(blog);
   }
 }

@@ -44,7 +44,7 @@ import { UpgradeConstant } from 'src/upgrade-package/constants/upgrade.constant'
     }),
     BullModule.registerQueueAsync({
       imports: [CustomConfigModule],
-      name: NotificationConstant.PUSH_NOTIFICATION_QUEUE,
+      name: NotificationConstant.NOTIFICATION_QUEUE,
       useExisting: BullMqQueueRegisterService,
       inject: [CustomConfigModule],
     }),

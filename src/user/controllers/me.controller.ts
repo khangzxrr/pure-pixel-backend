@@ -19,7 +19,7 @@ import {
 } from '@nestjs/swagger';
 import { UserFilterDto } from '../dtos/user-filter.dto';
 import { ParsedUserDto } from '../dtos/parsed-user.dto';
-import { MeDto } from '../dtos/me.dto';
+import { UserDto } from '../dtos/me.dto';
 
 import { Response } from 'express';
 import { PresignedUploadMediaDto } from '../dtos/presigned-upload-media.dto';
@@ -28,7 +28,7 @@ import { UpgradeOrderDto } from 'src/upgrade-order/dtos/upgrade-order.dto';
 import { UpgradeOrderService } from 'src/upgrade-order/services/upgrade-order.service';
 
 @Controller('me')
-@ApiTags('user')
+@ApiTags('me')
 export class MeController {
   constructor(
     @Inject() private readonly userService: UserService,
@@ -39,7 +39,7 @@ export class MeController {
     summary: 'get user info base on role ',
   })
   @ApiOkResponse({
-    type: MeDto,
+    type: UserDto,
   })
   @Get()
   @UseGuards(AuthGuard, KeycloakRoleGuard)
@@ -71,7 +71,7 @@ export class MeController {
     summary: 'update one or more field of profile',
   })
   @ApiOkResponse({
-    type: MeDto,
+    type: UserDto,
   })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   async patchUpdateProfile(

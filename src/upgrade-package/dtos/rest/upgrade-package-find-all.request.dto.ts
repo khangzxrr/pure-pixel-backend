@@ -102,7 +102,8 @@ export class UpgradePackageFindAllDto extends PagingPaginatedRequestDto {
         contains: this.searchById,
       },
       name: {
-        search: this.searchByName,
+        contains: this.searchByName,
+        mode: 'insensitive',
       },
       status: this.status,
       price: this.searchByPrice,

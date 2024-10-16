@@ -5,8 +5,7 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["fullTextSearch", "fullTextIndex"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -55,9 +54,12 @@ model User {
   transactions Transaction[]
   PhotoBuy     PhotoBuy[]
 
-  Report         Report[]
-  ReportResponse ReportResponse[]
-  Blog           Blog[]
+  photoshootPackages PhotoshootPackage[]
+  photoshootReviews  PhotoshootReview[]
+  reports            Report[]
+  reportResponses    ReportResponse[]
+  blogs              Blog[]
+  notifications      Notification[]
 }
 
 model BankInfo {
@@ -494,8 +496,83 @@ model Blog {
 
   status BlogStatus @default(ENABLED)
 
+  title     String
   content   String
   thumbnail String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PhotoshootDetail {
+  id           String   @id @default(uuid())
+  title        String
+  descriptions String[]
+
+  photoshootPackage   PhotoshootPackage @relation(fields: [photoshootPackageId], references: [id])
+  photoshootPackageId String
+}
+
+model PhotoshootReview {
+  id String @id @default(uuid())
+
+  star        Int
+  description String
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  photoshootPackage   PhotoshootPackage @relation(fields: [photoshootPackageId], references: [id])
+  photoshootPackageId String
+}
+
+enum PhotoshootPackageStatus {
+  ENABLED
+  DISABLED
+}
+
+model PhotoshootPackage {
+  id        String  @id @default(uuid())
+  title     String
+  subtitle  String
+  price     Decimal
+  thumbnail String
+
+  status PhotoshootPackageStatus
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  details PhotoshootDetail[]
+  reviews PhotoshootReview[]
+}
+
+enum NotificationStatus {
+  SHOW
+  HIDE
+}
+
+enum NotificationType {
+  IN_APP
+  EMAIL
+  BOTH_INAPP_EMAIL
+}
+
+model Notification {
+  id String @id @default(uuid())
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  status NotificationStatus @default(SHOW)
+  type   NotificationType   @default(IN_APP)
+
+  title   String
+  content String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

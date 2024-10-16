@@ -2801,7 +2801,7 @@ COPY public.defender_hosts (id, ip, ban_time, updated_at) FROM stdin;
 --
 
 COPY public.events_actions (id, name, description, type, options) FROM stdin;
-1	webhook		1	{"http_config":{"endpoint":"http://172.17.0.1:3001/sftpgo","password":{},"timeout":20,"skip_tls_verify":true,"method":"POST"},"cmd_config":{},"email_config":{},"retention_config":{},"fs_config":{"compress":{}},"pwd_expiration_config":{},"user_inactivity_config":{},"idp_config":{}}
+1	webhook		1	{"http_config":{"endpoint":"http://localhost:3001/sftpgo","password":{},"timeout":20,"skip_tls_verify":true,"method":"POST"},"cmd_config":{},"email_config":{},"retention_config":{},"fs_config":{"compress":{}},"pwd_expiration_config":{},"user_inactivity_config":{},"idp_config":{}}
 \.
 
 

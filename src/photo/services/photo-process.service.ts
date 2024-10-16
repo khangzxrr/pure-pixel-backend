@@ -25,6 +25,18 @@ export class PhotoProcessService {
     return this.storageService.getPresignedUploadUrl(key);
   }
 
+  async makeThumbnailAndUploadFromBuffer(key: string, buffer: Buffer) {
+    const sharp = await this.sharpInitFromBuffer(buffer);
+
+    const jpeg = await this.convertJpeg(sharp);
+
+    const thumbnailBuffer = await this.makeThumbnail(jpeg).then((s) =>
+      s.toBuffer(),
+    );
+
+    await this.uploadFromBuffer(key, thumbnailBuffer);
+  }
+
   async sharpInitFromBuffer(buffer: Buffer) {
     return SharpLib(buffer);
   }

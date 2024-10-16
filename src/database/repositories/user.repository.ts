@@ -70,7 +70,15 @@ export class UserRepository {
       },
     });
   }
-  async findOneById(userId: string) {
+
+  async findUniqueOrThrow(id: string) {
+    return this.prisma.user.findUniqueOrThrow({
+      where: {
+        id,
+      },
+    });
+  }
+  async findUnique(userId: string) {
     return this.prisma.user.findUnique({
       where: {
         id: userId,
@@ -96,8 +104,8 @@ export class UserRepository {
     });
   }
 
-  async updateUser(userId: string, { ...user }: Partial<User>) {
-    return this.prisma.user.update({
+  updateUser(userId: string, user: Prisma.UserUpdateInput) {
+    return this.prisma.extendedClient().user.update({
       where: {
         id: userId,
       },

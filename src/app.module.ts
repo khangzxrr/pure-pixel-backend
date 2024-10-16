@@ -19,6 +19,7 @@ import { UpgradeOrderModule } from './upgrade-order/upgrade-order.module';
 import { ReportModule } from './report/report.module';
 import { PhotoTagModule } from './photo-tag/photo-tag.module';
 import { BlogModule } from './blog/blog.module';
+import { PhotoshootPackageModule } from './photoshoot-package/photoshoot-package.module';
 
 @Module({
   providers: [
@@ -48,6 +49,7 @@ import { BlogModule } from './blog/blog.module';
     ReportModule,
     PhotoTagModule,
     BlogModule,
+    PhotoshootPackageModule,
   ],
   controllers: [AppController],
 })

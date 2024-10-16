@@ -42,7 +42,8 @@ export class BlogFindAllRequestDto extends PagingPaginatedRequestDto {
     const where: Prisma.BlogWhereInput = {};
     if (this.content) {
       where.content = {
-        search: this.content,
+        contains: this.content,
+        mode: 'insensitive',
       };
     }
 

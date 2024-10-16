@@ -4,9 +4,10 @@ import { StorageModule } from 'src/storage/storage.module';
 import { BlogService } from './services/blog.service';
 import { BlogController } from './controllers/blog.controller';
 import { AuthenModule } from 'src/authen/authen.module';
+import { PhotoModule } from 'src/photo/photo.module';
 
 @Module({
-  imports: [DatabaseModule, StorageModule, AuthenModule],
+  imports: [DatabaseModule, StorageModule, AuthenModule, PhotoModule],
   providers: [BlogService],
   controllers: [BlogController],
 })

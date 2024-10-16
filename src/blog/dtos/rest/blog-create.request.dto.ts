@@ -13,4 +13,16 @@ export class BlogCreateRequestDto {
   @IsString()
   @IsNotEmpty()
   content: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  title: string;
+
+  @ApiProperty({
+    type: 'string',
+    format: 'binary',
+    required: true,
+  })
+  thumbnailFile: Express.Multer.File;
 }

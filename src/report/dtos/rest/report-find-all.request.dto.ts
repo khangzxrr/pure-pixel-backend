@@ -62,7 +62,8 @@ export class ReportFindAllRequestDto extends PagingPaginatedRequestDto {
 
     if (this.content) {
       where.content = {
-        search: this.content,
+        mode: 'insensitive',
+        contains: this.content,
       };
     }
 

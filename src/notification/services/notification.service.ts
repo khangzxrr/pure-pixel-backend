@@ -1,12 +1,24 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { MailerService } from '@nestjs-modules/mailer';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { App } from '@onesignal/node-onesignal';
 import OneSignal = require('@onesignal/node-onesignal');
+import { NotificationCreateDto } from '../dtos/rest/notification-create.dto';
+import { NotificationRepository } from 'src/database/repositories/notification.repository';
+import { NotificationFindAllDto } from '../dtos/rest/notification-find-all.request.dto';
+import { NotificationFindAllResponseDto } from '../dtos/rest/notification-find-all.response.dto';
+import { plainToInstance } from 'class-transformer';
+import { NotificationDto } from '../dtos/notification.dto';
 
 @Injectable()
 export class NotificationService {
   private readonly logger = new Logger(NotificationService.name);
 
   private oneSignalClient: Promise<App> = null;
+
+  constructor(
+    private readonly mailerService: MailerService,
+    @Inject() private readonly notificationRepository: NotificationRepository,
+  ) {}
 
   client() {
     const config = OneSignal.createConfiguration({
@@ -27,43 +39,82 @@ export class NotificationService {
     return this.oneSignalClient;
   }
 
-  createTextNotification(
-    name: string,
-    titleEn: string,
-    titleVi: string,
-    en: string,
-    vi: string,
+  async findAll(
+    userId: string,
+    notificationFindAllDto: NotificationFindAllDto,
   ) {
+    const count = await this.notificationRepository.count({
+      userId,
+    });
+
+    const notifications = await this.notificationRepository.findAll(
+      notificationFindAllDto.toSkip(),
+      notificationFindAllDto.limit,
+      {
+        userId,
+      },
+    );
+
+    const notificationDtos = plainToInstance(NotificationDto, notifications);
+
+    return new NotificationFindAllResponseDto(
+      notificationFindAllDto.limit,
+      count,
+      notificationDtos,
+    );
+  }
+
+  async saveNotification(notificationCreateDto: NotificationCreateDto) {
+    return this.notificationRepository.create({
+      content: notificationCreateDto.content,
+      title: notificationCreateDto.title,
+      type: notificationCreateDto.type,
+      status: 'SHOW',
+      user: {
+        connect: {
+          id: notificationCreateDto.userId,
+        },
+      },
+    });
+  }
+
+  createTextNotification(name: string, title: string, content: string) {
     const notification = new OneSignal.Notification();
 
     notification.app_id = process.env.ONESIGNAL_APP_ID;
     notification.name = name;
     notification.headings = {
-      en: titleEn,
-      vi: titleVi,
+      en: title,
+      vi: title,
     };
     notification.contents = {
-      en,
-      vi,
+      en: content,
+      vi: title,
     };
 
     return notification;
   }
 
-  async sendToSpecificUserByUserId(
-    userid: string,
+  async sendEmailNotification(title: string, content: string, email: string[]) {
+    await this.mailerService.sendMail({
+      to: email,
+      from: process.env.SMTP_USERNAME,
+      subject: title,
+      text: content,
+      html: `<b>${content}</b>`,
+    });
+  }
+
+  async sendPushNotification(
+    userId: string,
     notification: OneSignal.Notification,
   ) {
     notification.include_aliases = {
-      external_id: [userid],
+      external_id: [userId],
     };
 
     notification.target_channel = 'push';
 
-    const notificationResponse =
-      await this.client().createNotification(notification);
-
-    this.logger.log(`sent notification to ${userid}`);
-    this.logger.log(notificationResponse);
+    await this.client().createNotification(notification);
   }
 }

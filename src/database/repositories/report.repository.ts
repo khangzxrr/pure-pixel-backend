@@ -39,6 +39,9 @@ export class ReportRepository {
       take,
       where,
       orderBy,
+      include: {
+        user: true,
+      },
     });
   }
 

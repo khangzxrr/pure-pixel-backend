@@ -71,6 +71,8 @@ import { PhotoTagRepository } from 'src/database/repositories/photo-tag.reposito
 import { PhotoVoteRequestDto } from '../dtos/rest/photo-vote.request.dto';
 import { PhotoVoteRepository } from 'src/database/repositories/photo-vote.repository';
 import { PhotoVoteDto } from '../dtos/photo-vote.dto';
+import { NotificationConstant } from 'src/notification/constants/notification.constant';
+import { NotificationCreateDto } from 'src/notification/dtos/rest/notification-create.dto';
 @Injectable()
 export class PhotoService {
   private readonly logger = new Logger(PhotoService.name);
@@ -86,6 +88,8 @@ export class PhotoService {
     @Inject() private readonly categoryRepository: CategoryRepository,
     @Inject() private readonly photoBuyRepository: PhotoBuyRepository,
     @Inject() private readonly photoVoteRepository: PhotoVoteRepository,
+    @InjectQueue(NotificationConstant.NOTIFICATION_QUEUE)
+    private readonly notificationQueue: Queue,
     @InjectQueue(PhotoConstant.PHOTO_PROCESS_QUEUE)
     private readonly photoProcessQueue: Queue,
     @InjectQueue(PhotoConstant.PHOTO_WATERMARK_QUEUE)
@@ -294,6 +298,17 @@ export class PhotoService {
       userId,
       photoVoteRequestDto.isUpvote,
       photoId,
+    );
+
+    const notificationDto: NotificationCreateDto = {
+      userId,
+      title: 'Tương tác mới',
+      content: `Ảnh <title>${photo.title}</title><id>${photo.id}</id> của bạn vừa nhận được một đánh giá!`,
+      type: 'IN_APP',
+    };
+    await this.notificationQueue.add(
+      NotificationConstant.TEXT_NOTIFICATION_JOB,
+      notificationDto,
     );
 
     return plainToInstance(PhotoVoteDto, vote);
@@ -520,7 +535,11 @@ export class PhotoService {
     return true;
   }
 
-  async getSignedPhotoById(userId: string, id: string) {
+  async getSignedPhotoById(
+    userId: string,
+    id: string,
+    validateOwnership: boolean = true,
+  ) {
     const photo = await this.photoRepository.getPhotoDetailById(id);
 
     if (!photo) {
@@ -528,6 +547,7 @@ export class PhotoService {
     }
 
     if (
+      validateOwnership &&
       photo.visibility === PhotoVisibility.PRIVATE &&
       photo.photographerId !== userId
     ) {

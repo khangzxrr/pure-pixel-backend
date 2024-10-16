@@ -15,7 +15,14 @@ export class BlogPutUpdateRequestDto {
   content: string;
 
   @ApiProperty()
+  @IsString()
   @IsNotEmpty()
-  @IsUrl({})
-  thumbnail: string;
+  title: string;
+
+  @ApiProperty({
+    type: 'string',
+    format: 'binary',
+    required: true,
+  })
+  thumbnailFile: Express.Multer.File;
 }

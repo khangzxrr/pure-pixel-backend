@@ -143,7 +143,8 @@ export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
     if (this.categoryName) {
       where.category = {
         name: {
-          search: this.categoryName,
+          mode: 'insensitive',
+          contains: this.categoryName,
         },
       };
     }
@@ -155,14 +156,16 @@ export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
     if (this.photographerName) {
       where.photographer = {
         name: {
-          search: this.photographerName,
+          mode: 'insensitive',
+          contains: this.photographerName,
         },
       };
     }
 
     if (this.title) {
       where.title = {
-        search: this.title,
+        contains: this.title,
+        mode: 'insensitive',
       };
     }
 
