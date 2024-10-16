@@ -44,10 +44,25 @@ export class BlogController {
   constructor(private readonly blogService: BlogService) {}
 
   @Get()
+  @ApiOperation({
+    summary: 'get many blogs',
+  })
   @ApiOkResponsePaginated(BlogDto)
   @Public(true)
   async findAll(@Query() findAllRequestDto: BlogFindAllRequestDto) {
     return await this.blogService.findAll(findAllRequestDto);
+  }
+
+  @Get(':id')
+  @ApiOperation({
+    summary: 'get specific blog by blogId',
+  })
+  @ApiOkResponse({
+    type: BlogDto,
+  })
+  @Public(true)
+  async getById(@Param('id') id: string) {
+    return await this.blogService.findById(id);
   }
 
   @Delete(':id')
