@@ -54,7 +54,7 @@ export class PhotoshootRepository {
     take: number,
     skip: number,
     where: Prisma.PhotoshootPackageWhereInput,
-  ) {
+  ): Promise<any[]> {
     return this.prisma.extendedClient().photoshootPackage.findMany({
       take,
       skip,
