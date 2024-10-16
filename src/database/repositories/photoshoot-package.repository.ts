@@ -7,7 +7,7 @@ export class PhotoshootRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async delete(id: string) {
-    return this.prisma.photoshootPackage.delete({
+    return this.prisma.extendedClient().photoshootPackage.delete({
       where: {
         id,
       },
@@ -26,14 +26,14 @@ export class PhotoshootRepository {
     });
   }
 
-  async create(photoshootPackage: Prisma.PhotoshootPackageCreateInput) {
-    return this.prisma.photoshootPackage.create({
+  create(photoshootPackage: Prisma.PhotoshootPackageCreateInput) {
+    return this.prisma.extendedClient().photoshootPackage.create({
       data: photoshootPackage,
     });
   }
 
   async count(where: Prisma.PhotoshootPackageWhereInput) {
-    return this.prisma.photoshootPackage.count({
+    return this.prisma.extendedClient().photoshootPackage.count({
       where,
     });
   }
@@ -47,6 +47,9 @@ export class PhotoshootRepository {
       take,
       skip,
       where,
+      include: {
+        details: true,
+      },
     });
   }
 }

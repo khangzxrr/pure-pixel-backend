@@ -96,8 +96,8 @@ export class UserRepository {
     });
   }
 
-  async updateUser(userId: string, { ...user }: Partial<User>) {
-    return this.prisma.user.update({
+  updateUser(userId: string, user: Prisma.UserUpdateInput) {
+    return this.prisma.extendedClient().user.update({
       where: {
         id: userId,
       },
