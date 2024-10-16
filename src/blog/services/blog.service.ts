@@ -78,7 +78,7 @@ export class BlogService {
 
     const blog = await this.blogRepository.updateById(id, blogUpdateRequestDto);
 
-    return this.signBlogThumbnail(blog);
+    return await this.signBlogThumbnail(blog);
   }
 
   async update(id: string, blogUpdateRequestDto: BlogPatchUpdateRequestDto) {
@@ -86,7 +86,7 @@ export class BlogService {
 
     const blog = await this.blogRepository.updateById(id, blogUpdateRequestDto);
 
-    return plainToInstance(BlogDto, blog);
+    return await this.signBlogThumbnail(blog);
   }
 
   async updateThumbnail(id: string, thumbnailFile: Express.Multer.File) {
@@ -109,7 +109,7 @@ export class BlogService {
 
     await this.storageService.uploadFromBytes(thumbnailPath, thumbnailBuffer);
 
-    return this.signBlogThumbnail(blog);
+    return await this.signBlogThumbnail(blog);
   }
 
   async create(
@@ -149,6 +149,6 @@ export class BlogService {
       },
     });
 
-    return plainToInstance(BlogDto, blog);
+    return await this.signBlogThumbnail(blog);
   }
 }
