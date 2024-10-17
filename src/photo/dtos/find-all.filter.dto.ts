@@ -64,7 +64,7 @@ export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
   selling?: boolean;
 
   @Exclude()
-  visibility: PhotoVisibility;
+  visibility?: PhotoVisibility;
 
   @Exclude()
   status?: PhotoStatus;
@@ -132,6 +132,9 @@ export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
   toWhere(): Prisma.PhotoWhereInput {
     const where: Prisma.PhotoWhereInput = {};
 
+    if (this.visibility) {
+      where.visibility = this.visibility;
+    }
     if (this.status) {
       where.status = this.status;
     }
