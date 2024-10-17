@@ -32,5 +32,5 @@ export class BookingDto {
 
   @ApiPropertyOptional()
   @Type(() => UserDto)
-  user: UserDto;
+  user?: UserDto;
 }
