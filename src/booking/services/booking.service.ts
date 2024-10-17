@@ -164,7 +164,6 @@ export class BookingService {
     //
     const previousBooking = await this.bookingRepository.findFirst({
       userId,
-      photoshootPackageId: packageId,
       status: {
         notIn: ['SUCCESSED', 'FAILED'],
       },
