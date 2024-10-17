@@ -490,6 +490,9 @@ export class PhotoService {
   }
 
   async findAll(filter: FindAllPhotoFilterDto) {
+    this.logger.log(`findall with filter:`);
+    this.logger.log(JSON.stringify(filter));
+
     const count = await this.photoRepository.count(filter);
 
     const photos = await this.photoRepository.findAll(

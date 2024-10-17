@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
+import { PhotoshootWithUserAndDetails } from '../types/photoshoot-package';
 
 @Injectable()
 export class PhotoshootRepository {
   constructor(private readonly prisma: PrismaService) {}
-
   async findUniqueOrThrow(id: string) {
     return this.prisma.extendedClient().photoshootPackage.findUniqueOrThrow({
       where: {
@@ -54,7 +54,7 @@ export class PhotoshootRepository {
     take: number,
     skip: number,
     where: Prisma.PhotoshootPackageWhereInput,
-  ): Promise<any[]> {
+  ): Promise<PhotoshootWithUserAndDetails[]> {
     return this.prisma.extendedClient().photoshootPackage.findMany({
       take,
       skip,
