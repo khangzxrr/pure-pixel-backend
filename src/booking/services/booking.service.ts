@@ -21,6 +21,26 @@ export class BookingService {
     @Inject() private readonly notificationService: NotificationService,
   ) {}
 
+  async findAllByUserId(userId: string, findallDto: BookingFindAllRequestDto) {
+    findallDto.userId = userId;
+
+    const count = await this.bookingRepository.count(findallDto.toWhere());
+
+    const bookings = await this.bookingRepository.findAll({
+      skip: findallDto.toSkip(),
+      take: findallDto.limit,
+      where: findallDto.toWhere(),
+      include: {
+        photoshootPackage: true,
+        user: true,
+      },
+    });
+
+    const bookingDtos = plainToInstance(BookingDto, bookings);
+
+    return new BookingFindAllResponseDto(findallDto.limit, count, bookingDtos);
+  }
+
   async findAllByPhotographerId(
     photographerId: string,
     findallDto: BookingFindAllRequestDto,
