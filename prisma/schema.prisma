@@ -551,11 +551,11 @@ enum NotificationType {
 
 enum NotificationReferenceType {
   BOOKING
-  COMMENT
   CHAT
   UPGRADE_PACKAGE
   PHOTO_SELL
   PHOTO_BUY
+  PHOTO
 }
 
 model Notification {
