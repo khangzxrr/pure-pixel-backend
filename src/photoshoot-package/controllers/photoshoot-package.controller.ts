@@ -53,6 +53,24 @@ export class PhotoShootPackageController {
     );
   }
 
+  @Get('/photographer/:photographerId')
+  @ApiOperation({
+    summary: 'get all photoshoot package of a photographer by photographerId',
+  })
+  @ApiOkResponsePaginated(PhotoshootPackageDto)
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
+  async findAllWithPhotographerId(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Param('photographerId') photographerId: string,
+    @Query() findAllDto: PhotoshootPackageFindAllDto,
+  ) {
+    return await this.photoshootPackageService.findAllEnabledPackageByPhotographerId(
+      photographerId,
+      findAllDto,
+    );
+  }
+
   @Post()
   @ApiOperation({
     summary: 'create new photoshoot package',
