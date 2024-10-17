@@ -8,6 +8,9 @@ import { NotificationFindAllDto } from '../dtos/rest/notification-find-all.reque
 import { NotificationFindAllResponseDto } from '../dtos/rest/notification-find-all.response.dto';
 import { plainToInstance } from 'class-transformer';
 import { NotificationDto } from '../dtos/notification.dto';
+import { InjectQueue } from '@nestjs/bullmq';
+import { NotificationConstant } from '../constants/notification.constant';
+import { Queue } from 'bullmq';
 
 @Injectable()
 export class NotificationService {
@@ -18,9 +21,11 @@ export class NotificationService {
   constructor(
     private readonly mailerService: MailerService,
     @Inject() private readonly notificationRepository: NotificationRepository,
+    @InjectQueue(NotificationConstant.NOTIFICATION_QUEUE)
+    private readonly queue: Queue,
   ) {}
 
-  client() {
+  private client() {
     const config = OneSignal.createConfiguration({
       userAuthKey: process.env.ONESIGNAL_USER_AUTH_KEY,
       restApiKey: process.env.ONESIGNAL_REST_API_KEY,
@@ -29,7 +34,7 @@ export class NotificationService {
     return new OneSignal.DefaultApi(config);
   }
 
-  async getApp(): Promise<App> {
+  private async getApp(): Promise<App> {
     if (this.oneSignalClient) {
       return this.oneSignalClient;
     }
@@ -118,5 +123,9 @@ export class NotificationService {
     notification.target_channel = 'push';
 
     await this.client().createNotification(notification);
+  }
+
+  async addNotificationToQueue(notificationDto: NotificationCreateDto) {
+    this.queue.add(NotificationConstant.TEXT_NOTIFICATION_JOB, notificationDto);
   }
 }
