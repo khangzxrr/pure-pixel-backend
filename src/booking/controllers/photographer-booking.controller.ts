@@ -22,6 +22,9 @@ export class PhotographerBookingController {
     @AuthenticatedUser() user: ParsedUserDto,
     @Query() findallDto: BookingFindAllRequestDto,
   ) {
-    return await this.bookingService.findAll(user.sub, findallDto);
+    return await this.bookingService.findAllByPhotographerId(
+      user.sub,
+      findallDto,
+    );
   }
 }
