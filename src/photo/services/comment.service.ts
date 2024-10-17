@@ -63,7 +63,9 @@ export class CommentService {
     const notificationDto: NotificationCreateDto = {
       userId,
       title: 'Bình luận mới!',
-      content: `Ảnh <title>${photo.title}</title><id>${photo.id}</id> của bạn vừa nhận được một bình luận mới!`,
+      content: `Ảnh ${photo.title} của bạn vừa nhận được một bình luận mới!`,
+      referenceType: 'PHOTO',
+      referenceId: photoId,
       type: 'IN_APP',
     };
     await this.notificationQueue.add(
