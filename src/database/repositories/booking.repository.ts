@@ -41,7 +41,22 @@ export class BookingRepository {
     });
   }
 
-  async findAll(args: Prisma.BookingFindManyArgs) {
-    return this.prisma.extendedClient().booking.findMany(args);
+  async findAllWithIncludedPhotoshootPackage(
+    skip: number,
+    take: number,
+    where: Prisma.BookingWhereInput,
+  ) {
+    return this.prisma.extendedClient().booking.findMany({
+      skip,
+      take,
+      where,
+      include: {
+        photoshootPackage: {
+          include: {
+            user: true,
+          },
+        },
+      },
+    });
   }
 }

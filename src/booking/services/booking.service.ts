@@ -11,6 +11,10 @@ import { EndDateMustLargerThanStartDateException } from '../exceptions/end-date-
 import { ExistBookingWithSelectedDateException } from '../exceptions/exist-booking-with-selected-date.exception';
 import { PhotoshootRepository } from 'src/database/repositories/photoshoot-package.repository';
 import { NotificationService } from 'src/notification/services/notification.service';
+import { DenyBookingRequestDto } from '../dtos/rest/deny-booking.request.dto';
+import { BookingNotBelongException } from '../exceptions/booking-not-belong.exception';
+import { BookingNotInRequestedStateException } from '../exceptions/booking-not-in-requested-state.exception';
+import { BookingWithPhotoshootPackageIncludedUser } from 'src/database/types/booking';
 
 @Injectable()
 export class BookingService {
@@ -26,22 +30,79 @@ export class BookingService {
 
     const count = await this.bookingRepository.count(findallDto.toWhere());
 
-    const bookings = await this.bookingRepository.findAll({
-      skip: findallDto.toSkip(),
-      take: findallDto.limit,
-      where: findallDto.toWhere(),
-      include: {
-        photoshootPackage: {
-          include: {
-            user: true,
-          },
-        },
-      },
-    });
+    const bookings: BookingWithPhotoshootPackageIncludedUser[] =
+      await this.bookingRepository.findAllWithIncludedPhotoshootPackage(
+        findallDto.toSkip(),
+        findallDto.limit,
+        findallDto.toWhere(),
+      );
 
     const bookingDtos = plainToInstance(BookingDto, bookings);
 
     return new BookingFindAllResponseDto(findallDto.limit, count, bookingDtos);
+  }
+
+  async accept(bookingId: string, userId: string) {
+    const booking = await this.bookingRepository.findUniqueOrThrow({
+      id: bookingId,
+    });
+
+    if (booking.photoshootPackage.userId !== userId) {
+      throw new BookingNotBelongException();
+    }
+
+    if (booking.status !== 'REQUESTED') {
+      throw new BookingNotInRequestedStateException();
+    }
+
+    const updatedBooking = await this.bookingRepository.updateById(bookingId, {
+      status: 'ACCEPTED',
+    });
+
+    await this.notificationService.addNotificationToQueue({
+      userId: booking.userId,
+      referenceId: booking.id,
+      referenceType: 'BOOKING',
+      title: `Nhiếp ảnh gia đã chấp nhận gói chụp ${booking.photoshootPackage.title}`,
+      type: 'BOTH_INAPP_EMAIL',
+      content: `Yêu cầu thực hiện gói chụp ${booking.photoshootPackage.title} của bạn đã được chấp nhận, nếu có bất kì yêu cầu nào khác - vui lòng liên hệ nhiếp ảnh gia qua tin nhắn để trao đổi thêm`,
+    });
+
+    return plainToInstance(BookingDto, updatedBooking);
+  }
+
+  async deny(
+    bookingId: string,
+    userId: string,
+    denyDto: DenyBookingRequestDto,
+  ) {
+    const booking = await this.bookingRepository.findUniqueOrThrow({
+      id: bookingId,
+    });
+
+    if (booking.photoshootPackage.userId !== userId) {
+      throw new BookingNotBelongException();
+    }
+
+    if (booking.status !== 'REQUESTED') {
+      throw new BookingNotInRequestedStateException();
+    }
+
+    const updatedBooking = await this.bookingRepository.updateById(bookingId, {
+      status: 'DENIED',
+      failedReason: denyDto.reason,
+    });
+
+    await this.notificationService.addNotificationToQueue({
+      userId: booking.userId,
+      referenceId: booking.id,
+      referenceType: 'BOOKING',
+      title: `Nhiếp ảnh gia đã từ chối gói chụp ${booking.photoshootPackage.title}`,
+      type: 'BOTH_INAPP_EMAIL',
+      content: `Yêu cầu thực hiện gói chụp ${booking.photoshootPackage.title} của bạn đã hủy bỏ với lí do ${denyDto.reason}`,
+    });
+
+    return plainToInstance(BookingDto, updatedBooking);
   }
 
   async findAllByPhotographerId(
@@ -52,15 +113,12 @@ export class BookingService {
 
     const count = await this.bookingRepository.count(findallDto.toWhere());
 
-    const bookings = await this.bookingRepository.findAll({
-      skip: findallDto.toSkip(),
-      take: findallDto.limit,
-      where: findallDto.toWhere(),
-      include: {
-        photoshootPackage: true,
-        user: true,
-      },
-    });
+    const bookings: BookingWithPhotoshootPackageIncludedUser[] =
+      await this.bookingRepository.findAllWithIncludedPhotoshootPackage(
+        findallDto.toSkip(),
+        findallDto.limit,
+        findallDto.toWhere(),
+      );
 
     const bookingDtos = plainToInstance(BookingDto, bookings);
 

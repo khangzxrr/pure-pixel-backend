@@ -5,3 +5,14 @@ export type BookingWithPhotoshootPackage = Prisma.BookingGetPayload<{
     photoshootPackage: true;
   };
 }>;
+
+export type BookingWithPhotoshootPackageIncludedUser =
+  Prisma.BookingGetPayload<{
+    include: {
+      photoshootPackage: {
+        include: {
+          user: true;
+        };
+      };
+    };
+  }>;
