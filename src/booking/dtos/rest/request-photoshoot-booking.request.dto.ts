@@ -1,21 +1,23 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDate, IsNotEmpty, IsString, MinDate } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { IsDate, MinDate } from 'class-validator';
 
 export class RequestPhotoshootBookingRequestDto {
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  photoshootPackageId: string;
-
-  @ApiProperty()
+  @ApiProperty({
+    example: '2024-10-19T01:30:14.761+07:00',
+  })
+  @Transform(({ value }) => new Date(value))
   @IsDate()
   @MinDate(new Date())
-  bookingFromDate: Date;
+  startDate: Date;
 
-  @ApiProperty()
+  @ApiProperty({
+    example: '2024-10-19T01:30:14.761+07:00',
+  })
+  @Transform(({ value }) => new Date(value))
   @IsDate()
   @MinDate(new Date())
-  bookingToDate: Date;
+  endDate: Date;
 
   @ApiProperty()
   description: string;

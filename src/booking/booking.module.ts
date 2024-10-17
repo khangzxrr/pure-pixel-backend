@@ -5,9 +5,10 @@ import { StorageModule } from 'src/storage/storage.module';
 import { BookingService } from './services/booking.service';
 import { CustomerBookingController } from './controllers/customer-booking.controller';
 import { PhotographerBookingController } from './controllers/photographer-booking.controller';
+import { NotificationModule } from 'src/notification/notification.module';
 
 @Module({
-  imports: [DatabaseModule, StorageModule, AuthenModule],
+  imports: [DatabaseModule, StorageModule, AuthenModule, NotificationModule],
   providers: [BookingService],
   controllers: [CustomerBookingController, PhotographerBookingController],
 })
