@@ -38,7 +38,7 @@ export class PhotoShootPackageController {
 
   @Get()
   @ApiOperation({
-    summary: 'get all photoshoot package of a photographer by userid',
+    summary: 'get all photoshoot package of current photographer',
   })
   @ApiOkResponsePaginated(PhotoshootPackageDto)
   @UseGuards(AuthGuard, KeycloakRoleGuard)

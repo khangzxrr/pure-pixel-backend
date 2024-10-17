@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PhotoshootPackageService } from '../services/photoshoot-package.service';
 import { AuthGuard, Roles, AuthenticatedUser } from 'nest-keycloak-connect';
@@ -16,7 +16,7 @@ export class CustomerPhotoshootPackageController {
     private readonly photoshootPackageService: PhotoshootPackageService,
   ) {}
 
-  @Get()
+  @Get('/photographer/:photographerId')
   @ApiOperation({
     summary: 'get all photoshoot package of a photographer by photographerId',
   })
@@ -25,6 +25,7 @@ export class CustomerPhotoshootPackageController {
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   async findAll(
     @AuthenticatedUser() user: ParsedUserDto,
+    @Param('photographerId') photographerId: string,
     @Query() findAllDto: PhotoshootPackageFindAllDto,
   ) {
     return await this.photoshootPackageService.findAllByUserId(
