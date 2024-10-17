@@ -31,8 +31,11 @@ export class BookingService {
       take: findallDto.limit,
       where: findallDto.toWhere(),
       include: {
-        photoshootPackage: true,
-        user: true,
+        photoshootPackage: {
+          include: {
+            user: true,
+          },
+        },
       },
     });
 

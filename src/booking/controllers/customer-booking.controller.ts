@@ -32,10 +32,7 @@ export class CustomerBookingController {
     @AuthenticatedUser() user: ParsedUserDto,
     @Query() findallDto: BookingFindAllRequestDto,
   ) {
-    return await this.bookingService.findAllByPhotographerId(
-      photographerId,
-      findallDto,
-    );
+    return await this.bookingService.findAllByUserId(user.sub, findallDto);
   }
   @Post('/photoshoot-package/:packageId/request')
   @ApiOperation({
