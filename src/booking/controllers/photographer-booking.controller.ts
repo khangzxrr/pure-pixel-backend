@@ -9,7 +9,7 @@ import { BookingFindAllRequestDto } from '../dtos/rest/booking-find-all.request.
 
 @Controller('booking')
 @ApiTags('photographer-booking')
-export class CustomerBookingController {
+export class PhotographerBookingController {
   constructor(@Inject() private readonly bookingService: BookingService) {}
 
   @Get('')
