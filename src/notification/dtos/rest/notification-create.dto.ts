@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { NotificationType } from '@prisma/client';
+import { NotificationReferenceType, NotificationType } from '@prisma/client';
 import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
 
 export class NotificationCreateDto {
@@ -23,4 +23,15 @@ export class NotificationCreateDto {
   })
   @IsEnum(NotificationType)
   type: NotificationType;
+
+  @ApiProperty({
+    enum: NotificationReferenceType,
+  })
+  @IsEnum(NotificationReferenceType)
+  referenceType: NotificationReferenceType;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  referenceId: string;
 }

@@ -70,6 +70,8 @@ export class NotificationService {
       title: notificationCreateDto.title,
       type: notificationCreateDto.type,
       status: 'SHOW',
+      referenceType: notificationCreateDto.referenceType,
+      referenceId: notificationCreateDto.referenceId,
       user: {
         connect: {
           id: notificationCreateDto.userId,
