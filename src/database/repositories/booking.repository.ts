@@ -6,6 +6,11 @@ import { PrismaService } from 'src/prisma.service';
 export class BookingRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  async create(data: Prisma.BookingCreateInput) {
+    return this.prisma.extendedClient().booking.create({
+      data,
+    });
+  }
   async findFirst(where: Prisma.BookingWhereInput) {
     return this.prisma.extendedClient().booking.findFirst({
       where,
