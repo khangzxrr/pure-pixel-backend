@@ -29,11 +29,17 @@ export class BookingService {
 
     const count = await this.bookingRepository.count(findallDto.toWhere());
 
-    const bookings = await this.bookingRepository.findAll(
-      findallDto.toSkip(),
-      findallDto.limit,
-      findallDto.toWhere(),
-    );
+    const bookings = await this.bookingRepository.findAll({
+      skip: findallDto.toSkip(),
+      take: findallDto.limit,
+      where: findallDto.toWhere(),
+      include: {
+        photoshootPackage: true,
+        user: true,
+      },
+    });
+
+    console.log(bookings);
 
     const bookingDtos = plainToInstance(BookingDto, bookings);
 
