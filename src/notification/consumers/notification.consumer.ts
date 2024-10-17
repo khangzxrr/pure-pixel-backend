@@ -19,12 +19,17 @@ export class NotificationConsumer extends WorkerHost {
   }
 
   async process(job: Job): Promise<any> {
-    switch (job.name) {
-      case NotificationConstant.TEXT_NOTIFICATION_JOB:
-        await this.sendNotification(job.data);
-        break;
-      default:
-        break;
+    try {
+      switch (job.name) {
+        case NotificationConstant.TEXT_NOTIFICATION_JOB:
+          await this.sendNotification(job.data);
+          break;
+        default:
+          break;
+      }
+    } catch (e) {
+      console.log(e);
+      throw new Error(); //retry
     }
 
     return null;
