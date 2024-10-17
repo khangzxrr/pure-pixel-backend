@@ -102,9 +102,21 @@ export class NotificationService {
     return notification;
   }
 
-  async sendEmailNotification(title: string, content: string, email: string[]) {
+  async sendEmailNotification(
+    title: string,
+    content: string,
+    emails: string[],
+  ) {
+    const filterNotEmptyEmails = emails.filter((m) => m.length !== 0);
+
+    this.logger.log(`send mail to emails: ${filterNotEmptyEmails}`);
+
+    if (filterNotEmptyEmails.length === 0) {
+      return;
+    }
+
     await this.mailerService.sendMail({
-      to: email,
+      to: filterNotEmptyEmails,
       from: process.env.SMTP_USERNAME,
       subject: title,
       text: content,
@@ -126,6 +138,7 @@ export class NotificationService {
   }
 
   async addNotificationToQueue(notificationDto: NotificationCreateDto) {
+    console.log(notificationDto);
     return await this.queue.add(
       NotificationConstant.TEXT_NOTIFICATION_JOB,
       notificationDto,
