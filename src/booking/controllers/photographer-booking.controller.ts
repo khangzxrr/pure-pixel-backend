@@ -7,7 +7,7 @@ import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { BookingFindAllRequestDto } from '../dtos/rest/booking-find-all.request.dto';
 
-@Controller('booking')
+@Controller('photographer/booking')
 @ApiTags('photographer-booking')
 export class PhotographerBookingController {
   constructor(@Inject() private readonly bookingService: BookingService) {}

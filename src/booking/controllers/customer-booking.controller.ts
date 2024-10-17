@@ -14,7 +14,7 @@ import { RequestPhotoshootBookingRequestDto } from '../dtos/rest/request-photosh
 import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
 
-@Controller('booking')
+@Controller('customer/booking')
 @ApiTags('customer-booking')
 export class CustomerBookingController {
   constructor(@Inject() private readonly bookingService: BookingService) {}

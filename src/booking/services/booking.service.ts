@@ -39,8 +39,6 @@ export class BookingService {
       },
     });
 
-    console.log(bookings);
-
     const bookingDtos = plainToInstance(BookingDto, bookings);
 
     return new BookingFindAllResponseDto(findallDto.limit, count, bookingDtos);
