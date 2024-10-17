@@ -22,14 +22,14 @@ export class CustomerPhotoshootPackageController {
   })
   @ApiOkResponsePaginated(PhotoshootPackageDto)
   @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
   async findAll(
     @AuthenticatedUser() user: ParsedUserDto,
     @Param('photographerId') photographerId: string,
     @Query() findAllDto: PhotoshootPackageFindAllDto,
   ) {
-    return await this.photoshootPackageService.findAllByUserId(
-      user.sub,
+    return await this.photoshootPackageService.findAllEnabledPackageByPhotographerId(
+      photographerId,
       findAllDto,
     );
   }
