@@ -126,6 +126,9 @@ export class NotificationService {
   }
 
   async addNotificationToQueue(notificationDto: NotificationCreateDto) {
-    this.queue.add(NotificationConstant.TEXT_NOTIFICATION_JOB, notificationDto);
+    return await this.queue.add(
+      NotificationConstant.TEXT_NOTIFICATION_JOB,
+      notificationDto,
+    );
   }
 }
