@@ -242,7 +242,7 @@ model UpgradePackage {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  name  String
+  name  String @unique
   price Decimal @default(0)
 
   minOrderMonth Int @default(0)
@@ -258,7 +258,6 @@ model UpgradePackage {
 
   upgradePackageHistories UpgradePackageHistory[]
 
-  @@unique([name, deletedAt])
 }
 
 model Category {

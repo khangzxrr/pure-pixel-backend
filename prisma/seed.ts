@@ -11,38 +11,32 @@ async function main() {
     description: 'Những bức ảnh chưa phân loại',
   };
 
-  const basicUpgradePackage = {
+  const basicUpgradePackage: Prisma.UpgradePackageCreateInput = {
     name: 'Cơ bản',
     minOrderMonth: 3,
     descriptions: ['description 1', 'description 2', 'description 3'],
     maxPhotoQuota: 5 * 1024 * 1024 * 1024,
     maxPackageCount: 10,
-    maxBookingPhotoQuota: 5 * 1024 * 1024 * 1024,
-    maxBookingVideoQuota: 5 * 1024 * 1024 * 1024,
     price: new Prisma.Decimal(20000),
     status: UpgradePackageStatus.ENABLED,
   };
 
-  const premiumUpgradePackage = {
+  const premiumUpgradePackage: Prisma.UpgradePackageCreateInput = {
     name: 'Nâng cao',
     minOrderMonth: 6,
     descriptions: ['description 1', 'description 2', 'description 3'],
     maxPhotoQuota: 10 * 1024 * 1024 * 1024,
     maxPackageCount: 10,
-    maxBookingPhotoQuota: 10 * 1024 * 1024 * 1024,
-    maxBookingVideoQuota: 10 * 1024 * 1024 * 1024,
     price: new Prisma.Decimal(38000),
     status: UpgradePackageStatus.ENABLED,
   };
 
-  const signatureUpgradePackage = {
+  const signatureUpgradePackage: Prisma.UpgradePackageCreateInput = {
     name: 'Cao cấp',
     minOrderMonth: 12,
     descriptions: ['description 1', 'description 2', 'description 3'],
     maxPhotoQuota: 20 * 1024 * 1024 * 1024,
     maxPackageCount: 100,
-    maxBookingPhotoQuota: 20 * 1024 * 1024 * 1024,
-    maxBookingVideoQuota: 20 * 1024 * 1024 * 1024,
     price: new Prisma.Decimal(50000),
     status: UpgradePackageStatus.ENABLED,
   };
@@ -63,10 +57,7 @@ async function main() {
   //insert signaure package
   await prisma.upgradePackage.upsert({
     where: {
-      name_deletedAt: {
-        name: signatureUpgradePackage.name,
-        deletedAt: null,
-      },
+      name: signatureUpgradePackage.name,
     },
     update: {
       ...signatureUpgradePackage,
@@ -75,10 +66,7 @@ async function main() {
   });
   await prisma.upgradePackage.upsert({
     where: {
-      name_deletedAt: {
-        name: premiumUpgradePackage.name,
-        deletedAt: null,
-      },
+      name: premiumUpgradePackage.name,
     },
     update: {
       ...premiumUpgradePackage,
@@ -87,10 +75,7 @@ async function main() {
   });
   await prisma.upgradePackage.upsert({
     where: {
-      name_deletedAt: {
-        name: basicUpgradePackage.name,
-        deletedAt: null,
-      },
+      name: basicUpgradePackage.name,
     },
     update: {
       ...basicUpgradePackage,
