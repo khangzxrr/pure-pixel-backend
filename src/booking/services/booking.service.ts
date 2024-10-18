@@ -214,6 +214,13 @@ export class BookingService {
       endDate: bookingRequestDto.endDate,
       status: 'REQUESTED',
       description: bookingRequestDto.description,
+      billItems: {
+        create: {
+          type: 'INCREASE',
+          title: 'giá gốc của gói chụp',
+          price: photoshootPackage.price,
+        },
+      },
       photoshootPackage: {
         connect: {
           id: packageId,
