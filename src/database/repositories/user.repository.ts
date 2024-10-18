@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Prisma, User } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 import { UserEntity } from 'src/user/entities/user.entity';
 import { DuplicatedUserIdException } from '../exceptions/duplicatedUserId.exception';
@@ -168,5 +168,11 @@ export class UserRepository {
         }
       }
     }
+  }
+
+  async findMany(where: Prisma.UserWhereInput) {
+    return this.prisma.extendedClient().user.findMany({
+      where,
+    });
   }
 }

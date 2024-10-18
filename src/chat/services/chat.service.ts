@@ -1,7 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { UserRepository } from 'src/database/repositories/user.repository';
 import { StreamChat } from 'stream-chat';
 @Injectable()
 export class ChatService {
+  private readonly logger = new Logger(ChatService.name);
+
+  constructor(@Inject() private readonly userRepository: UserRepository) {}
+
   private getStream() {
     const client = StreamChat.getInstance(
       process.env.STREAM_ACCESS_KEY,
@@ -9,6 +14,21 @@ export class ChatService {
     );
 
     return client;
+  }
+
+  async syncAllUsers() {
+    const users = await this.userRepository.findMany({});
+
+    users.forEach(async (user) => {
+      await this.getStream().upsertUser({
+        id: user.id,
+        name: user.name,
+      });
+
+      this.logger.log(`synced userId: ${user.id} name: ${user.name}`);
+    });
+
+    return users.length;
   }
 
   async upsertUser(userId: string, name: string) {

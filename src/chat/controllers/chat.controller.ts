@@ -11,6 +11,14 @@ import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
 export class ChatController {
   constructor(@Inject() private readonly chatService: ChatService) {}
 
+  @Post('sync-all-user')
+  @ApiOperation({
+    summary: 'sync all user to streamDB',
+  })
+  async syncAllUser() {
+    return await this.chatService.syncAllUsers();
+  }
+
   @Post('auth')
   @ApiOperation({
     summary: 'auth chat token',
