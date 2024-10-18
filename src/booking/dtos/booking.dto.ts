@@ -20,7 +20,7 @@ export class BookingDto {
   @ApiProperty()
   description: string;
 
-  @ApiProperty()
+  @Exclude()
   photoshootPackageId: string;
 
   @Exclude()

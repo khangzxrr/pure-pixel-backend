@@ -26,6 +26,10 @@ export class BookingBillItemRepository {
     });
   }
 
+  async aggregate(args: Prisma.BookingBillItemAggregateArgs) {
+    return this.prisma.extendedClient().bookingBillItem.aggregate(args);
+  }
+
   async findMany(
     skip: number,
     take: number,
