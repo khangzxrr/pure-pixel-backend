@@ -15,6 +15,9 @@ import { DenyBookingRequestDto } from '../dtos/rest/deny-booking.request.dto';
 import { BookingNotBelongException } from '../exceptions/booking-not-belong.exception';
 import { BookingNotInRequestedStateException } from '../exceptions/booking-not-in-requested-state.exception';
 import { BookingWithPhotoshootPackageIncludedUser } from 'src/database/types/booking';
+import { BookingUpdateRequestDto } from '../dtos/rest/booking-update.request.dto';
+import { BookingStatus } from '@prisma/client';
+import { BookingStartedException } from '../exceptions/booking-started.exception';
 
 @Injectable()
 export class BookingService {
@@ -24,6 +27,33 @@ export class BookingService {
     private readonly photoshootPackageRepository: PhotoshootRepository,
     @Inject() private readonly notificationService: NotificationService,
   ) {}
+
+  async updateById(
+    userId: string,
+    bookingId: string,
+    updateDto: BookingUpdateRequestDto,
+  ) {
+    const booking = await this.bookingRepository.findUniqueOrThrow({
+      id: bookingId,
+    });
+
+    if (booking.photoshootPackage.userId !== userId) {
+      throw new BookingNotBelongException();
+    }
+
+    const validStates: BookingStatus[] = ['REQUESTED', 'ACCEPTED'];
+
+    if (validStates.indexOf(booking.status) < 0) {
+      throw new BookingStartedException();
+    }
+
+    const updatedBooking = await this.bookingRepository.updateById(
+      bookingId,
+      updateDto,
+    );
+
+    return plainToInstance(BookingDto, updatedBooking);
+  }
 
   async findAllByUserId(userId: string, findallDto: BookingFindAllRequestDto) {
     findallDto.userId = userId;
