@@ -38,7 +38,7 @@ export class PhotoShootPackageController {
 
   @Get()
   @ApiOperation({
-    summary: 'get all photoshoot package of a photographer by userid',
+    summary: 'get all photoshoot package of current photographer',
   })
   @ApiOkResponsePaginated(PhotoshootPackageDto)
   @UseGuards(AuthGuard, KeycloakRoleGuard)
@@ -49,6 +49,24 @@ export class PhotoShootPackageController {
   ) {
     return await this.photoshootPackageService.findAllByUserId(
       user.sub,
+      findAllDto,
+    );
+  }
+
+  @Get('/photographer/:photographerId')
+  @ApiOperation({
+    summary: 'get all photoshoot package of a photographer by photographerId',
+  })
+  @ApiOkResponsePaginated(PhotoshootPackageDto)
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
+  async findAllWithPhotographerId(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Param('photographerId') photographerId: string,
+    @Query() findAllDto: PhotoshootPackageFindAllDto,
+  ) {
+    return await this.photoshootPackageService.findAllEnabledPackageByPhotographerId(
+      photographerId,
       findAllDto,
     );
   }

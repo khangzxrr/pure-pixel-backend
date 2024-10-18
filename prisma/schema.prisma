@@ -55,11 +55,12 @@ model User {
   PhotoBuy     PhotoBuy[]
 
   photoshootPackages PhotoshootPackage[]
-  photoshootReviews  PhotoshootReview[]
   reports            Report[]
   reportResponses    ReportResponse[]
   blogs              Blog[]
   notifications      Notification[]
+  bookings           Booking[]
+  reviews            Review[]
 }
 
 model BankInfo {
@@ -242,7 +243,7 @@ model UpgradePackage {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  name  String
+  name  String  @unique
   price Decimal @default(0)
 
   minOrderMonth Int @default(0)
@@ -257,8 +258,6 @@ model UpgradePackage {
   deletedAt DateTime?
 
   upgradePackageHistories UpgradePackageHistory[]
-
-  @@unique([name, deletedAt])
 }
 
 model Category {
@@ -513,19 +512,6 @@ model PhotoshootDetail {
   photoshootPackageId String
 }
 
-model PhotoshootReview {
-  id String @id @default(uuid())
-
-  star        Int
-  description String
-
-  user   User   @relation(fields: [userId], references: [id])
-  userId String
-
-  photoshootPackage   PhotoshootPackage @relation(fields: [photoshootPackageId], references: [id])
-  photoshootPackageId String
-}
-
 enum PhotoshootPackageStatus {
   ENABLED
   DISABLED
@@ -547,8 +533,9 @@ model PhotoshootPackage {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  details PhotoshootDetail[]
-  reviews PhotoshootReview[]
+  details  PhotoshootDetail[]
+  reviews  Review[]
+  bookings Booking[]
 }
 
 enum NotificationStatus {
@@ -562,6 +549,15 @@ enum NotificationType {
   BOTH_INAPP_EMAIL
 }
 
+enum NotificationReferenceType {
+  BOOKING
+  CHAT
+  UPGRADE_PACKAGE
+  PHOTO_SELL
+  PHOTO_BUY
+  PHOTO
+}
+
 model Notification {
   id String @id @default(uuid())
 
@@ -571,9 +567,66 @@ model Notification {
   status NotificationStatus @default(SHOW)
   type   NotificationType   @default(IN_APP)
 
+  referenceType NotificationReferenceType
+
   title   String
   content String
 
+  referenceId String
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+enum BookingStatus {
+  REQUESTED
+  ACCEPTED
+  DENIED
+  STARTED
+  ENDED
+  UPLOADED
+  PAID
+  SUCCESSED
+  FAILED
+}
+
+model Booking {
+  id String @id @default(uuid())
+
+  photoshootPackage   PhotoshootPackage @relation(fields: [photoshootPackageId], references: [id])
+  photoshootPackageId String
+
+  startDate DateTime
+  endDate   DateTime
+
+  status      BookingStatus
+  description String        @default("")
+
+  failedReason String @default("")
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  Review Review[]
+}
+
+model Review {
+  id String @id @default(uuid())
+
+  star        Int
+  description String
+
+  photoshootPackage   PhotoshootPackage @relation(fields: [photoshootPackageId], references: [id])
+  photoshootPackageId String
+
+  booking   Booking @relation(fields: [bookingId], references: [id])
+  bookingId String
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([bookingId, userId])
 }

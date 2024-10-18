@@ -17,7 +17,7 @@ export class AuthenService {
     @Inject() private sftpService: SftpService,
     @Inject(CACHE_MANAGER) private cache: Cache,
     private prisma: PrismaService,
-  ) { }
+  ) {}
   async createUserIfNotExist(userId: string, username: string, email: string) {
     await this.prisma.$transaction(
       async (tx) => {
@@ -25,7 +25,7 @@ export class AuthenService {
         userFilterDto.id = userId;
 
         if (await this.cache.get<UserEntity>(`user:${userFilterDto.id}`)) {
-          this.logger.log(`user is exist in cache, skip creation`)
+          this.logger.log(`user is exist in cache, skip creation`);
           return;
         }
 

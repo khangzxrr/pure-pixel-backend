@@ -19,14 +19,14 @@ import { PhotoshootPackageDetailReplaceDto } from '../dtos/rest/photoshoot-packa
 import { PhotoshootPackageDetailUpdateDto } from '../dtos/rest/photoshoot-package-detail.update.request.dto';
 import { PhotoshootPackageService } from '../services/photoshoot-package.service';
 
-@Controller('photoshoot-package-detail')
+@Controller('photoshoot-package')
 @ApiTags('photoshoot-package-detail')
 export class PhotoshootPackageDetailController {
   constructor(
     private readonly photoshootPackageService: PhotoshootPackageService,
   ) {}
 
-  @Post(':id/detail')
+  @Post(':packageId/detail')
   @ApiOperation({
     summary: 'create detail for a photoshoot package by photoshootPackageId',
   })
@@ -37,12 +37,12 @@ export class PhotoshootPackageDetailController {
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   async createDetail(
     @AuthenticatedUser() user: ParsedUserDto,
-    @Param('id') id: string,
+    @Param('packageId') packageId: string,
     @Body() createDto: PhotoshootPackageDetailCreateDto,
   ) {
     return await this.photoshootPackageService.createDetail(
       user.sub,
-      id,
+      packageId,
       createDto,
     );
   }

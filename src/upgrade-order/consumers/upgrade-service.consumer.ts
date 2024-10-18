@@ -19,6 +19,8 @@ export class UpgradeServiceConsumer extends WorkerHost {
   async sendSoonExpiredOrderNotification(order: UpgradeOrder) {
     const notificationCreateDto: NotificationCreateDto = {
       userId: order.userId,
+      referenceType: 'UPGRADE_PACKAGE',
+      referenceId: order.id,
       type: 'BOTH_INAPP_EMAIL',
       title: 'Gói nâng cấp của bạn sắp hết hạn',
       content:
@@ -34,6 +36,8 @@ export class UpgradeServiceConsumer extends WorkerHost {
   async sendExpiredOrderNotification(order: UpgradeOrder) {
     const notificationCreateDto: NotificationCreateDto = {
       userId: order.userId,
+      referenceType: 'UPGRADE_PACKAGE',
+      referenceId: order.id,
       type: 'BOTH_INAPP_EMAIL',
       title: 'Gói nâng cấp của bạn sắp hết hạn',
       content: 'Vui lòng gia hạn lại để được nhận các ưu đãi từ gói nâng cấp!',

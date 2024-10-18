@@ -303,7 +303,9 @@ export class PhotoService {
     const notificationDto: NotificationCreateDto = {
       userId,
       title: 'Tương tác mới',
-      content: `Ảnh <title>${photo.title}</title><id>${photo.id}</id> của bạn vừa nhận được một đánh giá!`,
+      content: `Ảnh ${photo.title} của bạn vừa nhận được một đánh giá!`,
+      referenceId: photoId,
+      referenceType: 'PHOTO',
       type: 'IN_APP',
     };
     await this.notificationQueue.add(

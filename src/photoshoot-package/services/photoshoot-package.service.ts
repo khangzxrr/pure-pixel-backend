@@ -225,6 +225,15 @@ export class PhotoshootPackageService {
     return plainToInstance(PhotoshootPackageDto, photoshootPackage);
   }
 
+  async findAllEnabledPackageByPhotographerId(
+    photographerId: string,
+    findAllDto: PhotoshootPackageFindAllDto,
+  ) {
+    findAllDto.status = 'ENABLED';
+
+    return await this.findAllByUserId(photographerId, findAllDto);
+  }
+
   async findAllByUserId(
     userId: string,
     findAllDto: PhotoshootPackageFindAllDto,

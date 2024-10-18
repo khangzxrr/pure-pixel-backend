@@ -20,6 +20,7 @@ import { ReportModule } from './report/report.module';
 import { PhotoTagModule } from './photo-tag/photo-tag.module';
 import { BlogModule } from './blog/blog.module';
 import { PhotoshootPackageModule } from './photoshoot-package/photoshoot-package.module';
+import { BookingModule } from './booking/booking.module';
 
 @Module({
   providers: [
@@ -50,6 +51,7 @@ import { PhotoshootPackageModule } from './photoshoot-package/photoshoot-package
     PhotoTagModule,
     BlogModule,
     PhotoshootPackageModule,
+    BookingModule,
   ],
   controllers: [AppController],
 })
