@@ -1,6 +1,7 @@
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { ChatService } from 'src/chat/services/chat.service';
 import { UserRepository } from 'src/database/repositories/user.repository';
 import { Utils } from 'src/infrastructure/utils/utils';
 import { PrismaService } from 'src/prisma.service';
@@ -13,6 +14,7 @@ export class AuthenService {
   private readonly logger = new Logger(AuthenService.name);
 
   constructor(
+    private readonly chatService: ChatService,
     @Inject() private userRepository: UserRepository,
     @Inject() private sftpService: SftpService,
     @Inject(CACHE_MANAGER) private cache: Cache,
@@ -57,6 +59,8 @@ export class AuthenService {
           email,
           newUser.ftpPassword,
         );
+
+        await this.chatService.upsertUser(userId, username);
 
         await this.userRepository.createIfNotExistTransaction(newUser, tx);
 

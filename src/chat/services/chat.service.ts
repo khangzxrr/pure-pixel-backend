@@ -1,12 +1,25 @@
 import { Injectable } from '@nestjs/common';
-import { sign } from 'jsonwebtoken';
+import { StreamChat } from 'stream-chat';
 @Injectable()
 export class ChatService {
-  async signChatToken(userId: string) {
-    return sign({ tokenType: 'user' }, process.env.TALKJS_SECRET_KEY, {
-      issuer: process.env.TALKJS_ISSUER,
-      subject: userId,
-      expiresIn: '2 days',
+  private getStream() {
+    const client = StreamChat.getInstance(
+      process.env.STREAM_ACCESS_KEY,
+      process.env.STREAM_SECRET_KEY,
+    );
+
+    return client;
+  }
+
+  async upsertUser(userId: string, name: string) {
+    console.log('upsert stream user');
+    return await this.getStream().upsertUser({
+      id: userId,
+      name: name,
     });
+  }
+
+  async signChatToken(userId: string) {
+    return this.getStream().createToken(userId);
   }
 }

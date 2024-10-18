@@ -21,6 +21,7 @@ import { UserRepository } from 'src/database/repositories/user.repository';
 import { SftpService } from 'src/storage/services/sftp.service';
 import { PrismaService } from 'src/prisma.service';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
+import { ChatService } from 'src/chat/services/chat.service';
 
 @Injectable()
 export class KeycloakRoleGuard extends RoleGuard implements CanActivate {
@@ -62,6 +63,7 @@ export class KeycloakRoleGuard extends RoleGuard implements CanActivate {
 
       //workaround for cirular dependency when using the same service in authenModule
       const authenService = new AuthenService(
+        new ChatService(),
         this.userRepository,
         this.sftpService,
         this.cache,

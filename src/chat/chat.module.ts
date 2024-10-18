@@ -8,6 +8,7 @@ import { ChatController } from './controllers/chat.controller';
 @Module({
   imports: [DatabaseModule, AuthenModule, StorageModule],
   providers: [ChatService],
+  exports: [ChatService],
   controllers: [ChatController],
 })
 export class ChatModule {}
