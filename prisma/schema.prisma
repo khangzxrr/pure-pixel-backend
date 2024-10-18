@@ -590,6 +590,27 @@ enum BookingStatus {
   FAILED
 }
 
+enum BookingBillItemType {
+  INCREASE
+  DECREASE
+}
+
+model BookingBillItem {
+  id String @id @default(uuid())
+
+  title       String
+  description String  @default("")
+  price       Decimal
+
+  type BookingBillItemType
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  booking   Booking @relation(fields: [bookingId], references: [id])
+  bookingId String
+}
+
 model Booking {
   id String @id @default(uuid())
 
@@ -607,7 +628,12 @@ model Booking {
   user   User   @relation(fields: [userId], references: [id])
   userId String
 
-  Review Review[]
+  reviews   Review[]
+  billItems BookingBillItem[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 }
 
 model Review {
