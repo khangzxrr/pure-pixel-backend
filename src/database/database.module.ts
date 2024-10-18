@@ -23,6 +23,7 @@ import { PhotoshootRepository } from './repositories/photoshoot-package.reposito
 import { NotificationRepository } from './repositories/notification.repository';
 import { PhotoshootPackageDetailRepository } from './repositories/photoshoot-package-detail.repository';
 import { BookingRepository } from './repositories/booking.repository';
+import { BookingBillItemRepository } from './repositories/booking-bill-item.repository';
 @Module({
   providers: [
     PrismaService,
@@ -49,6 +50,7 @@ import { BookingRepository } from './repositories/booking.repository';
     NotificationRepository,
     PhotoshootPackageDetailRepository,
     BookingRepository,
+    BookingBillItemRepository,
   ],
   exports: [
     PrismaService,
@@ -75,6 +77,7 @@ import { BookingRepository } from './repositories/booking.repository';
     NotificationRepository,
     PhotoshootPackageDetailRepository,
     BookingRepository,
+    BookingBillItemRepository,
   ],
 })
 export class DatabaseModule {}
