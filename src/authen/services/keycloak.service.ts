@@ -8,9 +8,9 @@ export class KeycloakService {
   private clientInstance: ClientRepresentation;
 
   private async getClient() {
-    if (this.clientInstance) {
-      return this.clientInstance;
-    }
+    // if (this.clientInstance) {
+    //   return this.clientInstance;
+    // }
 
     const kc = await this.getInstance();
 
