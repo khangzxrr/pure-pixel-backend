@@ -1,20 +1,23 @@
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { ChatService } from 'src/chat/services/chat.service';
 import { UserRepository } from 'src/database/repositories/user.repository';
 import { Utils } from 'src/infrastructure/utils/utils';
 import { PrismaService } from 'src/prisma.service';
 import { SftpService } from 'src/storage/services/sftp.service';
 import { UserFilterDto } from 'src/user/dtos/user-filter.dto';
 import { UserEntity } from 'src/user/entities/user.entity';
+import { StreamChat } from 'stream-chat';
 
 @Injectable()
 export class AuthenService {
   private readonly logger = new Logger(AuthenService.name);
+  private readonly streamChatClient = StreamChat.getInstance(
+    process.env.STREAM_ACCESS_KEY,
+    process.env.STREAM_SECRET_KEY,
+  );
 
   constructor(
-    private readonly chatService: ChatService,
     @Inject() private userRepository: UserRepository,
     @Inject() private sftpService: SftpService,
     @Inject(CACHE_MANAGER) private cache: Cache,
@@ -60,7 +63,10 @@ export class AuthenService {
           newUser.ftpPassword,
         );
 
-        await this.chatService.upsertUser(userId, username);
+        await this.streamChatClient.upsertUser({
+          id: userId,
+          name: username,
+        });
 
         await this.userRepository.createIfNotExistTransaction(newUser, tx);
 
