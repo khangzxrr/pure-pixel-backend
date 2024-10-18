@@ -18,6 +18,7 @@ import { BookingWithPhotoshootPackageIncludedUser } from 'src/database/types/boo
 import { BookingUpdateRequestDto } from '../dtos/rest/booking-update.request.dto';
 import { BookingStatus } from '@prisma/client';
 import { BookingStartedException } from '../exceptions/booking-started.exception';
+import { BothStartEndDateMustSpecifyException } from '../exceptions/start-end-date-must-specify.exception';
 
 @Injectable()
 export class BookingService {
@@ -33,6 +34,13 @@ export class BookingService {
     bookingId: string,
     updateDto: BookingUpdateRequestDto,
   ) {
+    if (
+      (updateDto.startDate && !updateDto.endDate) ||
+      (!updateDto.startDate && updateDto.endDate)
+    ) {
+      throw new BothStartEndDateMustSpecifyException();
+    }
+
     const booking = await this.bookingRepository.findUniqueOrThrow({
       id: bookingId,
     });
@@ -45,6 +53,16 @@ export class BookingService {
 
     if (validStates.indexOf(booking.status) < 0) {
       throw new BookingStartedException();
+    }
+
+    if (updateDto.startDate && updateDto.endDate) {
+      this.validateStartEndDateOfUser(updateDto.startDate, updateDto.endDate);
+
+      this.validatePreviousBookingOverlap(
+        booking.userId, //<-- user who book NOT PHOTOGRAPHER
+        updateDto.startDate,
+        updateDto.endDate,
+      );
     }
 
     const updatedBooking = await this.bookingRepository.updateById(
@@ -155,18 +173,10 @@ export class BookingService {
     return new BookingFindAllResponseDto(findallDto.limit, count, bookingDtos);
   }
 
-  async requestBooking(
-    userId: string,
-    packageId: string,
-    bookingRequestDto: RequestPhotoshootBookingRequestDto,
-  ) {
-    const photoshootPackage =
-      await this.photoshootPackageRepository.findUniqueOrThrow(packageId);
-
+  validateStartEndDateOfUser(start: Date, end: Date) {
     const now = new Date();
 
-    const diffFromStartDateToCurrentDate =
-      bookingRequestDto.startDate.getTime() - now.getTime();
+    const diffFromStartDateToCurrentDate = start.getTime() - now.getTime();
     const dayDiffFromCurrent =
       diffFromStartDateToCurrentDate / 1000 / 60 / 60 / 24;
 
@@ -174,9 +184,7 @@ export class BookingService {
       throw new StartDateMustLargerThanCurrentDateByOneDayException();
     }
 
-    const diffBetweenStartAndEndDate =
-      bookingRequestDto.endDate.getTime() -
-      bookingRequestDto.startDate.getTime();
+    const diffBetweenStartAndEndDate = end.getTime() - end.getTime();
     const hourDiffBetweenStartAndEnd =
       diffBetweenStartAndEndDate / 1000 / 60 / 60;
 
@@ -188,6 +196,10 @@ export class BookingService {
       throw new HourBetweenStartAndEndDateMustNotLessThanThreeException();
     }
 
+    return true;
+  }
+
+  async validatePreviousBookingOverlap(userId: string, start: Date, end: Date) {
     // ---------------------a-------------b------------------------------
     // -----c(startDate)-------------------------------d(endDate)--------
     //this is overlap date
@@ -195,19 +207,39 @@ export class BookingService {
     const previousBooking = await this.bookingRepository.findFirst({
       userId,
       status: {
-        notIn: ['SUCCESSED', 'FAILED'],
+        notIn: ['SUCCESSED', 'FAILED', 'DENIED'],
       },
       startDate: {
-        lte: bookingRequestDto.endDate,
+        lte: end,
       },
       endDate: {
-        gte: bookingRequestDto.startDate,
+        gte: start,
       },
     });
 
     if (previousBooking) {
       throw new ExistBookingWithSelectedDateException();
     }
+  }
+
+  async requestBooking(
+    userId: string,
+    packageId: string,
+    bookingRequestDto: RequestPhotoshootBookingRequestDto,
+  ) {
+    const photoshootPackage =
+      await this.photoshootPackageRepository.findUniqueOrThrow(packageId);
+
+    this.validateStartEndDateOfUser(
+      bookingRequestDto.startDate,
+      bookingRequestDto.endDate,
+    );
+
+    this.validatePreviousBookingOverlap(
+      userId,
+      bookingRequestDto.startDate,
+      bookingRequestDto.endDate,
+    );
 
     const booking = await this.bookingRepository.create({
       startDate: bookingRequestDto.startDate,
