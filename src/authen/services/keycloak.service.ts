@@ -7,10 +7,12 @@ export class KeycloakService {
   private kcInstance: KeycloakAdminClient;
   private clientInstance: ClientRepresentation;
 
+  private refreshTokenDate: Date;
+
   private async getClient() {
-    // if (this.clientInstance) {
-    //   return this.clientInstance;
-    // }
+    if (this.clientInstance) {
+      return this.clientInstance;
+    }
 
     const kc = await this.getInstance();
 
@@ -23,8 +25,26 @@ export class KeycloakService {
     return this.clientInstance;
   }
 
+  private async refreshToken() {
+    const now = new Date();
+
+    const diff = now.getTime() - this.refreshTokenDate.getTime();
+    const diffInMiniutes = diff / 1000 / 60;
+
+    if (diffInMiniutes >= 10) {
+      await this.kcInstance.auth({
+        username: process.env.KEYCLOAK_REALM_ADMIN_USERNAME,
+        password: process.env.KEYCLOAK_REALM_ADMIN_PASSWORD,
+        grantType: 'password',
+        clientId: process.env.KEYCLOAK_CLIENT_ID,
+      });
+    }
+  }
+
   private async getInstance() {
     if (this.kcInstance) {
+      await this.refreshToken();
+
       return this.kcInstance;
     }
 
@@ -39,6 +59,8 @@ export class KeycloakService {
       grantType: 'password',
       clientId: process.env.KEYCLOAK_CLIENT_ID,
     });
+
+    this.refreshTokenDate = new Date();
 
     return this.kcInstance;
   }
