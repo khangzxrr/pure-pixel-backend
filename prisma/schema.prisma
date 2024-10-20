@@ -561,12 +561,22 @@ enum PhotoshootPackageStatus {
   DISABLED
 }
 
+model PhotoshootPackageShowcasePhoto {
+  id       String @id @default(uuid())
+  photoUrl String
+
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  PhotoshootPackage   PhotoshootPackage? @relation(fields: [photoshootPackageId], references: [id])
+  photoshootPackageId String?
+}
+
 model PhotoshootPackage {
-  id        String  @id @default(uuid())
-  title     String
-  subtitle  String
-  price     Decimal
-  thumbnail String
+  id          String  @id @default(uuid())
+  title       String
+  subtitle    String
+  price       Decimal
+  thumbnail   String
   description String
 
   status PhotoshootPackageStatus
@@ -578,9 +588,10 @@ model PhotoshootPackage {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  reviews  Review[]
-  bookings Booking[]
-  history  PhotoshootPackageHistory[]
+  showcases PhotoshootPackageShowcasePhoto[]
+  reviews   Review[]
+  bookings  Booking[]
+  history   PhotoshootPackageHistory[]
 }
 
 model PhotoshootPackageHistory {
