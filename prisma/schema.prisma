@@ -556,15 +556,6 @@ model Blog {
   updatedAt DateTime @updatedAt
 }
 
-model PhotoshootDetail {
-  id           String   @id @default(uuid())
-  title        String
-  descriptions String[]
-
-  photoshootPackage   PhotoshootPackage @relation(fields: [photoshootPackageId], references: [id])
-  photoshootPackageId String
-}
-
 enum PhotoshootPackageStatus {
   ENABLED
   DISABLED
@@ -576,6 +567,7 @@ model PhotoshootPackage {
   subtitle  String
   price     Decimal
   thumbnail String
+  description String
 
   status PhotoshootPackageStatus
 
@@ -586,7 +578,6 @@ model PhotoshootPackage {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  details  PhotoshootDetail[]
   reviews  Review[]
   bookings Booking[]
   history  PhotoshootPackageHistory[]
