@@ -89,7 +89,6 @@ model Follow {
   following   User   @relation(name: "following", fields: [followingId], references: [id])
   followingId String
 
-
   createdAt DateTime @default(now())
 
   @@id([followerId, followingId])
