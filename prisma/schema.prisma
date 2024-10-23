@@ -318,9 +318,6 @@ model Photo {
   originalPhotoUrl  String
   watermarkPhotoUrl String
 
-  thumbnailPhotoUrl          String
-  watermarkThumbnailPhotoUrl String
-
   photoType PhotoType
 
   visibility PhotoVisibility @default(PUBLIC)
