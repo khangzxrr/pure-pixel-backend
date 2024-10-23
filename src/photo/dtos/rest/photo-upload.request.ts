@@ -4,7 +4,6 @@ import {
   MaxFileSize,
   HasMimeType,
   MemoryStoredFile,
-  MinFileSize,
 } from 'nestjs-form-data';
 
 export class PhotoUploadRequestDto {
@@ -12,7 +11,7 @@ export class PhotoUploadRequestDto {
     type: 'file',
   })
   @IsFile()
-  @MinFileSize(4e6)
+  // @MinFileSize(4e6)
   @MaxFileSize(5e7)
   @HasMimeType(['image/*'])
   file: MemoryStoredFile;

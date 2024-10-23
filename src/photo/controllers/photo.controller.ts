@@ -220,16 +220,16 @@ export class PhotoController {
   @FormDataRequest()
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
-  async getPresignedUploadUrl(
+  async uploadPhoto(
     @AuthenticatedUser() user: ParsedUserDto,
     @Body() body: PhotoUploadRequestDto,
   ) {
-    const presignedUrl = await this.photoService.getPresignedUploadUrl(
+    const uploadPhotoResponse = await this.photoService.uploadPhoto(
       user.sub,
       body,
     );
 
-    return presignedUrl;
+    return uploadPhotoResponse;
   }
 
   @Get('/:id/available-resolution')

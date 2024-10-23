@@ -71,6 +71,9 @@ import { PhotoVoteDto } from '../dtos/photo-vote.dto';
 import { NotificationConstant } from 'src/notification/constants/notification.constant';
 import { NotificationCreateDto } from 'src/notification/dtos/rest/notification-create.dto';
 import { CannotSignNullPhotoException } from '../exceptions/cannot-sign-null-photo.exception';
+import { BunnyService } from 'src/storage/services/bunny.service';
+import { UploadPhotoFailedException } from '../exceptions/upload-photo-failed.exception';
+import { ExifNotFoundException } from '../exceptions/exif-not-found.exception';
 
 @Injectable()
 export class PhotoService {
@@ -87,6 +90,7 @@ export class PhotoService {
     @Inject() private readonly categoryRepository: CategoryRepository,
     @Inject() private readonly photoBuyRepository: PhotoBuyRepository,
     @Inject() private readonly photoVoteRepository: PhotoVoteRepository,
+    @Inject() private readonly bunnyService: BunnyService,
     @InjectQueue(NotificationConstant.NOTIFICATION_QUEUE)
     private readonly notificationQueue: Queue,
     @InjectQueue(PhotoConstant.PHOTO_PROCESS_QUEUE)
@@ -382,8 +386,8 @@ export class PhotoService {
       : photo.originalPhotoUrl;
 
     const thumbnail = photo.watermark
-      ? photo.watermarkThumbnailPhotoUrl
-      : photo.thumbnailPhotoUrl;
+      ? photo.watermarkPhotoUrl
+      : photo.originalPhotoUrl;
 
     if (url.length == 0 || thumbnail.length == 0) {
       console.log(`error photo without thumbnail or original: ${photo.id}`);
@@ -566,7 +570,7 @@ export class PhotoService {
     return signedPhotoDto;
   }
 
-  async getPresignedUploadUrl(
+  async uploadPhoto(
     userId: string,
     photoUploadDto: PhotoUploadRequestDto,
   ): Promise<SignedPhotoDto> {
@@ -595,15 +599,52 @@ export class PhotoService {
       throw new FileIsNotValidException();
     }
 
-    const storageObjectKey = `${userId}/${v4()}.${extension}`;
-
-    const photo = await this.photoRepository.createTemporaryPhotos(
-      userId,
-      photoUploadDto.file.originalName,
-      storageObjectKey,
+    const exif = await this.photoProcessService.parseExifFromBuffer(
+      photoUploadDto.file.buffer,
     );
 
-    return this.signPhotoById(photo.id);
+    console.log(exif);
+
+    if (exif === null) {
+      throw new ExifNotFoundException();
+    }
+
+    try {
+      const storageObjectKey = await this.bunnyService.upload(
+        photoUploadDto.file,
+      );
+
+      const photo = await this.photoRepository.create({
+        photographer: {
+          connect: {
+            id: userId,
+          },
+        },
+        category: {
+          connectOrCreate: {
+            where: {
+              name: PhotoConstant.DEFAULT_CATEGORY.name,
+            },
+            create: PhotoConstant.DEFAULT_CATEGORY,
+          },
+        },
+        description: '',
+        title: photoUploadDto.file.originalName,
+        size: photoUploadDto.file.size,
+        exif,
+        status: 'PARSED',
+        photoType: 'RAW',
+        watermark: false,
+        visibility: 'PRIVATE',
+        originalPhotoUrl: storageObjectKey,
+        watermarkPhotoUrl: '',
+      });
+
+      return this.signPhotoById(photo.id);
+    } catch (e) {
+      console.log(e);
+      throw new UploadPhotoFailedException();
+    }
   }
 
   async signPhotoById(id: string) {
