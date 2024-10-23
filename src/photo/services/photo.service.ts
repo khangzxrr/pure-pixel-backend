@@ -20,8 +20,6 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { PhotoConstant } from '../constants/photo.constant';
 import { Queue } from 'bullmq';
 import { PhotoNotFoundException } from '../exceptions/photo-not-found.exception';
-import { ProcessPhotosRequest } from '../dtos/rest/process-images.request.dto';
-import { GenerateWatermarkRequestDto } from '../dtos/rest/generate-watermark.request.dto';
 import { UserRepository } from 'src/database/repositories/user.repository';
 import { RunOutPhotoQuotaException } from '../exceptions/run-out-photo-quota.exception';
 import { PhotoProcessService } from './photo-process.service';
@@ -95,10 +93,6 @@ export class PhotoService {
     private readonly notificationQueue: Queue,
     @InjectQueue(PhotoConstant.PHOTO_PROCESS_QUEUE)
     private readonly photoProcessQueue: Queue,
-    @InjectQueue(PhotoConstant.PHOTO_WATERMARK_QUEUE)
-    private readonly photoWatermarkQueue: Queue,
-    @InjectQueue(PhotoConstant.PHOTO_SHARE_QUEUE)
-    private readonly photoShareQueue: Queue,
     private readonly prisma: PrismaService,
     @Inject(CACHE_MANAGER)
     private readonly cacheManager: Cache,
@@ -231,20 +225,6 @@ export class PhotoService {
       throw new PhotoNotFoundException();
     }
 
-    if (photo.status === 'PENDING') {
-      throw new PhotoIsPendingStateException();
-    }
-
-    if (photo.shareStatus === 'NOT_READY') {
-      await this.photoShareQueue.add(PhotoConstant.GENERATE_SHARE_JOB_NAME, {
-        photoId: photo.id,
-        debounce: {
-          id: photo.id,
-          ttl: 10000,
-        },
-      });
-    }
-
     const availableResolutions =
       await this.photoProcessService.getAvailableResolution(
         photo.originalPhotoUrl,
@@ -253,37 +233,6 @@ export class PhotoService {
     this.cacheManager.set(cacheResolutionKey, availableResolutions);
 
     return availableResolutions;
-  }
-
-  async sendWatermarkRequest(
-    userId: string,
-    generateWatermarkRequest: GenerateWatermarkRequestDto,
-  ) {
-    const photo = await this.photoRepository.getPhotoById(
-      generateWatermarkRequest.photoId,
-    );
-
-    if (!photo) {
-      throw new PhotoNotFoundException();
-    }
-
-    if (photo.photographerId != userId) {
-      throw new NotBelongPhotoException();
-    }
-
-    await this.photoWatermarkQueue.add(
-      PhotoConstant.GENERATE_WATERMARK_JOB,
-      {
-        userId,
-        generateWatermarkRequest,
-      },
-      {
-        debounce: {
-          id: photo.id,
-          ttl: 10000,
-        },
-      },
-    );
   }
 
   async vote(
@@ -329,48 +278,6 @@ export class PhotoService {
     await this.photoVoteRepository.delete(userId, photoId);
 
     return 'deleted';
-  }
-
-  async sendProcessImageToMq(
-    userId: string,
-    processPhotosRequest: ProcessPhotosRequest,
-  ) {
-    await this.photoProcessQueue.add(
-      PhotoConstant.PROCESS_PHOTO_JOB_NAME,
-      {
-        userId,
-        processPhotosRequest,
-      },
-      {
-        debounce: {
-          id: processPhotosRequest.signedUpload.photoId,
-          ttl: 10000,
-        },
-      },
-    );
-
-    // await this.photoShareQueue.add(PhotoConstant.GENERATE_SHARE_JOB_NAME, {
-    //   userId,
-    //   photoId: processPhotosRequest.signedUpload.photoId,
-    //   debounce: {
-    //     id: processPhotosRequest.signedUpload.photoId,
-    //     ttl: 10000,
-    //   },
-    // });
-    //
-    // const generateWatermarkRequest: GenerateWatermarkRequestDto = {
-    //   photoId: processPhotosRequest.signedUpload.photoId,
-    //   text: 'PPX',
-    // };
-    //
-    // await this.photoWatermarkQueue.add(PhotoConstant.GENERATE_WATERMARK_JOB, {
-    //   userId,
-    //   generateWatermarkRequest,
-    //   debounce: {
-    //     id: processPhotosRequest.signedUpload.photoId,
-    //     ttl: 10000,
-    //   },
-    // });
   }
 
   async signPhoto(
@@ -632,6 +539,10 @@ export class PhotoService {
         visibility: 'PRIVATE',
         originalPhotoUrl: storageObjectKey,
         watermarkPhotoUrl: '',
+      });
+
+      await this.photoProcessQueue.add(PhotoConstant.PROCESS_PHOTO_JOB_NAME, {
+        id: photo.id,
       });
 
       return this.signPhoto(photo);

@@ -38,7 +38,6 @@ import { Response } from 'express';
 import { CommentService } from '../services/comment.service';
 import { CreateCommentRequestDto } from '../dtos/rest/create-comment.request.dto';
 import { CommentEntity } from '../entities/comment.entity';
-import { ProcessPhotosRequest } from '../dtos/rest/process-images.request.dto';
 import { GenerateWatermarkRequestDto } from '../dtos/rest/generate-watermark.request.dto';
 import { SharePhotoRequestDto } from '../dtos/rest/share-photo.request.dto';
 import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.response.dto';
@@ -159,33 +158,10 @@ export class PhotoController {
     @Body() generateWatermarkRequest: GenerateWatermarkRequestDto,
     @Res() res: Response,
   ) {
-    await this.photoService.sendWatermarkRequest(
-      user.sub,
-      generateWatermarkRequest,
-    );
-
-    res.status(HttpStatus.ACCEPTED).send();
-  }
-
-  @Post('/process')
-  @ApiOperation({
-    summary:
-      'put process image request to queue inorder to generate thumbnail, exif images after upload',
-  })
-  @ApiResponse({
-    status: HttpStatusCode.Accepted,
-  })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
-  async processPhotos(
-    @AuthenticatedUser() user: ParsedUserDto,
-    @Body() processPhotosRequest: ProcessPhotosRequest,
-    @Res() res: Response,
-  ) {
-    await this.photoService.sendProcessImageToMq(
-      user.sub,
-      processPhotosRequest,
-    );
+    // await this.photoService.sendWatermarkRequest(
+    //   user.sub,
+    //   generateWatermarkRequest,
+    // );
 
     res.status(HttpStatus.ACCEPTED).send();
   }
