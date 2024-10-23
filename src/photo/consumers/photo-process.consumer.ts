@@ -5,7 +5,6 @@ import { Inject, Logger } from '@nestjs/common';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoProcessService } from '../services/photo-process.service';
 import { PhotoGateway } from '../gateways/socket.io.gateway';
-import { ProcessPhotosRequest } from '../dtos/rest/process-images.request.dto';
 import { DatabaseService } from 'src/database/database.service';
 import { UserRepository } from 'src/database/repositories/user.repository';
 import { PhotoGenerateShareService } from '../services/photo-generate-share.service';
@@ -35,10 +34,7 @@ export class PhotoProcessConsumer extends WorkerHost {
     try {
       switch (job.name) {
         case PhotoConstant.PROCESS_PHOTO_JOB_NAME:
-          await this.processPhoto(
-            job.data.userId,
-            job.data.processPhotosRequest,
-          );
+          await this.processPhoto(job.data.id);
           break;
       }
     } catch (e) {
@@ -48,17 +44,8 @@ export class PhotoProcessConsumer extends WorkerHost {
     }
   }
 
-  async processPhoto(userId: string, processRequest: ProcessPhotosRequest) {
-    this.logger.log(`process photos`);
-    this.logger.log(processRequest);
-
-    await this.convertAndEmitProcessEvents(userId, processRequest);
-  }
-
-  async convertAndEmitProcessEvents(
-    userId: string,
-    processImagesRequest: ProcessPhotosRequest,
-  ) {
+  async processPhoto(photoId: string) {
+    console.log(`process photo id: ${photoId}`);
     //   const photo = await this.photoRepository.getPhotoByIdAndStatusAndUserId(
     //     processImagesRequest.signedUpload.photoId,
     //     'PENDING',
