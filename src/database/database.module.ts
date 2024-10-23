@@ -11,7 +11,6 @@ import { DatabaseService } from './database.service';
 import { ServiceTransactionRepository } from './repositories/service-transaction.repository';
 import { DepositTransactionRepository } from './repositories/deposit-transaction.repository';
 import { WithdrawalTransactionRepository } from './repositories/withdrawal-transaction.repository';
-import { PhotoSharingRepository } from './repositories/photo-sharing.repository';
 import { PhotoSellRepository } from './repositories/photo-sell.repository';
 import { PhotoBuyRepository } from './repositories/photo-buy.repository';
 import { UserToUserRepository } from './repositories/user-to-user-transaction.repository';
@@ -28,7 +27,6 @@ import { BookingBillItemRepository } from './repositories/booking-bill-item.repo
     PrismaService,
     UserRepository,
     PhotoRepository,
-    PhotoSharingRepository,
     CategoryRepository,
     UpgradePackageRepository,
     UpgradePackageOrderRepository,
@@ -54,7 +52,6 @@ import { BookingBillItemRepository } from './repositories/booking-bill-item.repo
     PrismaService,
     UserRepository,
     PhotoRepository,
-    PhotoSharingRepository,
     CategoryRepository,
     UpgradePackageRepository,
     UpgradePackageOrderRepository,
