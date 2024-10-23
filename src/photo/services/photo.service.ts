@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { HttpException, Inject, Injectable, Logger } from '@nestjs/common';
 import {
   Photo,
   PhotoSell,
@@ -511,6 +511,11 @@ export class PhotoService {
       return this.signPhoto(photo);
     } catch (e) {
       console.log(e);
+
+      if (e instanceof HttpException) {
+        throw e;
+      }
+
       throw new UploadPhotoFailedException();
     }
   }
