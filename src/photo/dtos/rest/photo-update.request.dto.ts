@@ -8,6 +8,7 @@ import {
   IsString,
 } from 'class-validator';
 import { ToBoolean } from 'src/infrastructure/transforms/to-boolean';
+import { GpsDto } from '../gps.dto';
 
 export class PhotoUpdateRequestDto {
   @ApiProperty({
@@ -71,4 +72,11 @@ export class PhotoUpdateRequestDto {
     each: true,
   })
   photoTags?: string[];
+
+  @ApiProperty({
+    type: GpsDto,
+    required: false,
+  })
+  @IsOptional()
+  gps?: GpsDto;
 }

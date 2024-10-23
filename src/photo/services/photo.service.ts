@@ -258,6 +258,8 @@ export class PhotoService {
         id,
       );
 
+    const exif = photo.exif;
+
     const prismaPromises: PrismaPromise<any>[] = [];
 
     if (photo.photographerId !== userId) {
@@ -271,6 +273,11 @@ export class PhotoService {
       if (!category) {
         throw new CategoryNotFoundException();
       }
+    }
+
+    if (photoUpdateDto.gps) {
+      exif['latitude'] = photoUpdateDto.gps.latitude;
+      exif['longitude'] = photoUpdateDto.gps.longitude;
     }
 
     if (photoUpdateDto.photoTags) {
@@ -295,6 +302,7 @@ export class PhotoService {
         description: photoUpdateDto.description,
         photoType: photoUpdateDto.photoType,
         visibility: photoUpdateDto.visibility,
+        exif,
       }),
     );
 
