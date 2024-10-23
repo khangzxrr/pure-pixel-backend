@@ -7,7 +7,6 @@ import { PhotoProcessService } from '../services/photo-process.service';
 import { PhotoGateway } from '../gateways/socket.io.gateway';
 import { DatabaseService } from 'src/database/database.service';
 import { UserRepository } from 'src/database/repositories/user.repository';
-import { PhotoGenerateShareService } from '../services/photo-generate-share.service';
 import { PhotoGenerateWatermarkService } from '../services/photo-generate-watermark.service';
 
 @Processor(PhotoConstant.PHOTO_PROCESS_QUEUE, {
@@ -22,8 +21,6 @@ export class PhotoProcessConsumer extends WorkerHost {
     @Inject() private readonly userRepository: UserRepository,
     @Inject() private readonly photoProcessService: PhotoProcessService,
     @Inject() private readonly databaseService: DatabaseService,
-    @Inject()
-    private readonly photoGenerateShareService: PhotoGenerateShareService,
     @Inject()
     private readonly photoGenerateWatermarkService: PhotoGenerateWatermarkService,
   ) {

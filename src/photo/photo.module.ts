@@ -15,11 +15,9 @@ import { PhotoGateway } from './gateways/socket.io.gateway';
 import { CacheModule } from '@nestjs/cache-manager';
 import { CommentService } from './services/comment.service';
 import { PhotoWatermarkConsumer } from './consumers/photo-watermark.consumer';
-import { PhotoShareConsumer } from './consumers/photo-share.consumer';
 import { PhotoExchangeController } from './controllers/photo-exchange.controller';
 import { PaymentModule } from 'src/payment/payment.module';
 import { PhotoGenerateWatermarkService } from './services/photo-generate-watermark.service';
-import { PhotoGenerateShareService } from './services/photo-generate-share.service';
 import { PhotoVoteController } from './controllers/photo-vote.controller';
 import { NestjsFormDataModule } from 'nestjs-form-data';
 
@@ -32,10 +30,8 @@ import { NestjsFormDataModule } from 'nestjs-form-data';
     PhotoCategoryService,
     PhotoProcessConsumer,
     PhotoWatermarkConsumer,
-    PhotoShareConsumer,
     CommentService,
     PhotoGenerateWatermarkService,
-    PhotoGenerateShareService,
   ],
   exports: [PhotoService, PhotoProcessService, PhotoCategoryService],
   controllers: [
