@@ -22,13 +22,14 @@ import {
 import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
 import {
+  ApiConsumes,
   ApiOkResponse,
   ApiOperation,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
 import { HttpStatusCode } from 'axios';
-import { PresignedUploadUrlRequest } from '../dtos/rest/presigned-upload-url.request';
+import { PhotoUploadRequestDto } from '../dtos/rest/photo-upload.request';
 import { PresignedUploadUrlResponse } from '../dtos/rest/presigned-upload-url.response.dto';
 import { PhotoDto } from '../dtos/photo.dto';
 import { PhotoUpdateRequestDto } from '../dtos/rest/photo-update.request.dto';
@@ -47,6 +48,7 @@ import { SharePhotoResponseDto } from '../dtos/rest/share-photo-response.dto';
 import { SignedPhotoSharingDto } from '../dtos/signed-photo-sharing.dto';
 import { ResolutionDto } from '../dtos/resolution.dto';
 import { SignedPhotoDto } from '../dtos/signed-photo.dto';
+import { FormDataRequest } from 'nestjs-form-data';
 
 @Controller('photo')
 @ApiTags('photo')
@@ -209,16 +211,18 @@ export class PhotoController {
   }
 
   @Post('/upload')
-  @ApiOperation({ summary: 'generate presigned upload urls for files' })
+  @ApiOperation({ summary: 'upload and validate photo' })
   @ApiResponse({
     status: HttpStatusCode.Ok,
     type: PresignedUploadUrlResponse,
   })
+  @ApiConsumes('multipart/form-data')
+  @FormDataRequest()
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   async getPresignedUploadUrl(
     @AuthenticatedUser() user: ParsedUserDto,
-    @Body() body: PresignedUploadUrlRequest,
+    @Body() body: PhotoUploadRequestDto,
   ) {
     const presignedUrl = await this.photoService.getPresignedUploadUrl(
       user.sub,

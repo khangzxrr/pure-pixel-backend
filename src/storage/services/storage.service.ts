@@ -17,13 +17,25 @@ import { getSignedUrl as getSignedUrlByCloudfront } from '@aws-sdk/cloudfront-si
 import { Injectable, Logger } from '@nestjs/common';
 import { CloudFrontClient } from '@aws-sdk/client-cloudfront';
 import { Upload } from '@aws-sdk/lib-storage';
+import { firstValueFrom } from 'rxjs';
+import { HttpService } from '@nestjs/axios';
 
 @Injectable()
 export class StorageService {
   private logger: Logger = new Logger(StorageService.name);
 
+  constructor(private httpService: HttpService) {}
+
   private s3: S3Client;
   private cfClient: CloudFrontClient;
+
+  async bunnyFileList() {
+    const response = await firstValueFrom(
+      this.httpService.get('https://example.com/data'),
+    );
+
+    return response;
+  }
 
   getS3() {
     if (this.s3) {

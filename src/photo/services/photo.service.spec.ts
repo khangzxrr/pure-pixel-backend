@@ -2,7 +2,7 @@ import { Test } from '@nestjs/testing';
 import { PhotoService } from './photo.service';
 import { StorageModule } from 'src/storage/storage.module';
 import { QueueModule } from 'src/queue/queue.module';
-import { PresignedUploadUrlRequest } from '../dtos/rest/presigned-upload-url.request';
+import { PhotoUploadRequestDto } from '../dtos/rest/photo-upload.request';
 import { FileIsNotValidException } from '../exceptions/file-is-not-valid.exception';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { SignedUpload } from '../dtos/rest/presigned-upload-url.response.dto';
@@ -64,7 +64,7 @@ describe('PhotoService', () => {
   };
 
   const userId = '6db1c6a1-f4ab-4ecb-a489-9285ebb53135';
-  const presignedUploadUrlRequest = new PresignedUploadUrlRequest();
+  const presignedUploadUrlRequest = new PhotoUploadRequestDto();
 
   const photo: PhotoType = {
     id: '3cb95f2e-4164-47ec-84ef-418c247c1963',

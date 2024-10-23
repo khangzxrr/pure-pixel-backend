@@ -3,16 +3,13 @@ import {
   Photo,
   PhotoSell,
   PhotoVisibility,
+  Prisma,
   PrismaPromise,
   ShareStatus,
 } from '@prisma/client';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoIsPrivatedException } from '../exceptions/photo-is-private.exception';
-import { PresignedUploadUrlRequest } from '../dtos/rest/presigned-upload-url.request';
-import {
-  PresignedUploadUrlResponse,
-  SignedUpload,
-} from '../dtos/rest/presigned-upload-url.response.dto';
+import { PhotoUploadRequestDto } from '../dtos/rest/photo-upload.request';
 import { Utils } from 'src/infrastructure/utils/utils';
 import { FileIsNotValidException } from '../exceptions/file-is-not-valid.exception';
 import { v4 } from 'uuid';
@@ -73,6 +70,8 @@ import { PhotoVoteRepository } from 'src/database/repositories/photo-vote.reposi
 import { PhotoVoteDto } from '../dtos/photo-vote.dto';
 import { NotificationConstant } from 'src/notification/constants/notification.constant';
 import { NotificationCreateDto } from 'src/notification/dtos/rest/notification-create.dto';
+import { CannotSignNullPhotoException } from '../exceptions/cannot-sign-null-photo.exception';
+
 @Injectable()
 export class PhotoService {
   private readonly logger = new Logger(PhotoService.name);
@@ -569,21 +568,22 @@ export class PhotoService {
 
   async getPresignedUploadUrl(
     userId: string,
-    presignedUploadUrlRequest: PresignedUploadUrlRequest,
-  ): Promise<PresignedUploadUrlResponse> {
+    photoUploadDto: PhotoUploadRequestDto,
+  ): Promise<SignedPhotoDto> {
     const user = await this.userRepository.findUserQuotaById(userId);
 
     if (!user) {
       throw new PhotographerNotFoundException();
     }
 
-    if (user.photoQuotaUsage >= user.maxPhotoQuota) {
+    const sizeAsBigint = BigInt(photoUploadDto.file.size);
+    const newUsageQuota = user.photoQuotaUsage + sizeAsBigint;
+
+    if (newUsageQuota >= user.maxPhotoQuota) {
       throw new RunOutPhotoQuotaException();
     }
 
-    const extension = Utils.regexFileExtension
-      .exec(presignedUploadUrlRequest.filename)[1]
-      .toLowerCase();
+    const extension = photoUploadDto.file.extension;
 
     if (
       extension !== 'jpg' &&
@@ -597,23 +597,27 @@ export class PhotoService {
 
     const storageObjectKey = `${userId}/${v4()}.${extension}`;
 
-    const presignedUploadUrl =
-      await this.photoProcessService.getPresignUploadUrl(storageObjectKey);
-
     const photo = await this.photoRepository.createTemporaryPhotos(
       userId,
-      presignedUploadUrlRequest.filename,
+      photoUploadDto.file.originalName,
       storageObjectKey,
     );
 
-    const signedUpload = new SignedUpload(
-      presignedUploadUrlRequest.filename,
-      presignedUploadUrl,
-      storageObjectKey,
-      photo.id,
-    );
+    const signedPhotoDto = plainToInstance(SignedPhotoDto, photo);
 
-    return new PresignedUploadUrlResponse(signedUpload);
+    return this.getSignedPhotoById(userId, id);
+  }
+
+  async signPhoto(photo: Photo) {
+    if (photo == null) {
+      throw new CannotSignNullPhotoException();
+    }
+
+    if (photo.originalPhotoUrl.trim() === '') {
+      throw new EmptyOriginalPhotoException();
+    }
+
+    const signedPhotoDto = plainToInstance(SignedPhotoDto, photo);
   }
 
   async parseAndValidateLightroomPresentFromBuffer(file: Express.Multer.File) {
