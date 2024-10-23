@@ -222,14 +222,23 @@ export class PhotoService {
       throw new PhotoNotFoundException();
     }
 
-    const availableResolutions =
-      await this.photoProcessService.getAvailableResolution(
-        photo.originalPhotoUrl,
+    const availableRes = [...PhotoConstant.SUPPORTED_PHOTO_RESOLUTION];
+
+    for (let i = 0; i < PhotoConstant.SUPPORTED_PHOTO_RESOLUTION.length; i++) {
+      const pixelOfRes = PhotoConstant.PHOTO_RESOLUTION_BIMAP.getValue(
+        PhotoConstant.SUPPORTED_PHOTO_RESOLUTION[i],
       );
 
-    this.cacheManager.set(cacheResolutionKey, availableResolutions);
+      if (photo.width >= pixelOfRes) {
+        break;
+      }
 
-    return availableResolutions;
+      availableRes.shift();
+    }
+
+    this.cacheManager.set(cacheResolutionKey, availableRes);
+
+    return availableRes;
   }
 
   async vote(
