@@ -6,9 +6,11 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  ValidateNested,
 } from 'class-validator';
 import { ToBoolean } from 'src/infrastructure/transforms/to-boolean';
 import { GpsDto } from '../gps.dto';
+import { Type } from 'class-transformer';
 
 export class PhotoUpdateRequestDto {
   @ApiProperty({
@@ -74,9 +76,10 @@ export class PhotoUpdateRequestDto {
   photoTags?: string[];
 
   @ApiProperty({
-    type: GpsDto,
     required: false,
   })
   @IsOptional()
+  @ValidateNested()
+  @Type(() => GpsDto)
   gps?: GpsDto;
 }

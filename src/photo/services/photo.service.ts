@@ -275,6 +275,7 @@ export class PhotoService {
       }
     }
 
+    //TODO: update exif to photo using queue
     if (photoUpdateDto.gps) {
       exif['latitude'] = photoUpdateDto.gps.latitude;
       exif['longitude'] = photoUpdateDto.gps.longitude;
