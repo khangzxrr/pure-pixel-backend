@@ -53,59 +53,58 @@ export class PhotoWatermarkConsumer extends WorkerHost {
   async generateWatermark(
     generateWatermarkRequest: GenerateWatermarkRequestDto,
   ) {
-    const photo = await this.photoRepository.getPhotoById(
-      generateWatermarkRequest.photoId,
-    );
-
-    const flagTime1 = new Date();
-
-    const sharp = await this.photoProcessService.sharpInitFromObjectKey(
-      photo.originalPhotoUrl,
-    );
-
-    const watermark = await this.photoProcessService.makeWatermark(
-      sharp,
-      generateWatermarkRequest.text,
-    );
-
-    const flagTime2 = new Date();
-
-    console.log(
-      `time diff of watermark: ${flagTime2.valueOf() - flagTime1.valueOf()}`,
-    );
-
-    const watermarkBuffer = await watermark.toBuffer();
-    photo.watermarkPhotoUrl = `watermark/${photo.originalPhotoUrl}`;
-    await this.photoProcessService.uploadFromBuffer(
-      photo.watermarkPhotoUrl,
-      watermarkBuffer,
-    );
-
-    //make a copy from buffer DO NOT DIRECT USE watermark: sharp
-    //or it will throw composite image not valid size
-    const watermarkFromBuffer =
-      await this.photoProcessService.sharpInitFromBuffer(watermarkBuffer);
-    const watermarkThumbnail =
-      await this.photoProcessService.makeThumbnail(watermarkFromBuffer);
-
-    const watermarkThumbnailBuffer = await watermarkThumbnail.toBuffer();
-    photo.watermarkThumbnailPhotoUrl = `watermark/thumbnail/${photo.originalPhotoUrl}`;
-    await this.photoProcessService.uploadFromBuffer(
-      photo.watermarkThumbnailPhotoUrl,
-      watermarkThumbnailBuffer,
-    );
-
-    await this.photoRepository.updateById(photo.id, {
-      watermarkPhotoUrl: photo.watermarkPhotoUrl,
-      watermarkThumbnailPhotoUrl: photo.watermarkThumbnailPhotoUrl,
-    });
-
-    this.logger.log(
-      `created watermark:
-${photo.watermarkPhotoUrl}
-${photo.watermarkThumbnailPhotoUrl}`,
-    );
-
-    return photo;
+    //    const photo = await this.photoRepository.getPhotoById(
+    //       generateWatermarkRequest.photoId,
+    //     );
+    //
+    //     const flagTime1 = new Date();
+    //
+    //     const sharp = await this.photoProcessService.sharpInitFromObjectKey(
+    //       photo.originalPhotoUrl,
+    //     );
+    //
+    //     const watermark = await this.photoProcessService.makeWatermark(
+    //       sharp,
+    //       generateWatermarkRequest.text,
+    //     );
+    //
+    //     const flagTime2 = new Date();
+    //
+    //     console.log(
+    //       `time diff of watermark: ${flagTime2.valueOf() - flagTime1.valueOf()}`,
+    //     );
+    //
+    //     const watermarkBuffer = await watermark.toBuffer();
+    //     photo.watermarkPhotoUrl = `watermark/${photo.originalPhotoUrl}`;
+    //     await this.photoProcessService.uploadFromBuffer(
+    //       photo.watermarkPhotoUrl,
+    //       watermarkBuffer,
+    //     );
+    //
+    //     //make a copy from buffer DO NOT DIRECT USE watermark: sharp
+    //     //or it will throw composite image not valid size
+    //     const watermarkFromBuffer =
+    //       await this.photoProcessService.sharpInitFromBuffer(watermarkBuffer);
+    //     const watermarkThumbnail =
+    //       await this.photoProcessService.makeThumbnail(watermarkFromBuffer);
+    //
+    //     const watermarkThumbnailBuffer = await watermarkThumbnail.toBuffer();
+    //     photo.watermarkThumbnailPhotoUrl = `watermark/thumbnail/${photo.originalPhotoUrl}`;
+    //     await this.photoProcessService.uploadFromBuffer(
+    //       photo.watermarkThumbnailPhotoUrl,
+    //       watermarkThumbnailBuffer,
+    //     );
+    //
+    //     await this.photoRepository.updateById(photo.id, {
+    //       watermarkPhotoUrl: photo.watermarkPhotoUrl,
+    //       watermarkThumbnailPhotoUrl: photo.watermarkThumbnailPhotoUrl,
+    //     });
+    //
+    //     this.logger.log(
+    //       `created watermark:
+    // ${photo.watermarkPhotoUrl}
+    // ${photo.watermarkThumbnailPhotoUrl}`,
+    //     );
+    // return photo;
   }
 }

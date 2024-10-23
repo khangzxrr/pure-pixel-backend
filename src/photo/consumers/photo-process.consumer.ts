@@ -59,92 +59,92 @@ export class PhotoProcessConsumer extends WorkerHost {
     userId: string,
     processImagesRequest: ProcessPhotosRequest,
   ) {
-    const photo = await this.photoRepository.getPhotoByIdAndStatusAndUserId(
-      processImagesRequest.signedUpload.photoId,
-      'PENDING',
-      userId,
-    );
-
-    if (!photo) {
-      this.logger.error(
-        `photo not found to process userId: ${userId}, photoId: ${processImagesRequest.signedUpload.photoId}`,
-      );
-
-      return;
-    }
-
-    const currentTime = new Date();
-
-    const sharp = await this.photoProcessService.sharpInitFromObjectKey(
-      photo.originalPhotoUrl,
-    );
-
-    const metadata = await sharp.metadata();
-    photo.size = metadata.size;
-
-    const thumbnailBuffer = await this.photoProcessService
-      .makeThumbnail(sharp)
-      .then((s) => s.toBuffer());
-    photo.thumbnailPhotoUrl = `thumbnail/${photo.originalPhotoUrl}`;
-
-    await this.photoProcessService.uploadFromBuffer(
-      photo.thumbnailPhotoUrl,
-      thumbnailBuffer,
-    );
-
-    const sharpJpegBuffer = await this.photoProcessService
-      .convertJpeg(sharp)
-      .then((s) => s.toBuffer());
-
-    await this.photoProcessService.uploadFromBuffer(
-      photo.originalPhotoUrl,
-      sharpJpegBuffer,
-    );
-
-    photo.watermarkThumbnailPhotoUrl = photo.thumbnailPhotoUrl;
-    photo.watermarkPhotoUrl = photo.originalPhotoUrl;
-
-    const updateQuery = this.photoRepository.updateQuery({
-      id: photo.id,
-      originalPhotoUrl: photo.originalPhotoUrl,
-      thumbnailPhotoUrl: photo.thumbnailPhotoUrl,
-      watermarkPhotoUrl: photo.watermarkPhotoUrl,
-      watermarkThumbnailPhotoUrl: photo.watermarkThumbnailPhotoUrl,
-      status: 'PARSED',
-      size: photo.size,
-    });
-
-    const updateQuotaQuery = this.userRepository.increasePhotoQuotaUsageById(
-      userId,
-      photo.size,
-    );
-
-    await this.databaseService.applyTransactionMultipleQueries([
-      updateQuery,
-      updateQuotaQuery,
-    ]);
-
-    await this.photoGateway.sendFinishProcessPhotoEventToUserId(userId, photo);
-
-    const currentTime2nd = new Date();
-
-    console.log(
-      'time to convert photo: ',
-      currentTime2nd.valueOf() - currentTime.valueOf(),
-    );
-
-    await this.photoGenerateWatermarkService.processWatermark(
-      userId,
-      {
-        text: 'PPX',
-        photoId: photo.id,
-      },
-      sharpJpegBuffer,
-    );
-
-    await this.photoGenerateShareService.generateSharePayload(
-      photo.id,
-      sharpJpegBuffer,
-    );
+    //   const photo = await this.photoRepository.getPhotoByIdAndStatusAndUserId(
+    //     processImagesRequest.signedUpload.photoId,
+    //     'PENDING',
+    //     userId,
+    //   );
+    //
+    //   if (!photo) {
+    //     this.logger.error(
+    //       `photo not found to process userId: ${userId}, photoId: ${processImagesRequest.signedUpload.photoId}`,
+    //     );
+    //
+    //     return;
+    //   }
+    //
+    //   const currentTime = new Date();
+    //
+    //   const sharp = await this.photoProcessService.sharpInitFromObjectKey(
+    //     photo.originalPhotoUrl,
+    //   );
+    //
+    //   const metadata = await sharp.metadata();
+    //   photo.size = metadata.size;
+    //
+    //   const thumbnailBuffer = await this.photoProcessService
+    //     .makeThumbnail(sharp)
+    //     .then((s) => s.toBuffer());
+    //   photo.thumbnailPhotoUrl = `thumbnail/${photo.originalPhotoUrl}`;
+    //
+    //   await this.photoProcessService.uploadFromBuffer(
+    //     photo.thumbnailPhotoUrl,
+    //     thumbnailBuffer,
+    //   );
+    //
+    //   const sharpJpegBuffer = await this.photoProcessService
+    //     .convertJpeg(sharp)
+    //     .then((s) => s.toBuffer());
+    //
+    //   await this.photoProcessService.uploadFromBuffer(
+    //     photo.originalPhotoUrl,
+    //     sharpJpegBuffer,
+    //   );
+    //
+    //   photo.watermarkThumbnailPhotoUrl = photo.thumbnailPhotoUrl;
+    //   photo.watermarkPhotoUrl = photo.originalPhotoUrl;
+    //
+    //   const updateQuery = this.photoRepository.updateQuery({
+    //     id: photo.id,
+    //     originalPhotoUrl: photo.originalPhotoUrl,
+    //     thumbnailPhotoUrl: photo.thumbnailPhotoUrl,
+    //     watermarkPhotoUrl: photo.watermarkPhotoUrl,
+    //     watermarkThumbnailPhotoUrl: photo.watermarkThumbnailPhotoUrl,
+    //     status: 'PARSED',
+    //     size: photo.size,
+    //   });
+    //
+    //   const updateQuotaQuery = this.userRepository.increasePhotoQuotaUsageById(
+    //     userId,
+    //     photo.size,
+    //   );
+    //
+    //   await this.databaseService.applyTransactionMultipleQueries([
+    //     updateQuery,
+    //     updateQuotaQuery,
+    //   ]);
+    //
+    //   await this.photoGateway.sendFinishProcessPhotoEventToUserId(userId, photo);
+    //
+    //   const currentTime2nd = new Date();
+    //
+    //   console.log(
+    //     'time to convert photo: ',
+    //     currentTime2nd.valueOf() - currentTime.valueOf(),
+    //   );
+    //
+    //   await this.photoGenerateWatermarkService.processWatermark(
+    //     userId,
+    //     {
+    //       text: 'PPX',
+    //       photoId: photo.id,
+    //     },
+    //     sharpJpegBuffer,
+    //   );
+    //
+    //   await this.photoGenerateShareService.generateSharePayload(
+    //     photo.id,
+    //     sharpJpegBuffer,
+    //   );
   }
 }
