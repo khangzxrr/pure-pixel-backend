@@ -198,11 +198,7 @@ export class PhotoshootPackageService {
       title: createDto.title,
       subtitle: createDto.subtitle,
       thumbnail: thumbnailKey,
-      details: {
-        createMany: {
-          data: [],
-        },
-      },
+      description: createDto.description,
     });
 
     const updatePackageQuotaQuery = this.userRepository.updateUser(user.id, {
