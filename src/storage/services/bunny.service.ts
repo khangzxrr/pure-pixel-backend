@@ -43,14 +43,14 @@ export class BunnyService {
     return filekey;
   }
 
-  async getPresignedFile(filename: string) {
+  getPresignedFile(filename: string, query: string = '') {
     return this.signUrl(
-      `${process.env.BUNNY_STORAGE_CDN}/${filename}`,
+      `${process.env.BUNNY_STORAGE_CDN}/${filename}${query}`,
       `${process.env.BUNNY_CDN_ACCESS_KEY}`,
       3600,
       null,
       false,
-      '/DSCF5015.JPG',
+      `/${filename}`,
       null,
       null,
     );
