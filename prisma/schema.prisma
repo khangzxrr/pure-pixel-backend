@@ -288,14 +288,9 @@ enum PhotoVisibility {
 }
 
 enum PhotoStatus {
-  PARSED
   PENDING
-}
-
-enum ShareStatus {
-  NOT_READY
-  READY
-  SHARED
+  PARSED
+  VERIFYING
 }
 
 model Photo {
@@ -308,6 +303,9 @@ model Photo {
   categoryId String
 
   title String
+
+  width  Int
+  height Int
 
   watermark Boolean @default(false)
 
@@ -323,9 +321,6 @@ model Photo {
   visibility PhotoVisibility @default(PUBLIC)
 
   status PhotoStatus @default(PENDING)
-
-  shareStatus  ShareStatus @default(NOT_READY)
-  sharePayload Json        @default("{}")
 
   size Int @default(0)
 
