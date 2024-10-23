@@ -3,7 +3,6 @@ import {
   Photo,
   PhotoSell,
   PhotoVisibility,
-  Prisma,
   PrismaPromise,
 } from '@prisma/client';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
@@ -23,17 +22,11 @@ import { UserRepository } from 'src/database/repositories/user.repository';
 import { RunOutPhotoQuotaException } from '../exceptions/run-out-photo-quota.exception';
 import { PhotoProcessService } from './photo-process.service';
 import { SharePhotoRequestDto } from '../dtos/rest/share-photo.request.dto';
-import { ShareStatusIsNotReadyException } from '../exceptions/share-status-is-not-ready.exception';
 import { ChoosedShareQualityIsNotFoundException } from '../exceptions/choosed-share-quality-is-not-found.exception';
 import { SharePhotoResponseDto } from '../dtos/rest/share-photo-response.dto';
 import { EmptyOriginalPhotoException } from '../exceptions/empty-original-photo.exception';
 import { PagingPaginatedResposneDto } from 'src/infrastructure/restful/paging-paginated.response.dto';
-import { PhotoSharingRepository } from 'src/database/repositories/photo-sharing.repository';
-import { CreatePhotoSharingFailedException } from '../exceptions/create-photo-sharing-failed.exception';
-import { SignedPhotoSharingDto } from '../dtos/signed-photo-sharing.dto';
 import { plainToInstance } from 'class-transformer';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
-import { ShareQualityAlreadyExistException } from '../exceptions/share-quality-already-exist.exception';
 import { CreatePhotoSellingDto } from '../dtos/rest/create-photo-selling.request.dto';
 import { PhotoSellRepository } from 'src/database/repositories/photo-sell.repository';
 import { PhotoSellDto } from '../dtos/photo-sell.dto';
@@ -79,7 +72,6 @@ export class PhotoService {
   constructor(
     @Inject() private readonly sepayService: SepayService,
     @Inject() private readonly photoRepository: PhotoRepository,
-    @Inject() private readonly photoSharingRepository: PhotoSharingRepository,
     @Inject() private readonly userRepository: UserRepository,
     @Inject() private readonly photoProcessService: PhotoProcessService,
     @Inject() private readonly photoSellRepository: PhotoSellRepository,
@@ -114,48 +106,7 @@ export class PhotoService {
     return photo;
   }
 
-  async getSharedPhotoById(
-    sharedPhotoId: string,
-  ): Promise<SignedPhotoSharingDto> {
-    const sharedPhoto =
-      await this.photoSharingRepository.findUniqueById(sharedPhotoId);
-
-    if (!sharedPhoto) {
-      throw new PhotoNotFoundException();
-    }
-
-    const signedSharePhotoUrl =
-      await this.photoProcessService.getSignedObjectUrl(
-        sharedPhoto.sharePhotoUrl,
-      );
-
-    sharedPhoto.sharePhotoUrl = signedSharePhotoUrl;
-
-    //using class transformer to exclude what doesnt want to show
-    return plainToInstance(SignedPhotoSharingDto, sharedPhoto, {});
-  }
-
-  async findAllShared(userId: string, photoId: string) {
-    await this.findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
-      userId,
-      photoId,
-    );
-
-    const sharedPhotos =
-      await this.photoSharingRepository.findAllByOriginalPhotoId(photoId);
-
-    return sharedPhotos.map(
-      (s) =>
-        new SharePhotoResponseDto(
-          s.quality,
-          `${process.env.FRONTEND_ORIGIN}/shared-photo/${s.id}`,
-        ),
-    );
-  }
-
   async sharePhoto(userId: string, shareRequest: SharePhotoRequestDto) {
-    //TODO: finish share photo feature
-
     const photo =
       await this.findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
         userId,
@@ -168,42 +119,12 @@ export class PhotoService {
       throw new ChoosedShareQualityIsNotFoundException();
     }
 
-    const previousSharePhotoWithChoosedQuality =
-      await this.photoSharingRepository.findOneByPhotoIdAndQuality(
-        photo.id,
-        shareRequest.resolution,
-      );
+    const shareUrl = this.bunnyService.getPresignedFile(
+      photo.originalPhotoUrl,
+      `?width=${PhotoConstant.PHOTO_RESOLUTION_BIMAP.getValue(shareRequest.resolution)}`,
+    );
 
-    if (previousSharePhotoWithChoosedQuality) {
-      return new SharePhotoResponseDto(
-        shareRequest.resolution,
-        `${process.env.FRONTEND_ORIGIN}/shared-photo/${previousSharePhotoWithChoosedQuality.id}`,
-      );
-    }
-
-    try {
-      const photoSharing = await this.photoSharingRepository.create(
-        photo.id,
-        shareRequest.resolution,
-        choosedQualityPhotoUrl,
-      );
-
-      if (!photoSharing) {
-        throw new CreatePhotoSharingFailedException();
-      }
-
-      return new SharePhotoResponseDto(
-        shareRequest.resolution,
-        `${process.env.FRONTEND_ORIGIN}/shared-photo/${photoSharing.id}`,
-      );
-    } catch (e) {
-      if (e instanceof PrismaClientKnownRequestError) {
-        //share photo exist
-        if (e.code === 'P2002') {
-          throw new ShareQualityAlreadyExistException();
-        }
-      }
-    }
+    return new SharePhotoResponseDto(shareRequest.resolution, shareUrl);
   }
 
   async getAvailablePhotoResolution(id: string) {
@@ -481,6 +402,7 @@ export class PhotoService {
     const newUsageQuota = user.photoQuotaUsage + sizeAsBigint;
 
     if (newUsageQuota >= user.maxPhotoQuota) {
+      console.log(newUsageQuota, user.maxPhotoQuota);
       throw new RunOutPhotoQuotaException();
     }
 

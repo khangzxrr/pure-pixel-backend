@@ -42,8 +42,6 @@ import { GenerateWatermarkRequestDto } from '../dtos/rest/generate-watermark.req
 import { SharePhotoRequestDto } from '../dtos/rest/share-photo.request.dto';
 import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.response.dto';
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
-import { SharePhotoResponseDto } from '../dtos/rest/share-photo-response.dto';
-import { SignedPhotoSharingDto } from '../dtos/signed-photo-sharing.dto';
 import { ResolutionDto } from '../dtos/resolution.dto';
 import { SignedPhotoDto } from '../dtos/signed-photo.dto';
 import { FormDataRequest } from 'nestjs-form-data';
@@ -235,35 +233,6 @@ export class PhotoController {
 
     res.status(200).send(result);
   }
-
-  @Get('/:sharedPhotoId/get-shared')
-  @ApiOperation({
-    summary: 'get shared photo detail by id',
-  })
-  @ApiOkResponse({
-    type: SignedPhotoSharingDto,
-  })
-  async getSharedPhotoDetail(@Param('sharedPhotoId') sharedPhotoId: string) {
-    return await this.photoService.getSharedPhotoById(sharedPhotoId);
-  }
-
-  @Get('/:id/get-list-shared')
-  @ApiOperation({
-    summary: 'get all shared link of a photo by id',
-  })
-  @ApiOkResponse({
-    isArray: true,
-    type: SharePhotoResponseDto,
-  })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
-  async findAllShared(
-    @AuthenticatedUser() user: ParsedUserDto,
-    @Param('id') photoId: string,
-  ) {
-    return await this.photoService.findAllShared(user.sub, photoId);
-  }
-
   @Post('/share')
   @ApiOperation({
     summary: 'generate share url by photo id',
