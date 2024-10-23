@@ -98,9 +98,6 @@ export class PhotoRepository {
   async create(data: Prisma.PhotoCreateInput) {
     return this.prisma.extendedClient().photo.create({
       data,
-      select: {
-        id: true,
-      },
     });
   }
 
