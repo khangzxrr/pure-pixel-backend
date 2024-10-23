@@ -48,28 +48,6 @@ export class PhotoProcessService {
     return photo;
   }
 
-  async getAvailableResolution(key: string): Promise<string[]> {
-    const sharp = await this.sharpInitFromObjectKey(key);
-
-    const metadata = await sharp.metadata();
-
-    const availableRes = [...PhotoConstant.SUPPORTED_PHOTO_RESOLUTION];
-
-    for (let i = 0; i < PhotoConstant.SUPPORTED_PHOTO_RESOLUTION.length; i++) {
-      const pixelOfRes = PhotoConstant.PHOTO_RESOLUTION_BIMAP.getValue(
-        PhotoConstant.SUPPORTED_PHOTO_RESOLUTION[i],
-      );
-
-      if (metadata.height >= pixelOfRes) {
-        break;
-      }
-
-      availableRes.shift();
-    }
-
-    return availableRes;
-  }
-
   async resizeWithMetadata(sharp: SharpLib.Sharp, heightRequired: number) {
     return sharp
       .clone()
