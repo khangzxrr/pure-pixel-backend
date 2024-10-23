@@ -430,7 +430,6 @@ export class PhotoService {
     const newUsageQuota = user.photoQuotaUsage + sizeAsBigint;
 
     if (newUsageQuota >= user.maxPhotoQuota) {
-      console.log(newUsageQuota, user.maxPhotoQuota);
       throw new RunOutPhotoQuotaException();
     }
 
