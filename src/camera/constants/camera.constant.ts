@@ -1,0 +1,5 @@
+export class CameraConstant {
+  static CAMERA_PROCESS_QUEUE = 'CAMERA_PROCESS_QUEUE';
+
+  static ADD_NEW_CAMERA_USAGE_JOB = 'ADD_NEW_CAMERA_USAGE_JOB';
+}

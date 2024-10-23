@@ -22,6 +22,7 @@ import { BlogModule } from './blog/blog.module';
 import { PhotoshootPackageModule } from './photoshoot-package/photoshoot-package.module';
 import { BookingModule } from './booking/booking.module';
 import { ChatModule } from './chat/chat.module';
+import { CameraModule } from './camera/camera.module';
 
 @Module({
   providers: [
@@ -54,6 +55,7 @@ import { ChatModule } from './chat/chat.module';
     PhotoshootPackageModule,
     BookingModule,
     ChatModule,
+    CameraModule,
   ],
   controllers: [AppController],
 })

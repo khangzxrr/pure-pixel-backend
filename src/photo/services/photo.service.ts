@@ -66,6 +66,7 @@ import { MissingModelExifException } from '../exceptions/missing-model-exif.exce
 import { SignedUrl } from '../dtos/photo-signed-url.dto';
 import { GenerateWatermarkRequestDto } from '../dtos/rest/generate-watermark.request.dto';
 import { PhotoGenerateWatermarkService } from './photo-generate-watermark.service';
+import { CameraConstant } from 'src/camera/constants/camera.constant';
 
 @Injectable()
 export class PhotoService {
@@ -88,6 +89,8 @@ export class PhotoService {
     private readonly notificationQueue: Queue,
     @InjectQueue(PhotoConstant.PHOTO_PROCESS_QUEUE)
     private readonly photoProcessQueue: Queue,
+    @InjectQueue(CameraConstant.CAMERA_PROCESS_QUEUE)
+    private readonly cameraQueue: Queue,
     private readonly prisma: PrismaService,
     @Inject(CACHE_MANAGER)
     private readonly cacheManager: Cache,
@@ -500,6 +503,9 @@ export class PhotoService {
 
       await this.photoProcessQueue.add(PhotoConstant.PROCESS_PHOTO_JOB_NAME, {
         id: photo.id,
+      });
+      await this.cameraQueue.add(CameraConstant.ADD_NEW_CAMERA_USAGE_JOB, {
+        photoId: photo.id,
       });
 
       return this.signPhoto(photo);
