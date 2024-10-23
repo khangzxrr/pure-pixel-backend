@@ -74,6 +74,8 @@ import { CannotSignNullPhotoException } from '../exceptions/cannot-sign-null-pho
 import { BunnyService } from 'src/storage/services/bunny.service';
 import { UploadPhotoFailedException } from '../exceptions/upload-photo-failed.exception';
 import { ExifNotFoundException } from '../exceptions/exif-not-found.exception';
+import { MissingMakeExifException } from '../exceptions/missing-make-exif.exception';
+import { MissingModelExifException } from '../exceptions/missing-model-exif.exception';
 
 @Injectable()
 export class PhotoService {
@@ -574,11 +576,7 @@ export class PhotoService {
     userId: string,
     photoUploadDto: PhotoUploadRequestDto,
   ): Promise<SignedPhotoDto> {
-    const user = await this.userRepository.findUserQuotaById(userId);
-
-    if (!user) {
-      throw new PhotographerNotFoundException();
-    }
+    const user = await this.userRepository.findUniqueOrThrow(userId);
 
     const sizeAsBigint = BigInt(photoUploadDto.file.size);
     const newUsageQuota = user.photoQuotaUsage + sizeAsBigint;
@@ -605,9 +603,19 @@ export class PhotoService {
 
     console.log(exif);
 
-    if (exif === null) {
+    if (!exif) {
       throw new ExifNotFoundException();
     }
+
+    if (!exif['Make']) {
+      throw new MissingMakeExifException();
+    }
+
+    if (!exif['Model']) {
+      throw new MissingModelExifException();
+    }
+
+    exif['Copyright'] = ` © copyright by ${user.name}`;
 
     try {
       const storageObjectKey = await this.bunnyService.upload(
