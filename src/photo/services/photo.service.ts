@@ -64,6 +64,8 @@ import { ExifNotFoundException } from '../exceptions/exif-not-found.exception';
 import { MissingMakeExifException } from '../exceptions/missing-make-exif.exception';
 import { MissingModelExifException } from '../exceptions/missing-model-exif.exception';
 import { SignedUrl } from '../dtos/photo-signed-url.dto';
+import { GenerateWatermarkRequestDto } from '../dtos/rest/generate-watermark.request.dto';
+import { PhotoGenerateWatermarkService } from './photo-generate-watermark.service';
 
 @Injectable()
 export class PhotoService {
@@ -80,6 +82,8 @@ export class PhotoService {
     @Inject() private readonly photoBuyRepository: PhotoBuyRepository,
     @Inject() private readonly photoVoteRepository: PhotoVoteRepository,
     @Inject() private readonly bunnyService: BunnyService,
+    @Inject()
+    private readonly photoGenerateWatermarkService: PhotoGenerateWatermarkService,
     @InjectQueue(NotificationConstant.NOTIFICATION_QUEUE)
     private readonly notificationQueue: Queue,
     @InjectQueue(PhotoConstant.PHOTO_PROCESS_QUEUE)
@@ -88,6 +92,26 @@ export class PhotoService {
     @Inject(CACHE_MANAGER)
     private readonly cacheManager: Cache,
   ) {}
+
+  async sendImageWatermarkQueue(
+    userId: string,
+    photoId: string,
+    generateWatermarkRequest: GenerateWatermarkRequestDto,
+  ) {
+    const photo = await this.photoRepository.getPhotoById(photoId);
+
+    if (photo.photographerId !== userId) {
+      throw new NotBelongPhotoException();
+    }
+
+    const updatedPhoto =
+      await this.photoGenerateWatermarkService.generateWatermark(
+        photo.id,
+        generateWatermarkRequest,
+      );
+
+    return this.signPhoto(updatedPhoto);
+  }
 
   async findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
     userId: string,
@@ -516,90 +540,93 @@ export class PhotoService {
     sellPhotoDto: CreatePhotoSellingDto,
     afterPhotoFile: Express.Multer.File,
   ) {
-    await this.parseAndValidateLightroomPresentFromBuffer(afterPhotoFile);
-
-    const photo =
-      await this.findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
-        userId,
-        sellPhotoDto.photoId,
-      );
-
-    if (photo.status !== 'PARSED') {
-      throw new PhotoIsPendingStateException();
-    }
-
-    const previousActivePhotoSell =
-      await this.photoSellRepository.getByActiveAndPhotoId(
-        sellPhotoDto.photoId,
-      );
-
-    if (
-      previousActivePhotoSell &&
-      previousActivePhotoSell.price.toNumber() === sellPhotoDto.price &&
-      previousActivePhotoSell.description === sellPhotoDto.description
-    ) {
-      //idemponent
-      return plainToInstance(PhotoSellDto, previousActivePhotoSell, {});
-    }
-
-    const extension = Utils.regexFileExtension.exec(
-      afterPhotoFile.originalname,
-    )[1];
-
-    const newPhotoSellId = v4();
-
-    const colorGradingPhotoUrl = `color_grading/${newPhotoSellId}/${photo.id}.${extension}`;
-    await this.photoProcessService.uploadFromBuffer(
-      colorGradingPhotoUrl,
-      afterPhotoFile.buffer,
-    );
-
-    //upload colorGrading first because watermark will replace buffer
-
-    const watermarkAfterPhotoBuffer =
-      await this.photoProcessService.makeTextWatermark(
-        afterPhotoFile.buffer,
-        'PUREPIXEL',
-      );
-
-    const watermarkColorGradingPhotoUrl = `watermark_color_grading/${newPhotoSellId}/${photo.id}.${extension}`;
-    await this.photoProcessService.uploadFromBuffer(
-      watermarkColorGradingPhotoUrl,
-      watermarkAfterPhotoBuffer,
-    );
-
-    photo.watermark = true;
-    photo.visibility = 'PUBLIC';
-
-    const prismaQuery: PrismaPromise<any>[] = [];
-    if (previousActivePhotoSell) {
-      const updatePreviousPhotoSellQuery = this.photoSellRepository.updateQuery(
-        previousActivePhotoSell.id,
-        {
-          active: false,
-        },
-      );
-      prismaQuery.push(updatePreviousPhotoSellQuery);
-    }
-
-    const updatePhotoToPublicAndWatermarkQuery =
-      this.photoRepository.updateQuery(photo);
-    prismaQuery.push(updatePhotoToPublicAndWatermarkQuery);
-
-    const photoSell = plainToInstance(PhotoSellEntity, sellPhotoDto);
-    photoSell.id = newPhotoSellId;
-    photoSell.colorGradingPhotoUrl = colorGradingPhotoUrl;
-    photoSell.colorGradingPhotoWatermarkUrl = watermarkColorGradingPhotoUrl;
-
-    const createPhotoSellQuery =
-      this.photoSellRepository.createAndActiveByPhotoIdQuery(photoSell);
-    prismaQuery.push(createPhotoSellQuery);
-
-    const [, newPhotoSell] = await this.prisma
-      .extendedClient()
-      .$transaction([...prismaQuery]);
-
-    return plainToInstance(PhotoSellDto, newPhotoSell);
+    //TODO: finish sell photo
+    //
+    //
+    // await this.parseAndValidateLightroomPresentFromBuffer(afterPhotoFile);
+    //
+    // const photo =
+    //   await this.findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
+    //     userId,
+    //     sellPhotoDto.photoId,
+    //   );
+    //
+    // if (photo.status !== 'PARSED') {
+    //   throw new PhotoIsPendingStateException();
+    // }
+    //
+    // const previousActivePhotoSell =
+    //   await this.photoSellRepository.getByActiveAndPhotoId(
+    //     sellPhotoDto.photoId,
+    //   );
+    //
+    // if (
+    //   previousActivePhotoSell &&
+    //   previousActivePhotoSell.price.toNumber() === sellPhotoDto.price &&
+    //   previousActivePhotoSell.description === sellPhotoDto.description
+    // ) {
+    //   //idemponent
+    //   return plainToInstance(PhotoSellDto, previousActivePhotoSell, {});
+    // }
+    //
+    // const extension = Utils.regexFileExtension.exec(
+    //   afterPhotoFile.originalname,
+    // )[1];
+    //
+    // const newPhotoSellId = v4();
+    //
+    // const colorGradingPhotoUrl = `color_grading/${newPhotoSellId}/${photo.id}.${extension}`;
+    // await this.photoProcessService.uploadFromBuffer(
+    //   colorGradingPhotoUrl,
+    //   afterPhotoFile.buffer,
+    // );
+    //
+    // //upload colorGrading first because watermark will replace buffer
+    //
+    // const watermarkAfterPhotoBuffer =
+    //   await this.photoProcessService.makeTextWatermark(
+    //     afterPhotoFile.buffer,
+    //     'PUREPIXEL',
+    //   );
+    //
+    // const watermarkColorGradingPhotoUrl = `watermark_color_grading/${newPhotoSellId}/${photo.id}.${extension}`;
+    // await this.photoProcessService.uploadFromBuffer(
+    //   watermarkColorGradingPhotoUrl,
+    //   watermarkAfterPhotoBuffer,
+    // );
+    //
+    // photo.watermark = true;
+    // photo.visibility = 'PUBLIC';
+    //
+    // const prismaQuery: PrismaPromise<any>[] = [];
+    // if (previousActivePhotoSell) {
+    //   const updatePreviousPhotoSellQuery = this.photoSellRepository.updateQuery(
+    //     previousActivePhotoSell.id,
+    //     {
+    //       active: false,
+    //     },
+    //   );
+    //   prismaQuery.push(updatePreviousPhotoSellQuery);
+    // }
+    //
+    // const updatePhotoToPublicAndWatermarkQuery =
+    //   this.photoRepository.updateQuery(photo);
+    // prismaQuery.push(updatePhotoToPublicAndWatermarkQuery);
+    //
+    // const photoSell = plainToInstance(PhotoSellEntity, sellPhotoDto);
+    // photoSell.id = newPhotoSellId;
+    // photoSell.colorGradingPhotoUrl = colorGradingPhotoUrl;
+    // photoSell.colorGradingPhotoWatermarkUrl = watermarkColorGradingPhotoUrl;
+    //
+    // const createPhotoSellQuery =
+    //   this.photoSellRepository.createAndActiveByPhotoIdQuery(photoSell);
+    // prismaQuery.push(createPhotoSellQuery);
+    //
+    // const [, newPhotoSell] = await this.prisma
+    //   .extendedClient()
+    //   .$transaction([...prismaQuery]);
+    //
+    // return plainToInstance(PhotoSellDto, newPhotoSell);
   }
 
   async getPhotoBuyByPhotoId(userId: string, photoId: string) {

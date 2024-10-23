@@ -142,7 +142,7 @@ export class PhotoController {
   //   return 'cool';
   // }
 
-  @Post('/watermark')
+  @Post(':id/watermark')
   @ApiOperation({
     summary: 'put photo to watermark queue inorder to generate watermark',
   })
@@ -154,14 +154,13 @@ export class PhotoController {
   async generateWatermark(
     @AuthenticatedUser() user: ParsedUserDto,
     @Body() generateWatermarkRequest: GenerateWatermarkRequestDto,
-    @Res() res: Response,
+    @Param('id') id: string,
   ) {
-    // await this.photoService.sendWatermarkRequest(
-    //   user.sub,
-    //   generateWatermarkRequest,
-    // );
-
-    res.status(HttpStatus.ACCEPTED).send();
+    return await this.photoService.sendImageWatermarkQueue(
+      user.sub,
+      id,
+      generateWatermarkRequest,
+    );
   }
 
   @Patch(':id')
