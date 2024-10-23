@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Constants } from 'src/infrastructure/utils/constants';
 import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
@@ -19,7 +20,7 @@ export class CameraRepository {
       },
       create: {
         name: model,
-        thumbnail: 'model_thumbnail',
+        thumbnail: Constants.DEFAULT_IMAGE,
         cameraMaker: {
           connectOrCreate: {
             where: {
@@ -27,7 +28,7 @@ export class CameraRepository {
             },
             create: {
               name: make,
-              thumbnail: 'camera_maker_thumbnail',
+              thumbnail: Constants.DEFAULT_IMAGE,
             },
           },
         },

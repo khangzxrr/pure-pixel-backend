@@ -5,7 +5,10 @@ export class Constants {
   static ADMIN_ROLE = 'purepixel-admin';
 
   static DEFAULT_AVATAR =
-    'https://s3-hcm-r1.s3cloud.vn/sftpgo/avatar%2Favatar.png';
+    'https://purepixel-default.b-cdn.net/default-avatar.png';
+
+  static DEFAULT_IMAGE =
+    'https://purepixel-default.b-cdn.net/default-camera.jpg';
 
   static SORT = ['asc', 'desc'];
 }
