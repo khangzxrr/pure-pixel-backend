@@ -155,55 +155,55 @@ export class PhotoService {
 
   async sharePhoto(userId: string, shareRequest: SharePhotoRequestDto) {
     //TODO: finish share photo feature
-    //
-    // const photo =
-    //   await this.findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
-    //     userId,
-    //     shareRequest.photoId,
-    //   );
-    //
-    // const choosedQualityPhotoUrl = photo.sharePayload[shareRequest.resolution];
-    //
-    // if (!choosedQualityPhotoUrl) {
-    //   throw new ChoosedShareQualityIsNotFoundException();
-    // }
-    //
-    // const previousSharePhotoWithChoosedQuality =
-    //   await this.photoSharingRepository.findOneByPhotoIdAndQuality(
-    //     photo.id,
-    //     shareRequest.resolution,
-    //   );
-    //
-    // if (previousSharePhotoWithChoosedQuality) {
-    //   return new SharePhotoResponseDto(
-    //     shareRequest.resolution,
-    //     `${process.env.FRONTEND_ORIGIN}/shared-photo/${previousSharePhotoWithChoosedQuality.id}`,
-    //   );
-    // }
-    //
-    // try {
-    //   const photoSharing = await this.photoSharingRepository.create(
-    //     photo.id,
-    //     shareRequest.resolution,
-    //     choosedQualityPhotoUrl,
-    //   );
-    //
-    //   if (!photoSharing) {
-    //     throw new CreatePhotoSharingFailedException();
-    //   }
-    //
-    //   return new SharePhotoResponseDto(
-    //     shareRequest.resolution,
-    //     `${process.env.FRONTEND_ORIGIN}/shared-photo/${photoSharing.id}`,
-    //   );
-    // } catch (e) {
-    //   if (e instanceof PrismaClientKnownRequestError) {
-    //     //share photo exist
-    //     if (e.code === 'P2002') {
-    //       throw new ShareQualityAlreadyExistException();
-    //     }
-    //   }
-    // }
+
+    const photo =
+      await this.findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
+        userId,
+        shareRequest.photoId,
+      );
+
+    const availableRes = await this.getAvailablePhotoResolution(photo.id);
+
+    if (availableRes.indexOf(shareRequest.resolution) <= 0) {
+      throw new ChoosedShareQualityIsNotFoundException();
+    }
+
+    const previousSharePhotoWithChoosedQuality =
+      await this.photoSharingRepository.findOneByPhotoIdAndQuality(
+        photo.id,
+        shareRequest.resolution,
+      );
+
+    if (previousSharePhotoWithChoosedQuality) {
+      return new SharePhotoResponseDto(
+        shareRequest.resolution,
+        `${process.env.FRONTEND_ORIGIN}/shared-photo/${previousSharePhotoWithChoosedQuality.id}`,
+      );
+    }
+
+    try {
+      const photoSharing = await this.photoSharingRepository.create(
+        photo.id,
+        shareRequest.resolution,
+        choosedQualityPhotoUrl,
+      );
+
+      if (!photoSharing) {
+        throw new CreatePhotoSharingFailedException();
+      }
+
+      return new SharePhotoResponseDto(
+        shareRequest.resolution,
+        `${process.env.FRONTEND_ORIGIN}/shared-photo/${photoSharing.id}`,
+      );
+    } catch (e) {
+      if (e instanceof PrismaClientKnownRequestError) {
+        //share photo exist
+        if (e.code === 'P2002') {
+          throw new ShareQualityAlreadyExistException();
+        }
+      }
+    }
   }
 
   async getAvailablePhotoResolution(id: string) {
