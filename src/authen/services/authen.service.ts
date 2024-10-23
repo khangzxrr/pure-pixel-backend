@@ -56,13 +56,13 @@ export class AuthenService {
 
         newUser.ftpPassword = Utils.randomString(12);
 
-        await this.sftpService.registerNewSftpUser(
-          userId,
-          newUser.ftpUsername,
-          email,
-          newUser.ftpPassword,
-        );
-
+        // await this.sftpService.registerNewSftpUser(
+        //   userId,
+        //   newUser.ftpUsername,
+        //   email,
+        //   newUser.ftpPassword,
+        // );
+        //
         await this.streamChatClient.upsertUser({
           id: userId,
           name: username,
