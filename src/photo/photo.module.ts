@@ -21,6 +21,7 @@ import { PaymentModule } from 'src/payment/payment.module';
 import { PhotoGenerateWatermarkService } from './services/photo-generate-watermark.service';
 import { PhotoGenerateShareService } from './services/photo-generate-share.service';
 import { PhotoVoteController } from './controllers/photo-vote.controller';
+import { NestjsFormDataModule } from 'nestjs-form-data';
 
 @Module({
   providers: [
@@ -54,6 +55,7 @@ import { PhotoVoteController } from './controllers/photo-vote.controller';
     StorageModule,
     QueueModule,
     PaymentModule,
+    NestjsFormDataModule,
   ],
 })
 export class PhotoModule {}
