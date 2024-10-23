@@ -330,7 +330,6 @@ model Photo {
 
   comments      Comment[]
   votes         Vote[]
-  photoSharings PhotoSharing[]
   photoSellings PhotoSell[]
   photoTags     PhotoTag[]
   bookmarks     Bookmark[]
@@ -415,21 +414,6 @@ model PhotoBuy {
   updatedAt DateTime @updatedAt
 
   @@unique([photoSellId, buyerId, resolution])
-}
-
-model PhotoSharing {
-  id String @id @default(uuid())
-
-  quality       String
-  sharePhotoUrl String
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  originalPhoto   Photo  @relation(fields: [originalPhotoId], references: [id])
-  originalPhotoId String
-
-  @@unique([quality, sharePhotoUrl, originalPhotoId])
 }
 
 model Bookmark {
