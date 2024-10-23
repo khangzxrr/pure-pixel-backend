@@ -7,6 +7,7 @@ import { PhotoNotFoundException } from 'src/photo/exceptions/photo-not-found.exc
 import { MissingModelExifException } from 'src/photo/exceptions/missing-model-exif.exception';
 import { MissingMakeExifException } from 'src/photo/exceptions/missing-make-exif.exception';
 import { CameraRepository } from 'src/database/repositories/camera.repository';
+import { CameraOnUsersRepository } from 'src/database/repositories/camera-on-users.repository';
 
 @Processor(CameraConstant.CAMERA_PROCESS_QUEUE, {})
 export class CameraConsumer extends WorkerHost {
@@ -14,6 +15,7 @@ export class CameraConsumer extends WorkerHost {
 
   constructor(
     @Inject() private readonly photoRepository: PhotoRepository,
+    @Inject() private readonly cameraOnUsersRepository: CameraOnUsersRepository,
     @Inject() private readonly cameraRepository: CameraRepository,
   ) {
     super();
@@ -52,7 +54,9 @@ export class CameraConsumer extends WorkerHost {
       throw new MissingMakeExifException();
     }
 
-    await this.cameraRepository.upsert(model, make, photoId);
+    const camera = await this.cameraRepository.upsert(model, make, photoId);
+
+    await this.cameraOnUsersRepository.create(camera.id, photo.photographerId);
 
     this.logger.log(`upsert one photo for ${make} ${model}`);
   }

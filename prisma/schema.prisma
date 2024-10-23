@@ -62,9 +62,11 @@ model User {
   bookings           Booking[]
   reviews            Review[]
 
-  bookmarks    Bookmark[]
-  chatrooms    Chatroom[]
-  chatmessages ChatMessage[]
+  bookmarks     Bookmark[]
+  chatrooms     Chatroom[]
+  chatmessages  ChatMessage[]
+  cameras       Camera[]
+  CameraOnUsers CameraOnUsers[]
 }
 
 model BankInfo {
@@ -269,7 +271,7 @@ model UpgradePackage {
 model CameraMaker {
   id String @id @default(uuid())
 
-  name String @unique
+  name      String @unique
   thumbnail String
 
   cameras Camera[]
@@ -281,16 +283,30 @@ model CameraMaker {
 model Camera {
   id String @id @default(uuid())
 
-  name String @unique
+  name      String @unique
   thumbnail String
 
   cameraMaker   CameraMaker @relation(fields: [cameraMakerId], references: [id])
   cameraMakerId String
 
   photos Photo[]
+  users  User[]
+
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  CameraOnUsers CameraOnUsers[]
+}
+
+model CameraOnUsers {
+  camera   Camera @relation(fields: [cameraId], references: [id])
+  cameraId String
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
 
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+
+  @@id([cameraId, userId])
 }
 
 model Category {

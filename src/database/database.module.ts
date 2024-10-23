@@ -23,6 +23,8 @@ import { NotificationRepository } from './repositories/notification.repository';
 import { BookingRepository } from './repositories/booking.repository';
 import { BookingBillItemRepository } from './repositories/booking-bill-item.repository';
 import { CameraRepository } from './repositories/camera.repository';
+import { CameraMakerRepository } from './repositories/camera-maker.repository';
+import { CameraOnUsersRepository } from './repositories/camera-on-users.repository';
 @Module({
   providers: [
     PrismaService,
@@ -49,6 +51,8 @@ import { CameraRepository } from './repositories/camera.repository';
     BookingRepository,
     BookingBillItemRepository,
     CameraRepository,
+    CameraMakerRepository,
+    CameraOnUsersRepository,
   ],
   exports: [
     PrismaService,
@@ -75,6 +79,8 @@ import { CameraRepository } from './repositories/camera.repository';
     BookingRepository,
     BookingBillItemRepository,
     CameraRepository,
+    CameraMakerRepository,
+    CameraOnUsersRepository,
   ],
 })
 export class DatabaseModule {}
