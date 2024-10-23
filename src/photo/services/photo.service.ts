@@ -603,9 +603,13 @@ export class PhotoService {
       storageObjectKey,
     );
 
-    const signedPhotoDto = plainToInstance(SignedPhotoDto, photo);
+    return this.signPhotoById(photo.id);
+  }
 
-    return this.getSignedPhotoById(userId, id);
+  async signPhotoById(id: string) {
+    const photo = await this.photoRepository.getPhotoById(id);
+
+    return this.signPhoto(photo);
   }
 
   async signPhoto(photo: Photo) {
@@ -618,6 +622,8 @@ export class PhotoService {
     }
 
     const signedPhotoDto = plainToInstance(SignedPhotoDto, photo);
+
+    return signedPhotoDto;
   }
 
   async parseAndValidateLightroomPresentFromBuffer(file: Express.Multer.File) {

@@ -63,7 +63,7 @@ export class BookingBillItemService {
 
     if (
       booking.userId !== userId &&
-      booking.photoshootPackage.userId !== userId
+      booking.originalPhotoshootPackage.userId !== userId
     ) {
       throw new BookingNotBelongException();
     }

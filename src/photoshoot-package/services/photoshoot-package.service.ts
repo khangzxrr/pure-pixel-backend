@@ -10,11 +10,7 @@ import { RunOutOfPackageQuotaException } from '../exceptions/run-out-of-package-
 import { PrismaService } from 'src/prisma.service';
 import { PhotoProcessService } from 'src/photo/services/photo-process.service';
 import { v4 } from 'uuid';
-import { PhotoshootPackageDetailCreateDto } from '../dtos/rest/photoshoot-package-detail.create.request.dto';
 import { PhotoshootPackageNotBelongException } from '../exceptions/photoshoot-package-not-belong.exception';
-import { PhotoshootPackageDetailRepository } from 'src/database/repositories/photoshoot-package-detail.repository';
-import { PhotoshootPackageDetailDto } from '../dtos/photoshoot-package-detail.dto';
-import { PhotoshootPackageDetailUpdateDto } from '../dtos/rest/photoshoot-package-detail.update.request.dto';
 import { PhotoshootPackageUpdateRequestDto } from '../dtos/rest/photoshoot-package-update.request.dto';
 import { PhotoshootPackageReplaceRequestDto } from '../dtos/rest/photoshoot-package-replace.request.dto';
 
@@ -24,80 +20,8 @@ export class PhotoshootPackageService {
     @Inject() private readonly photoshootRepository: PhotoshootRepository,
     @Inject() private readonly userRepository: UserRepository,
     @Inject() private readonly photoProcessService: PhotoProcessService,
-    @Inject()
-    private readonly photoshootPackageDetailRepository: PhotoshootPackageDetailRepository,
     private readonly prisma: PrismaService,
   ) {}
-
-  async deleteDetail(userId: string, packageId: string, detailId: string) {
-    const photoshootPackage =
-      await this.photoshootRepository.findUniqueOrThrow(packageId);
-
-    if (photoshootPackage.userId !== userId) {
-      throw new PhotoshootPackageNotBelongException();
-    }
-
-    await this.photoshootPackageDetailRepository.findUniqueByIdOrThrow(
-      detailId,
-      packageId,
-    );
-
-    const deletedDetail =
-      await this.photoshootPackageDetailRepository.delete(detailId);
-
-    return plainToInstance(PhotoshootPackageDetailDto, deletedDetail);
-  }
-
-  async updateDetail(
-    userId: string,
-    packageId: string,
-    detailId: string,
-    updateDto: PhotoshootPackageDetailUpdateDto,
-  ) {
-    const photoshootPackage =
-      await this.photoshootRepository.findUniqueOrThrow(packageId);
-
-    if (photoshootPackage.userId !== userId) {
-      throw new PhotoshootPackageNotBelongException();
-    }
-
-    await this.photoshootPackageDetailRepository.findUniqueByIdOrThrow(
-      detailId,
-      packageId,
-    );
-
-    const updatedDetail = await this.photoshootPackageDetailRepository.update(
-      detailId,
-      updateDto,
-    );
-
-    return plainToInstance(PhotoshootPackageDetailDto, updatedDetail);
-  }
-
-  async createDetail(
-    userId: string,
-    photoshootPackageId: string,
-    createDto: PhotoshootPackageDetailCreateDto,
-  ) {
-    const photoshootPackage =
-      await this.photoshootRepository.findUniqueOrThrow(photoshootPackageId);
-
-    if (photoshootPackage.userId !== userId) {
-      throw new PhotoshootPackageNotBelongException();
-    }
-
-    const photoshootPackageDetail =
-      await this.photoshootPackageDetailRepository.create({
-        ...createDto,
-        photoshootPackage: {
-          connect: {
-            id: photoshootPackageId,
-          },
-        },
-      });
-
-    return plainToInstance(PhotoshootPackageDetailDto, photoshootPackageDetail);
-  }
 
   async replace(
     userId: string,

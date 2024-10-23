@@ -21,7 +21,6 @@ import { PhotoVoteRepository } from './repositories/photo-vote.repository';
 import { BlogRepository } from './repositories/blog.repository';
 import { PhotoshootRepository } from './repositories/photoshoot-package.repository';
 import { NotificationRepository } from './repositories/notification.repository';
-import { PhotoshootPackageDetailRepository } from './repositories/photoshoot-package-detail.repository';
 import { BookingRepository } from './repositories/booking.repository';
 import { BookingBillItemRepository } from './repositories/booking-bill-item.repository';
 @Module({
@@ -48,7 +47,6 @@ import { BookingBillItemRepository } from './repositories/booking-bill-item.repo
     BlogRepository,
     PhotoshootRepository,
     NotificationRepository,
-    PhotoshootPackageDetailRepository,
     BookingRepository,
     BookingBillItemRepository,
   ],
@@ -75,7 +73,6 @@ import { BookingBillItemRepository } from './repositories/booking-bill-item.repo
     BlogRepository,
     PhotoshootRepository,
     NotificationRepository,
-    PhotoshootPackageDetailRepository,
     BookingRepository,
     BookingBillItemRepository,
   ],

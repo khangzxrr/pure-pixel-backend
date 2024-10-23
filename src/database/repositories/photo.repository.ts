@@ -127,10 +127,8 @@ export class PhotoRepository {
         status: 'PENDING',
         title,
       },
-
       select: {
         id: true,
-        originalPhotoUrl: true,
       },
     });
   }

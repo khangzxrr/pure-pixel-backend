@@ -2,16 +2,20 @@ import { Prisma } from '@prisma/client';
 
 export type BookingWithPhotoshootPackage = Prisma.BookingGetPayload<{
   include: {
-    photoshootPackage: true;
+    photoshootPackageHistory: true;
   };
 }>;
 
 export type BookingWithPhotoshootPackageIncludedUser =
   Prisma.BookingGetPayload<{
     include: {
-      photoshootPackage: {
+      photoshootPackageHistory: {
         include: {
-          user: true;
+          originalPhotoshootPackage: {
+            include: {
+              user: true;
+            };
+          };
         };
       };
     };

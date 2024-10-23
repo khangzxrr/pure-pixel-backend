@@ -45,7 +45,7 @@ export class BookingService {
       id: bookingId,
     });
 
-    if (booking.photoshootPackage.userId !== userId) {
+    if (booking.originalPhotoshootPackage.userId !== userId) {
       throw new BookingNotBelongException();
     }
 
@@ -95,7 +95,7 @@ export class BookingService {
       id: bookingId,
     });
 
-    if (booking.photoshootPackage.userId !== userId) {
+    if (booking.originalPhotoshootPackage.userId !== userId) {
       throw new BookingNotBelongException();
     }
 
@@ -111,9 +111,9 @@ export class BookingService {
       userId: booking.userId,
       referenceId: booking.id,
       referenceType: 'BOOKING',
-      title: `Nhiếp ảnh gia đã chấp nhận gói chụp ${booking.photoshootPackage.title}`,
+      title: `Nhiếp ảnh gia đã chấp nhận gói chụp ${booking.photoshootPackageHistory.title}`,
       type: 'BOTH_INAPP_EMAIL',
-      content: `Yêu cầu thực hiện gói chụp ${booking.photoshootPackage.title} của bạn đã được chấp nhận, nếu có bất kì yêu cầu nào khác - vui lòng liên hệ nhiếp ảnh gia qua tin nhắn để trao đổi thêm`,
+      content: `Yêu cầu thực hiện gói chụp ${booking.photoshootPackageHistory.title} của bạn đã được chấp nhận, nếu có bất kì yêu cầu nào khác - vui lòng liên hệ nhiếp ảnh gia qua tin nhắn để trao đổi thêm`,
     });
 
     return plainToInstance(BookingDto, updatedBooking);
@@ -128,7 +128,7 @@ export class BookingService {
       id: bookingId,
     });
 
-    if (booking.photoshootPackage.userId !== userId) {
+    if (booking.originalPhotoshootPackage.userId !== userId) {
       throw new BookingNotBelongException();
     }
 
@@ -145,9 +145,9 @@ export class BookingService {
       userId: booking.userId,
       referenceId: booking.id,
       referenceType: 'BOOKING',
-      title: `Nhiếp ảnh gia đã từ chối gói chụp ${booking.photoshootPackage.title}`,
+      title: `Nhiếp ảnh gia đã từ chối gói chụp ${booking.photoshootPackageHistory.title}`,
       type: 'BOTH_INAPP_EMAIL',
-      content: `Yêu cầu thực hiện gói chụp ${booking.photoshootPackage.title} của bạn đã hủy bỏ với lí do ${denyDto.reason}`,
+      content: `Yêu cầu thực hiện gói chụp ${booking.photoshootPackageHistory.title} của bạn đã hủy bỏ với lí do ${denyDto.reason}`,
     });
 
     return plainToInstance(BookingDto, updatedBooking);
@@ -253,9 +253,17 @@ export class BookingService {
           price: photoshootPackage.price,
         },
       },
-      photoshootPackage: {
-        connect: {
-          id: packageId,
+      photoshootPackageHistory: {
+        create: {
+          originalPhotoshootPackage: {
+            connect: {
+              id: photoshootPackage.id,
+            },
+          },
+          price: photoshootPackage.price,
+          title: photoshootPackage.title,
+          subtitle: photoshootPackage.subtitle,
+          thumbnail: photoshootPackage.thumbnail,
         },
       },
       user: {
