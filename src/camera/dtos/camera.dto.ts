@@ -13,6 +13,9 @@ export class CameraDto {
   cameraOnUsers: CameraOnUserDto[];
 
   @Exclude()
+  cameraMakerId: string;
+
+  @Exclude()
   createdAt: Date;
 
   @Exclude()

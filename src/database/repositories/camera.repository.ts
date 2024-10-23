@@ -5,7 +5,6 @@ import { PrismaService } from 'src/prisma.service';
 @Injectable()
 export class CameraRepository {
   constructor(private readonly prismaService: PrismaService) {}
-
   async upsert(model: string, make: string, photoId: string) {
     return this.prismaService.camera.upsert({
       where: {

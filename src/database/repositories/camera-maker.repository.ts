@@ -8,11 +8,7 @@ export class CameraMakerRepository {
   async findAll() {
     return this.prisma.cameraMaker.findMany({
       include: {
-        cameras: {
-          include: {
-            cameraOnUsers: true,
-          },
-        },
+        cameras: true,
       },
     });
   }
