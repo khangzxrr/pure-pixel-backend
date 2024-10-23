@@ -15,7 +15,6 @@ import { FileIsNotValidException } from '../exceptions/file-is-not-valid.excepti
 import { v4 } from 'uuid';
 import { NotBelongPhotoException } from '../exceptions/not-belong-photo.exception';
 import { PhotoIsPendingStateException } from '../exceptions/photo-is-pending-state.exception';
-import { SignedUrl } from '../dtos/photo-signed-url.dto';
 import { FindAllPhotoFilterDto } from '../dtos/find-all.filter.dto';
 import { InjectQueue } from '@nestjs/bullmq';
 import { PhotoConstant } from '../constants/photo.constant';
@@ -24,7 +23,6 @@ import { PhotoNotFoundException } from '../exceptions/photo-not-found.exception'
 import { ProcessPhotosRequest } from '../dtos/rest/process-images.request.dto';
 import { GenerateWatermarkRequestDto } from '../dtos/rest/generate-watermark.request.dto';
 import { UserRepository } from 'src/database/repositories/user.repository';
-import { PhotographerNotFoundException } from 'src/photographer/exceptions/photographer-not-found.exception';
 import { RunOutPhotoQuotaException } from '../exceptions/run-out-photo-quota.exception';
 import { PhotoProcessService } from './photo-process.service';
 import { SharePhotoRequestDto } from '../dtos/rest/share-photo.request.dto';
@@ -70,12 +68,12 @@ import { PhotoVoteRepository } from 'src/database/repositories/photo-vote.reposi
 import { PhotoVoteDto } from '../dtos/photo-vote.dto';
 import { NotificationConstant } from 'src/notification/constants/notification.constant';
 import { NotificationCreateDto } from 'src/notification/dtos/rest/notification-create.dto';
-import { CannotSignNullPhotoException } from '../exceptions/cannot-sign-null-photo.exception';
 import { BunnyService } from 'src/storage/services/bunny.service';
 import { UploadPhotoFailedException } from '../exceptions/upload-photo-failed.exception';
 import { ExifNotFoundException } from '../exceptions/exif-not-found.exception';
 import { MissingMakeExifException } from '../exceptions/missing-make-exif.exception';
 import { MissingModelExifException } from '../exceptions/missing-model-exif.exception';
+import { SignedUrl } from '../dtos/photo-signed-url.dto';
 
 @Injectable()
 export class PhotoService {
@@ -375,48 +373,44 @@ export class PhotoService {
     // });
   }
 
-  async signUrlFromPhotos(
+  async signPhoto(
     photo: Photo,
     photoSell?: PhotoSell,
-  ): Promise<SignedUrl> {
-    if (photo.status == 'PENDING') {
-      throw new PhotoIsPendingStateException();
-    }
+  ): Promise<SignedPhotoDto> {
+    const signedPhotoDto = plainToInstance(SignedPhotoDto, photo);
 
     const url = photo.watermark
       ? photo.watermarkPhotoUrl
       : photo.originalPhotoUrl;
 
-    const thumbnail = photo.watermark
-      ? photo.watermarkPhotoUrl
-      : photo.originalPhotoUrl;
+    const thumbnail = `${
+      photo.watermark ? photo.watermarkPhotoUrl : photo.originalPhotoUrl
+    }`;
 
-    if (url.length == 0 || thumbnail.length == 0) {
+    if (url.length == 0) {
       console.log(`error photo without thumbnail or original: ${photo.id}`);
       throw new EmptyOriginalPhotoException();
     }
 
-    const signedUrl = await this.photoProcessService.getSignedObjectUrl(url);
-    const signedThumbnail =
-      await this.photoProcessService.getSignedObjectUrl(thumbnail);
+    const signedUrl = this.bunnyService.getPresignedFile(url);
+    const signedThumbnailUrl = this.bunnyService.getPresignedFile(
+      thumbnail,
+      `?width=${PhotoConstant.THUMBNAIL_WIDTH}`,
+    );
+
+    const signedUrlDto = new SignedUrl(signedUrl, signedThumbnailUrl);
+    signedPhotoDto.signedUrl = signedUrlDto;
 
     if (photoSell) {
-      const signedColorGradingWatermark =
-        await this.photoProcessService.getSignedObjectUrl(
-          photoSell.colorGradingPhotoWatermarkUrl,
-        );
+      const signedColorGradingWatermark = this.bunnyService.getPresignedFile(
+        photoSell.colorGradingPhotoWatermarkUrl,
+      );
 
-      return {
-        url: signedUrl,
-        thumbnail: signedThumbnail,
-        colorGradingWatermark: signedColorGradingWatermark,
-      };
+      signedPhotoDto.signedUrl.colorGradingWatermark =
+        signedColorGradingWatermark;
     }
 
-    return {
-      url: signedUrl,
-      thumbnail: signedThumbnail,
-    };
+    return signedPhotoDto;
   }
 
   async updatePhoto(
@@ -510,12 +504,7 @@ export class PhotoService {
     );
 
     const signedPhotoDtoPromises = photos.map(async (p) => {
-      const signedPhotoDto = plainToInstance(SignedPhotoDto, p);
-
-      const signedUrls = await this.signUrlFromPhotos(p, p.photoSellings[0]);
-
-      signedPhotoDto.signedUrl = signedUrls;
-
+      const signedPhotoDto = await this.signPhoto(p, p.photoSellings[0]);
       return signedPhotoDto;
     });
 
@@ -564,10 +553,7 @@ export class PhotoService {
       throw new PhotoIsPrivatedException();
     }
 
-    const signedPhotoDto = plainToInstance(SignedPhotoDto, photo);
-
-    const signedUrls = await this.signUrlFromPhotos(photo);
-    signedPhotoDto.signedUrl = signedUrls;
+    const signedPhotoDto = await this.signPhoto(photo);
 
     return signedPhotoDto;
   }
@@ -648,31 +634,11 @@ export class PhotoService {
         watermarkPhotoUrl: '',
       });
 
-      return this.signPhotoById(photo.id);
+      return this.signPhoto(photo);
     } catch (e) {
       console.log(e);
       throw new UploadPhotoFailedException();
     }
-  }
-
-  async signPhotoById(id: string) {
-    const photo = await this.photoRepository.getPhotoById(id);
-
-    return this.signPhoto(photo);
-  }
-
-  async signPhoto(photo: Photo) {
-    if (photo == null) {
-      throw new CannotSignNullPhotoException();
-    }
-
-    if (photo.originalPhotoUrl.trim() === '') {
-      throw new EmptyOriginalPhotoException();
-    }
-
-    const signedPhotoDto = plainToInstance(SignedPhotoDto, photo);
-
-    return signedPhotoDto;
   }
 
   async parseAndValidateLightroomPresentFromBuffer(file: Express.Multer.File) {

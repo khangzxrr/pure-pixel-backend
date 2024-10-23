@@ -30,7 +30,6 @@ import {
 } from '@nestjs/swagger';
 import { HttpStatusCode } from 'axios';
 import { PhotoUploadRequestDto } from '../dtos/rest/photo-upload.request';
-import { PresignedUploadUrlResponse } from '../dtos/rest/presigned-upload-url.response.dto';
 import { PhotoDto } from '../dtos/photo.dto';
 import { PhotoUpdateRequestDto } from '../dtos/rest/photo-update.request.dto';
 import { FindAllPhotoFilterDto } from '../dtos/find-all.filter.dto';
@@ -214,7 +213,7 @@ export class PhotoController {
   @ApiOperation({ summary: 'upload and validate photo' })
   @ApiResponse({
     status: HttpStatusCode.Ok,
-    type: PresignedUploadUrlResponse,
+    type: SignedPhotoDto,
   })
   @ApiConsumes('multipart/form-data')
   @FormDataRequest()
