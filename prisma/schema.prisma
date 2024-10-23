@@ -66,7 +66,7 @@ model User {
   chatrooms     Chatroom[]
   chatmessages  ChatMessage[]
   cameras       Camera[]
-  CameraOnUsers CameraOnUsers[]
+  cameraOnUsers CameraOnUsers[]
 }
 
 model BankInfo {
@@ -294,7 +294,7 @@ model Camera {
 
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
-  CameraOnUsers CameraOnUsers[]
+  cameraOnUsers CameraOnUsers[]
 }
 
 model CameraOnUsers {
