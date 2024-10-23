@@ -700,11 +700,12 @@ model Booking {
   reviews   Review[]
   billItems BookingBillItem[]
 
-  createdAt           DateTime           @default(now())
-  updatedAt           DateTime           @updatedAt
-  deletedAt           DateTime?
-  PhotoshootPackage   PhotoshootPackage? @relation(fields: [photoshootPackageId], references: [id])
-  photoshootPackageId String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  originalPhotoshootPackage   PhotoshootPackage? @relation(fields: [originalPhotoshootPackageId], references: [id])
+  originalPhotoshootPackageId String?
 }
 
 model Review {
