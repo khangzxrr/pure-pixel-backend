@@ -141,6 +141,12 @@ export class PhotoProcessService {
     });
   }
 
+  async parseMetadataFromBuffer(buffer: Buffer) {
+    const sharp = await this.sharpInitFromBuffer(buffer);
+
+    return sharp.metadata();
+  }
+
   async parseExifFromBuffer(buffer: Buffer) {
     return exifr.parse(buffer, {
       exif: true,

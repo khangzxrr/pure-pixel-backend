@@ -5,7 +5,6 @@ import {
   PhotoVisibility,
   Prisma,
   PrismaPromise,
-  ShareStatus,
 } from '@prisma/client';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoIsPrivatedException } from '../exceptions/photo-is-private.exception';
@@ -155,58 +154,56 @@ export class PhotoService {
   }
 
   async sharePhoto(userId: string, shareRequest: SharePhotoRequestDto) {
-    const photo =
-      await this.findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
-        userId,
-        shareRequest.photoId,
-      );
-
-    if (photo.shareStatus !== ShareStatus.READY) {
-      throw new ShareStatusIsNotReadyException();
-    }
-
-    const choosedQualityPhotoUrl = photo.sharePayload[shareRequest.resolution];
-
-    if (!choosedQualityPhotoUrl) {
-      throw new ChoosedShareQualityIsNotFoundException();
-    }
-
-    const previousSharePhotoWithChoosedQuality =
-      await this.photoSharingRepository.findOneByPhotoIdAndQuality(
-        photo.id,
-        shareRequest.resolution,
-      );
-
-    if (previousSharePhotoWithChoosedQuality) {
-      return new SharePhotoResponseDto(
-        shareRequest.resolution,
-        `${process.env.FRONTEND_ORIGIN}/shared-photo/${previousSharePhotoWithChoosedQuality.id}`,
-      );
-    }
-
-    try {
-      const photoSharing = await this.photoSharingRepository.create(
-        photo.id,
-        shareRequest.resolution,
-        choosedQualityPhotoUrl,
-      );
-
-      if (!photoSharing) {
-        throw new CreatePhotoSharingFailedException();
-      }
-
-      return new SharePhotoResponseDto(
-        shareRequest.resolution,
-        `${process.env.FRONTEND_ORIGIN}/shared-photo/${photoSharing.id}`,
-      );
-    } catch (e) {
-      if (e instanceof PrismaClientKnownRequestError) {
-        //share photo exist
-        if (e.code === 'P2002') {
-          throw new ShareQualityAlreadyExistException();
-        }
-      }
-    }
+    //TODO: finish share photo feature
+    //
+    // const photo =
+    //   await this.findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
+    //     userId,
+    //     shareRequest.photoId,
+    //   );
+    //
+    // const choosedQualityPhotoUrl = photo.sharePayload[shareRequest.resolution];
+    //
+    // if (!choosedQualityPhotoUrl) {
+    //   throw new ChoosedShareQualityIsNotFoundException();
+    // }
+    //
+    // const previousSharePhotoWithChoosedQuality =
+    //   await this.photoSharingRepository.findOneByPhotoIdAndQuality(
+    //     photo.id,
+    //     shareRequest.resolution,
+    //   );
+    //
+    // if (previousSharePhotoWithChoosedQuality) {
+    //   return new SharePhotoResponseDto(
+    //     shareRequest.resolution,
+    //     `${process.env.FRONTEND_ORIGIN}/shared-photo/${previousSharePhotoWithChoosedQuality.id}`,
+    //   );
+    // }
+    //
+    // try {
+    //   const photoSharing = await this.photoSharingRepository.create(
+    //     photo.id,
+    //     shareRequest.resolution,
+    //     choosedQualityPhotoUrl,
+    //   );
+    //
+    //   if (!photoSharing) {
+    //     throw new CreatePhotoSharingFailedException();
+    //   }
+    //
+    //   return new SharePhotoResponseDto(
+    //     shareRequest.resolution,
+    //     `${process.env.FRONTEND_ORIGIN}/shared-photo/${photoSharing.id}`,
+    //   );
+    // } catch (e) {
+    //   if (e instanceof PrismaClientKnownRequestError) {
+    //     //share photo exist
+    //     if (e.code === 'P2002') {
+    //       throw new ShareQualityAlreadyExistException();
+    //     }
+    //   }
+    // }
   }
 
   async getAvailablePhotoResolution(id: string) {
@@ -490,27 +487,29 @@ export class PhotoService {
       throw new FileIsNotValidException();
     }
 
-    const exif = await this.photoProcessService.parseExifFromBuffer(
-      photoUploadDto.file.buffer,
-    );
-
-    console.log(exif);
-
-    if (!exif) {
-      throw new ExifNotFoundException();
-    }
-
-    if (!exif['Make']) {
-      throw new MissingMakeExifException();
-    }
-
-    if (!exif['Model']) {
-      throw new MissingModelExifException();
-    }
-
-    exif['Copyright'] = ` © copyright by ${user.name}`;
-
     try {
+      const exif = await this.photoProcessService.parseExifFromBuffer(
+        photoUploadDto.file.buffer,
+      );
+
+      const metadata = await this.photoProcessService.parseMetadataFromBuffer(
+        photoUploadDto.file.buffer,
+      );
+
+      if (!exif) {
+        throw new ExifNotFoundException();
+      }
+
+      if (!exif['Make']) {
+        throw new MissingMakeExifException();
+      }
+
+      if (!exif['Model']) {
+        throw new MissingModelExifException();
+      }
+
+      exif['Copyright'] = ` © copyright by ${user.name}`;
+
       const storageObjectKey = await this.bunnyService.upload(
         photoUploadDto.file,
       );
@@ -533,6 +532,8 @@ export class PhotoService {
         title: photoUploadDto.file.originalName,
         size: photoUploadDto.file.size,
         exif,
+        width: metadata.width,
+        height: metadata.height,
         status: 'PARSED',
         photoType: 'RAW',
         watermark: false,
@@ -593,10 +594,6 @@ export class PhotoService {
 
     if (photo.status !== 'PARSED') {
       throw new PhotoIsPendingStateException();
-    }
-
-    if (photo.shareStatus === 'NOT_READY') {
-      throw new ShareStatusIsNotReadyException();
     }
 
     const previousActivePhotoSell =

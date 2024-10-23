@@ -45,6 +45,12 @@ export class PhotoDto {
   @Exclude()
   watermarkThumbnailPhotoUrl: string;
 
+  @ApiProperty()
+  width: number;
+
+  @ApiProperty()
+  height: number;
+
   @ApiProperty({})
   photoType: string;
 
