@@ -1,7 +1,8 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { CameraConstant } from '../constants/camera.constant';
-import { Logger } from '@nestjs/common';
+import { Inject, Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
+import { PhotoRepository } from 'src/database/repositories/photo.repository';
 
 @Processor(CameraConstant.CAMERA_PROCESS_QUEUE, {
   concurrency: 2,
@@ -9,11 +10,15 @@ import { Job } from 'bullmq';
 export class CameraConsumer extends WorkerHost {
   private readonly logger = new Logger(CameraConsumer.name);
 
+  constructor(@Inject() private readonly photoRepository: PhotoRepository) {
+    super();
+  }
+
   async process(job: Job): Promise<any> {
     try {
       switch (job.name) {
         case CameraConstant.ADD_NEW_CAMERA_USAGE_JOB:
-          await this.processExif(job.data.photoId);
+          await this.processCamera(job.data.photoId);
           break;
       }
     } catch (e) {
@@ -23,7 +28,7 @@ export class CameraConsumer extends WorkerHost {
     }
   }
 
-  async processExif(photoId: string) {
+  async processCamera(photoId: string) {
     this.logger.log(`process camera for photo ${photoId}`);
   }
 }

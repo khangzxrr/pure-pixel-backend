@@ -266,6 +266,33 @@ model UpgradePackage {
   upgradePackageHistories UpgradePackageHistory[]
 }
 
+model CameraMaker {
+  id String @id @default(uuid())
+
+  name String @unique
+  thumbnail String
+
+  cameras Camera[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Camera {
+  id String @id @default(uuid())
+
+  name String @unique
+  thumbnail String
+
+  cameraMaker   CameraMaker @relation(fields: [cameraMakerId], references: [id])
+  cameraMakerId String
+
+  photos Photo[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model Category {
   id          String   @id @default(uuid())
   name        String   @unique
@@ -301,6 +328,9 @@ model Photo {
 
   category   Category @relation(fields: [categoryId], references: [id])
   categoryId String
+
+  camera   Camera? @relation(fields: [cameraId], references: [id])
+  cameraId String?
 
   title String
 
