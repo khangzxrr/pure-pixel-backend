@@ -23,7 +23,7 @@ import { NestjsFormDataModule } from 'nestjs-form-data';
     }),
     NestjsFormDataModule,
   ],
-  exports: [StorageService, SftpService],
+  exports: [StorageService, SftpService, BunnyService],
   controllers: [StorageController, BunnyController],
   providers: [StorageService, SftpService, BunnyService],
 })

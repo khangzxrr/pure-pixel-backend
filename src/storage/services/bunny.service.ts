@@ -40,8 +40,6 @@ export class BunnyService {
       ),
     );
 
-    console.log(response);
-
     return filekey;
   }
 
