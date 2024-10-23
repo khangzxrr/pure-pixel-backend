@@ -1,6 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { CameraMakerRepository } from 'src/database/repositories/camera-maker.repository';
 import { CameraRepository } from 'src/database/repositories/camera.repository';
+import { MakerWithUserCountDto } from '../dtos/maker-with-user-count.dto';
+import { plainToInstance } from 'class-transformer';
+import { MakerDto } from '../dtos/maker.dto';
 
 @Injectable()
 export class CameraService {
@@ -10,12 +13,23 @@ export class CameraService {
   ) {}
 
   async findTopBrand(n: number) {
-    //Apple
-    //user1 -> some photos -> some camera --> any maker = APPle
     const result = await this.cameraMakerRepository.findAll();
 
-    console.log(result[1].cameras[0].CameraOnUsers);
+    const makerWithUserCountDtos = result.map((m): MakerWithUserCountDto => {
+      const userCount = m.cameras.reduce(
+        (accumulator, currentValue) =>
+          accumulator + currentValue.cameraOnUsers.length,
+        0,
+      );
 
-    return result;
+      return {
+        maker: plainToInstance(MakerDto, m),
+        userCount,
+      };
+    });
+
+    return makerWithUserCountDtos
+      .sort((a, b) => b.userCount - a.userCount)
+      .slice(0, n);
   }
 }

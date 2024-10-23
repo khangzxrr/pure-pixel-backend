@@ -10,7 +10,7 @@ export class CameraMakerRepository {
       include: {
         cameras: {
           include: {
-            CameraOnUsers: true,
+            cameraOnUsers: true,
           },
         },
       },

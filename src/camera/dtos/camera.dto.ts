@@ -1,17 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Exclude, Type } from 'class-transformer';
-import { CameraDto } from './camera.dto';
+import { Exclude } from 'class-transformer';
+import { CameraOnUserDto } from './camera-on-user.dto';
 
-export class MakerDto {
+export class CameraDto {
   @ApiProperty()
   name: string;
 
   @ApiProperty()
   thumbnail: string;
 
-  @ApiProperty()
-  @Type(() => CameraDto)
-  cameras: CameraDto[];
+  @Exclude()
+  cameraOnUsers: CameraOnUserDto[];
 
   @Exclude()
   createdAt: Date;
