@@ -95,38 +95,9 @@ export class PhotoRepository {
     });
   }
 
-  async createTemporaryPhotos(
-    userId: string,
-    title: string,
-    originalPhotoUrl: string,
-  ) {
+  async create(data: Prisma.PhotoCreateInput) {
     return this.prisma.extendedClient().photo.create({
-      data: {
-        photographer: {
-          connect: {
-            id: userId,
-          },
-        },
-        originalPhotoUrl,
-        category: {
-          connectOrCreate: {
-            where: {
-              name: PhotoConstant.DEFAULT_CATEGORY.name,
-            },
-            create: PhotoConstant.DEFAULT_CATEGORY,
-          },
-        },
-        photoType: 'RAW',
-        watermarkThumbnailPhotoUrl: '',
-        thumbnailPhotoUrl: '',
-        watermarkPhotoUrl: '',
-        description: '',
-        exif: {},
-        watermark: false,
-        visibility: 'PRIVATE',
-        status: 'PENDING',
-        title,
-      },
+      data,
       select: {
         id: true,
       },
