@@ -175,7 +175,7 @@ export class PhotoController {
   })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
-  async updatePhotos(
+  async updatePhoto(
     @AuthenticatedUser() user: ParsedUserDto,
     @Param('id') id: string,
     @Body() photoUpdateDto: PhotoUpdateRequestDto,

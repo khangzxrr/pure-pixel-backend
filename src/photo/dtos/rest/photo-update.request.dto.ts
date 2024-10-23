@@ -3,7 +3,6 @@ import { PhotoType, PhotoVisibility } from '@prisma/client';
 import {
   IsBoolean,
   IsEnum,
-  IsJSON,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -34,13 +33,6 @@ export class PhotoUpdateRequestDto {
   @ToBoolean()
   @IsBoolean()
   watermark?: boolean;
-
-  @ApiProperty({
-    required: false,
-  })
-  @IsOptional()
-  @IsJSON()
-  exif?: string;
 
   @ApiProperty({
     required: false,

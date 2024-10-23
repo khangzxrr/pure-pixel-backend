@@ -273,13 +273,6 @@ export class PhotoService {
       }
     }
 
-    if (photoUpdateDto.exif) {
-      const removedNullByteExifsString = JSON.stringify(
-        photoUpdateDto.exif,
-      ).replaceAll('\\u0000', '');
-      photo.exif = JSON.parse(removedNullByteExifsString);
-    }
-
     if (photoUpdateDto.photoTags) {
       const setOftags = new Set(photoUpdateDto.photoTags);
 
@@ -300,7 +293,6 @@ export class PhotoService {
         title: photoUpdateDto.title,
         watermark: photoUpdateDto.watermark,
         description: photoUpdateDto.description,
-        exif: photoUpdateDto.exif,
         photoType: photoUpdateDto.photoType,
         visibility: photoUpdateDto.visibility,
       }),
