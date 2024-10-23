@@ -40,21 +40,6 @@ export class UserRepository {
     });
   }
 
-  async findUserQuotaById(userId: string) {
-    return this.prisma.user.findUnique({
-      where: {
-        id: userId,
-      },
-      select: {
-        maxPhotoQuota: true,
-        maxPackageCount: true,
-
-        photoQuotaUsage: true,
-        packageCount: true,
-      },
-    });
-  }
-
   async findOneByIdWithFollowings(userId: string) {
     return this.prisma.user.findUnique({
       where: {
