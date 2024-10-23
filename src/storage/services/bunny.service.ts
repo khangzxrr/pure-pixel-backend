@@ -19,6 +19,48 @@ export class BunnyService {
     };
   }
 
+  async download(key: string) {
+    if (key == null) {
+      throw new FileShouldNotBeNullException();
+    }
+
+    const response = await firstValueFrom(
+      this.httpService.get(
+        `${process.env.BUNNY_EDGE_STORAGE_CDN}/${process.env.BUNNY_STORAGE_BUCKET}/${key}`,
+        {
+          headers: {
+            accessKey: process.env.BUNNY_EDGE_STORAGE_ACCESS_KEY,
+          },
+          responseType: 'arraybuffer',
+        },
+      ),
+    );
+
+    return response.data;
+  }
+
+  async uploadFromBuffer(key: string, buffer: Buffer) {
+    if (key == null || buffer == null) {
+      throw new FileShouldNotBeNullException();
+    }
+
+    await firstValueFrom(
+      this.httpService.put(
+        `${process.env.BUNNY_EDGE_STORAGE_CDN}/${process.env.BUNNY_STORAGE_BUCKET}/${key}`,
+        buffer,
+        {
+          headers: {
+            'Content-Type': 'application/octet-stream',
+            accept: 'application/json',
+            accessKey: process.env.BUNNY_EDGE_STORAGE_ACCESS_KEY,
+          },
+        },
+      ),
+    );
+
+    return key;
+  }
+
   async upload(file: MemoryStoredFile) {
     if (file === null) {
       throw new FileShouldNotBeNullException();
@@ -26,7 +68,7 @@ export class BunnyService {
 
     const filekey = `${v4()}.${file.extension}`;
 
-    const response = await firstValueFrom(
+    await firstValueFrom(
       this.httpService.put(
         `${process.env.BUNNY_EDGE_STORAGE_CDN}/${process.env.BUNNY_STORAGE_BUCKET}/${filekey}`,
         file.buffer,
