@@ -5,6 +5,7 @@ import { MakerWithUserCountDto } from '../dtos/maker-with-user-count.dto';
 import { plainToInstance } from 'class-transformer';
 import { MakerDto } from '../dtos/maker.dto';
 import { CameraOnUsersRepository } from 'src/database/repositories/camera-on-users.repository';
+import { PopularCameraGraphRequestDto } from '../dtos/rest/popular-camera-graph.request.dto';
 
 @Injectable()
 export class CameraService {
@@ -13,6 +14,10 @@ export class CameraService {
     @Inject() private readonly cameraMakerRepository: CameraMakerRepository,
     @Inject() private readonly cameraOnUsersRepository: CameraOnUsersRepository,
   ) {}
+
+  async getPopularGraph(popularCameraGraphDto: PopularCameraGraphRequestDto) {
+    return this.cameraRepository.findAllGroupBy('day');
+  }
 
   async findTopBrand(n: number) {
     const result = await this.cameraMakerRepository.findAll();
