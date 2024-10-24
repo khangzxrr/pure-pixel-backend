@@ -31,6 +31,10 @@ export class CameraService {
     return plainToInstance(PopularCameraTimelineDto, timeline);
   }
 
+  async findTopCameraOfBrand(brandId: string, take: number) {
+    return await this.cameraRepository.findByMakerId(brandId, take);
+  }
+
   async findTopBrand(n: number) {
     const result = await this.cameraMakerRepository.findAll();
 

@@ -6,6 +6,40 @@ import { PrismaService } from 'src/prisma.service';
 export class CameraRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
+  async findByMakerId(makerId: string, take: number) {
+    return this.prismaService.camera.findMany({
+      take,
+      where: {
+        cameraMaker: {
+          id: makerId,
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        _count: {
+          select: {
+            photos: true,
+            cameraOnUsers: true,
+          },
+        },
+      },
+
+      orderBy: [
+        {
+          photos: {
+            _count: 'desc',
+          },
+        },
+        {
+          cameraOnUsers: {
+            _count: 'desc',
+          },
+        },
+      ],
+    });
+  }
+
   async findTopUsageAtTimestamp(
     dateSeperator: string,
     limit: number,
