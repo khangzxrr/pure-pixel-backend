@@ -6,14 +6,21 @@ import { PrismaService } from 'src/prisma.service';
 export class CameraRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async findAllGroupBy(dateSeperator: string) {
+  async findTopUsageAtTimestamp(
+    dateSeperator: string,
+    limit: number,
+    startDate: Date,
+    endDate: Date,
+  ): Promise<any[]> {
     //date_trunc(${dateSeperator}, "public"."Camera"."createdAt") "date",
     return this.prismaService
-      .$queryRaw`SELECT "public"."Camera"."name", count("userId") as userCount, date_trunc(${dateSeperator}, "public"."CameraOnUsers"."createdAt") "date"
+      .$queryRaw`SELECT "public"."Camera"."id", "public"."Camera"."name", count("userId") as "userCount", date_trunc(${dateSeperator}, "public"."CameraOnUsers"."createdAt") "date"
                 FROM "public"."Camera"
                 INNER JOIN "public"."CameraOnUsers" ON "public"."Camera".id = "public"."CameraOnUsers"."cameraId"
-                GROUP BY "public"."Camera"."name", "date"
-                ORDER BY userCount DESC
+                WHERE "public"."CameraOnUsers"."createdAt" >= ${startDate} AND  "public"."CameraOnUsers"."createdAt" < ${endDate}
+                GROUP BY "public"."Camera"."id", "public"."Camera"."name", "date"
+                ORDER BY "userCount" DESC
+                LIMIT ${limit}
                 `;
   }
 

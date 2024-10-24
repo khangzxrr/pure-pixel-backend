@@ -3,7 +3,6 @@ import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CameraService } from '../services/camera.service';
 import { MakerDto } from '../dtos/maker.dto';
 import { GetTopBranchDto } from '../dtos/rest/get-top-brand.dto';
-import { PopularCameraGraphRequestDto } from '../dtos/rest/popular-camera-graph.request.dto';
 
 @Controller('camera')
 @ApiTags('camera')
@@ -26,9 +25,7 @@ export class CameraController {
   @ApiOperation({
     summary: 'get most popular cameras graph',
   })
-  async getPopularCameraGraphs(
-    @Query() popularCameraGraphDto: PopularCameraGraphRequestDto,
-  ) {
-    return await this.cameraService.getPopularGraph(popularCameraGraphDto);
+  async getPopularCameraGraphs() {
+    return await this.cameraService.getPopularGraph();
   }
 }

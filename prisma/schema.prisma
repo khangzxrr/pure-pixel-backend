@@ -268,6 +268,33 @@ model UpgradePackage {
   upgradePackageHistories UpgradePackageHistory[]
 }
 
+model PopularCameraTimeline {
+  id String @id @default(uuid())
+
+  timestamp DateTime @unique
+
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  popularCameraDataPoints PopularCameraDataPoint[]
+}
+
+model PopularCameraDataPoint {
+  id String @id @default(uuid())
+
+  camera   Camera @relation(fields: [cameraId], references: [id])
+  cameraId String
+
+  timeline   PopularCameraTimeline @relation(fields: [timelineId], references: [id])
+  timelineId String
+
+  userCount Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([cameraId, timelineId])
+}
+
 model CameraMaker {
   id String @id @default(uuid())
 
@@ -292,10 +319,11 @@ model Camera {
   photos Photo[]
   users  User[]
 
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  cameraOnUsers CameraOnUsers[]
+  cameraOnUsers           CameraOnUsers[]
+  popularCameraDataPoints PopularCameraDataPoint[]
 }
 
 model CameraOnUsers {

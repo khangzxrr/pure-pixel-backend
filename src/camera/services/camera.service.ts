@@ -5,7 +5,9 @@ import { MakerWithUserCountDto } from '../dtos/maker-with-user-count.dto';
 import { plainToInstance } from 'class-transformer';
 import { MakerDto } from '../dtos/maker.dto';
 import { CameraOnUsersRepository } from 'src/database/repositories/camera-on-users.repository';
-import { PopularCameraGraphRequestDto } from '../dtos/rest/popular-camera-graph.request.dto';
+
+import { PopularCameraTimelineRepository } from 'src/database/repositories/popular-camera-timeline.repository';
+import { PopularCameraTimelineDto } from '../dtos/popular-camera-timeline.dto';
 
 @Injectable()
 export class CameraService {
@@ -13,12 +15,20 @@ export class CameraService {
     @Inject() private readonly cameraRepository: CameraRepository,
     @Inject() private readonly cameraMakerRepository: CameraMakerRepository,
     @Inject() private readonly cameraOnUsersRepository: CameraOnUsersRepository,
+    @Inject()
+    private readonly popularCameraTimeline: PopularCameraTimelineRepository,
   ) {}
 
-  async getPopularGraph(popularCameraGraphDto: PopularCameraGraphRequestDto) {
-    return this.cameraRepository.findAllGroupBy(
-      popularCameraGraphDto.seperator,
-    );
+  async getPopularGraph() {
+    const startDate = new Date(new Date().getTime() - 1000 * 60 * 60 * 24 * 7);
+
+    const timeline = await this.popularCameraTimeline.findMany({
+      timestamp: {
+        gte: startDate,
+      },
+    });
+
+    return plainToInstance(PopularCameraTimelineDto, timeline);
   }
 
   async findTopBrand(n: number) {
