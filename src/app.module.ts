@@ -21,6 +21,9 @@ import { PhotoTagModule } from './photo-tag/photo-tag.module';
 import { BlogModule } from './blog/blog.module';
 import { PhotoshootPackageModule } from './photoshoot-package/photoshoot-package.module';
 import { BookingModule } from './booking/booking.module';
+import { ChatModule } from './chat/chat.module';
+import { CameraModule } from './camera/camera.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   providers: [
@@ -52,6 +55,9 @@ import { BookingModule } from './booking/booking.module';
     BlogModule,
     PhotoshootPackageModule,
     BookingModule,
+    ChatModule,
+    CameraModule,
+    AdminModule,
   ],
   controllers: [AppController],
 })

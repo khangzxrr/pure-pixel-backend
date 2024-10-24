@@ -1,5 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { NotificationStatus, NotificationType } from '@prisma/client';
+import {
+  NotificationReferenceType,
+  NotificationStatus,
+  NotificationType,
+} from '@prisma/client';
 import { Exclude } from 'class-transformer';
 
 export class NotificationDto {
@@ -24,6 +28,14 @@ export class NotificationDto {
     enum: NotificationType,
   })
   type: NotificationType;
+
+  @ApiProperty({
+    enum: NotificationReferenceType,
+  })
+  referenceType: NotificationReferenceType;
+
+  @ApiProperty({})
+  referenceId: string;
 
   @ApiProperty()
   createdAt: Date;

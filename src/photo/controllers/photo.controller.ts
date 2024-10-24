@@ -3,7 +3,6 @@ import {
   Controller,
   Delete,
   Get,
-  HttpStatus,
   Inject,
   Param,
   Patch,
@@ -22,14 +21,14 @@ import {
 import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
 import {
+  ApiConsumes,
   ApiOkResponse,
   ApiOperation,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
 import { HttpStatusCode } from 'axios';
-import { PresignedUploadUrlRequest } from '../dtos/rest/presigned-upload-url.request';
-import { PresignedUploadUrlResponse } from '../dtos/rest/presigned-upload-url.response.dto';
+import { PhotoUploadRequestDto } from '../dtos/rest/photo-upload.request';
 import { PhotoDto } from '../dtos/photo.dto';
 import { PhotoUpdateRequestDto } from '../dtos/rest/photo-update.request.dto';
 import { FindAllPhotoFilterDto } from '../dtos/find-all.filter.dto';
@@ -38,15 +37,13 @@ import { Response } from 'express';
 import { CommentService } from '../services/comment.service';
 import { CreateCommentRequestDto } from '../dtos/rest/create-comment.request.dto';
 import { CommentEntity } from '../entities/comment.entity';
-import { ProcessPhotosRequest } from '../dtos/rest/process-images.request.dto';
 import { GenerateWatermarkRequestDto } from '../dtos/rest/generate-watermark.request.dto';
 import { SharePhotoRequestDto } from '../dtos/rest/share-photo.request.dto';
 import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.response.dto';
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
-import { SharePhotoResponseDto } from '../dtos/rest/share-photo-response.dto';
-import { SignedPhotoSharingDto } from '../dtos/signed-photo-sharing.dto';
 import { ResolutionDto } from '../dtos/resolution.dto';
 import { SignedPhotoDto } from '../dtos/signed-photo.dto';
+import { FormDataRequest } from 'nestjs-form-data';
 
 @Controller('photo')
 @ApiTags('photo')
@@ -144,7 +141,7 @@ export class PhotoController {
   //   return 'cool';
   // }
 
-  @Post('/watermark')
+  @Post(':id/watermark')
   @ApiOperation({
     summary: 'put photo to watermark queue inorder to generate watermark',
   })
@@ -156,37 +153,13 @@ export class PhotoController {
   async generateWatermark(
     @AuthenticatedUser() user: ParsedUserDto,
     @Body() generateWatermarkRequest: GenerateWatermarkRequestDto,
-    @Res() res: Response,
+    @Param('id') id: string,
   ) {
-    await this.photoService.sendWatermarkRequest(
+    return await this.photoService.sendImageWatermarkQueue(
       user.sub,
+      id,
       generateWatermarkRequest,
     );
-
-    res.status(HttpStatus.ACCEPTED).send();
-  }
-
-  @Post('/process')
-  @ApiOperation({
-    summary:
-      'put process image request to queue inorder to generate thumbnail, exif images after upload',
-  })
-  @ApiResponse({
-    status: HttpStatusCode.Accepted,
-  })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
-  async processPhotos(
-    @AuthenticatedUser() user: ParsedUserDto,
-    @Body() processPhotosRequest: ProcessPhotosRequest,
-    @Res() res: Response,
-  ) {
-    await this.photoService.sendProcessImageToMq(
-      user.sub,
-      processPhotosRequest,
-    );
-
-    res.status(HttpStatus.ACCEPTED).send();
   }
 
   @Patch(':id')
@@ -200,7 +173,7 @@ export class PhotoController {
   })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
-  async updatePhotos(
+  async updatePhoto(
     @AuthenticatedUser() user: ParsedUserDto,
     @Param('id') id: string,
     @Body() photoUpdateDto: PhotoUpdateRequestDto,
@@ -209,23 +182,25 @@ export class PhotoController {
   }
 
   @Post('/upload')
-  @ApiOperation({ summary: 'generate presigned upload urls for files' })
+  @ApiOperation({ summary: 'upload and validate photo' })
   @ApiResponse({
     status: HttpStatusCode.Ok,
-    type: PresignedUploadUrlResponse,
+    type: SignedPhotoDto,
   })
+  @ApiConsumes('multipart/form-data')
+  @FormDataRequest()
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
-  async getPresignedUploadUrl(
+  async uploadPhoto(
     @AuthenticatedUser() user: ParsedUserDto,
-    @Body() body: PresignedUploadUrlRequest,
+    @Body() body: PhotoUploadRequestDto,
   ) {
-    const presignedUrl = await this.photoService.getPresignedUploadUrl(
+    const uploadPhotoResponse = await this.photoService.uploadPhoto(
       user.sub,
       body,
     );
 
-    return presignedUrl;
+    return uploadPhotoResponse;
   }
 
   @Get('/:id/available-resolution')
@@ -256,35 +231,6 @@ export class PhotoController {
 
     res.status(200).send(result);
   }
-
-  @Get('/:sharedPhotoId/get-shared')
-  @ApiOperation({
-    summary: 'get shared photo detail by id',
-  })
-  @ApiOkResponse({
-    type: SignedPhotoSharingDto,
-  })
-  async getSharedPhotoDetail(@Param('sharedPhotoId') sharedPhotoId: string) {
-    return await this.photoService.getSharedPhotoById(sharedPhotoId);
-  }
-
-  @Get('/:id/get-list-shared')
-  @ApiOperation({
-    summary: 'get all shared link of a photo by id',
-  })
-  @ApiOkResponse({
-    isArray: true,
-    type: SharePhotoResponseDto,
-  })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
-  async findAllShared(
-    @AuthenticatedUser() user: ParsedUserDto,
-    @Param('id') photoId: string,
-  ) {
-    return await this.photoService.findAllShared(user.sub, photoId);
-  }
-
   @Post('/share')
   @ApiOperation({
     summary: 'generate share url by photo id',

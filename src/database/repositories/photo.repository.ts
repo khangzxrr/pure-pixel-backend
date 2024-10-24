@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Photo, PhotoVisibility, Prisma } from '@prisma/client';
-import { PhotoConstant } from 'src/photo/constants/photo.constant';
+
 import { FindAllPhotoFilterDto } from 'src/photo/dtos/find-all.filter.dto';
 import { PrismaService } from 'src/prisma.service';
 
@@ -95,43 +95,9 @@ export class PhotoRepository {
     });
   }
 
-  async createTemporaryPhotos(
-    userId: string,
-    title: string,
-    originalPhotoUrl: string,
-  ) {
+  async create(data: Prisma.PhotoCreateInput) {
     return this.prisma.extendedClient().photo.create({
-      data: {
-        photographer: {
-          connect: {
-            id: userId,
-          },
-        },
-        originalPhotoUrl,
-        category: {
-          connectOrCreate: {
-            where: {
-              name: PhotoConstant.DEFAULT_CATEGORY.name,
-            },
-            create: PhotoConstant.DEFAULT_CATEGORY,
-          },
-        },
-        photoType: 'RAW',
-        watermarkThumbnailPhotoUrl: '',
-        thumbnailPhotoUrl: '',
-        watermarkPhotoUrl: '',
-        description: '',
-        exif: {},
-        watermark: false,
-        visibility: 'PRIVATE',
-        status: 'PENDING',
-        title,
-      },
-
-      select: {
-        id: true,
-        originalPhotoUrl: true,
-      },
+      data,
     });
   }
 
@@ -217,6 +183,11 @@ export class PhotoRepository {
         },
         photographer: true,
         category: true,
+        camera: {
+          include: {
+            cameraMaker: true,
+          },
+        },
         photoSellings: {
           where: {
             active: true,

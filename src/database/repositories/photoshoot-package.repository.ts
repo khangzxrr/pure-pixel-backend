@@ -30,7 +30,7 @@ export class PhotoshootRepository {
     id: string,
     photoshootPackage: Prisma.PhotoshootPackageUpdateInput,
   ) {
-    this.prisma.extendedClient().photoshootPackage.update({
+    return this.prisma.extendedClient().photoshootPackage.update({
       where: {
         id,
       },

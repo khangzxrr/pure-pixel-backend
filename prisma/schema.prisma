@@ -61,6 +61,12 @@ model User {
   notifications      Notification[]
   bookings           Booking[]
   reviews            Review[]
+
+  bookmarks     Bookmark[]
+  chatrooms     Chatroom[]
+  chatmessages  ChatMessage[]
+  cameras       Camera[]
+  cameraOnUsers CameraOnUsers[]
 }
 
 model BankInfo {
@@ -84,6 +90,8 @@ model Follow {
 
   following   User   @relation(name: "following", fields: [followingId], references: [id])
   followingId String
+
+  createdAt DateTime @default(now())
 
   @@id([followerId, followingId])
 }
@@ -260,6 +268,76 @@ model UpgradePackage {
   upgradePackageHistories UpgradePackageHistory[]
 }
 
+model PopularCameraTimeline {
+  id String @id @default(uuid())
+
+  timestamp DateTime @unique
+
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  popularCameraDataPoints PopularCameraDataPoint[]
+}
+
+model PopularCameraDataPoint {
+  id String @id @default(uuid())
+
+  camera   Camera @relation(fields: [cameraId], references: [id])
+  cameraId String
+
+  timeline   PopularCameraTimeline @relation(fields: [timelineId], references: [id])
+  timelineId String
+
+  userCount Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([cameraId, timelineId])
+}
+
+model CameraMaker {
+  id String @id @default(uuid())
+
+  name      String @unique
+  thumbnail String
+
+  cameras Camera[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Camera {
+  id String @id @default(uuid())
+
+  name      String @unique
+  thumbnail String
+
+  cameraMaker   CameraMaker @relation(fields: [cameraMakerId], references: [id])
+  cameraMakerId String
+
+  photos Photo[]
+  users  User[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cameraOnUsers           CameraOnUsers[]
+  popularCameraDataPoints PopularCameraDataPoint[]
+}
+
+model CameraOnUsers {
+  camera   Camera @relation(fields: [cameraId], references: [id])
+  cameraId String
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  createdAt DateTime @default(now())
+
+  @@id([cameraId, userId])
+}
+
 model Category {
   id          String   @id @default(uuid())
   name        String   @unique
@@ -282,14 +360,9 @@ enum PhotoVisibility {
 }
 
 enum PhotoStatus {
-  PARSED
   PENDING
-}
-
-enum ShareStatus {
-  NOT_READY
-  READY
-  SHARED
+  PARSED
+  VERIFYING
 }
 
 model Photo {
@@ -301,7 +374,13 @@ model Photo {
   category   Category @relation(fields: [categoryId], references: [id])
   categoryId String
 
+  camera   Camera? @relation(fields: [cameraId], references: [id])
+  cameraId String?
+
   title String
+
+  width  Int
+  height Int
 
   watermark Boolean @default(false)
 
@@ -312,17 +391,11 @@ model Photo {
   originalPhotoUrl  String
   watermarkPhotoUrl String
 
-  thumbnailPhotoUrl          String
-  watermarkThumbnailPhotoUrl String
-
   photoType PhotoType
 
   visibility PhotoVisibility @default(PUBLIC)
 
   status PhotoStatus @default(PENDING)
-
-  shareStatus  ShareStatus @default(NOT_READY)
-  sharePayload Json        @default("{}")
 
   size Int @default(0)
 
@@ -332,9 +405,38 @@ model Photo {
 
   comments      Comment[]
   votes         Vote[]
-  photoSharings PhotoSharing[]
   photoSellings PhotoSell[]
   photoTags     PhotoTag[]
+  bookmarks     Bookmark[]
+}
+
+model Chatroom {
+  id String @id @default(uuid())
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  chatmessages ChatMessage[]
+}
+
+model ChatMessage {
+  id String @id @default(uuid())
+
+  chatroom   Chatroom @relation(fields: [chatroomId], references: [id])
+  chatroomId String
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  message String
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 }
 
 model PhotoTag {
@@ -389,19 +491,16 @@ model PhotoBuy {
   @@unique([photoSellId, buyerId, resolution])
 }
 
-model PhotoSharing {
+model Bookmark {
   id String @id @default(uuid())
 
-  quality       String
-  sharePhotoUrl String
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  photo   Photo  @relation(fields: [photoId], references: [id])
+  photoId String
 
-  originalPhoto   Photo  @relation(fields: [originalPhotoId], references: [id])
-  originalPhotoId String
-
-  @@unique([quality, sharePhotoUrl, originalPhotoId])
+  @@unique([userId, photoId])
 }
 
 model Vote {
@@ -466,12 +565,17 @@ model Report {
 
   archived Boolean
 
+  response ReportResponse[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model ReportResponse {
   id String @id @default(uuid())
+
+  report   Report @relation(fields: [reportId], references: [id])
+  reportId String
 
   user   User   @relation(fields: [userId], references: [id])
   userId String
@@ -503,26 +607,28 @@ model Blog {
   updatedAt DateTime @updatedAt
 }
 
-model PhotoshootDetail {
-  id           String   @id @default(uuid())
-  title        String
-  descriptions String[]
-
-  photoshootPackage   PhotoshootPackage @relation(fields: [photoshootPackageId], references: [id])
-  photoshootPackageId String
-}
-
 enum PhotoshootPackageStatus {
   ENABLED
   DISABLED
 }
 
+model PhotoshootPackageShowcasePhoto {
+  id       String @id @default(uuid())
+  photoUrl String
+
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  PhotoshootPackage   PhotoshootPackage? @relation(fields: [photoshootPackageId], references: [id])
+  photoshootPackageId String?
+}
+
 model PhotoshootPackage {
-  id        String  @id @default(uuid())
-  title     String
-  subtitle  String
-  price     Decimal
-  thumbnail String
+  id          String  @id @default(uuid())
+  title       String
+  subtitle    String
+  price       Decimal
+  thumbnail   String
+  description String
 
   status PhotoshootPackageStatus
 
@@ -533,9 +639,23 @@ model PhotoshootPackage {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  details  PhotoshootDetail[]
-  reviews  Review[]
-  bookings Booking[]
+  showcases PhotoshootPackageShowcasePhoto[]
+  reviews   Review[]
+  bookings  Booking[]
+  history   PhotoshootPackageHistory[]
+}
+
+model PhotoshootPackageHistory {
+  id        String  @id @default(uuid())
+  title     String
+  subtitle  String
+  price     Decimal
+  thumbnail String
+
+  originalPhotoshootPackage   PhotoshootPackage @relation(fields: [originalPhotoshootPackageId], references: [id])
+  originalPhotoshootPackageId String
+
+  booking Booking[]
 }
 
 enum NotificationStatus {
@@ -590,11 +710,32 @@ enum BookingStatus {
   FAILED
 }
 
+enum BookingBillItemType {
+  INCREASE
+  DECREASE
+}
+
+model BookingBillItem {
+  id String @id @default(uuid())
+
+  title       String
+  description String  @default("")
+  price       Decimal
+
+  type BookingBillItemType
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  booking   Booking @relation(fields: [bookingId], references: [id])
+  bookingId String
+}
+
 model Booking {
   id String @id @default(uuid())
 
-  photoshootPackage   PhotoshootPackage @relation(fields: [photoshootPackageId], references: [id])
-  photoshootPackageId String
+  photoshootPackageHistory   PhotoshootPackageHistory @relation(fields: [photoshootPackageHistoryId], references: [id])
+  photoshootPackageHistoryId String
 
   startDate DateTime
   endDate   DateTime
@@ -607,7 +748,15 @@ model Booking {
   user   User   @relation(fields: [userId], references: [id])
   userId String
 
-  Review Review[]
+  reviews   Review[]
+  billItems BookingBillItem[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  originalPhotoshootPackage   PhotoshootPackage? @relation(fields: [originalPhotoshootPackageId], references: [id])
+  originalPhotoshootPackageId String?
 }
 
 model Review {

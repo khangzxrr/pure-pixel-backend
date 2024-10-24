@@ -6,10 +6,11 @@ import { BookingService } from './services/booking.service';
 import { CustomerBookingController } from './controllers/customer-booking.controller';
 import { PhotographerBookingController } from './controllers/photographer-booking.controller';
 import { NotificationModule } from 'src/notification/notification.module';
+import { BookingBillItemService } from './services/bill-item.service';
 
 @Module({
   imports: [DatabaseModule, StorageModule, AuthenModule, NotificationModule],
-  providers: [BookingService],
+  providers: [BookingService, BookingBillItemService],
   controllers: [CustomerBookingController, PhotographerBookingController],
 })
 export class BookingModule {}

@@ -1,47 +1,32 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { HttpException, Inject, Injectable, Logger } from '@nestjs/common';
 import {
   Photo,
   PhotoSell,
   PhotoVisibility,
   PrismaPromise,
-  ShareStatus,
 } from '@prisma/client';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoIsPrivatedException } from '../exceptions/photo-is-private.exception';
-import { PresignedUploadUrlRequest } from '../dtos/rest/presigned-upload-url.request';
-import {
-  PresignedUploadUrlResponse,
-  SignedUpload,
-} from '../dtos/rest/presigned-upload-url.response.dto';
+import { PhotoUploadRequestDto } from '../dtos/rest/photo-upload.request';
 import { Utils } from 'src/infrastructure/utils/utils';
 import { FileIsNotValidException } from '../exceptions/file-is-not-valid.exception';
 import { v4 } from 'uuid';
 import { NotBelongPhotoException } from '../exceptions/not-belong-photo.exception';
 import { PhotoIsPendingStateException } from '../exceptions/photo-is-pending-state.exception';
-import { SignedUrl } from '../dtos/photo-signed-url.dto';
 import { FindAllPhotoFilterDto } from '../dtos/find-all.filter.dto';
 import { InjectQueue } from '@nestjs/bullmq';
 import { PhotoConstant } from '../constants/photo.constant';
 import { Queue } from 'bullmq';
 import { PhotoNotFoundException } from '../exceptions/photo-not-found.exception';
-import { ProcessPhotosRequest } from '../dtos/rest/process-images.request.dto';
-import { GenerateWatermarkRequestDto } from '../dtos/rest/generate-watermark.request.dto';
 import { UserRepository } from 'src/database/repositories/user.repository';
-import { PhotographerNotFoundException } from 'src/photographer/exceptions/photographer-not-found.exception';
 import { RunOutPhotoQuotaException } from '../exceptions/run-out-photo-quota.exception';
 import { PhotoProcessService } from './photo-process.service';
 import { SharePhotoRequestDto } from '../dtos/rest/share-photo.request.dto';
-import { ShareStatusIsNotReadyException } from '../exceptions/share-status-is-not-ready.exception';
 import { ChoosedShareQualityIsNotFoundException } from '../exceptions/choosed-share-quality-is-not-found.exception';
 import { SharePhotoResponseDto } from '../dtos/rest/share-photo-response.dto';
 import { EmptyOriginalPhotoException } from '../exceptions/empty-original-photo.exception';
 import { PagingPaginatedResposneDto } from 'src/infrastructure/restful/paging-paginated.response.dto';
-import { PhotoSharingRepository } from 'src/database/repositories/photo-sharing.repository';
-import { CreatePhotoSharingFailedException } from '../exceptions/create-photo-sharing-failed.exception';
-import { SignedPhotoSharingDto } from '../dtos/signed-photo-sharing.dto';
 import { plainToInstance } from 'class-transformer';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
-import { ShareQualityAlreadyExistException } from '../exceptions/share-quality-already-exist.exception';
 import { CreatePhotoSellingDto } from '../dtos/rest/create-photo-selling.request.dto';
 import { PhotoSellRepository } from 'src/database/repositories/photo-sell.repository';
 import { PhotoSellDto } from '../dtos/photo-sell.dto';
@@ -73,6 +58,16 @@ import { PhotoVoteRepository } from 'src/database/repositories/photo-vote.reposi
 import { PhotoVoteDto } from '../dtos/photo-vote.dto';
 import { NotificationConstant } from 'src/notification/constants/notification.constant';
 import { NotificationCreateDto } from 'src/notification/dtos/rest/notification-create.dto';
+import { BunnyService } from 'src/storage/services/bunny.service';
+import { UploadPhotoFailedException } from '../exceptions/upload-photo-failed.exception';
+import { ExifNotFoundException } from '../exceptions/exif-not-found.exception';
+import { MissingMakeExifException } from '../exceptions/missing-make-exif.exception';
+import { MissingModelExifException } from '../exceptions/missing-model-exif.exception';
+import { SignedUrl } from '../dtos/photo-signed-url.dto';
+import { GenerateWatermarkRequestDto } from '../dtos/rest/generate-watermark.request.dto';
+import { PhotoGenerateWatermarkService } from './photo-generate-watermark.service';
+import { CameraConstant } from 'src/camera/constants/camera.constant';
+
 @Injectable()
 export class PhotoService {
   private readonly logger = new Logger(PhotoService.name);
@@ -80,7 +75,6 @@ export class PhotoService {
   constructor(
     @Inject() private readonly sepayService: SepayService,
     @Inject() private readonly photoRepository: PhotoRepository,
-    @Inject() private readonly photoSharingRepository: PhotoSharingRepository,
     @Inject() private readonly userRepository: UserRepository,
     @Inject() private readonly photoProcessService: PhotoProcessService,
     @Inject() private readonly photoSellRepository: PhotoSellRepository,
@@ -88,18 +82,39 @@ export class PhotoService {
     @Inject() private readonly categoryRepository: CategoryRepository,
     @Inject() private readonly photoBuyRepository: PhotoBuyRepository,
     @Inject() private readonly photoVoteRepository: PhotoVoteRepository,
+    @Inject() private readonly bunnyService: BunnyService,
+    @Inject()
+    private readonly photoGenerateWatermarkService: PhotoGenerateWatermarkService,
     @InjectQueue(NotificationConstant.NOTIFICATION_QUEUE)
     private readonly notificationQueue: Queue,
     @InjectQueue(PhotoConstant.PHOTO_PROCESS_QUEUE)
     private readonly photoProcessQueue: Queue,
-    @InjectQueue(PhotoConstant.PHOTO_WATERMARK_QUEUE)
-    private readonly photoWatermarkQueue: Queue,
-    @InjectQueue(PhotoConstant.PHOTO_SHARE_QUEUE)
-    private readonly photoShareQueue: Queue,
+    @InjectQueue(CameraConstant.CAMERA_PROCESS_QUEUE)
+    private readonly cameraQueue: Queue,
     private readonly prisma: PrismaService,
     @Inject(CACHE_MANAGER)
     private readonly cacheManager: Cache,
   ) {}
+
+  async sendImageWatermarkQueue(
+    userId: string,
+    photoId: string,
+    generateWatermarkRequest: GenerateWatermarkRequestDto,
+  ) {
+    const photo = await this.photoRepository.getPhotoById(photoId);
+
+    if (photo.photographerId !== userId) {
+      throw new NotBelongPhotoException();
+    }
+
+    const updatedPhoto =
+      await this.photoGenerateWatermarkService.generateWatermark(
+        photo.id,
+        generateWatermarkRequest,
+      );
+
+    return this.signPhoto(updatedPhoto);
+  }
 
   async findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
     userId: string,
@@ -118,45 +133,6 @@ export class PhotoService {
     return photo;
   }
 
-  async getSharedPhotoById(
-    sharedPhotoId: string,
-  ): Promise<SignedPhotoSharingDto> {
-    const sharedPhoto =
-      await this.photoSharingRepository.findUniqueById(sharedPhotoId);
-
-    if (!sharedPhoto) {
-      throw new PhotoNotFoundException();
-    }
-
-    const signedSharePhotoUrl =
-      await this.photoProcessService.getSignedObjectUrl(
-        sharedPhoto.sharePhotoUrl,
-      );
-
-    sharedPhoto.sharePhotoUrl = signedSharePhotoUrl;
-
-    //using class transformer to exclude what doesnt want to show
-    return plainToInstance(SignedPhotoSharingDto, sharedPhoto, {});
-  }
-
-  async findAllShared(userId: string, photoId: string) {
-    await this.findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
-      userId,
-      photoId,
-    );
-
-    const sharedPhotos =
-      await this.photoSharingRepository.findAllByOriginalPhotoId(photoId);
-
-    return sharedPhotos.map(
-      (s) =>
-        new SharePhotoResponseDto(
-          s.quality,
-          `${process.env.FRONTEND_ORIGIN}/shared-photo/${s.id}`,
-        ),
-    );
-  }
-
   async sharePhoto(userId: string, shareRequest: SharePhotoRequestDto) {
     const photo =
       await this.findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
@@ -164,52 +140,18 @@ export class PhotoService {
         shareRequest.photoId,
       );
 
-    if (photo.shareStatus !== ShareStatus.READY) {
-      throw new ShareStatusIsNotReadyException();
-    }
+    const availableRes = await this.getAvailablePhotoResolution(photo.id);
 
-    const choosedQualityPhotoUrl = photo.sharePayload[shareRequest.resolution];
-
-    if (!choosedQualityPhotoUrl) {
+    if (availableRes.indexOf(shareRequest.resolution) <= 0) {
       throw new ChoosedShareQualityIsNotFoundException();
     }
 
-    const previousSharePhotoWithChoosedQuality =
-      await this.photoSharingRepository.findOneByPhotoIdAndQuality(
-        photo.id,
-        shareRequest.resolution,
-      );
+    const shareUrl = this.bunnyService.getPresignedFile(
+      photo.originalPhotoUrl,
+      `?width=${PhotoConstant.PHOTO_RESOLUTION_BIMAP.getValue(shareRequest.resolution)}`,
+    );
 
-    if (previousSharePhotoWithChoosedQuality) {
-      return new SharePhotoResponseDto(
-        shareRequest.resolution,
-        `${process.env.FRONTEND_ORIGIN}/shared-photo/${previousSharePhotoWithChoosedQuality.id}`,
-      );
-    }
-
-    try {
-      const photoSharing = await this.photoSharingRepository.create(
-        photo.id,
-        shareRequest.resolution,
-        choosedQualityPhotoUrl,
-      );
-
-      if (!photoSharing) {
-        throw new CreatePhotoSharingFailedException();
-      }
-
-      return new SharePhotoResponseDto(
-        shareRequest.resolution,
-        `${process.env.FRONTEND_ORIGIN}/shared-photo/${photoSharing.id}`,
-      );
-    } catch (e) {
-      if (e instanceof PrismaClientKnownRequestError) {
-        //share photo exist
-        if (e.code === 'P2002') {
-          throw new ShareQualityAlreadyExistException();
-        }
-      }
-    }
+    return new SharePhotoResponseDto(shareRequest.resolution, shareUrl);
   }
 
   async getAvailablePhotoResolution(id: string) {
@@ -228,59 +170,23 @@ export class PhotoService {
       throw new PhotoNotFoundException();
     }
 
-    if (photo.status === 'PENDING') {
-      throw new PhotoIsPendingStateException();
-    }
+    const availableRes = [...PhotoConstant.SUPPORTED_PHOTO_RESOLUTION];
 
-    if (photo.shareStatus === 'NOT_READY') {
-      await this.photoShareQueue.add(PhotoConstant.GENERATE_SHARE_JOB_NAME, {
-        photoId: photo.id,
-        debounce: {
-          id: photo.id,
-          ttl: 10000,
-        },
-      });
-    }
-
-    const availableResolutions =
-      await this.photoProcessService.getAvailableResolution(
-        photo.originalPhotoUrl,
+    for (let i = 0; i < PhotoConstant.SUPPORTED_PHOTO_RESOLUTION.length; i++) {
+      const pixelOfRes = PhotoConstant.PHOTO_RESOLUTION_BIMAP.getValue(
+        PhotoConstant.SUPPORTED_PHOTO_RESOLUTION[i],
       );
 
-    this.cacheManager.set(cacheResolutionKey, availableResolutions);
+      if (photo.width >= pixelOfRes) {
+        break;
+      }
 
-    return availableResolutions;
-  }
-
-  async sendWatermarkRequest(
-    userId: string,
-    generateWatermarkRequest: GenerateWatermarkRequestDto,
-  ) {
-    const photo = await this.photoRepository.getPhotoById(
-      generateWatermarkRequest.photoId,
-    );
-
-    if (!photo) {
-      throw new PhotoNotFoundException();
+      availableRes.shift();
     }
 
-    if (photo.photographerId != userId) {
-      throw new NotBelongPhotoException();
-    }
+    this.cacheManager.set(cacheResolutionKey, availableRes);
 
-    await this.photoWatermarkQueue.add(
-      PhotoConstant.GENERATE_WATERMARK_JOB,
-      {
-        userId,
-        generateWatermarkRequest,
-      },
-      {
-        debounce: {
-          id: photo.id,
-          ttl: 10000,
-        },
-      },
-    );
+    return availableRes;
   }
 
   async vote(
@@ -328,90 +234,44 @@ export class PhotoService {
     return 'deleted';
   }
 
-  async sendProcessImageToMq(
-    userId: string,
-    processPhotosRequest: ProcessPhotosRequest,
-  ) {
-    await this.photoProcessQueue.add(
-      PhotoConstant.PROCESS_PHOTO_JOB_NAME,
-      {
-        userId,
-        processPhotosRequest,
-      },
-      {
-        debounce: {
-          id: processPhotosRequest.signedUpload.photoId,
-          ttl: 10000,
-        },
-      },
-    );
-
-    // await this.photoShareQueue.add(PhotoConstant.GENERATE_SHARE_JOB_NAME, {
-    //   userId,
-    //   photoId: processPhotosRequest.signedUpload.photoId,
-    //   debounce: {
-    //     id: processPhotosRequest.signedUpload.photoId,
-    //     ttl: 10000,
-    //   },
-    // });
-    //
-    // const generateWatermarkRequest: GenerateWatermarkRequestDto = {
-    //   photoId: processPhotosRequest.signedUpload.photoId,
-    //   text: 'PPX',
-    // };
-    //
-    // await this.photoWatermarkQueue.add(PhotoConstant.GENERATE_WATERMARK_JOB, {
-    //   userId,
-    //   generateWatermarkRequest,
-    //   debounce: {
-    //     id: processPhotosRequest.signedUpload.photoId,
-    //     ttl: 10000,
-    //   },
-    // });
-  }
-
-  async signUrlFromPhotos(
+  async signPhoto(
     photo: Photo,
     photoSell?: PhotoSell,
-  ): Promise<SignedUrl> {
-    if (photo.status == 'PENDING') {
-      throw new PhotoIsPendingStateException();
-    }
+  ): Promise<SignedPhotoDto> {
+    const signedPhotoDto = plainToInstance(SignedPhotoDto, photo);
 
     const url = photo.watermark
       ? photo.watermarkPhotoUrl
       : photo.originalPhotoUrl;
 
-    const thumbnail = photo.watermark
-      ? photo.watermarkThumbnailPhotoUrl
-      : photo.thumbnailPhotoUrl;
+    const thumbnail = `${
+      photo.watermark ? photo.watermarkPhotoUrl : photo.originalPhotoUrl
+    }`;
 
-    if (url.length == 0 || thumbnail.length == 0) {
+    if (url.length == 0) {
       console.log(`error photo without thumbnail or original: ${photo.id}`);
       throw new EmptyOriginalPhotoException();
     }
 
-    const signedUrl = await this.photoProcessService.getSignedObjectUrl(url);
-    const signedThumbnail =
-      await this.photoProcessService.getSignedObjectUrl(thumbnail);
+    const signedUrl = this.bunnyService.getPresignedFile(url);
+    const signedThumbnailUrl = this.bunnyService.getPresignedFile(
+      thumbnail,
+      `?width=${PhotoConstant.THUMBNAIL_WIDTH}`,
+    );
+
+    const signedUrlDto = new SignedUrl(signedUrl, signedThumbnailUrl);
+    signedPhotoDto.signedUrl = signedUrlDto;
 
     if (photoSell) {
-      const signedColorGradingWatermark =
-        await this.photoProcessService.getSignedObjectUrl(
-          photoSell.colorGradingPhotoWatermarkUrl,
-        );
+      const signedColorGradingWatermark = this.bunnyService.getPresignedFile(
+        photoSell.colorGradingPhotoWatermarkUrl,
+      );
 
-      return {
-        url: signedUrl,
-        thumbnail: signedThumbnail,
-        colorGradingWatermark: signedColorGradingWatermark,
-      };
+      signedPhotoDto.signedUrl.colorGradingWatermark =
+        signedColorGradingWatermark;
     }
 
-    return {
-      url: signedUrl,
-      thumbnail: signedThumbnail,
-    };
+    return signedPhotoDto;
   }
 
   async updatePhoto(
@@ -424,6 +284,8 @@ export class PhotoService {
         userId,
         id,
       );
+
+    const exif = photo.exif;
 
     const prismaPromises: PrismaPromise<any>[] = [];
 
@@ -440,11 +302,10 @@ export class PhotoService {
       }
     }
 
-    if (photoUpdateDto.exif) {
-      const removedNullByteExifsString = JSON.stringify(
-        photoUpdateDto.exif,
-      ).replaceAll('\\u0000', '');
-      photo.exif = JSON.parse(removedNullByteExifsString);
+    //TODO: update exif to photo using queue
+    if (photoUpdateDto.gps) {
+      exif['latitude'] = photoUpdateDto.gps.latitude;
+      exif['longitude'] = photoUpdateDto.gps.longitude;
     }
 
     if (photoUpdateDto.photoTags) {
@@ -467,9 +328,9 @@ export class PhotoService {
         title: photoUpdateDto.title,
         watermark: photoUpdateDto.watermark,
         description: photoUpdateDto.description,
-        exif: photoUpdateDto.exif,
         photoType: photoUpdateDto.photoType,
         visibility: photoUpdateDto.visibility,
+        exif,
       }),
     );
 
@@ -505,12 +366,7 @@ export class PhotoService {
     );
 
     const signedPhotoDtoPromises = photos.map(async (p) => {
-      const signedPhotoDto = plainToInstance(SignedPhotoDto, p);
-
-      const signedUrls = await this.signUrlFromPhotos(p, p.photoSellings[0]);
-
-      signedPhotoDto.signedUrl = signedUrls;
-
+      const signedPhotoDto = await this.signPhoto(p, p.photoSellings[0]);
       return signedPhotoDto;
     });
 
@@ -559,31 +415,25 @@ export class PhotoService {
       throw new PhotoIsPrivatedException();
     }
 
-    const signedPhotoDto = plainToInstance(SignedPhotoDto, photo);
-
-    const signedUrls = await this.signUrlFromPhotos(photo);
-    signedPhotoDto.signedUrl = signedUrls;
+    const signedPhotoDto = await this.signPhoto(photo);
 
     return signedPhotoDto;
   }
 
-  async getPresignedUploadUrl(
+  async uploadPhoto(
     userId: string,
-    presignedUploadUrlRequest: PresignedUploadUrlRequest,
-  ): Promise<PresignedUploadUrlResponse> {
-    const user = await this.userRepository.findUserQuotaById(userId);
+    photoUploadDto: PhotoUploadRequestDto,
+  ): Promise<SignedPhotoDto> {
+    const user = await this.userRepository.findUniqueOrThrow(userId);
 
-    if (!user) {
-      throw new PhotographerNotFoundException();
-    }
+    const sizeAsBigint = BigInt(photoUploadDto.file.size);
+    const newUsageQuota = user.photoQuotaUsage + sizeAsBigint;
 
-    if (user.photoQuotaUsage >= user.maxPhotoQuota) {
+    if (newUsageQuota >= user.maxPhotoQuota) {
       throw new RunOutPhotoQuotaException();
     }
 
-    const extension = Utils.regexFileExtension
-      .exec(presignedUploadUrlRequest.filename)[1]
-      .toLowerCase();
+    const extension = photoUploadDto.file.extension;
 
     if (
       extension !== 'jpg' &&
@@ -595,25 +445,78 @@ export class PhotoService {
       throw new FileIsNotValidException();
     }
 
-    const storageObjectKey = `${userId}/${v4()}.${extension}`;
+    try {
+      const exif = await this.photoProcessService.parseExifFromBuffer(
+        photoUploadDto.file.buffer,
+      );
 
-    const presignedUploadUrl =
-      await this.photoProcessService.getPresignUploadUrl(storageObjectKey);
+      const metadata = await this.photoProcessService.parseMetadataFromBuffer(
+        photoUploadDto.file.buffer,
+      );
 
-    const photo = await this.photoRepository.createTemporaryPhotos(
-      userId,
-      presignedUploadUrlRequest.filename,
-      storageObjectKey,
-    );
+      if (!exif) {
+        throw new ExifNotFoundException();
+      }
 
-    const signedUpload = new SignedUpload(
-      presignedUploadUrlRequest.filename,
-      presignedUploadUrl,
-      storageObjectKey,
-      photo.id,
-    );
+      if (!exif['Make']) {
+        throw new MissingMakeExifException();
+      }
 
-    return new PresignedUploadUrlResponse(signedUpload);
+      if (!exif['Model']) {
+        throw new MissingModelExifException();
+      }
+
+      exif['Copyright'] = ` © copyright by ${user.name}`;
+
+      const storageObjectKey = await this.bunnyService.upload(
+        photoUploadDto.file,
+      );
+
+      const photo = await this.photoRepository.create({
+        photographer: {
+          connect: {
+            id: userId,
+          },
+        },
+        category: {
+          connectOrCreate: {
+            where: {
+              name: PhotoConstant.DEFAULT_CATEGORY.name,
+            },
+            create: PhotoConstant.DEFAULT_CATEGORY,
+          },
+        },
+        description: '',
+        title: photoUploadDto.file.originalName,
+        size: photoUploadDto.file.size,
+        exif,
+        width: metadata.width,
+        height: metadata.height,
+        status: 'PARSED',
+        photoType: 'RAW',
+        watermark: false,
+        visibility: 'PRIVATE',
+        originalPhotoUrl: storageObjectKey,
+        watermarkPhotoUrl: '',
+      });
+
+      await this.photoProcessQueue.add(PhotoConstant.PROCESS_PHOTO_JOB_NAME, {
+        id: photo.id,
+      });
+      await this.cameraQueue.add(CameraConstant.ADD_NEW_CAMERA_USAGE_JOB, {
+        photoId: photo.id,
+      });
+
+      return this.signPhoto(photo);
+    } catch (e) {
+      console.log(e);
+
+      if (e instanceof HttpException) {
+        throw e;
+      }
+
+      throw new UploadPhotoFailedException();
+    }
   }
 
   async parseAndValidateLightroomPresentFromBuffer(file: Express.Multer.File) {
@@ -647,94 +550,93 @@ export class PhotoService {
     sellPhotoDto: CreatePhotoSellingDto,
     afterPhotoFile: Express.Multer.File,
   ) {
-    await this.parseAndValidateLightroomPresentFromBuffer(afterPhotoFile);
-
-    const photo =
-      await this.findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
-        userId,
-        sellPhotoDto.photoId,
-      );
-
-    if (photo.status !== 'PARSED') {
-      throw new PhotoIsPendingStateException();
-    }
-
-    if (photo.shareStatus === 'NOT_READY') {
-      throw new ShareStatusIsNotReadyException();
-    }
-
-    const previousActivePhotoSell =
-      await this.photoSellRepository.getByActiveAndPhotoId(
-        sellPhotoDto.photoId,
-      );
-
-    if (
-      previousActivePhotoSell &&
-      previousActivePhotoSell.price.toNumber() === sellPhotoDto.price &&
-      previousActivePhotoSell.description === sellPhotoDto.description
-    ) {
-      //idemponent
-      return plainToInstance(PhotoSellDto, previousActivePhotoSell, {});
-    }
-
-    const extension = Utils.regexFileExtension.exec(
-      afterPhotoFile.originalname,
-    )[1];
-
-    const newPhotoSellId = v4();
-
-    const colorGradingPhotoUrl = `color_grading/${newPhotoSellId}/${photo.id}.${extension}`;
-    await this.photoProcessService.uploadFromBuffer(
-      colorGradingPhotoUrl,
-      afterPhotoFile.buffer,
-    );
-
-    //upload colorGrading first because watermark will replace buffer
-
-    const watermarkAfterPhotoBuffer =
-      await this.photoProcessService.makeTextWatermark(
-        afterPhotoFile.buffer,
-        'PUREPIXEL',
-      );
-
-    const watermarkColorGradingPhotoUrl = `watermark_color_grading/${newPhotoSellId}/${photo.id}.${extension}`;
-    await this.photoProcessService.uploadFromBuffer(
-      watermarkColorGradingPhotoUrl,
-      watermarkAfterPhotoBuffer,
-    );
-
-    photo.watermark = true;
-    photo.visibility = 'PUBLIC';
-
-    const prismaQuery: PrismaPromise<any>[] = [];
-    if (previousActivePhotoSell) {
-      const updatePreviousPhotoSellQuery = this.photoSellRepository.updateQuery(
-        previousActivePhotoSell.id,
-        {
-          active: false,
-        },
-      );
-      prismaQuery.push(updatePreviousPhotoSellQuery);
-    }
-
-    const updatePhotoToPublicAndWatermarkQuery =
-      this.photoRepository.updateQuery(photo);
-    prismaQuery.push(updatePhotoToPublicAndWatermarkQuery);
-
-    const photoSell = plainToInstance(PhotoSellEntity, sellPhotoDto);
-    photoSell.id = newPhotoSellId;
-    photoSell.colorGradingPhotoUrl = colorGradingPhotoUrl;
-    photoSell.colorGradingPhotoWatermarkUrl = watermarkColorGradingPhotoUrl;
-
-    const createPhotoSellQuery =
-      this.photoSellRepository.createAndActiveByPhotoIdQuery(photoSell);
-    prismaQuery.push(createPhotoSellQuery);
-
-    const [, newPhotoSell] = await this.prisma
-      .extendedClient()
-      .$transaction([...prismaQuery]);
-
-    return plainToInstance(PhotoSellDto, newPhotoSell);
+    //TODO: finish sell photo
+    //
+    //
+    // await this.parseAndValidateLightroomPresentFromBuffer(afterPhotoFile);
+    //
+    // const photo =
+    //   await this.findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
+    //     userId,
+    //     sellPhotoDto.photoId,
+    //   );
+    //
+    // if (photo.status !== 'PARSED') {
+    //   throw new PhotoIsPendingStateException();
+    // }
+    //
+    // const previousActivePhotoSell =
+    //   await this.photoSellRepository.getByActiveAndPhotoId(
+    //     sellPhotoDto.photoId,
+    //   );
+    //
+    // if (
+    //   previousActivePhotoSell &&
+    //   previousActivePhotoSell.price.toNumber() === sellPhotoDto.price &&
+    //   previousActivePhotoSell.description === sellPhotoDto.description
+    // ) {
+    //   //idemponent
+    //   return plainToInstance(PhotoSellDto, previousActivePhotoSell, {});
+    // }
+    //
+    // const extension = Utils.regexFileExtension.exec(
+    //   afterPhotoFile.originalname,
+    // )[1];
+    //
+    // const newPhotoSellId = v4();
+    //
+    // const colorGradingPhotoUrl = `color_grading/${newPhotoSellId}/${photo.id}.${extension}`;
+    // await this.photoProcessService.uploadFromBuffer(
+    //   colorGradingPhotoUrl,
+    //   afterPhotoFile.buffer,
+    // );
+    //
+    // //upload colorGrading first because watermark will replace buffer
+    //
+    // const watermarkAfterPhotoBuffer =
+    //   await this.photoProcessService.makeTextWatermark(
+    //     afterPhotoFile.buffer,
+    //     'PUREPIXEL',
+    //   );
+    //
+    // const watermarkColorGradingPhotoUrl = `watermark_color_grading/${newPhotoSellId}/${photo.id}.${extension}`;
+    // await this.photoProcessService.uploadFromBuffer(
+    //   watermarkColorGradingPhotoUrl,
+    //   watermarkAfterPhotoBuffer,
+    // );
+    //
+    // photo.watermark = true;
+    // photo.visibility = 'PUBLIC';
+    //
+    // const prismaQuery: PrismaPromise<any>[] = [];
+    // if (previousActivePhotoSell) {
+    //   const updatePreviousPhotoSellQuery = this.photoSellRepository.updateQuery(
+    //     previousActivePhotoSell.id,
+    //     {
+    //       active: false,
+    //     },
+    //   );
+    //   prismaQuery.push(updatePreviousPhotoSellQuery);
+    // }
+    //
+    // const updatePhotoToPublicAndWatermarkQuery =
+    //   this.photoRepository.updateQuery(photo);
+    // prismaQuery.push(updatePhotoToPublicAndWatermarkQuery);
+    //
+    // const photoSell = plainToInstance(PhotoSellEntity, sellPhotoDto);
+    // photoSell.id = newPhotoSellId;
+    // photoSell.colorGradingPhotoUrl = colorGradingPhotoUrl;
+    // photoSell.colorGradingPhotoWatermarkUrl = watermarkColorGradingPhotoUrl;
+    //
+    // const createPhotoSellQuery =
+    //   this.photoSellRepository.createAndActiveByPhotoIdQuery(photoSell);
+    // prismaQuery.push(createPhotoSellQuery);
+    //
+    // const [, newPhotoSell] = await this.prisma
+    //   .extendedClient()
+    //   .$transaction([...prismaQuery]);
+    //
+    // return plainToInstance(PhotoSellDto, newPhotoSell);
   }
 
   async getPhotoBuyByPhotoId(userId: string, photoId: string) {

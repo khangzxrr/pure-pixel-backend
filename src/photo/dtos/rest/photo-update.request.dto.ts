@@ -3,12 +3,14 @@ import { PhotoType, PhotoVisibility } from '@prisma/client';
 import {
   IsBoolean,
   IsEnum,
-  IsJSON,
   IsNotEmpty,
   IsOptional,
   IsString,
+  ValidateNested,
 } from 'class-validator';
 import { ToBoolean } from 'src/infrastructure/transforms/to-boolean';
+import { GpsDto } from '../gps.dto';
+import { Type } from 'class-transformer';
 
 export class PhotoUpdateRequestDto {
   @ApiProperty({
@@ -34,13 +36,6 @@ export class PhotoUpdateRequestDto {
   @ToBoolean()
   @IsBoolean()
   watermark?: boolean;
-
-  @ApiProperty({
-    required: false,
-  })
-  @IsOptional()
-  @IsJSON()
-  exif?: string;
 
   @ApiProperty({
     required: false,
@@ -79,4 +74,12 @@ export class PhotoUpdateRequestDto {
     each: true,
   })
   photoTags?: string[];
+
+  @ApiProperty({
+    required: false,
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => GpsDto)
+  gps?: GpsDto;
 }

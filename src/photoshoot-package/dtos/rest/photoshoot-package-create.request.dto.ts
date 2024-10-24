@@ -27,6 +27,11 @@ export class PhotoshootPackageCreateRequestDto {
   @Min(10000)
   price: number;
 
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  description: string;
+
   @ApiProperty({
     type: 'file',
   })

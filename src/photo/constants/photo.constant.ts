@@ -13,7 +13,7 @@ export class PhotoConstant {
 
   static WEBSOCKET_GATEWAY = 'PHOTO_GATEWAY';
 
-  static THUMBNAIL_WIDTH = 1080;
+  static THUMBNAIL_WIDTH = 720;
 
   static MIN_PHOTO_SIZE = 4000000;
 

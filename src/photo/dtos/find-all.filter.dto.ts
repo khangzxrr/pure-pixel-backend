@@ -19,6 +19,22 @@ export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
   @IsOptional()
   @IsString()
   @IsNotEmpty()
+  brandId?: string;
+
+  @ApiProperty({
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  cameraId?: string;
+
+  @ApiProperty({
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
   categoryName?: string;
 
   @ApiProperty({
@@ -132,6 +148,19 @@ export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
   toWhere(): Prisma.PhotoWhereInput {
     const where: Prisma.PhotoWhereInput = {};
 
+    if (this.cameraId) {
+      where.camera = {
+        id: this.cameraId,
+      };
+    }
+
+    if (this.brandId) {
+      where.camera = {
+        cameraMaker: {
+          id: this.brandId,
+        },
+      };
+    }
     if (this.visibility) {
       where.visibility = this.visibility;
     }

@@ -12,7 +12,7 @@ export class BookingFindAllRequestDto extends PagingPaginatedRequestDto {
   toWhere(): Prisma.BookingWhereInput {
     const where: Prisma.BookingWhereInput = {};
     if (this.photographerId) {
-      where.photoshootPackage = {
+      where.originalPhotoshootPackage = {
         userId: this.photographerId,
       };
     }

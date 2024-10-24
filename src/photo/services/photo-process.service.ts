@@ -1,12 +1,12 @@
 import { HttpService } from '@nestjs/axios';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { lastValueFrom } from 'rxjs';
-import { StorageService } from 'src/storage/services/storage.service';
 import { FailedToGenerateThumbnailException } from '../exceptions/failed-to-generate-thumbnail.exception';
 
 import exifr from 'exifr';
 import * as SharpLib from 'sharp';
 import { PhotoConstant } from '../constants/photo.constant';
+import { BunnyService } from 'src/storage/services/bunny.service';
 
 @Injectable()
 export class PhotoProcessService {
@@ -14,27 +14,11 @@ export class PhotoProcessService {
 
   constructor(
     private readonly httpService: HttpService,
-    @Inject() private readonly storageService: StorageService,
+    @Inject() private readonly bunnyService: BunnyService,
   ) {}
 
-  async deleteKeys(keys: string[]) {
-    return await this.storageService.deleteKeys(keys);
-  }
-
-  async getPresignUploadUrl(key: string) {
-    return this.storageService.getPresignedUploadUrl(key);
-  }
-
-  async makeThumbnailAndUploadFromBuffer(key: string, buffer: Buffer) {
-    const sharp = await this.sharpInitFromBuffer(buffer);
-
-    const jpeg = await this.convertJpeg(sharp);
-
-    const thumbnailBuffer = await this.makeThumbnail(jpeg).then((s) =>
-      s.toBuffer(),
-    );
-
-    await this.uploadFromBuffer(key, thumbnailBuffer);
+  async uploadFromBuffer(key: string, buffer: Buffer) {
+    return this.bunnyService.uploadFromBuffer(key, buffer);
   }
 
   async sharpInitFromBuffer(buffer: Buffer) {
@@ -42,32 +26,10 @@ export class PhotoProcessService {
   }
 
   async sharpInitFromObjectKey(key: string) {
-    const buffer = await this.getObjectToBuffer(key);
+    const buffer = await this.bunnyService.download(key);
 
     const photo = SharpLib(buffer);
     return photo;
-  }
-
-  async getAvailableResolution(key: string): Promise<string[]> {
-    const sharp = await this.sharpInitFromObjectKey(key);
-
-    const metadata = await sharp.metadata();
-
-    const availableRes = [...PhotoConstant.SUPPORTED_PHOTO_RESOLUTION];
-
-    for (let i = 0; i < PhotoConstant.SUPPORTED_PHOTO_RESOLUTION.length; i++) {
-      const pixelOfRes = PhotoConstant.PHOTO_RESOLUTION_BIMAP.getValue(
-        PhotoConstant.SUPPORTED_PHOTO_RESOLUTION[i],
-      );
-
-      if (metadata.height >= pixelOfRes) {
-        break;
-      }
-
-      availableRes.shift();
-    }
-
-    return availableRes;
   }
 
   async resizeWithMetadata(sharp: SharpLib.Sharp, heightRequired: number) {
@@ -141,6 +103,12 @@ export class PhotoProcessService {
     });
   }
 
+  async parseMetadataFromBuffer(buffer: Buffer) {
+    const sharp = await this.sharpInitFromBuffer(buffer);
+
+    return sharp.metadata();
+  }
+
   async parseExifFromBuffer(buffer: Buffer) {
     return exifr.parse(buffer, {
       exif: true,
@@ -152,25 +120,6 @@ export class PhotoProcessService {
     return exifr.parse(await sharp.keepExif().toBuffer(), {
       exif: true,
     });
-  }
-
-  async getEncodedSignedGetObjectUrl(originalImageKey: string) {
-    const imagePublicUrl =
-      await this.storageService.signUrlUsingCDN(originalImageKey);
-
-    const encodedImageUrl = encodeURIComponent(imagePublicUrl);
-
-    return encodedImageUrl;
-  }
-
-  async getSignedObjectUrl(key: string) {
-    return this.storageService.signUrlUsingCDN(key);
-  }
-
-  async getObjectToBuffer(key: string): Promise<Buffer> {
-    const byteArray = await this.storageService.getObjectToByteArray(key);
-
-    return Buffer.from(byteArray);
   }
 
   async getBufferImageFromUrl(url: string) {
@@ -185,9 +134,5 @@ export class PhotoProcessService {
     }
 
     return response.data;
-  }
-
-  async uploadFromBuffer(key: string, buffer: Buffer) {
-    await this.storageService.uploadFromBytes(key, buffer);
   }
 }

@@ -10,11 +10,7 @@ import { RunOutOfPackageQuotaException } from '../exceptions/run-out-of-package-
 import { PrismaService } from 'src/prisma.service';
 import { PhotoProcessService } from 'src/photo/services/photo-process.service';
 import { v4 } from 'uuid';
-import { PhotoshootPackageDetailCreateDto } from '../dtos/rest/photoshoot-package-detail.create.request.dto';
 import { PhotoshootPackageNotBelongException } from '../exceptions/photoshoot-package-not-belong.exception';
-import { PhotoshootPackageDetailRepository } from 'src/database/repositories/photoshoot-package-detail.repository';
-import { PhotoshootPackageDetailDto } from '../dtos/photoshoot-package-detail.dto';
-import { PhotoshootPackageDetailUpdateDto } from '../dtos/rest/photoshoot-package-detail.update.request.dto';
 import { PhotoshootPackageUpdateRequestDto } from '../dtos/rest/photoshoot-package-update.request.dto';
 import { PhotoshootPackageReplaceRequestDto } from '../dtos/rest/photoshoot-package-replace.request.dto';
 
@@ -24,110 +20,40 @@ export class PhotoshootPackageService {
     @Inject() private readonly photoshootRepository: PhotoshootRepository,
     @Inject() private readonly userRepository: UserRepository,
     @Inject() private readonly photoProcessService: PhotoProcessService,
-    @Inject()
-    private readonly photoshootPackageDetailRepository: PhotoshootPackageDetailRepository,
     private readonly prisma: PrismaService,
   ) {}
-
-  async deleteDetail(userId: string, packageId: string, detailId: string) {
-    const photoshootPackage =
-      await this.photoshootRepository.findUniqueOrThrow(packageId);
-
-    if (photoshootPackage.userId !== userId) {
-      throw new PhotoshootPackageNotBelongException();
-    }
-
-    await this.photoshootPackageDetailRepository.findUniqueByIdOrThrow(
-      detailId,
-      packageId,
-    );
-
-    const deletedDetail =
-      await this.photoshootPackageDetailRepository.delete(detailId);
-
-    return plainToInstance(PhotoshootPackageDetailDto, deletedDetail);
-  }
-
-  async updateDetail(
-    userId: string,
-    packageId: string,
-    detailId: string,
-    updateDto: PhotoshootPackageDetailUpdateDto,
-  ) {
-    const photoshootPackage =
-      await this.photoshootRepository.findUniqueOrThrow(packageId);
-
-    if (photoshootPackage.userId !== userId) {
-      throw new PhotoshootPackageNotBelongException();
-    }
-
-    await this.photoshootPackageDetailRepository.findUniqueByIdOrThrow(
-      detailId,
-      packageId,
-    );
-
-    const updatedDetail = await this.photoshootPackageDetailRepository.update(
-      detailId,
-      updateDto,
-    );
-
-    return plainToInstance(PhotoshootPackageDetailDto, updatedDetail);
-  }
-
-  async createDetail(
-    userId: string,
-    photoshootPackageId: string,
-    createDto: PhotoshootPackageDetailCreateDto,
-  ) {
-    const photoshootPackage =
-      await this.photoshootRepository.findUniqueOrThrow(photoshootPackageId);
-
-    if (photoshootPackage.userId !== userId) {
-      throw new PhotoshootPackageNotBelongException();
-    }
-
-    const photoshootPackageDetail =
-      await this.photoshootPackageDetailRepository.create({
-        ...createDto,
-        photoshootPackage: {
-          connect: {
-            id: photoshootPackageId,
-          },
-        },
-      });
-
-    return plainToInstance(PhotoshootPackageDetailDto, photoshootPackageDetail);
-  }
 
   async replace(
     userId: string,
     id: string,
     replaceDto: PhotoshootPackageReplaceRequestDto,
   ) {
-    const photoshootPackage =
-      await this.photoshootRepository.findUniqueOrThrow(id);
-
-    if (photoshootPackage.userId !== userId) {
-      throw new PhotoshootPackageNotBelongException();
-    }
-
-    if (replaceDto.thumbnail) {
-      await this.photoProcessService.makeThumbnailAndUploadFromBuffer(
-        photoshootPackage.thumbnail,
-        replaceDto.thumbnail.buffer,
-      );
-    }
-
-    const updatedPhotoshootPackage = await this.photoshootRepository.updateById(
-      id,
-      {
-        price: replaceDto.price,
-        title: replaceDto.title,
-        subtitle: replaceDto.subtitle,
-      },
-    );
-
-    return plainToInstance(PhotoshootPackageDto, updatedPhotoshootPackage);
+    //TODO: finish replace photoshoot package method
+    //
+    // const photoshootPackage =
+    //   await this.photoshootRepository.findUniqueOrThrow(id);
+    //
+    // if (photoshootPackage.userId !== userId) {
+    //   throw new PhotoshootPackageNotBelongException();
+    // }
+    //
+    // if (replaceDto.thumbnail) {
+    //   await this.photoProcessService.makeThumbnailAndUploadFromBuffer(
+    //     photoshootPackage.thumbnail,
+    //     replaceDto.thumbnail.buffer,
+    //   );
+    // }
+    //
+    // const updatedPhotoshootPackage = await this.photoshootRepository.updateById(
+    //   id,
+    //   {
+    //     price: replaceDto.price,
+    //     title: replaceDto.title,
+    //     subtitle: replaceDto.subtitle,
+    //   },
+    // );
+    //
+    // return plainToInstance(PhotoshootPackageDto, updatedPhotoshootPackage);
   }
 
   async delete(userId: string, id: string) {
@@ -148,74 +74,73 @@ export class PhotoshootPackageService {
     id: string,
     updateDto: PhotoshootPackageUpdateRequestDto,
   ) {
-    const photoshootPackage =
-      await this.photoshootRepository.findUniqueOrThrow(id);
-
-    if (photoshootPackage.userId !== userId) {
-      throw new PhotoshootPackageNotBelongException();
-    }
-
-    if (updateDto.thumbnail) {
-      await this.photoProcessService.makeThumbnailAndUploadFromBuffer(
-        photoshootPackage.thumbnail,
-        updateDto.thumbnail.buffer,
-      );
-    }
-
-    const updatedPhotoshootPackage = await this.photoshootRepository.updateById(
-      id,
-      {
-        price: updateDto.price,
-        title: updateDto.title,
-        subtitle: updateDto.subtitle,
-      },
-    );
-
-    return plainToInstance(PhotoshootPackageDto, updatedPhotoshootPackage);
+    //TODO: finish update photoshoot package
+    // const photoshootPackage =
+    //   await this.photoshootRepository.findUniqueOrThrow(id);
+    //
+    // if (photoshootPackage.userId !== userId) {
+    //   throw new PhotoshootPackageNotBelongException();
+    // }
+    //
+    // if (updateDto.thumbnail) {
+    //   await this.photoProcessService.makeThumbnailAndUploadFromBuffer(
+    //     photoshootPackage.thumbnail,
+    //     updateDto.thumbnail.buffer,
+    //   );
+    // }
+    //
+    // const updatedPhotoshootPackage = await this.photoshootRepository.updateById(
+    //   id,
+    //   {
+    //     price: updateDto.price,
+    //     title: updateDto.title,
+    //     subtitle: updateDto.subtitle,
+    //   },
+    // );
+    //
+    // return plainToInstance(PhotoshootPackageDto, updatedPhotoshootPackage);
   }
 
   async create(userId: string, createDto: PhotoshootPackageCreateRequestDto) {
-    const user = await this.userRepository.findUniqueOrThrow(userId);
-
-    if (user.packageCount >= user.maxPackageCount) {
-      throw new RunOutOfPackageQuotaException();
-    }
-
-    const thumbnailKey = `photoshoot_thumbnail/${v4()}.jpg`;
-    await this.photoProcessService.makeThumbnailAndUploadFromBuffer(
-      thumbnailKey,
-      createDto.thumbnail.buffer,
-    );
-
-    const photoshootPackageCreateQuery = this.photoshootRepository.create({
-      user: {
-        connect: {
-          id: userId,
-        },
-      },
-      status: 'ENABLED',
-      price: createDto.price,
-      title: createDto.title,
-      subtitle: createDto.subtitle,
-      thumbnail: thumbnailKey,
-      details: {
-        createMany: {
-          data: [],
-        },
-      },
-    });
-
-    const updatePackageQuotaQuery = this.userRepository.updateUser(user.id, {
-      packageCount: {
-        increment: 1,
-      },
-    });
-
-    const [photoshootPackage] = await this.prisma
-      .extendedClient()
-      .$transaction([photoshootPackageCreateQuery, updatePackageQuotaQuery]);
-
-    return plainToInstance(PhotoshootPackageDto, photoshootPackage);
+    //TODO: finish create photoshoot package
+    //
+    // const user = await this.userRepository.findUniqueOrThrow(userId);
+    //
+    // if (user.packageCount >= user.maxPackageCount) {
+    //   throw new RunOutOfPackageQuotaException();
+    // }
+    //
+    // const thumbnailKey = `photoshoot_thumbnail/${v4()}.jpg`;
+    // await this.photoProcessService.makeThumbnailAndUploadFromBuffer(
+    //   thumbnailKey,
+    //   createDto.thumbnail.buffer,
+    // );
+    //
+    // const photoshootPackageCreateQuery = this.photoshootRepository.create({
+    //   user: {
+    //     connect: {
+    //       id: userId,
+    //     },
+    //   },
+    //   status: 'ENABLED',
+    //   price: createDto.price,
+    //   title: createDto.title,
+    //   subtitle: createDto.subtitle,
+    //   thumbnail: thumbnailKey,
+    //   description: createDto.description,
+    // });
+    //
+    // const updatePackageQuotaQuery = this.userRepository.updateUser(user.id, {
+    //   packageCount: {
+    //     increment: 1,
+    //   },
+    // });
+    //
+    // const [photoshootPackage] = await this.prisma
+    //   .extendedClient()
+    //   .$transaction([photoshootPackageCreateQuery, updatePackageQuotaQuery]);
+    //
+    // return plainToInstance(PhotoshootPackageDto, photoshootPackage);
   }
 
   async getById(id: string) {

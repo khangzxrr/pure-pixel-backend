@@ -5,11 +5,6 @@ export class GenerateWatermarkRequestDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  photoId: string;
-
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
   @MaxLength(20)
   text: string;
 }

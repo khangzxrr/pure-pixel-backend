@@ -11,7 +11,6 @@ import { DatabaseService } from './database.service';
 import { ServiceTransactionRepository } from './repositories/service-transaction.repository';
 import { DepositTransactionRepository } from './repositories/deposit-transaction.repository';
 import { WithdrawalTransactionRepository } from './repositories/withdrawal-transaction.repository';
-import { PhotoSharingRepository } from './repositories/photo-sharing.repository';
 import { PhotoSellRepository } from './repositories/photo-sell.repository';
 import { PhotoBuyRepository } from './repositories/photo-buy.repository';
 import { UserToUserRepository } from './repositories/user-to-user-transaction.repository';
@@ -21,14 +20,18 @@ import { PhotoVoteRepository } from './repositories/photo-vote.repository';
 import { BlogRepository } from './repositories/blog.repository';
 import { PhotoshootRepository } from './repositories/photoshoot-package.repository';
 import { NotificationRepository } from './repositories/notification.repository';
-import { PhotoshootPackageDetailRepository } from './repositories/photoshoot-package-detail.repository';
 import { BookingRepository } from './repositories/booking.repository';
+import { BookingBillItemRepository } from './repositories/booking-bill-item.repository';
+import { CameraRepository } from './repositories/camera.repository';
+import { CameraMakerRepository } from './repositories/camera-maker.repository';
+import { CameraOnUsersRepository } from './repositories/camera-on-users.repository';
+import { PopularCameraDatapointRepository } from './repositories/popular-camera-data-point.repository';
+import { PopularCameraTimelineRepository } from './repositories/popular-camera-timeline.repository';
 @Module({
   providers: [
     PrismaService,
     UserRepository,
     PhotoRepository,
-    PhotoSharingRepository,
     CategoryRepository,
     UpgradePackageRepository,
     UpgradePackageOrderRepository,
@@ -47,14 +50,18 @@ import { BookingRepository } from './repositories/booking.repository';
     BlogRepository,
     PhotoshootRepository,
     NotificationRepository,
-    PhotoshootPackageDetailRepository,
     BookingRepository,
+    BookingBillItemRepository,
+    CameraRepository,
+    CameraMakerRepository,
+    CameraOnUsersRepository,
+    PopularCameraDatapointRepository,
+    PopularCameraTimelineRepository,
   ],
   exports: [
     PrismaService,
     UserRepository,
     PhotoRepository,
-    PhotoSharingRepository,
     CategoryRepository,
     UpgradePackageRepository,
     UpgradePackageOrderRepository,
@@ -73,8 +80,13 @@ import { BookingRepository } from './repositories/booking.repository';
     BlogRepository,
     PhotoshootRepository,
     NotificationRepository,
-    PhotoshootPackageDetailRepository,
     BookingRepository,
+    BookingBillItemRepository,
+    CameraRepository,
+    CameraMakerRepository,
+    CameraOnUsersRepository,
+    PopularCameraDatapointRepository,
+    PopularCameraTimelineRepository,
   ],
 })
 export class DatabaseModule {}

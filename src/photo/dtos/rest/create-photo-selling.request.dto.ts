@@ -25,11 +25,4 @@ export class CreatePhotoSellingDto {
   @IsString()
   @IsNotEmpty()
   description: string;
-
-  @ApiProperty({
-    type: 'string',
-    format: 'binary',
-    required: true,
-  })
-  afterPhotoFile: Express.Multer.File;
 }
