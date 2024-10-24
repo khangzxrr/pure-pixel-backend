@@ -15,7 +15,6 @@ import { ReportType } from '@prisma/client';
 import { ReportPutUpdateRequestDto } from '../dtos/rest/report-put-update.request.dto';
 import { PhotoDto } from 'src/photo/dtos/photo.dto';
 import { CommentEntity } from 'src/photo/entities/comment.entity';
-import { Constants } from 'src/infrastructure/utils/constants';
 import { PhotoService } from 'src/photo/services/photo.service';
 import { UserDto } from 'src/user/dtos/me.dto';
 
@@ -34,7 +33,7 @@ export class ReportService {
 
     switch (reportType) {
       case 'USER':
-        obj = await this.userRepository.findUnique(referenceId);
+        obj = await this.userRepository.findUniqueOrThrow(referenceId);
         break;
       case 'PHOTO':
         obj = await this.photoRepository.getPhotoById(referenceId);
@@ -44,7 +43,7 @@ export class ReportService {
         throw new NotImplementedException();
 
       case 'COMMENT':
-        obj = await this.commentRepository.findById(referenceId);
+        obj = await this.commentRepository.findUniqueOrThrow(referenceId);
         break;
     }
 
@@ -159,7 +158,9 @@ export class ReportService {
           r.referencedPhoto = plainToInstance(PhotoDto, photo);
           break;
         case 'COMMENT':
-          const comment = await this.commentRepository.findById(r.referenceId);
+          const comment = await this.commentRepository.findUniqueOrThrow(
+            r.referenceId,
+          );
           r.referencedComment = plainToInstance(CommentEntity, comment);
           break;
         case 'BOOKING':

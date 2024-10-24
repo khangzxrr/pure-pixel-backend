@@ -10,6 +10,8 @@ import { NotificationCreateDto } from 'src/notification/dtos/rest/notification-c
 import { NotificationConstant } from 'src/notification/constants/notification.constant';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
+import { plainToInstance } from 'class-transformer';
+import { CommentDto } from '../dtos/comment-dto';
 
 @Injectable()
 export class CommentService {
@@ -44,7 +46,55 @@ export class CommentService {
       photo.id,
     );
 
-    return comments.map((c) => new CommentEntity(c));
+    return plainToInstance(CommentDto, comments);
+  }
+
+  async createReply(
+    photoId: string,
+    userId: string,
+    commentId: string,
+    createCommentRequestDto: CreateCommentRequestDto,
+  ): Promise<CommentEntity> {
+    const photo = await this.validatePhotoByIdAndVisibility(photoId, 'PUBLIC');
+
+    const parentComment =
+      await this.commentRepository.findUniqueOrThrow(commentId);
+
+    const comment = new CommentEntity({
+      content: createCommentRequestDto.content,
+      userId: userId,
+      photoId: photo.id,
+      parentId: commentId,
+    });
+
+    const notificationDto: NotificationCreateDto = {
+      userId: photo.photographerId,
+      title: 'Bình luận mới!',
+      content: `Ảnh ${photo.title} của bạn vừa nhận được một bình luận mới!`,
+      referenceType: 'PHOTO',
+      referenceId: photoId,
+      type: 'IN_APP',
+    };
+
+    const notificationReplyDto: NotificationCreateDto = {
+      userId: parentComment.userId,
+      title: 'Bình luận của bạn nhận được phản hồi mới!',
+      content: `Bình luận của bạn ở ảnh ${photo.title} vừa nhận được một phản hồi mới!`,
+      referenceType: 'PHOTO',
+      referenceId: photoId,
+      type: 'IN_APP',
+    };
+
+    await this.notificationQueue.add(
+      NotificationConstant.TEXT_NOTIFICATION_JOB,
+      notificationDto,
+    );
+    await this.notificationQueue.add(
+      NotificationConstant.TEXT_NOTIFICATION_JOB,
+      notificationReplyDto,
+    );
+
+    return await this.commentRepository.createComment(comment);
   }
 
   async createComment(
@@ -61,7 +111,7 @@ export class CommentService {
     });
 
     const notificationDto: NotificationCreateDto = {
-      userId,
+      userId: photo.photographerId,
       title: 'Bình luận mới!',
       content: `Ảnh ${photo.title} của bạn vừa nhận được một bình luận mới!`,
       referenceType: 'PHOTO',

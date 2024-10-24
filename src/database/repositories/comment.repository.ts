@@ -6,8 +6,8 @@ import { PrismaService } from 'src/prisma.service';
 export class CommentRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findById(id: string) {
-    return this.prisma.comment.findUnique({
+  async findUniqueOrThrow(id: string) {
+    return this.prisma.comment.findUniqueOrThrow({
       where: {
         id,
       },
@@ -21,6 +21,7 @@ export class CommentRepository {
       },
       include: {
         user: true,
+        replies: true,
       },
     });
   }

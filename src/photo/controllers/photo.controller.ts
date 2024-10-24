@@ -34,9 +34,6 @@ import { PhotoUpdateRequestDto } from '../dtos/rest/photo-update.request.dto';
 import { FindAllPhotoFilterDto } from '../dtos/find-all.filter.dto';
 
 import { Response } from 'express';
-import { CommentService } from '../services/comment.service';
-import { CreateCommentRequestDto } from '../dtos/rest/create-comment.request.dto';
-import { CommentEntity } from '../entities/comment.entity';
 import { GenerateWatermarkRequestDto } from '../dtos/rest/generate-watermark.request.dto';
 import { SharePhotoRequestDto } from '../dtos/rest/share-photo.request.dto';
 import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.response.dto';
@@ -48,10 +45,7 @@ import { FormDataRequest } from 'nestjs-form-data';
 @Controller('photo')
 @ApiTags('photo')
 export class PhotoController {
-  constructor(
-    @Inject() private readonly photoService: PhotoService,
-    @Inject() private readonly commentService: CommentService,
-  ) {}
+  constructor(@Inject() private readonly photoService: PhotoService) {}
 
   @Get('/public')
   @ApiOperation({
@@ -62,42 +56,6 @@ export class PhotoController {
   @Public(false)
   async getAllPublicPhoto(@Query() findPhotoFilter: FindAllPhotoFilterDto) {
     return await this.photoService.findPublicPhotos(findPhotoFilter);
-  }
-
-  //TODO: finish get comments API
-  @Get('/:id/comment')
-  @ApiOperation({
-    summary: 'get comments of photo',
-  })
-  @ApiOkResponse({
-    type: CommentEntity,
-    isArray: true,
-  })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Public(false)
-  async getComments(@Param('id') id: string): Promise<CommentEntity[]> {
-    return await this.commentService.findAllByPhotoId(id);
-  }
-
-  @Post('/:id/comment')
-  @ApiOperation({
-    summary: 'create a comment to photo',
-  })
-  @ApiOkResponse({
-    type: CommentEntity,
-  })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
-  async createComment(
-    @AuthenticatedUser() user: ParsedUserDto,
-    @Param('id') id: string,
-    @Body() createCommentRequestDto: CreateCommentRequestDto,
-  ): Promise<CommentEntity> {
-    return await this.commentService.createComment(
-      id,
-      user.sub,
-      createCommentRequestDto,
-    );
   }
 
   @Delete(':id')
