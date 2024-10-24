@@ -6,6 +6,9 @@ import { StorageService } from 'src/storage/services/storage.service';
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { PhotoService } from 'src/photo/services/photo.service';
+import { PhotoUploadRequestDto } from 'src/photo/dtos/rest/photo-upload.request';
+import { MemoryStoredFile } from 'nestjs-form-data';
 
 @Injectable()
 export class AdminService {
@@ -13,6 +16,7 @@ export class AdminService {
     @Inject() private readonly userRepository: UserRepository,
     @Inject() private readonly keycloakService: KeycloakService,
     @Inject() private readonly storageService: StorageService,
+    @Inject() private readonly photoService: PhotoService,
   ) {}
 
   readRandomUsernames() {
@@ -26,18 +30,39 @@ export class AdminService {
     return usernames;
   }
 
+  readImageList() {
+    const files = fs.readdirSync(path.join(process.cwd(), `./images`));
+
+    return files;
+  }
+
+  readFileToBuffer(filepath: string) {
+    const file = fs.readFileSync(path.join(process.cwd(), filepath));
+
+    return file;
+  }
+
   async seed() {
     const usernames = this.readRandomUsernames();
 
+    const imageList = this.readImageList();
+
+    const imagePerUserCount = Math.floor(imageList.length / usernames.length);
+
     usernames.forEach(async (username) => {
+      const trimmedUsername = username.trim();
+      if (trimmedUsername.length === 0) {
+        return;
+      }
+
       const keycloakUser = await this.keycloakService.createUser(
-        username.trim(),
+        trimmedUsername,
         'photographer',
       );
-      await this.userRepository.createIfNotExist({
+      const user = await this.userRepository.createIfNotExist({
         id: keycloakUser.id,
-        mail: `${username}@gmail.com`,
-        name: username,
+        mail: `${trimmedUsername}@gmail.com`,
+        name: trimmedUsername,
         cover: Constants.DEFAULT_COVER,
         quote: '',
         avatar: Constants.DEFAULT_AVATAR,
@@ -56,6 +81,29 @@ export class AdminService {
       });
 
       console.log(`created photographer ${username}`);
+
+      for (let i = 0; i < imagePerUserCount; i++) {
+        const photoUploadDto = new PhotoUploadRequestDto();
+        photoUploadDto.file = new MemoryStoredFile();
+
+        imageList.shift();
+
+        photoUploadDto.file.buffer = this.readFileToBuffer(
+          `./images/${imageList[0]}`,
+        );
+        photoUploadDto.file.size = photoUploadDto.file.buffer.byteLength;
+        photoUploadDto.file.originalName = imageList[0];
+
+        try {
+          await this.photoService.uploadPhoto(user.id, photoUploadDto);
+        } catch (e) {
+          console.log(e);
+        }
+      }
+
+      console.log(
+        `finished user ${username} remain: ${usernames.indexOf(username) + 1 - usernames.length} users`,
+      );
     });
   }
 }
