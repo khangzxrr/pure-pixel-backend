@@ -22,6 +22,9 @@ export class CommentEntity implements PrismaCommentEntity {
   @ApiProperty({ required: false, nullable: true })
   userId: string | null;
 
+  @ApiProperty()
+  parentId: string;
+
   @ApiProperty({ required: false, type: UserEntity })
   user?: UserEntity;
 

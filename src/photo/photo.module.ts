@@ -19,6 +19,7 @@ import { PaymentModule } from 'src/payment/payment.module';
 import { PhotoGenerateWatermarkService } from './services/photo-generate-watermark.service';
 import { PhotoVoteController } from './controllers/photo-vote.controller';
 import { NestjsFormDataModule } from 'nestjs-form-data';
+import { PhotoCommentController } from './controllers/photo-comment.controller';
 
 @Module({
   providers: [
@@ -37,6 +38,7 @@ import { NestjsFormDataModule } from 'nestjs-form-data';
     PhotoCategoryController,
     PhotoExchangeController,
     PhotoVoteController,
+    PhotoCommentController,
   ],
   imports: [
     HttpModule.register({
