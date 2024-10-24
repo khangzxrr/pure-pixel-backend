@@ -8,6 +8,7 @@ import { UpdateTimelineService } from './crons/update-timeline.service.cron';
 @Module({
   imports: [DatabaseModule],
   providers: [CameraConsumer, CameraService, UpdateTimelineService],
+  exports: [UpdateTimelineService],
   controllers: [CameraController],
 })
 export class CameraModule {}
