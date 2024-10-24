@@ -95,7 +95,14 @@ export class AdminService {
         photoUploadDto.file.originalName = imageList[0];
 
         try {
-          await this.photoService.uploadPhoto(user.id, photoUploadDto);
+          const photoDto = await this.photoService.uploadPhoto(
+            user.id,
+            photoUploadDto,
+          );
+
+          await this.photoService.updatePhoto(user.id, photoDto.id, {
+            visibility: 'PUBLIC',
+          });
         } catch (e) {
           console.log(e);
         }
