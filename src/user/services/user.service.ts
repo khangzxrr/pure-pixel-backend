@@ -4,11 +4,12 @@ import { UserFilterDto } from '../dtos/user-filter.dto';
 import { UserDto } from '../dtos/me.dto';
 import { KeycloakService } from 'src/authen/services/keycloak.service';
 import { UserNotFoundException } from '../exceptions/user-not-found.exception';
-import { Constants } from 'src/infrastructure/utils/constants';
 import { StorageService } from 'src/storage/services/storage.service';
 import { PresignedUploadMediaDto } from '../dtos/presigned-upload-media.dto';
 import { UpdateProfileDto } from '../dtos/rest/update-profile.request.dto';
 import { plainToInstance } from 'class-transformer';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class UserService {
@@ -17,6 +18,21 @@ export class UserService {
     @Inject() private readonly keycloakService: KeycloakService,
     @Inject() private readonly storageService: StorageService,
   ) {}
+
+  async seed() {
+    const usernames = fs
+      .readFileSync(
+        path.join(process.cwd(), './prisma/random_username.csv'),
+        'utf-8',
+      )
+      .split('\n');
+
+    usernames.forEach(async (username) => {
+      await this.keycloakService.createUser(username.trim(), 'photographer');
+
+      console.log(`created photographer ${username}`);
+    });
+  }
 
   async generatePresignedUploadMedia(userId: string) {
     const user = await this.userRepository.findUnique(userId);

@@ -7,7 +7,7 @@ export class KeycloakService {
   private kcInstance: KeycloakAdminClient;
   private clientInstance: ClientRepresentation;
 
-  private refreshTokenDate: Date;
+  private refreshTokenDate: Date = new Date('2023-10-24');
 
   private async getClient() {
     if (this.clientInstance) {
@@ -60,9 +60,39 @@ export class KeycloakService {
       clientId: process.env.KEYCLOAK_CLIENT_ID,
     });
 
-    this.refreshTokenDate = new Date();
+    this.refreshTokenDate = new Date('2023-10-24');
 
     return this.kcInstance;
+  }
+
+  async createUser(username: string, role: string) {
+    const instance = await this.getInstance();
+
+    const existUser = await instance.users.find({
+      username,
+    });
+
+    if (existUser.length !== 0) {
+      return existUser[0];
+    }
+
+    const user = await instance.users.create({
+      username,
+      email: `${username}@gmail.com`,
+      emailVerified: true,
+      enabled: true,
+      firstName: username,
+      lastName: username,
+      credentials: [
+        {
+          type: 'password',
+          value: username,
+          temporary: false,
+        },
+      ],
+    });
+
+    await this.addRoleToUser(user.id, role);
   }
 
   async getRole(roleName: string) {

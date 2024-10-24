@@ -1,4 +1,11 @@
-import { Controller, Get, Inject, Param, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Inject,
+  Param,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserService } from '../services/user.service';
 import { AuthGuard, Roles } from 'nest-keycloak-connect';
@@ -9,6 +16,16 @@ import { Constants } from 'src/infrastructure/utils/constants';
 @ApiTags('manager-user')
 export class UserController {
   constructor(@Inject() private readonly userService: UserService) {}
+
+  @Post('seed')
+  @ApiOperation({
+    summary: 'seed users',
+  })
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.MANAGER_ROLE] })
+  async seedUsers() {
+    return await this.userService.seed();
+  }
 
   @Get(':id')
   @ApiOperation({
