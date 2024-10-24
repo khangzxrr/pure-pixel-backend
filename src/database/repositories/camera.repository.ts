@@ -9,10 +9,11 @@ export class CameraRepository {
   async findAllGroupBy(dateSeperator: string) {
     //date_trunc(${dateSeperator}, "public"."Camera"."createdAt") "date",
     return this.prismaService
-      .$queryRaw`SELECT "public"."Camera"."name", count("userId"), date_trunc(${dateSeperator}, "public"."CameraOnUsers"."createdAt") "date"
+      .$queryRaw`SELECT "public"."Camera"."name", count("userId") as userCount, date_trunc(${dateSeperator}, "public"."CameraOnUsers"."createdAt") "date"
                 FROM "public"."Camera"
                 INNER JOIN "public"."CameraOnUsers" ON "public"."Camera".id = "public"."CameraOnUsers"."cameraId"
                 GROUP BY "public"."Camera"."name", "date"
+                ORDER BY userCount DESC
                 `;
   }
 

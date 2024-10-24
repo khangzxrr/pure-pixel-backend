@@ -1,5 +1,6 @@
 export enum GraphSeperator {
-  DAY,
-  WEEK,
-  MONTH,
+  DAY = 'day',
+  WEEK = 'week',
+  MONTH = 'month',
+  YEAR = 'year',
 }

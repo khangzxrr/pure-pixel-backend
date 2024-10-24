@@ -16,7 +16,9 @@ export class CameraService {
   ) {}
 
   async getPopularGraph(popularCameraGraphDto: PopularCameraGraphRequestDto) {
-    return this.cameraRepository.findAllGroupBy('day');
+    return this.cameraRepository.findAllGroupBy(
+      popularCameraGraphDto.seperator,
+    );
   }
 
   async findTopBrand(n: number) {

@@ -4,11 +4,11 @@ import { IsEnum, IsNumber, Max, Min } from 'class-validator';
 import { GraphSeperator } from 'src/camera/enums/graph-seperator.enum';
 
 export class PopularCameraGraphRequestDto {
-  // @ApiProperty({
-  //   enum: GraphSeperator,
-  // })
-  // @IsEnum(GraphSeperator)
-  // seperator: GraphSeperator;
+  @ApiProperty({
+    enum: GraphSeperator,
+  })
+  @IsEnum(GraphSeperator)
+  seperator: GraphSeperator;
 
   @ApiProperty()
   @IsNumber()
