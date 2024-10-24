@@ -183,6 +183,11 @@ export class PhotoRepository {
         },
         photographer: true,
         category: true,
+        camera: {
+          include: {
+            cameraMaker: true,
+          },
+        },
         photoSellings: {
           where: {
             active: true,
