@@ -93,6 +93,8 @@ export class KeycloakService {
     });
 
     await this.addRoleToUser(user.id, role);
+
+    return user;
   }
 
   async getRole(roleName: string) {

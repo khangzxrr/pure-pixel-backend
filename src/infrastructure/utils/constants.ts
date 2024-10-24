@@ -10,5 +10,7 @@ export class Constants {
   static DEFAULT_IMAGE =
     'https://purepixel-default.b-cdn.net/default-camera.jpg';
 
+  static DEFAULT_COVER = 'https://purepixel-default.b-cdn.net/cover.jpg';
+
   static SORT = ['asc', 'desc'];
 }
