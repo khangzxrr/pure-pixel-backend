@@ -8,9 +8,6 @@ import { StorageService } from 'src/storage/services/storage.service';
 import { PresignedUploadMediaDto } from '../dtos/presigned-upload-media.dto';
 import { UpdateProfileDto } from '../dtos/rest/update-profile.request.dto';
 import { plainToInstance } from 'class-transformer';
-import * as fs from 'fs';
-import * as path from 'path';
-import { Constants } from 'src/infrastructure/utils/constants';
 
 @Injectable()
 export class UserService {
@@ -19,44 +16,6 @@ export class UserService {
     @Inject() private readonly keycloakService: KeycloakService,
     @Inject() private readonly storageService: StorageService,
   ) {}
-
-  async seed() {
-    const usernames = fs
-      .readFileSync(
-        path.join(process.cwd(), './prisma/random_username.csv'),
-        'utf-8',
-      )
-      .split('\n');
-
-    usernames.forEach(async (username) => {
-      const keycloakUser = await this.keycloakService.createUser(
-        username.trim(),
-        'photographer',
-      );
-      await this.userRepository.createIfNotExist({
-        id: keycloakUser.id,
-        mail: `${username}@gmail.com`,
-        name: username,
-        cover: Constants.DEFAULT_COVER,
-        quote: '',
-        avatar: Constants.DEFAULT_AVATAR,
-        location: 'TP.Hồ Chí Minh',
-        phonenumber: '',
-        expertises: ['phong cảnh'],
-        ftpPassword: '',
-        ftpUsername: '',
-        socialLinks: [''],
-        packageCount: BigInt('999'),
-        maxPhotoQuota: BigInt('999999999'),
-        maxPackageCount: BigInt('99999'),
-        photoQuotaUsage: BigInt('0'),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-
-      console.log(`created photographer ${username}`);
-    });
-  }
 
   async generatePresignedUploadMedia(userId: string) {
     const user = await this.userRepository.findUnique(userId);
