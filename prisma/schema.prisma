@@ -529,6 +529,11 @@ model Comment {
   photo   Photo  @relation(fields: [photoId], references: [id])
   photoId String
 
+  parent   Comment? @relation("parentComment", fields: [parentId], references: [id])
+  parentId String?  @unique
+
+  replies Comment[] @relation("parentComment")
+
   content String
 
   createdAt DateTime @default(now())
