@@ -38,8 +38,33 @@ export class PhotoCommentController {
   })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Public(false)
-  async getComments(@Param('id') id: string): Promise<CommentDto[]> {
-    return await this.commentService.findAllByPhotoId(id);
+  async getComments(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Param('id') id: string,
+  ): Promise<CommentDto[]> {
+    return await this.commentService.findAllByPhotoId(id, user ? user.sub : '');
+  }
+
+  @Get('/photo/:photoId/comment/:commentId')
+  @ApiOperation({
+    summary: 'get reply of a comment by commentId',
+  })
+  @ApiOkResponse({
+    isArray: true,
+    type: CommentDto,
+  })
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Public(false)
+  async getCommentReply(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Param('photoId') photoId: string,
+    @Param('commentId') commentId: string,
+  ) {
+    return await this.commentService.findAllReplies(
+      photoId,
+      user ? user.sub : '',
+      commentId,
+    );
   }
 
   @Post('/photo/:photoId/comment/:commentId/reply')

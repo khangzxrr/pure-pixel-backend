@@ -24,7 +24,7 @@ export class CommentService {
 
   async validatePhotoByIdAndVisibility(
     photoId: string,
-    visibility: PhotoVisibility,
+    userId: string,
   ): Promise<Photo> {
     const photo = await this.photoRepository.getPhotoById(photoId);
 
@@ -32,21 +32,30 @@ export class CommentService {
       throw new PhotoNotFoundException();
     }
 
-    if (photo.visibility != visibility) {
+    if (photo.visibility === 'PRIVATE' && userId !== photo.photographerId) {
       throw new PhotoIsPrivatedException();
     }
 
     return photo;
   }
 
-  async findAllByPhotoId(photoId: string) {
-    const photo = await this.validatePhotoByIdAndVisibility(photoId, 'PUBLIC');
+  async findAllByPhotoId(photoId: string, userId: string) {
+    const photo = await this.validatePhotoByIdAndVisibility(photoId, userId);
 
-    const comments = await this.commentRepository.findAllCommentByPhotoId(
+    const comments = await this.commentRepository.findAllParentCommentByPhotoId(
       photo.id,
     );
 
     return plainToInstance(CommentDto, comments);
+  }
+
+  async findAllReplies(photoId: string, userId: string, commentId: string) {
+    await this.validatePhotoByIdAndVisibility(photoId, userId);
+
+    const replies =
+      await this.commentRepository.findReplyByCommentId(commentId);
+
+    return plainToInstance(CommentDto, replies);
   }
 
   async createReply(
@@ -54,8 +63,8 @@ export class CommentService {
     userId: string,
     commentId: string,
     createCommentRequestDto: CreateCommentRequestDto,
-  ): Promise<CommentEntity> {
-    const photo = await this.validatePhotoByIdAndVisibility(photoId, 'PUBLIC');
+  ): Promise<CommentDto> {
+    const photo = await this.validatePhotoByIdAndVisibility(photoId, userId);
 
     const parentComment =
       await this.commentRepository.findUniqueOrThrow(commentId);
@@ -94,7 +103,9 @@ export class CommentService {
       notificationReplyDto,
     );
 
-    return await this.commentRepository.createComment(comment);
+    const createdComment = await this.commentRepository.createComment(comment);
+
+    return plainToInstance(CommentDto, createdComment);
   }
 
   async createComment(

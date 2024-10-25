@@ -14,14 +14,49 @@ export class CommentRepository {
     });
   }
 
-  async findAllCommentByPhotoId(photoId: string) {
+  async findReplyByCommentId(commentId: string) {
     return this.prisma.comment.findMany({
       where: {
-        photoId,
+        parentId: commentId,
       },
       include: {
         user: true,
-        replies: true,
+        replies: {
+          select: {
+            id: true,
+            user: true,
+            content: true,
+            _count: {
+              select: {
+                replies: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+
+  async findAllParentCommentByPhotoId(photoId: string) {
+    return this.prisma.comment.findMany({
+      where: {
+        photoId,
+        parentId: null,
+      },
+      include: {
+        user: true,
+        replies: {
+          select: {
+            id: true,
+            user: true,
+            content: true,
+            _count: {
+              select: {
+                replies: true,
+              },
+            },
+          },
+        },
       },
     });
   }
