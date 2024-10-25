@@ -8,17 +8,10 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import {
-  AuthGuard,
-  Public,
-  Roles,
-  AuthenticatedUser,
-} from 'nest-keycloak-connect';
+import { AuthGuard, Public, AuthenticatedUser } from 'nest-keycloak-connect';
 import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
-import { Constants } from 'src/infrastructure/utils/constants';
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
 import { CreateCommentRequestDto } from '../dtos/rest/create-comment.request.dto';
-import { CommentEntity } from '../entities/comment.entity';
 import { CommentService } from '../services/comment.service';
 
 import { CommentDto } from '../dtos/comment-dto';
@@ -33,7 +26,7 @@ export class PhotoCommentController {
     summary: 'get comments of photo',
   })
   @ApiOkResponse({
-    type: CommentEntity,
+    type: CommentDto,
     isArray: true,
   })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
@@ -72,10 +65,9 @@ export class PhotoCommentController {
     summary: 'create a reply to comment',
   })
   @ApiOkResponse({
-    type: CommentEntity,
+    type: CommentDto,
   })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
   async createReply(
     @AuthenticatedUser() user: ParsedUserDto,
     @Param('photoId') photoId: string,
@@ -96,15 +88,14 @@ export class PhotoCommentController {
     summary: 'create a comment to photo',
   })
   @ApiOkResponse({
-    type: CommentEntity,
+    type: CommentDto,
   })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
   async createComment(
     @AuthenticatedUser() user: ParsedUserDto,
     @Param('id') id: string,
     @Body() createCommentRequestDto: CreateCommentRequestDto,
-  ): Promise<CommentEntity> {
+  ): Promise<CommentDto> {
     return await this.commentService.createComment(
       id,
       user.sub,

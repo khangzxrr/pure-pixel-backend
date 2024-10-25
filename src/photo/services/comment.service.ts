@@ -112,7 +112,7 @@ export class CommentService {
     photoId: string,
     userId: string,
     createCommentRequestDto: CreateCommentRequestDto,
-  ): Promise<CommentEntity> {
+  ): Promise<CommentDto> {
     const photo = await this.validatePhotoByIdAndVisibility(photoId, 'PUBLIC');
 
     const comment = new CommentEntity({
@@ -134,6 +134,8 @@ export class CommentService {
       notificationDto,
     );
 
-    return await this.commentRepository.createComment(comment);
+    const createdComment = await this.commentRepository.createComment(comment);
+
+    return plainToInstance(CommentDto, createdComment);
   }
 }
