@@ -11,6 +11,12 @@ export class CommentDto {
   @ApiProperty()
   id: string;
 
+  @ApiProperty()
+  createdAt: Date;
+
+  @ApiProperty()
+  updatedAt: Date;
+
   @Exclude()
   userId: string;
 

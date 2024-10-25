@@ -43,7 +43,9 @@ export class ReportService {
         throw new NotImplementedException();
 
       case 'COMMENT':
-        obj = await this.commentRepository.findUniqueOrThrow(referenceId);
+        obj = await this.commentRepository.findUniqueOrThrow({
+          id: referenceId,
+        });
         break;
     }
 
@@ -158,9 +160,9 @@ export class ReportService {
           r.referencedPhoto = plainToInstance(PhotoDto, photo);
           break;
         case 'COMMENT':
-          const comment = await this.commentRepository.findUniqueOrThrow(
-            r.referenceId,
-          );
+          const comment = await this.commentRepository.findUniqueOrThrow({
+            id: r.referenceId,
+          });
           r.referencedComment = plainToInstance(CommentEntity, comment);
           break;
         case 'BOOKING':

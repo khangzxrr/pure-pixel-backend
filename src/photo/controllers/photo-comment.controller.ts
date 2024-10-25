@@ -1,9 +1,11 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Inject,
   Param,
+  Patch,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -15,6 +17,7 @@ import { CreateCommentRequestDto } from '../dtos/rest/create-comment.request.dto
 import { CommentService } from '../services/comment.service';
 
 import { CommentDto } from '../dtos/comment-dto';
+import { UpdateCommentRequestDto } from '../dtos/rest/update-comment.request.dto';
 
 @Controller('comment')
 @ApiTags('comment')
@@ -83,6 +86,49 @@ export class PhotoCommentController {
     );
   }
 
+  @Patch('/photo/:photoId/comment/:commentId')
+  @ApiOperation({
+    summary: 'update comment by commentId',
+  })
+  @ApiOkResponse({
+    type: CommentDto,
+  })
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  async updateComment(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Param('photoId') photoId: string,
+    @Param('commentId') commentId: string,
+
+    @Body() updateCommentRequestDto: UpdateCommentRequestDto,
+  ) {
+    return await this.commentService.updateComment(
+      photoId,
+      user.sub,
+      commentId,
+      updateCommentRequestDto,
+    );
+  }
+
+  @Delete('/photo/:photoId/comment/:commentId')
+  @ApiOperation({
+    summary: 'delete comment by commentId',
+  })
+  @ApiOkResponse({
+    type: CommentDto,
+  })
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  async deleteComment(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Param('photoId') photoId: string,
+    @Param('commentId') commentId: string,
+  ) {
+    return await this.commentService.deleteComment(
+      photoId,
+      user.sub,
+      commentId,
+    );
+  }
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Post('/photo/:id')
   @ApiOperation({
     summary: 'create a comment to photo',

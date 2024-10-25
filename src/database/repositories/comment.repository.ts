@@ -1,17 +1,25 @@
 import { Injectable } from '@nestjs/common';
-import { Comment } from '@prisma/client';
+import { Comment, Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
 export class CommentRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findUniqueOrThrow(id: string) {
+  async findUniqueOrThrow(where: Prisma.CommentWhereUniqueInput) {
     return this.prisma.comment.findUniqueOrThrow({
-      where: {
-        id,
-      },
+      where,
     });
+  }
+
+  async delete(where: Prisma.CommentWhereUniqueInput) {
+    return this.prisma.comment.delete({
+      where,
+    });
+  }
+
+  async update(args: Prisma.CommentUpdateArgs) {
+    return this.prisma.comment.update(args);
   }
 
   async findReplyByCommentId(commentId: string) {
@@ -25,6 +33,8 @@ export class CommentRepository {
           select: {
             id: true,
             user: true,
+            createdAt: true,
+            updatedAt: true,
             content: true,
             _count: {
               select: {
@@ -49,6 +59,8 @@ export class CommentRepository {
           select: {
             id: true,
             user: true,
+            createdAt: true,
+            updatedAt: true,
             content: true,
             _count: {
               select: {
