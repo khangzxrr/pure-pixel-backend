@@ -530,7 +530,7 @@ model Comment {
   photoId String
 
   parent   Comment? @relation("parentComment", fields: [parentId], references: [id])
-  parentId String?  @unique
+  parentId String?
 
   replies Comment[] @relation("parentComment")
 
