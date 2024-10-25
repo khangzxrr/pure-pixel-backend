@@ -47,6 +47,9 @@ export class AdminService {
 
     const imageList = this.readImageList();
 
+    console.log(usernames);
+    console.log(imageList);
+
     const imagePerUserCount = Math.floor(imageList.length / usernames.length);
 
     usernames.forEach(async (username) => {
@@ -106,6 +109,8 @@ export class AdminService {
         } catch (e) {
           console.log(e);
         }
+
+        console.log(`image = ${i} / ${imagePerUserCount}`);
       }
 
       console.log(
