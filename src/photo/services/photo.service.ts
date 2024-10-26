@@ -67,6 +67,7 @@ import { SignedUrl } from '../dtos/photo-signed-url.dto';
 import { GenerateWatermarkRequestDto } from '../dtos/rest/generate-watermark.request.dto';
 import { PhotoGenerateWatermarkService } from './photo-generate-watermark.service';
 import { CameraConstant } from 'src/camera/constants/camera.constant';
+import { PhotoDto } from '../dtos/photo.dto';
 
 @Injectable()
 export class PhotoService {
@@ -229,9 +230,9 @@ export class PhotoService {
       throw new PhotoNotFoundException();
     }
 
-    await this.photoVoteRepository.delete(userId, photoId);
+    const deletedPhoto = await this.photoVoteRepository.delete(userId, photoId);
 
-    return 'deleted';
+    return plainToInstance(PhotoDto, deletedPhoto);
   }
 
   async signPhoto(

@@ -2,9 +2,9 @@ import { ApiProperty } from '@nestjs/swagger';
 import { JsonValue } from '@prisma/client/runtime/library';
 import { Exclude, Type } from 'class-transformer';
 import { PhotographerDTO } from 'src/photographer/dtos/photographer.dto';
-import { PhotoSellDto } from './photo-sell.dto';
 import { PhotoTagDto } from './photo-tag.dto';
 import { PhotoCategoryDto } from './photo-category.dto';
+import { PhotoSellDto } from './photo-sell.dto';
 
 export class PhotoDto {
   @ApiProperty()
@@ -74,13 +74,15 @@ export class PhotoDto {
   @ApiProperty({
     required: false,
     isArray: true,
+    type: PhotoSellDto,
   })
-  //must specific type here
-  @Type(() => PhotoSellDto)
-  photoSellings: PhotoSellDto[];
+  @Type(() => PhotoTagDto)
+  photoSellings: PhotoTagDto[];
 
   @ApiProperty({
+    required: false,
     isArray: true,
+    type: PhotoTagDto,
   })
   @Type(() => PhotoTagDto)
   photoTags: PhotoTagDto[];
@@ -88,6 +90,7 @@ export class PhotoDto {
   @ApiProperty({
     required: false,
     isArray: true,
+    type: PhotoCategoryDto,
   })
   @Type(() => PhotoCategoryDto)
   categories: PhotoCategoryDto[];
