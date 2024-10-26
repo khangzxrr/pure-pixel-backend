@@ -27,10 +27,6 @@ import { plainToInstance } from 'class-transformer';
 import { PhotoSellRepository } from 'src/database/repositories/photo-sell.repository';
 
 import { PrismaService } from 'src/prisma.service';
-import { PhotoBuyRepository } from 'src/database/repositories/photo-buy.repository';
-import { BuyQualityIsNotExistException } from '../exceptions/buy-quality-is-not-exist.exception';
-import { PhotoBuyNotFoundException } from '../exceptions/photo-buy-not-found.exception';
-import { PhotoBuyTransactionIsNotSuccessException } from '../exceptions/photo-buy-transaction-is-not-success.exception';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { PhotoUpdateRequestDto } from '../dtos/rest/photo-update.request.dto';
 import { SignedPhotoDto } from '../dtos/signed-photo.dto';
@@ -65,7 +61,6 @@ export class PhotoService {
     @Inject() private readonly photoSellRepository: PhotoSellRepository,
     @Inject() private readonly photoTagRepository: PhotoTagRepository,
     @Inject() private readonly categoryRepository: CategoryRepository,
-    @Inject() private readonly photoBuyRepository: PhotoBuyRepository,
     @Inject() private readonly photoVoteRepository: PhotoVoteRepository,
     @Inject() private readonly bunnyService: BunnyService,
     @Inject()
@@ -155,7 +150,7 @@ export class PhotoService {
       throw new PhotoNotFoundException();
     }
 
-    const availableRes = [photo.width];
+    const availableRes = [];
 
     for (
       let i = photo.width;
