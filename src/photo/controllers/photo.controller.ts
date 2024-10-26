@@ -89,16 +89,6 @@ export class PhotoController {
     return await this.photoService.getSignedPhotoById(user ? user.sub : '', id);
   }
 
-  //TODO: webhook handle sftp
-  // @UseGuards(AuthGuard, KeycloakRoleGuard)
-  // @Public(false)
-  // async parseExifviaWebhook(@Query() query) {
-  //   console.log(query);
-  //   console.log('call from webhook');
-  //
-  //   return 'cool';
-  // }
-
   @Post(':id/watermark')
   @ApiOperation({
     summary: 'put photo to watermark queue inorder to generate watermark',

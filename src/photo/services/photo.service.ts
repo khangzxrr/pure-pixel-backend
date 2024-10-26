@@ -8,11 +8,8 @@ import {
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoIsPrivatedException } from '../exceptions/photo-is-private.exception';
 import { PhotoUploadRequestDto } from '../dtos/rest/photo-upload.request';
-import { Utils } from 'src/infrastructure/utils/utils';
 import { FileIsNotValidException } from '../exceptions/file-is-not-valid.exception';
-import { v4 } from 'uuid';
 import { NotBelongPhotoException } from '../exceptions/not-belong-photo.exception';
-import { PhotoIsPendingStateException } from '../exceptions/photo-is-pending-state.exception';
 import { FindAllPhotoFilterDto } from '../dtos/find-all.filter.dto';
 import { InjectQueue } from '@nestjs/bullmq';
 import { PhotoConstant } from '../constants/photo.constant';
@@ -27,23 +24,11 @@ import { SharePhotoResponseDto } from '../dtos/rest/share-photo-response.dto';
 import { EmptyOriginalPhotoException } from '../exceptions/empty-original-photo.exception';
 import { PagingPaginatedResposneDto } from 'src/infrastructure/restful/paging-paginated.response.dto';
 import { plainToInstance } from 'class-transformer';
-import { CreatePhotoSellingDto } from '../dtos/rest/create-photo-selling.request.dto';
 import { PhotoSellRepository } from 'src/database/repositories/photo-sell.repository';
-import { PhotoSellDto } from '../dtos/photo-sell.dto';
 
-import { PhotoSellEntity } from '../entities/photo-sell.entity';
 import { PrismaService } from 'src/prisma.service';
-import { CannotBuyOwnedPhotoException } from '../exceptions/cannot-buy-owned-photo.exception';
 import { PhotoBuyRepository } from 'src/database/repositories/photo-buy.repository';
-import { PhotoSellNotFoundException } from '../exceptions/photo-sell-not-found.exception';
-import { PhotoBuyResponseDto } from '../dtos/rest/photo-buy.response.dto';
-import { SepayService } from 'src/payment/services/sepay.service';
-import { BuyPhotoRequestDto } from '../dtos/rest/buy-photo.request.dto';
 import { BuyQualityIsNotExistException } from '../exceptions/buy-quality-is-not-exist.exception';
-import { SignedPhotoBuyDto } from '../dtos/rest/signed-photo-buy.response.dto';
-import { ExistPhotoBuyWithChoosedResolutionException } from '../exceptions/exist-photo-buy-with-choosed-resolution.exception';
-import { UnrecognizedAdobeSidecarException } from '../exceptions/unrecognized-adobe-sidecar.exception';
-import { PhotoMinSizeIsNotExcessException } from '../exceptions/photo-min-size-is-not-excess.exception';
 import { PhotoBuyNotFoundException } from '../exceptions/photo-buy-not-found.exception';
 import { PhotoBuyTransactionIsNotSuccessException } from '../exceptions/photo-buy-transaction-is-not-success.exception';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
@@ -74,7 +59,6 @@ export class PhotoService {
   private readonly logger = new Logger(PhotoService.name);
 
   constructor(
-    @Inject() private readonly sepayService: SepayService,
     @Inject() private readonly photoRepository: PhotoRepository,
     @Inject() private readonly userRepository: UserRepository,
     @Inject() private readonly photoProcessService: PhotoProcessService,
@@ -143,27 +127,27 @@ export class PhotoService {
 
     const availableRes = await this.getAvailablePhotoResolution(photo.id);
 
-    if (availableRes.indexOf(shareRequest.resolution) <= 0) {
+    if (availableRes.indexOf(shareRequest.size) <= 0) {
       throw new ChoosedShareQualityIsNotFoundException();
     }
 
     const shareUrl = this.bunnyService.getPresignedFile(
       photo.originalPhotoUrl,
-      `?width=${PhotoConstant.PHOTO_RESOLUTION_BIMAP.getValue(shareRequest.resolution)}`,
+      `?width=${shareRequest.size}`,
     );
 
-    return new SharePhotoResponseDto(shareRequest.resolution, shareUrl);
+    return new SharePhotoResponseDto(shareRequest.size, shareUrl);
   }
 
   async getAvailablePhotoResolution(id: string) {
-    const cacheResolutionKey = `PHOTO_RESOLUTION:${id}`;
-
-    const cachedResolution =
-      await this.cacheManager.get<string[]>(cacheResolutionKey);
-
-    if (cachedResolution) {
-      return cachedResolution;
-    }
+    // const cacheResolutionKey = `PHOTO_RESOLUTION:${id}`;
+    //
+    // const cachedResolution =
+    //   await this.cacheManager.get<string[]>(cacheResolutionKey);
+    //
+    // if (cachedResolution) {
+    //   return cachedResolution;
+    // }
 
     const photo = await this.photoRepository.getPhotoById(id);
 
@@ -171,21 +155,17 @@ export class PhotoService {
       throw new PhotoNotFoundException();
     }
 
-    const availableRes = [...PhotoConstant.SUPPORTED_PHOTO_RESOLUTION];
+    const availableRes = [photo.width];
 
-    for (let i = 0; i < PhotoConstant.SUPPORTED_PHOTO_RESOLUTION.length; i++) {
-      const pixelOfRes = PhotoConstant.PHOTO_RESOLUTION_BIMAP.getValue(
-        PhotoConstant.SUPPORTED_PHOTO_RESOLUTION[i],
-      );
-
-      if (photo.width >= pixelOfRes) {
-        break;
-      }
-
-      availableRes.shift();
+    for (
+      let i = photo.width;
+      i >= PhotoConstant.MIN_PHOTO_WIDTH;
+      i -= Math.floor((i * 20) / 100)
+    ) {
+      availableRes.push(i);
     }
 
-    this.cacheManager.set(cacheResolutionKey, availableRes);
+    // this.cacheManager.set(cacheResolutionKey, availableRes);
 
     return availableRes;
   }
@@ -515,241 +495,5 @@ export class PhotoService {
 
       throw new UploadPhotoFailedException();
     }
-  }
-
-  async parseAndValidateLightroomPresentFromBuffer(file: Express.Multer.File) {
-    const sidecar = await this.photoProcessService.parseXmpFromBuffer(
-      file.buffer,
-    );
-
-    if (!sidecar) {
-      throw new UnrecognizedAdobeSidecarException();
-    }
-
-    const creatorTool: string = sidecar.CreatorTool;
-
-    if (file.size < PhotoConstant.MIN_PHOTO_SIZE) {
-      throw new PhotoMinSizeIsNotExcessException();
-    }
-
-    if (
-      !creatorTool ||
-      (creatorTool.indexOf('Photoshop') < 0 &&
-        creatorTool.indexOf('Lightroom') < 0)
-    ) {
-      throw new UnrecognizedAdobeSidecarException();
-    }
-  }
-
-  //TODO: what if photographer update visibility to private => handle deactive sell
-  //
-  async sellPhoto(
-    userId: string,
-    sellPhotoDto: CreatePhotoSellingDto,
-    afterPhotoFile: Express.Multer.File,
-  ) {
-    //TODO: finish sell photo
-    //
-    //
-    // await this.parseAndValidateLightroomPresentFromBuffer(afterPhotoFile);
-    //
-    // const photo =
-    //   await this.findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
-    //     userId,
-    //     sellPhotoDto.photoId,
-    //   );
-    //
-    // if (photo.status !== 'PARSED') {
-    //   throw new PhotoIsPendingStateException();
-    // }
-    //
-    // const previousActivePhotoSell =
-    //   await this.photoSellRepository.getByActiveAndPhotoId(
-    //     sellPhotoDto.photoId,
-    //   );
-    //
-    // if (
-    //   previousActivePhotoSell &&
-    //   previousActivePhotoSell.price.toNumber() === sellPhotoDto.price &&
-    //   previousActivePhotoSell.description === sellPhotoDto.description
-    // ) {
-    //   //idemponent
-    //   return plainToInstance(PhotoSellDto, previousActivePhotoSell, {});
-    // }
-    //
-    // const extension = Utils.regexFileExtension.exec(
-    //   afterPhotoFile.originalname,
-    // )[1];
-    //
-    // const newPhotoSellId = v4();
-    //
-    // const colorGradingPhotoUrl = `color_grading/${newPhotoSellId}/${photo.id}.${extension}`;
-    // await this.photoProcessService.uploadFromBuffer(
-    //   colorGradingPhotoUrl,
-    //   afterPhotoFile.buffer,
-    // );
-    //
-    // //upload colorGrading first because watermark will replace buffer
-    //
-    // const watermarkAfterPhotoBuffer =
-    //   await this.photoProcessService.makeTextWatermark(
-    //     afterPhotoFile.buffer,
-    //     'PUREPIXEL',
-    //   );
-    //
-    // const watermarkColorGradingPhotoUrl = `watermark_color_grading/${newPhotoSellId}/${photo.id}.${extension}`;
-    // await this.photoProcessService.uploadFromBuffer(
-    //   watermarkColorGradingPhotoUrl,
-    //   watermarkAfterPhotoBuffer,
-    // );
-    //
-    // photo.watermark = true;
-    // photo.visibility = 'PUBLIC';
-    //
-    // const prismaQuery: PrismaPromise<any>[] = [];
-    // if (previousActivePhotoSell) {
-    //   const updatePreviousPhotoSellQuery = this.photoSellRepository.updateQuery(
-    //     previousActivePhotoSell.id,
-    //     {
-    //       active: false,
-    //     },
-    //   );
-    //   prismaQuery.push(updatePreviousPhotoSellQuery);
-    // }
-    //
-    // const updatePhotoToPublicAndWatermarkQuery =
-    //   this.photoRepository.updateQuery(photo);
-    // prismaQuery.push(updatePhotoToPublicAndWatermarkQuery);
-    //
-    // const photoSell = plainToInstance(PhotoSellEntity, sellPhotoDto);
-    // photoSell.id = newPhotoSellId;
-    // photoSell.colorGradingPhotoUrl = colorGradingPhotoUrl;
-    // photoSell.colorGradingPhotoWatermarkUrl = watermarkColorGradingPhotoUrl;
-    //
-    // const createPhotoSellQuery =
-    //   this.photoSellRepository.createAndActiveByPhotoIdQuery(photoSell);
-    // prismaQuery.push(createPhotoSellQuery);
-    //
-    // const [, newPhotoSell] = await this.prisma
-    //   .extendedClient()
-    //   .$transaction([...prismaQuery]);
-    //
-    // return plainToInstance(PhotoSellDto, newPhotoSell);
-  }
-
-  async getPhotoBuyByPhotoId(userId: string, photoId: string) {
-    const previousPhotoBuys =
-      await this.photoBuyRepository.findAllByBuyerIdAndPhotoId(userId, photoId);
-
-    const mappingToDtoPromises = previousPhotoBuys.map(async (photobuy) => {
-      const signedPhotoBuyDto = plainToInstance(SignedPhotoBuyDto, photobuy);
-
-      if (
-        photobuy.userToUserTransaction.fromUserTransaction.status === 'SUCCESS'
-      ) {
-        signedPhotoBuyDto.signedPhotoUrl = `${process.env.BACKEND_ORIGIN}/photo/photo-buy/${photobuy.id}/download-colorgrading`;
-      }
-
-      return signedPhotoBuyDto;
-    });
-
-    const signedPhotoBuyDtos = await Promise.all(mappingToDtoPromises);
-
-    return signedPhotoBuyDtos;
-  }
-
-  async buyPhotoRequest(userId: string, buyPhotoRequest: BuyPhotoRequestDto) {
-    const photoSell = await this.photoSellRepository.getByActiveAndPhotoId(
-      buyPhotoRequest.photoId,
-    );
-
-    if (!photoSell) {
-      throw new PhotoSellNotFoundException();
-    }
-
-    if (photoSell.photo.photographerId === userId) {
-      throw new CannotBuyOwnedPhotoException();
-    }
-
-    const availableRes = await this.getAvailablePhotoResolution(
-      buyPhotoRequest.photoId,
-    );
-
-    const indexOfChoosedRes = availableRes.indexOf(buyPhotoRequest.resolution);
-    if (indexOfChoosedRes < 0) {
-      throw new BuyQualityIsNotExistException();
-    }
-
-    const previousPhotoBuy = await this.photoBuyRepository.findFirst(
-      photoSell.id,
-      userId,
-      buyPhotoRequest.resolution,
-    );
-
-    if (previousPhotoBuy) {
-      throw new ExistPhotoBuyWithChoosedResolutionException();
-    }
-
-    //4 resolutions
-    //2
-    //[4k 2k 1080p 720p]
-    //              x <-- index = 3 => +1 = 4 => price = base / 4
-    const priceOfSelectedRes = photoSell.price.div(indexOfChoosedRes + 1);
-    const fee = priceOfSelectedRes.mul(10).div(100);
-
-    await this.sepayService.validateWalletBalanceIsEnough(
-      userId,
-      priceOfSelectedRes.toNumber(),
-    );
-
-    const newPhotoBuy = await this.photoBuyRepository.createWithTransaction(
-      userId,
-      photoSell.photo.photographerId,
-      photoSell.id,
-      fee,
-      priceOfSelectedRes,
-      buyPhotoRequest.resolution,
-    );
-
-    return plainToInstance(PhotoBuyResponseDto, newPhotoBuy);
-  }
-
-  async getPhotoWithScaledResolutionFromPhotoBuyId(
-    userId: string,
-    photobuyId: string,
-  ) {
-    const photobuy = await this.photoBuyRepository.findFirstById(
-      photobuyId,
-      userId,
-    );
-
-    if (!photobuy) {
-      throw new PhotoBuyNotFoundException();
-    }
-
-    if (
-      photobuy.userToUserTransaction.fromUserTransaction.status !== 'SUCCESS'
-    ) {
-      throw new PhotoBuyTransactionIsNotSuccessException();
-    }
-
-    const resPixels = PhotoConstant.PHOTO_RESOLUTION_BIMAP.getValue(
-      photobuy.resolution,
-    );
-
-    if (!resPixels) {
-      throw new BuyQualityIsNotExistException();
-    }
-
-    const sharp = await this.photoProcessService.sharpInitFromObjectKey(
-      photobuy.photoSell.colorGradingPhotoUrl,
-    );
-
-    const resizedBuffer = await this.photoProcessService.resizeWithMetadata(
-      sharp,
-      resPixels,
-    );
-
-    return resizedBuffer;
   }
 }

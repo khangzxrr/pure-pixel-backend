@@ -42,12 +42,12 @@ export class PhotoBuyRepository {
     });
   }
 
-  async findFirst(photoSellId: string, buyerId: string, resolution: string) {
+  async findFirst(photoSellId: string, buyerId: string, size: number) {
     return this.prisma.photoBuy.findFirst({
       where: {
         photoSellId,
         buyerId,
-        resolution,
+        size,
       },
       include: {
         userToUserTransaction: {
@@ -65,7 +65,7 @@ export class PhotoBuyRepository {
     photoSellId: string,
     fee: Prisma.Decimal,
     amount: Prisma.Decimal,
-    resolution: string,
+    size: number,
   ) {
     return this.prisma.photoBuy.create({
       include: {
@@ -76,7 +76,7 @@ export class PhotoBuyRepository {
         },
       },
       data: {
-        resolution,
+        size,
 
         buyer: {
           connect: {
