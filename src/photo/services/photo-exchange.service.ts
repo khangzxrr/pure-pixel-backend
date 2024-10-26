@@ -45,7 +45,6 @@ export class PhotoExchangeService {
 
     if (
       previousActivePhotoSell &&
-      previousActivePhotoSell.price.toNumber() === sellPhotoDto.price &&
       previousActivePhotoSell.description === sellPhotoDto.description
     ) {
       //idemponent
