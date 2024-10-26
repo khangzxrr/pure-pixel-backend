@@ -4,6 +4,7 @@ import { Exclude, Type } from 'class-transformer';
 import { PhotographerDTO } from 'src/photographer/dtos/photographer.dto';
 import { PhotoSellDto } from './photo-sell.dto';
 import { PhotoTagDto } from './photo-tag.dto';
+import { PhotoCategoryDto } from './photo-category.dto';
 
 export class PhotoDto {
   @ApiProperty()
@@ -14,9 +15,6 @@ export class PhotoDto {
 
   @Exclude()
   sharePayload: JsonValue;
-
-  @Exclude()
-  categoryId: string;
 
   @Exclude()
   photographerId: string;
@@ -86,4 +84,11 @@ export class PhotoDto {
   })
   @Type(() => PhotoTagDto)
   photoTags: PhotoTagDto[];
+
+  @ApiProperty({
+    required: false,
+    isArray: true,
+  })
+  @Type(() => PhotoCategoryDto)
+  categories: PhotoCategoryDto[];
 }

@@ -98,6 +98,21 @@ export class PhotoRepository {
   async create(data: Prisma.PhotoCreateInput) {
     return this.prisma.extendedClient().photo.create({
       data,
+
+      include: {
+        photographer: true,
+        categories: true,
+        _count: {
+          select: {
+            votes: {
+              where: {
+                isUpvote: true,
+              },
+            },
+            comments: true,
+          },
+        },
+      },
     });
   }
 
