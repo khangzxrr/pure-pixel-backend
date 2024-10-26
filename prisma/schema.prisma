@@ -371,8 +371,7 @@ model Photo {
   photographer   User   @relation(fields: [photographerId], references: [id])
   photographerId String
 
-  category   Category @relation(fields: [categoryId], references: [id])
-  categoryId String
+  categories Category[]
 
   camera   Camera? @relation(fields: [cameraId], references: [id])
   cameraId String?

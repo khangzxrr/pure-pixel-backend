@@ -48,7 +48,7 @@ export class PhotoRepository {
     });
   }
 
-  updateByIdQuery(id: string, photo: Partial<Photo>) {
+  updateByIdQuery(id: string, photo: Prisma.PhotoUpdateInput) {
     return this.prisma.extendedClient().photo.update({
       where: {
         id,
@@ -108,7 +108,7 @@ export class PhotoRepository {
       },
       include: {
         photographer: true,
-        category: true,
+        categories: true,
         _count: {
           select: {
             votes: {
@@ -130,7 +130,7 @@ export class PhotoRepository {
       },
       include: {
         photographer: true,
-        category: true,
+        categories: true,
         photoTags: true,
         _count: {
           select: {
@@ -182,7 +182,7 @@ export class PhotoRepository {
           },
         },
         photographer: true,
-        category: true,
+        categories: true,
         camera: {
           include: {
             cameraMaker: true,

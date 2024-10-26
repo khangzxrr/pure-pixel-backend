@@ -177,10 +177,12 @@ export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
     }
 
     if (this.categoryName) {
-      where.category = {
-        name: {
-          mode: 'insensitive',
-          contains: this.categoryName,
+      where.categories = {
+        some: {
+          name: {
+            mode: 'insensitive',
+            contains: this.categoryName,
+          },
         },
       };
     }

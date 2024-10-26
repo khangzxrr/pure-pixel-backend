@@ -293,11 +293,14 @@ export class PhotoService {
       throw new NotBelongPhotoException();
     }
 
-    if (photoUpdateDto.categoryId) {
-      const category = await this.categoryRepository.findById(
-        photoUpdateDto.categoryId,
-      );
-      if (!category) {
+    if (photoUpdateDto.categoryIds) {
+      const categories = await this.categoryRepository.findMany({
+        id: {
+          in: photoUpdateDto.categoryIds,
+        },
+      });
+
+      if (categories.length !== photoUpdateDto.categoryIds.length) {
         throw new CategoryNotFoundException();
       }
     }
@@ -324,7 +327,9 @@ export class PhotoService {
 
     prismaPromises.push(
       this.photoRepository.updateByIdQuery(id, {
-        categoryId: photoUpdateDto.categoryId,
+        categories: {
+          connect: photoUpdateDto.categoryIds.map((id) => ({ id })),
+        },
         title: photoUpdateDto.title,
         watermark: photoUpdateDto.watermark,
         description: photoUpdateDto.description,
@@ -476,14 +481,6 @@ export class PhotoService {
         photographer: {
           connect: {
             id: userId,
-          },
-        },
-        category: {
-          connectOrCreate: {
-            where: {
-              name: PhotoConstant.DEFAULT_CATEGORY.name,
-            },
-            create: PhotoConstant.DEFAULT_CATEGORY,
           },
         },
         description: '',
