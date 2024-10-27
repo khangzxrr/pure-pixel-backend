@@ -10,11 +10,21 @@ export class PhotoBuyRepository {
     return this.prisma.photoBuy.findMany({
       where: {
         buyerId,
+        photoSellHistory: {
+          originalPhotoSell: {
+            photoId,
+          },
+        },
       },
       include: {
         userToUserTransaction: {
           include: {
             fromUserTransaction: true,
+          },
+        },
+        photoSellHistory: {
+          include: {
+            originalPhotoSell: true,
           },
         },
       },

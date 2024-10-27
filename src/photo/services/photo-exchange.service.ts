@@ -143,7 +143,7 @@ export class PhotoExchangeService {
       if (
         photobuy.userToUserTransaction.fromUserTransaction.status === 'SUCCESS'
       ) {
-        signedPhotoBuyDto.signedPhotoUrl = `${process.env.BACKEND_ORIGIN}/photo/photo-buy/${photobuy.id}/download-colorgrading`;
+        signedPhotoBuyDto.downloadUrl = `${process.env.BACKEND_ORIGIN}/photo/${photoId}/photo-buy/${photobuy.id}/download`;
       }
 
       return signedPhotoBuyDto;

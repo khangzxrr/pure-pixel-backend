@@ -93,7 +93,7 @@ export class PhotoExchangeController {
     stream.getStream().pipe(res);
   }
 
-  @Get('/:id/bought')
+  @Get('/:id/photo-buy')
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
   @ApiOkResponse({
