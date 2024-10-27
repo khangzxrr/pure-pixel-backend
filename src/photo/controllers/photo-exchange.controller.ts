@@ -4,6 +4,7 @@ import {
   Get,
   Inject,
   Param,
+  Patch,
   Post,
   Res,
   StreamableFile,
@@ -19,7 +20,6 @@ import { PhotoBuyResponseDto } from '../dtos/rest/photo-buy.response.dto';
 import { PhotoSellDto } from '../dtos/photo-sell.dto';
 import { SignedPhotoBuyDto } from '../dtos/rest/signed-photo-buy.response.dto';
 import { PhotoExchangeService } from '../services/photo-exchange.service';
-import { createReadStream } from 'fs';
 import { Response } from 'express';
 
 @Controller('photo')
@@ -29,7 +29,7 @@ export class PhotoExchangeController {
     @Inject() private readonly photoExchangeService: PhotoExchangeService,
   ) {}
 
-  @Post('/:id/sell')
+  @Post('/:photoId/sell')
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   @ApiOkResponse({
@@ -37,7 +37,7 @@ export class PhotoExchangeController {
   })
   async sellPhoto(
     @AuthenticatedUser() user: ParsedUserDto,
-    @Param('id') id: string,
+    @Param('photoId') id: string,
     @Body() createPhotoSellingDto: CreatePhotoSellingDto,
   ) {
     return await this.photoExchangeService.sellPhoto(
@@ -47,6 +47,12 @@ export class PhotoExchangeController {
     );
   }
 
+  @Patch(':photoId/sell')
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
+  @ApiOkResponse({
+    type: PhotoSellDto,
+  })
   @Post('/:photoId/photo-sell/:photoSellId/price-tag/:pricetagId')
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
@@ -93,7 +99,7 @@ export class PhotoExchangeController {
     stream.getStream().pipe(res);
   }
 
-  @Get('/:id/photo-buy')
+  @Get('/:photoId/photo-buy')
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
   @ApiOkResponse({
@@ -102,7 +108,7 @@ export class PhotoExchangeController {
   })
   async getBoughtPhoto(
     @AuthenticatedUser() user: ParsedUserDto,
-    @Param('id') id: string,
+    @Param('photoId') id: string,
   ) {
     return await this.photoExchangeService.getPhotoBuyByPhotoId(user.sub, id);
   }
