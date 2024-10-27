@@ -152,47 +152,6 @@ export class PhotoService {
     return availableRes;
   }
 
-  async vote(
-    userId: string,
-    photoId: string,
-    photoVoteRequestDto: PhotoVoteRequestDto,
-  ) {
-    const photo = await this.photoRepository.findUniqueOrThrow(photoId);
-
-    const vote = await this.photoVoteRepository.vote(
-      userId,
-      photoVoteRequestDto.isUpvote,
-      photoId,
-    );
-
-    const notificationDto: NotificationCreateDto = {
-      userId,
-      title: 'Tương tác mới',
-      content: `Ảnh ${photo.title} của bạn vừa nhận được một đánh giá!`,
-      referenceId: photoId,
-      referenceType: 'PHOTO',
-      type: 'IN_APP',
-    };
-    await this.notificationQueue.add(
-      NotificationConstant.TEXT_NOTIFICATION_JOB,
-      notificationDto,
-    );
-
-    return plainToInstance(PhotoVoteDto, vote);
-  }
-
-  async deleteVote(userId: string, photoId: string) {
-    const photo = await this.photoRepository.findUniqueOrThrow(photoId);
-
-    if (!photo) {
-      throw new PhotoNotFoundException();
-    }
-
-    const deletedPhoto = await this.photoVoteRepository.delete(userId, photoId);
-
-    return plainToInstance(PhotoDto, deletedPhoto);
-  }
-
   async signPhoto(photo: Photo): Promise<SignedPhotoDto> {
     const signedPhotoDto = plainToInstance(SignedPhotoDto, photo);
 

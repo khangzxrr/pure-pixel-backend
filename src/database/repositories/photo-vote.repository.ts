@@ -5,8 +5,18 @@ import { PrismaService } from 'src/prisma.service';
 export class PhotoVoteRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  delete(userId: string, photoId: string) {
+  delete(voteId: string, photoId: string, userId: string) {
     return this.prisma.vote.delete({
+      where: {
+        id: voteId,
+        photoId,
+        userId,
+      },
+    });
+  }
+
+  findFirst(userId: string, photoId: string) {
+    return this.prisma.vote.findUnique({
       where: {
         userId_photoId: {
           userId,
