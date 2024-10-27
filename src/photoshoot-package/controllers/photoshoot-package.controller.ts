@@ -36,7 +36,7 @@ export class PhotoShootPackageController {
     private readonly photoshootPackageService: PhotoshootPackageService,
   ) {}
 
-  @Get()
+  @Get('me')
   @ApiOperation({
     summary: 'get all photoshoot package of current photographer',
   })
