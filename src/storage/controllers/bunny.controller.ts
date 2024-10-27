@@ -22,8 +22,14 @@ export class BunnyController {
     summary: 'get presigned file',
   })
   async getPresignedFile() {
-    return await this.bunnyService.getPresignedFile('');
+    return this.bunnyService.getPresignedFile('test.jpg');
   }
+
+  @Get('/presigned-upload')
+  @ApiOperation({
+    summary: 'get presigned upload file',
+  })
+  async getPresignedUploadFile() {}
 
   @Put('/upload')
   @ApiConsumes('multipart/form-data')

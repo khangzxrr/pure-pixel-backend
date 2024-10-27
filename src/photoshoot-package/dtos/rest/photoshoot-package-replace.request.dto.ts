@@ -19,6 +19,11 @@ export class PhotoshootPackageReplaceRequestDto {
   @IsNotEmpty()
   subtitle: string;
 
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  description: string;
+
   @ApiProperty({
     example: 10000,
   })

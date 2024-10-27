@@ -20,6 +20,7 @@ import { PhotoGenerateWatermarkService } from './services/photo-generate-waterma
 import { PhotoVoteController } from './controllers/photo-vote.controller';
 import { NestjsFormDataModule } from 'nestjs-form-data';
 import { PhotoCommentController } from './controllers/photo-comment.controller';
+import { PhotoExchangeService } from './services/photo-exchange.service';
 
 @Module({
   providers: [
@@ -31,6 +32,7 @@ import { PhotoCommentController } from './controllers/photo-comment.controller';
     PhotoWatermarkConsumer,
     CommentService,
     PhotoGenerateWatermarkService,
+    PhotoExchangeService,
   ],
   exports: [PhotoService, PhotoProcessService, PhotoCategoryService],
   controllers: [

@@ -2,13 +2,13 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class SharePhotoResponseDto {
   @ApiProperty()
-  resolution: string;
+  size: number;
 
   @ApiProperty()
   shareUrl: string;
 
-  constructor(resolution: string, shareUrl: string) {
+  constructor(size: number, shareUrl: string) {
     this.shareUrl = shareUrl;
-    this.resolution = resolution;
+    this.size = size;
   }
 }

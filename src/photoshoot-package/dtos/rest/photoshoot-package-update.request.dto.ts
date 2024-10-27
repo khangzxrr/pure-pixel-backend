@@ -32,6 +32,14 @@ export class PhotoshootPackageUpdateRequestDto {
   subtitle?: string;
 
   @ApiProperty({
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  description?: string;
+
+  @ApiProperty({
     example: 10000,
     required: false,
   })

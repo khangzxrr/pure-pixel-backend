@@ -87,9 +87,6 @@ export class PhotoGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   async sendFinishProcessPhotoEventToUserId(userId: string, data: any) {
-    //TODO: what if user disconnect before this method is called
-    // handle recall
-    //
     const socketIds = await this.getSetOfSocketIdsByUserId(userId);
 
     if (!socketIds) {

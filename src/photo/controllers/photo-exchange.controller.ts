@@ -1,35 +1,33 @@
 import {
   Body,
   Controller,
-  FileTypeValidator,
   Get,
   Inject,
   Param,
-  ParseFilePipe,
   Post,
   Res,
-  UploadedFile,
+  StreamableFile,
   UseGuards,
-  UseInterceptors,
 } from '@nestjs/common';
 import { AuthenticatedUser, AuthGuard, Roles } from 'nest-keycloak-connect';
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
 import { CreatePhotoSellingDto } from '../dtos/rest/create-photo-selling.request.dto';
 import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
-import { ApiConsumes, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import { PhotoService } from '../services/photo.service';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { PhotoBuyResponseDto } from '../dtos/rest/photo-buy.response.dto';
 import { PhotoSellDto } from '../dtos/photo-sell.dto';
-import { BuyPhotoRequestDto } from '../dtos/rest/buy-photo.request.dto';
 import { SignedPhotoBuyDto } from '../dtos/rest/signed-photo-buy.response.dto';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { PhotoExchangeService } from '../services/photo-exchange.service';
+import { createReadStream } from 'fs';
 import { Response } from 'express';
 
 @Controller('photo')
 @ApiTags('photo-exchange')
 export class PhotoExchangeController {
-  constructor(@Inject() private readonly photoService: PhotoService) {}
+  constructor(
+    @Inject() private readonly photoExchangeService: PhotoExchangeService,
+  ) {}
 
   @Post('/:id/sell')
   @UseGuards(AuthGuard, KeycloakRoleGuard)
@@ -37,28 +35,19 @@ export class PhotoExchangeController {
   @ApiOkResponse({
     type: PhotoSellDto,
   })
-  @ApiConsumes('multipart/form-data')
-  @UseInterceptors(FileInterceptor('afterPhotoFile'))
   async sellPhoto(
     @AuthenticatedUser() user: ParsedUserDto,
+    @Param('id') id: string,
     @Body() createPhotoSellingDto: CreatePhotoSellingDto,
-    @UploadedFile(
-      new ParseFilePipe({
-        validators: [
-          new FileTypeValidator({ fileType: '.(png|jpeg|jpg|PNG|JPG|JPEG)' }),
-        ],
-      }),
-    )
-    afterPhotoFile: Express.Multer.File,
   ) {
-    return await this.photoService.sellPhoto(
+    return await this.photoExchangeService.sellPhoto(
       user.sub,
+      id,
       createPhotoSellingDto,
-      afterPhotoFile,
     );
   }
 
-  @Post('/:id/buy')
+  @Post('/:photoId/photo-sell/:photoSellId/price-tag/:pricetagId')
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
   @ApiOkResponse({
@@ -66,15 +55,45 @@ export class PhotoExchangeController {
   })
   async buyPhoto(
     @AuthenticatedUser() user: ParsedUserDto,
-    @Body() buyPhotoRequestDto: BuyPhotoRequestDto,
+    @Param('photoId') photoId: string,
+    @Param('photoSellId') photoSellId: string,
+    @Param('pricetagId') pricetagId: string,
   ) {
-    return await this.photoService.buyPhotoRequest(
+    return await this.photoExchangeService.buyPhotoRequest(
       user.sub,
-      buyPhotoRequestDto,
+      photoId,
+      photoSellId,
+      pricetagId,
     );
   }
 
-  @Get('/:id/bought')
+  @Get(':photoId/photo-buy/:photoBuyId/download')
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
+  @ApiOkResponse({
+    type: PhotoBuyResponseDto,
+  })
+  async getPhotoBought(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Param('photoId') photoId: string,
+    @Param('photoBuyId') photoBuyId: string,
+    @Res() res: Response,
+  ) {
+    const buffer = await this.photoExchangeService.downloadBoughtPhoto(
+      photoId,
+      user.sub,
+      photoBuyId,
+    );
+
+    const stream = new StreamableFile(buffer);
+
+    res.set({
+      'Content-type': 'image/jpeg',
+    });
+    stream.getStream().pipe(res);
+  }
+
+  @Get('/:id/photo-buy')
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
   @ApiOkResponse({
@@ -85,24 +104,6 @@ export class PhotoExchangeController {
     @AuthenticatedUser() user: ParsedUserDto,
     @Param('id') id: string,
   ) {
-    return await this.photoService.getPhotoBuyByPhotoId(user.sub, id);
-  }
-
-  @Get('/photo-buy/:photobuyid/download-colorgrading')
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
-  async downloadColorGrading(
-    @AuthenticatedUser() user: ParsedUserDto,
-    @Param('photobuyid') id: string,
-    @Res() res: Response,
-  ) {
-    const buffer =
-      await this.photoService.getPhotoWithScaledResolutionFromPhotoBuyId(
-        user.sub,
-        id,
-      );
-
-    res.set({ 'Content-Type': 'image/jpeg' });
-    res.end(buffer, 'binary');
+    return await this.photoExchangeService.getPhotoBuyByPhotoId(user.sub, id);
   }
 }

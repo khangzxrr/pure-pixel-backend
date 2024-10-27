@@ -1,8 +1,7 @@
 import { Prisma } from '@prisma/client';
 
-export type PhotoshootWithUserAndDetails = Prisma.PhotoshootPackageGetPayload<{
+export type PhotoshootWithUser = Prisma.PhotoshootPackageGetPayload<{
   include: {
     user: true;
-    details: true;
   };
 }>;

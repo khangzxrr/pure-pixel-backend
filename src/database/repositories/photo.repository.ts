@@ -30,10 +30,10 @@ export class PhotoRepository {
     );
   }
 
-  updateQuery(photo: Partial<Photo>) {
+  updateQueryById(id: string, photo: Prisma.PhotoUpdateInput) {
     return this.prisma.extendedClient().photo.update({
       where: {
-        id: photo.id,
+        id,
       },
       data: photo,
     });
@@ -48,7 +48,7 @@ export class PhotoRepository {
     });
   }
 
-  updateByIdQuery(id: string, photo: Partial<Photo>) {
+  updateByIdQuery(id: string, photo: Prisma.PhotoUpdateInput) {
     return this.prisma.extendedClient().photo.update({
       where: {
         id,
@@ -98,6 +98,21 @@ export class PhotoRepository {
   async create(data: Prisma.PhotoCreateInput) {
     return this.prisma.extendedClient().photo.create({
       data,
+
+      include: {
+        photographer: true,
+        categories: true,
+        _count: {
+          select: {
+            votes: {
+              where: {
+                isUpvote: true,
+              },
+            },
+            comments: true,
+          },
+        },
+      },
     });
   }
 
@@ -108,7 +123,7 @@ export class PhotoRepository {
       },
       include: {
         photographer: true,
-        category: true,
+        categories: true,
         _count: {
           select: {
             votes: {
@@ -123,33 +138,33 @@ export class PhotoRepository {
     });
   }
 
-  async getPhotoDetailById(id: string) {
-    return this.prisma.extendedClient().photo.findUnique({
+  async findUniqueOrThrow(id: string) {
+    return this.prisma.extendedClient().photo.findUniqueOrThrow({
       where: {
         id,
       },
       include: {
-        photographer: true,
-        category: true,
-        photoTags: true,
         _count: {
           select: {
-            votes: {
-              where: {
-                isUpvote: true,
-              },
-            },
-            comments: true,
+            votes: true,
           },
         },
-      },
-    });
-  }
-
-  async getPhotoById(id: string) {
-    return this.prisma.extendedClient().photo.findUnique({
-      where: {
-        id,
+        photographer: true,
+        categories: true,
+        camera: {
+          include: {
+            cameraMaker: true,
+          },
+        },
+        photoSellings: {
+          where: {
+            active: true,
+          },
+          include: {
+            pricetags: true,
+          },
+        },
+        photoTags: true,
       },
     });
   }
@@ -182,7 +197,7 @@ export class PhotoRepository {
           },
         },
         photographer: true,
-        category: true,
+        categories: true,
         camera: {
           include: {
             cameraMaker: true,
@@ -191,6 +206,9 @@ export class PhotoRepository {
         photoSellings: {
           where: {
             active: true,
+          },
+          include: {
+            pricetags: true,
           },
         },
         photoTags: true,

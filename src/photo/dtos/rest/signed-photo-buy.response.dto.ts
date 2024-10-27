@@ -3,5 +3,5 @@ import { PhotoBuyResponseDto } from './photo-buy.response.dto';
 
 export class SignedPhotoBuyDto extends PhotoBuyResponseDto {
   @ApiProperty()
-  signedPhotoUrl: string;
+  downloadUrl: string;
 }

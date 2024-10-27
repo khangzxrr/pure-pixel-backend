@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { PhotoType, PhotoVisibility } from '@prisma/client';
 import {
+  IsArray,
   IsBoolean,
   IsEnum,
   IsNotEmpty,
@@ -15,11 +16,15 @@ import { Type } from 'class-transformer';
 export class PhotoUpdateRequestDto {
   @ApiProperty({
     required: false,
+    isArray: true,
+    type: String,
   })
   @IsOptional()
-  @IsString()
-  @IsNotEmpty()
-  categoryId?: string;
+  @IsArray()
+  @IsNotEmpty({
+    each: true,
+  })
+  categoryIds?: string[];
 
   @ApiProperty({
     required: false,
