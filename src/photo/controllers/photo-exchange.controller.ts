@@ -53,6 +53,10 @@ export class PhotoExchangeController {
   @ApiOkResponse({
     type: PhotoSellDto,
   })
+  async updatePhoto(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Param('photoId') id: string,
+  ) {}
   @Post('/:photoId/photo-sell/:photoSellId/price-tag/:pricetagId')
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })

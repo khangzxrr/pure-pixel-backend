@@ -180,13 +180,9 @@ export class PhotoExchangeService {
         id: userId,
       },
       photoSellHistory: {
+        size: pricetag.size,
         originalPhotoSell: {
           id: photoSellId,
-          pricetags: {
-            some: {
-              id: pricetagId,
-            },
-          },
         },
       },
     });
@@ -198,10 +194,10 @@ export class PhotoExchangeService {
     const priceOfSelectedRes = pricetag.price;
     const fee = priceOfSelectedRes.mul(10).div(100);
 
-    await this.sepayService.validateWalletBalanceIsEnough(
-      userId,
-      priceOfSelectedRes.toNumber(),
-    );
+    // await this.sepayService.validateWalletBalanceIsEnough(
+    //   userId,
+    //   priceOfSelectedRes.toNumber(),
+    // );
 
     const newPhotoBuy = await this.photoBuyRepository.createWithTransaction({
       buyer: {
