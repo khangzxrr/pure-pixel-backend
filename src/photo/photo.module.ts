@@ -21,6 +21,7 @@ import { PhotoVoteController } from './controllers/photo-vote.controller';
 import { NestjsFormDataModule } from 'nestjs-form-data';
 import { PhotoCommentController } from './controllers/photo-comment.controller';
 import { PhotoExchangeService } from './services/photo-exchange.service';
+import { PhotoVoteService } from './services/photo-vote.service';
 
 @Module({
   providers: [
@@ -33,6 +34,7 @@ import { PhotoExchangeService } from './services/photo-exchange.service';
     CommentService,
     PhotoGenerateWatermarkService,
     PhotoExchangeService,
+    PhotoVoteService,
   ],
   exports: [PhotoService, PhotoProcessService, PhotoCategoryService],
   controllers: [
