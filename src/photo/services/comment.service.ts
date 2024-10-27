@@ -27,7 +27,7 @@ export class CommentService {
     photoId: string,
     userId: string,
   ): Promise<Photo> {
-    const photo = await this.photoRepository.getPhotoById(photoId);
+    const photo = await this.photoRepository.findUniqueOrThrow(photoId);
 
     if (!photo) {
       throw new PhotoNotFoundException();

@@ -3,7 +3,6 @@ import { CameraConstant } from '../constants/camera.constant';
 import { Inject, Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
-import { PhotoNotFoundException } from 'src/photo/exceptions/photo-not-found.exception';
 import { MissingModelExifException } from 'src/photo/exceptions/missing-model-exif.exception';
 import { MissingMakeExifException } from 'src/photo/exceptions/missing-make-exif.exception';
 import { CameraRepository } from 'src/database/repositories/camera.repository';
@@ -37,11 +36,7 @@ export class CameraConsumer extends WorkerHost {
 
   async processCamera(photoId: string) {
     this.logger.log(`process camera for photo ${photoId}`);
-    const photo = await this.photoRepository.getPhotoById(photoId);
-
-    if (photo == null) {
-      throw new PhotoNotFoundException();
-    }
+    const photo = await this.photoRepository.findUniqueOrThrow(photoId);
 
     const model = photo.exif['Model'];
     const make = photo.exif['Make'];

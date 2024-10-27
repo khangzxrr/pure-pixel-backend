@@ -32,24 +32,24 @@ export class PhotoProcessService {
     return photo;
   }
 
-  async resizeWithMetadata(sharp: SharpLib.Sharp, heightRequired: number) {
+  async resizeWithMetadata(sharp: SharpLib.Sharp, widthRequired: number) {
     return sharp
       .clone()
       .withMetadata()
       .resize({
-        height: heightRequired,
+        width: widthRequired,
       })
       .toBuffer();
   }
 
-  async resize(sharp: SharpLib.Sharp, heightRequired: number) {
+  async resize(sharp: SharpLib.Sharp, widthRequired: number) {
     //this resize will take orientation from exif
     //to determine resize width or height
     //caution this is a feature not a bug!
     return sharp
       .clone()
       .resize({
-        height: heightRequired,
+        width: widthRequired,
       })
       .toBuffer();
   }
@@ -120,6 +120,10 @@ export class PhotoProcessService {
     return exifr.parse(await sharp.keepExif().toBuffer(), {
       exif: true,
     });
+  }
+
+  async getBufferFromKey(key: string) {
+    return await this.bunnyService.download(key);
   }
 
   async getBufferImageFromUrl(url: string) {

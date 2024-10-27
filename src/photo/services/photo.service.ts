@@ -1,10 +1,5 @@
 import { HttpException, Inject, Injectable, Logger } from '@nestjs/common';
-import {
-  Photo,
-  PhotoSell,
-  PhotoVisibility,
-  PrismaPromise,
-} from '@prisma/client';
+import { Photo, PhotoVisibility, PrismaPromise } from '@prisma/client';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoIsPrivatedException } from '../exceptions/photo-is-private.exception';
 import { PhotoUploadRequestDto } from '../dtos/rest/photo-upload.request';
@@ -72,8 +67,8 @@ export class PhotoService {
     @InjectQueue(CameraConstant.CAMERA_PROCESS_QUEUE)
     private readonly cameraQueue: Queue,
     private readonly prisma: PrismaService,
-    @Inject(CACHE_MANAGER)
-    private readonly cacheManager: Cache,
+    // @Inject(CACHE_MANAGER)
+    // private readonly cacheManager: Cache,
   ) {}
 
   async sendImageWatermarkQueue(
@@ -81,7 +76,7 @@ export class PhotoService {
     photoId: string,
     generateWatermarkRequest: GenerateWatermarkRequestDto,
   ) {
-    const photo = await this.photoRepository.getPhotoById(photoId);
+    const photo = await this.photoRepository.findUniqueOrThrow(photoId);
 
     if (photo.photographerId !== userId) {
       throw new NotBelongPhotoException();
@@ -100,11 +95,7 @@ export class PhotoService {
     userId: string,
     id: string,
   ) {
-    const photo = await this.photoRepository.getPhotoById(id);
-
-    if (!photo) {
-      throw new PhotoNotFoundException();
-    }
+    const photo = await this.photoRepository.findUniqueOrThrow(id);
 
     if (photo.photographerId !== userId) {
       throw new NotBelongPhotoException();
@@ -144,11 +135,7 @@ export class PhotoService {
     //   return cachedResolution;
     // }
 
-    const photo = await this.photoRepository.getPhotoById(id);
-
-    if (!photo) {
-      throw new PhotoNotFoundException();
-    }
+    const photo = await this.photoRepository.findUniqueOrThrow(id);
 
     const availableRes = [];
 
@@ -170,11 +157,7 @@ export class PhotoService {
     photoId: string,
     photoVoteRequestDto: PhotoVoteRequestDto,
   ) {
-    const photo = await this.photoRepository.getPhotoById(photoId);
-
-    if (!photo) {
-      throw new PhotoNotFoundException();
-    }
+    const photo = await this.photoRepository.findUniqueOrThrow(photoId);
 
     const vote = await this.photoVoteRepository.vote(
       userId,
@@ -199,7 +182,7 @@ export class PhotoService {
   }
 
   async deleteVote(userId: string, photoId: string) {
-    const photo = await this.photoRepository.getPhotoById(photoId);
+    const photo = await this.photoRepository.findUniqueOrThrow(photoId);
 
     if (!photo) {
       throw new PhotoNotFoundException();
@@ -210,10 +193,7 @@ export class PhotoService {
     return plainToInstance(PhotoDto, deletedPhoto);
   }
 
-  async signPhoto(
-    photo: Photo,
-    photoSell?: PhotoSell,
-  ): Promise<SignedPhotoDto> {
+  async signPhoto(photo: Photo): Promise<SignedPhotoDto> {
     const signedPhotoDto = plainToInstance(SignedPhotoDto, photo);
 
     const url = photo.watermark
@@ -226,7 +206,14 @@ export class PhotoService {
 
     if (url.length == 0) {
       console.log(`error photo without thumbnail or original: ${photo.id}`);
-      throw new EmptyOriginalPhotoException();
+
+      if (photo.watermark) {
+        await this.sendImageWatermarkQueue(photo.photographerId, photo.id, {
+          text: 'PXL',
+        });
+      } else {
+        throw new EmptyOriginalPhotoException();
+      }
     }
 
     const signedUrl = this.bunnyService.getPresignedFile(url);
@@ -237,15 +224,6 @@ export class PhotoService {
 
     const signedUrlDto = new SignedUrl(signedUrl, signedThumbnailUrl);
     signedPhotoDto.signedUrl = signedUrlDto;
-
-    if (photoSell) {
-      const signedColorGradingWatermark = this.bunnyService.getPresignedFile(
-        photoSell.colorGradingPhotoWatermarkUrl,
-      );
-
-      signedPhotoDto.signedUrl.colorGradingWatermark =
-        signedColorGradingWatermark;
-    }
 
     return signedPhotoDto;
   }
@@ -346,8 +324,10 @@ export class PhotoService {
       filter.limit,
     );
 
+    // console.log(photos);
+
     const signedPhotoDtoPromises = photos.map(async (p) => {
-      const signedPhotoDto = await this.signPhoto(p, p.photoSellings[0]);
+      const signedPhotoDto = await this.signPhoto(p);
       return signedPhotoDto;
     });
 
@@ -382,7 +362,7 @@ export class PhotoService {
     id: string,
     validateOwnership: boolean = true,
   ) {
-    const photo = await this.photoRepository.getPhotoDetailById(id);
+    const photo = await this.photoRepository.findUniqueOrThrow(id);
 
     if (!photo) {
       throw new PhotoNotFoundException();

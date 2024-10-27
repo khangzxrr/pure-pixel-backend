@@ -449,17 +449,25 @@ model PhotoTag {
   @@unique([name, photoId])
 }
 
+model Pricetag {
+  id String @id @default(uuid())
+
+  size  Int
+  price Decimal
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  PhotoSell   PhotoSell @relation(fields: [photoSellId], references: [id])
+  photoSellId String
+}
+
 model PhotoSell {
   id String @id @default(uuid())
 
   active Boolean @default(false)
 
-  price Decimal
-
   description String
-
-  colorGradingPhotoUrl          String @default("")
-  colorGradingPhotoWatermarkUrl String @default("")
 
   photo   Photo  @relation(fields: [photoId], references: [id])
   photoId String
@@ -467,27 +475,39 @@ model PhotoSell {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  photoBuys PhotoBuy[]
+  pricetags          Pricetag[]
+  photoSellHistories PhotoSellHistory[]
+}
+
+model PhotoSellHistory {
+  id String @id @default(uuid())
+
+  originalPhotoSell   PhotoSell @relation(fields: [originalPhotoSellId], references: [id])
+  originalPhotoSellId String
+
+  description String
+
+  size  Int
+  price Decimal
+
+  createdAt DateTime   @default(now())
+  PhotoBuy  PhotoBuy[]
 }
 
 model PhotoBuy {
   id String @id @default(uuid())
 
-  photoSell   PhotoSell @relation(fields: [photoSellId], references: [id])
-  photoSellId String
+  photoSellHistory   PhotoSellHistory @relation(fields: [photoSellHistoryId], references: [id])
+  photoSellHistoryId String
 
   userToUserTransaction   UserToUserTransaction @relation(fields: [userToUserTransactionId], references: [id])
   userToUserTransactionId String                @unique
-
-  size Int
 
   buyer   User   @relation(fields: [buyerId], references: [id])
   buyerId String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@unique([photoSellId, buyerId, size])
 }
 
 model Bookmark {

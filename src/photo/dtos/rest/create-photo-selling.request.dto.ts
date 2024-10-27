@@ -6,17 +6,11 @@ import {
   IsArray,
   IsNotEmpty,
   IsString,
+  ValidateNested,
 } from 'class-validator';
-import { PriceMapDto } from '../price-map.dto';
+import { PricetagDto } from '../price-map.dto';
 
 export class CreatePhotoSellingDto {
-  @ApiProperty({
-    required: true,
-  })
-  @IsNotEmpty()
-  @IsString()
-  photoId: string;
-
   @ApiProperty({
     required: true,
   })
@@ -27,11 +21,12 @@ export class CreatePhotoSellingDto {
   @ApiProperty({
     required: true,
     isArray: true,
-    type: PriceMapDto,
+    type: PricetagDto,
   })
   @IsArray()
   @ArrayMinSize(1)
   @ArrayUnique()
-  @Type(() => PriceMapDto)
-  priceMaps: PriceMapDto[];
+  @ValidateNested()
+  @Type(() => PricetagDto)
+  pricetags: PricetagDto[];
 }

@@ -10,9 +10,6 @@ export class PhotoBuyRepository {
     return this.prisma.photoBuy.findMany({
       where: {
         buyerId,
-        photoSell: {
-          photoId,
-        },
       },
       include: {
         userToUserTransaction: {
@@ -20,7 +17,6 @@ export class PhotoBuyRepository {
             fromUserTransaction: true,
           },
         },
-        photoSell: true,
       },
     });
   }
@@ -37,18 +33,27 @@ export class PhotoBuyRepository {
             fromUserTransaction: true,
           },
         },
-        photoSell: true,
       },
     });
   }
 
-  async findFirst(photoSellId: string, buyerId: string, size: number) {
-    return this.prisma.photoBuy.findFirst({
-      where: {
-        photoSellId,
-        buyerId,
-        size,
+  async findUniqueOrThrow(where: Prisma.PhotoBuyWhereUniqueInput) {
+    return this.prisma.photoBuy.findUniqueOrThrow({
+      where,
+      include: {
+        userToUserTransaction: {
+          include: {
+            fromUserTransaction: true,
+          },
+        },
+        photoSellHistory: true,
       },
+    });
+  }
+
+  async findFirst(where: Prisma.PhotoBuyWhereInput) {
+    return this.prisma.photoBuy.findFirst({
+      where,
       include: {
         userToUserTransaction: {
           include: {
@@ -59,14 +64,7 @@ export class PhotoBuyRepository {
     });
   }
 
-  async createWithTransaction(
-    buyerId: string,
-    toUserId: string,
-    photoSellId: string,
-    fee: Prisma.Decimal,
-    amount: Prisma.Decimal,
-    size: number,
-  ) {
+  async createWithTransaction(data: Prisma.PhotoBuyCreateInput) {
     return this.prisma.photoBuy.create({
       include: {
         userToUserTransaction: {
@@ -75,44 +73,7 @@ export class PhotoBuyRepository {
           },
         },
       },
-      data: {
-        size,
-
-        buyer: {
-          connect: {
-            id: buyerId,
-          },
-        },
-        photoSell: {
-          connect: {
-            id: photoSellId,
-          },
-        },
-        userToUserTransaction: {
-          create: {
-            toUser: {
-              connect: {
-                id: toUserId,
-              },
-            },
-            fromUserTransaction: {
-              create: {
-                type: 'IMAGE_BUY',
-                fee,
-                user: {
-                  connect: {
-                    id: buyerId,
-                  },
-                },
-                amount,
-                status: 'PENDING',
-                paymentMethod: 'SEPAY',
-                paymentPayload: {},
-              },
-            },
-          },
-        },
-      },
+      data,
     });
   }
 }

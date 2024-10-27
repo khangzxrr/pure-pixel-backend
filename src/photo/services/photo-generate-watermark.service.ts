@@ -18,7 +18,7 @@ export class PhotoGenerateWatermarkService {
     id: string,
     generateWatermarkRequest: GenerateWatermarkRequestDto,
   ) {
-    const photo = await this.photoRepository.getPhotoById(id);
+    const photo = await this.photoRepository.findUniqueOrThrow(id);
 
     const flagTime1 = new Date();
 
@@ -47,7 +47,6 @@ export class PhotoGenerateWatermarkService {
 
     await this.photoRepository.updateById(photo.id, {
       watermarkPhotoUrl: photo.watermarkPhotoUrl,
-      watermark: true,
     });
 
     this.logger.log(`created watermark: ${photo.watermarkPhotoUrl}`);

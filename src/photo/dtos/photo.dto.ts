@@ -76,8 +76,8 @@ export class PhotoDto {
     isArray: true,
     type: PhotoSellDto,
   })
-  @Type(() => PhotoTagDto)
-  photoSellings: PhotoTagDto[];
+  @Type(() => PhotoSellDto)
+  photoSellings: PhotoSellDto[];
 
   @ApiProperty({
     required: false,

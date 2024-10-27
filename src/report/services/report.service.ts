@@ -36,7 +36,7 @@ export class ReportService {
         obj = await this.userRepository.findUniqueOrThrow(referenceId);
         break;
       case 'PHOTO':
-        obj = await this.photoRepository.getPhotoById(referenceId);
+        obj = await this.photoRepository.findUniqueOrThrow(referenceId);
         break;
 
       case 'BOOKING':

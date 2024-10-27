@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { firstValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
 import * as crypto from 'crypto';
@@ -9,8 +9,6 @@ import { v4 } from 'uuid';
 
 @Injectable()
 export class BunnyService {
-  private logger: Logger = new Logger(BunnyService.name);
-
   constructor(private httpService: HttpService) {}
 
   private getAccessHeader() {

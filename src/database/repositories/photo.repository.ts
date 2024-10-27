@@ -30,10 +30,10 @@ export class PhotoRepository {
     );
   }
 
-  updateQuery(photo: Partial<Photo>) {
+  updateQueryById(id: string, photo: Prisma.PhotoUpdateInput) {
     return this.prisma.extendedClient().photo.update({
       where: {
-        id: photo.id,
+        id,
       },
       data: photo,
     });
@@ -138,33 +138,33 @@ export class PhotoRepository {
     });
   }
 
-  async getPhotoDetailById(id: string) {
-    return this.prisma.extendedClient().photo.findUnique({
+  async findUniqueOrThrow(id: string) {
+    return this.prisma.extendedClient().photo.findUniqueOrThrow({
       where: {
         id,
       },
       include: {
-        photographer: true,
-        categories: true,
-        photoTags: true,
         _count: {
           select: {
-            votes: {
-              where: {
-                isUpvote: true,
-              },
-            },
-            comments: true,
+            votes: true,
           },
         },
-      },
-    });
-  }
-
-  async getPhotoById(id: string) {
-    return this.prisma.extendedClient().photo.findUnique({
-      where: {
-        id,
+        photographer: true,
+        categories: true,
+        camera: {
+          include: {
+            cameraMaker: true,
+          },
+        },
+        photoSellings: {
+          where: {
+            active: true,
+          },
+          include: {
+            pricetags: true,
+          },
+        },
+        photoTags: true,
       },
     });
   }
@@ -206,6 +206,9 @@ export class PhotoRepository {
         photoSellings: {
           where: {
             active: true,
+          },
+          include: {
+            pricetags: true,
           },
         },
         photoTags: true,

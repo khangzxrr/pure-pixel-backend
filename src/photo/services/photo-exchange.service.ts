@@ -5,18 +5,19 @@ import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { SepayService } from 'src/payment/services/sepay.service';
 import { PrismaService } from 'src/prisma.service';
 import { plainToInstance } from 'class-transformer';
-import { BuyPhotoRequestDto } from '../dtos/rest/buy-photo.request.dto';
 import { CreatePhotoSellingDto } from '../dtos/rest/create-photo-selling.request.dto';
 import { PhotoBuyResponseDto } from '../dtos/rest/photo-buy.response.dto';
 import { SignedPhotoBuyDto } from '../dtos/rest/signed-photo-buy.response.dto';
-import { BuyQualityIsNotExistException } from '../exceptions/buy-quality-is-not-exist.exception';
 import { CannotBuyOwnedPhotoException } from '../exceptions/cannot-buy-owned-photo.exception';
 import { ExistPhotoBuyWithChoosedResolutionException } from '../exceptions/exist-photo-buy-with-choosed-resolution.exception';
-import { PhotoSellNotFoundException } from '../exceptions/photo-sell-not-found.exception';
 import { PrismaPromise } from '@prisma/client';
 import { PhotoSellDto } from '../dtos/photo-sell.dto';
-import { PhotoSellEntity } from '../entities/photo-sell.entity';
 import { PhotoService } from './photo.service';
+import { PhotoSellPriceTagRepository } from 'src/database/repositories/photo-sell-price-tag.repository';
+import { SellQualityNotExistException } from '../exceptions/sell-quality-is-not-exist.exception';
+import { PhotoBuyTransactionIsNotSuccessException } from '../exceptions/photo-buy-transaction-is-not-success.exception';
+import { BunnyService } from 'src/storage/services/bunny.service';
+import { PhotoProcessService } from './photo-process.service';
 
 @Injectable()
 export class PhotoExchangeService {
@@ -25,61 +26,111 @@ export class PhotoExchangeService {
     @Inject() private readonly photoRepository: PhotoRepository,
     @Inject() private readonly photoSellRepository: PhotoSellRepository,
     @Inject() private readonly photoBuyRepository: PhotoBuyRepository,
+    @Inject()
+    private readonly photoSellPriceTagRepository: PhotoSellPriceTagRepository,
     @Inject() private readonly photoService: PhotoService,
+    @Inject() private readonly photoProcessService: PhotoProcessService,
     private readonly prisma: PrismaService,
   ) {}
 
-  //TODO: what if photographer update visibility to private => handle deactive sell
-  //
-  async sellPhoto(userId: string, sellPhotoDto: CreatePhotoSellingDto) {
+  async downloadBoughtPhoto(
+    photoId: string,
+    userId: string,
+    photoBuyId: string,
+  ): Promise<Buffer> {
+    const photo = await this.photoRepository.findUniqueOrThrow(photoId);
+    const photoBuy = await this.photoBuyRepository.findUniqueOrThrow({
+      id: photoBuyId,
+      buyerId: userId,
+    });
+
+    if (
+      photoBuy.userToUserTransaction.fromUserTransaction.status !== 'SUCCESS'
+    ) {
+      throw new PhotoBuyTransactionIsNotSuccessException();
+    }
+
+    if (photoBuy.photoSellHistory.size === photo.width) {
+      return this.photoProcessService.getBufferFromKey(photo.originalPhotoUrl);
+    }
+
+    const sharp = await this.photoProcessService.sharpInitFromObjectKey(
+      photo.originalPhotoUrl,
+    );
+
+    const resizedBuffer = await this.photoProcessService.resizeWithMetadata(
+      sharp,
+      photoBuy.photoSellHistory.size,
+    );
+
+    return resizedBuffer;
+  }
+
+  async sellPhoto(
+    userId: string,
+    photoId: string,
+    sellPhotoDto: CreatePhotoSellingDto,
+  ) {
     const photo =
       await this.photoService.findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
         userId,
-        sellPhotoDto.photoId,
+        photoId,
       );
 
-    const previousActivePhotoSell =
-      await this.photoSellRepository.getByActiveAndPhotoId(
-        sellPhotoDto.photoId,
-      );
+    const previousActivePhotoSell = await this.photoSellRepository.findFirst({
+      active: true,
+      photoId,
+    });
 
-    if (
-      previousActivePhotoSell &&
-      previousActivePhotoSell.description === sellPhotoDto.description
-    ) {
-      //idemponent
-      return plainToInstance(PhotoSellDto, previousActivePhotoSell, {});
+    const availableSize =
+      await this.photoService.getAvailablePhotoResolution(photoId);
+
+    sellPhotoDto.pricetags.forEach((pricetag) => {
+      if (availableSize.indexOf(pricetag.size) < 0) {
+        throw new SellQualityNotExistException();
+      }
+    });
+
+    if (photo.watermarkPhotoUrl === '') {
+      await this.photoService.sendImageWatermarkQueue(userId, photoId, {
+        text: 'PXL',
+      });
     }
-
-    photo.watermark = true;
-    photo.visibility = 'PUBLIC';
 
     const prismaQuery: PrismaPromise<any>[] = [];
     if (previousActivePhotoSell) {
-      const updatePreviousPhotoSellQuery = this.photoSellRepository.updateQuery(
-        previousActivePhotoSell.id,
-        {
-          active: false,
-        },
-      );
+      const updatePreviousPhotoSellQuery =
+        this.photoSellRepository.deactivatePhotoSellByPhotoIdQuery(photoId);
       prismaQuery.push(updatePreviousPhotoSellQuery);
     }
 
     const updatePhotoToPublicAndWatermarkQuery =
-      this.photoRepository.updateQuery(photo);
+      this.photoRepository.updateQueryById(photoId, {
+        watermark: true,
+        visibility: 'PUBLIC',
+      });
     prismaQuery.push(updatePhotoToPublicAndWatermarkQuery);
 
-    const photoSell = plainToInstance(PhotoSellEntity, sellPhotoDto);
-
     const createPhotoSellQuery =
-      this.photoSellRepository.createAndActiveByPhotoIdQuery(photoSell);
+      this.photoSellRepository.createAndActiveByPhotoIdQuery({
+        active: true,
+        description: sellPhotoDto.description,
+        photo: {
+          connect: {
+            id: photoId,
+          },
+        },
+        pricetags: {
+          create: sellPhotoDto.pricetags,
+        },
+      });
     prismaQuery.push(createPhotoSellQuery);
 
-    const [, newPhotoSell] = await this.prisma
+    const results = await this.prisma
       .extendedClient()
       .$transaction([...prismaQuery]);
 
-    return plainToInstance(PhotoSellDto, newPhotoSell);
+    return plainToInstance(PhotoSellDto, results.pop());
   }
 
   async getPhotoBuyByPhotoId(userId: string, photoId: string) {
@@ -103,43 +154,48 @@ export class PhotoExchangeService {
     return signedPhotoBuyDtos;
   }
 
-  async buyPhotoRequest(userId: string, buyPhotoRequest: BuyPhotoRequestDto) {
-    const photoSell = await this.photoSellRepository.getByActiveAndPhotoId(
-      buyPhotoRequest.photoId,
-    );
-
-    if (!photoSell) {
-      throw new PhotoSellNotFoundException();
-    }
+  async buyPhotoRequest(
+    userId: string,
+    photoId: string,
+    photoSellId: string,
+    pricetagId: string,
+  ) {
+    const photoSell = await this.photoSellRepository.findUniqueOrThrow({
+      id: photoSellId,
+      photoId,
+      active: true,
+    });
 
     if (photoSell.photo.photographerId === userId) {
       throw new CannotBuyOwnedPhotoException();
     }
 
-    const availableRes = await this.photoService.getAvailablePhotoResolution(
-      buyPhotoRequest.photoId,
-    );
+    const pricetag = await this.photoSellPriceTagRepository.findUniqueOrThrow({
+      photoSellId,
+      id: pricetagId,
+    });
 
-    const indexOfChoosedRes = availableRes.indexOf(buyPhotoRequest.size);
-    if (indexOfChoosedRes < 0) {
-      throw new BuyQualityIsNotExistException();
-    }
-
-    const previousPhotoBuy = await this.photoBuyRepository.findFirst(
-      photoSell.id,
-      userId,
-      buyPhotoRequest.size,
-    );
+    const previousPhotoBuy = await this.photoBuyRepository.findFirst({
+      buyer: {
+        id: userId,
+      },
+      photoSellHistory: {
+        originalPhotoSell: {
+          id: photoSellId,
+          pricetags: {
+            some: {
+              id: pricetagId,
+            },
+          },
+        },
+      },
+    });
 
     if (previousPhotoBuy) {
       throw new ExistPhotoBuyWithChoosedResolutionException();
     }
 
-    //4 resolutions
-    //2
-    //[4k 2k 1080p 720p]
-    //              x <-- index = 3 => +1 = 4 => price = base / 4
-    const priceOfSelectedRes = photoSell.price.div(indexOfChoosedRes + 1);
+    const priceOfSelectedRes = pricetag.price;
     const fee = priceOfSelectedRes.mul(10).div(100);
 
     await this.sepayService.validateWalletBalanceIsEnough(
@@ -147,14 +203,49 @@ export class PhotoExchangeService {
       priceOfSelectedRes.toNumber(),
     );
 
-    const newPhotoBuy = await this.photoBuyRepository.createWithTransaction(
-      userId,
-      photoSell.photo.photographerId,
-      photoSell.id,
-      fee,
-      priceOfSelectedRes,
-      buyPhotoRequest.size,
-    );
+    const newPhotoBuy = await this.photoBuyRepository.createWithTransaction({
+      buyer: {
+        connect: {
+          id: userId,
+        },
+      },
+      photoSellHistory: {
+        create: {
+          size: pricetag.size,
+          price: pricetag.price,
+          description: photoSell.description,
+          originalPhotoSell: {
+            connect: {
+              id: photoSell.id,
+            },
+          },
+        },
+      },
+      userToUserTransaction: {
+        create: {
+          toUser: {
+            connect: {
+              id: photoSell.photo.photographerId,
+            },
+          },
+          fromUserTransaction: {
+            create: {
+              type: 'IMAGE_BUY',
+              fee,
+              user: {
+                connect: {
+                  id: userId,
+                },
+              },
+              amount: pricetag.price,
+              status: 'PENDING',
+              paymentMethod: 'SEPAY',
+              paymentPayload: {},
+            },
+          },
+        },
+      },
+    });
 
     return plainToInstance(PhotoBuyResponseDto, newPhotoBuy);
   }

@@ -5,6 +5,8 @@ import {
   Inject,
   Param,
   Post,
+  Res,
+  StreamableFile,
   UseGuards,
 } from '@nestjs/common';
 import { AuthenticatedUser, AuthGuard, Roles } from 'nest-keycloak-connect';
@@ -15,9 +17,10 @@ import { Constants } from 'src/infrastructure/utils/constants';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { PhotoBuyResponseDto } from '../dtos/rest/photo-buy.response.dto';
 import { PhotoSellDto } from '../dtos/photo-sell.dto';
-import { BuyPhotoRequestDto } from '../dtos/rest/buy-photo.request.dto';
 import { SignedPhotoBuyDto } from '../dtos/rest/signed-photo-buy.response.dto';
 import { PhotoExchangeService } from '../services/photo-exchange.service';
+import { createReadStream } from 'fs';
+import { Response } from 'express';
 
 @Controller('photo')
 @ApiTags('photo-exchange')
@@ -34,15 +37,17 @@ export class PhotoExchangeController {
   })
   async sellPhoto(
     @AuthenticatedUser() user: ParsedUserDto,
+    @Param('id') id: string,
     @Body() createPhotoSellingDto: CreatePhotoSellingDto,
   ) {
     return await this.photoExchangeService.sellPhoto(
       user.sub,
+      id,
       createPhotoSellingDto,
     );
   }
 
-  @Post('/:id/buy')
+  @Post('/:photoId/photo-sell/:photoSellId/price-tag/:pricetagId')
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
   @ApiOkResponse({
@@ -50,12 +55,42 @@ export class PhotoExchangeController {
   })
   async buyPhoto(
     @AuthenticatedUser() user: ParsedUserDto,
-    @Body() buyPhotoRequestDto: BuyPhotoRequestDto,
+    @Param('photoId') photoId: string,
+    @Param('photoSellId') photoSellId: string,
+    @Param('pricetagId') pricetagId: string,
   ) {
     return await this.photoExchangeService.buyPhotoRequest(
       user.sub,
-      buyPhotoRequestDto,
+      photoId,
+      photoSellId,
+      pricetagId,
     );
+  }
+
+  @Get(':photoId/photo-buy/:photoBuyId/download')
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
+  @ApiOkResponse({
+    type: PhotoBuyResponseDto,
+  })
+  async getPhotoBought(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Param('photoId') photoId: string,
+    @Param('photoBuyId') photoBuyId: string,
+    @Res() res: Response,
+  ) {
+    const buffer = await this.photoExchangeService.downloadBoughtPhoto(
+      photoId,
+      user.sub,
+      photoBuyId,
+    );
+
+    const stream = new StreamableFile(buffer);
+
+    res.set({
+      'Content-type': 'image/jpeg',
+    });
+    stream.getStream().pipe(res);
   }
 
   @Get('/:id/bought')

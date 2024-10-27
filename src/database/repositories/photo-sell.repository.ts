@@ -1,19 +1,23 @@
 import { Injectable } from '@nestjs/common';
-import { PhotoSell } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
 export class PhotoSellRepository {
   constructor(private prisma: PrismaService) {}
 
-  async getByActiveAndPhotoId(photoId: string) {
+  async findFirst(where: Prisma.PhotoSellWhereInput) {
     return this.prisma.extendedClient().photoSell.findFirst({
-      where: {
-        active: true,
-        photoId,
-      },
+      where,
+    });
+  }
+
+  async findUniqueOrThrow(where: Prisma.PhotoSellWhereUniqueInput) {
+    return this.prisma.extendedClient().photoSell.findUniqueOrThrow({
+      where,
       include: {
         photo: true,
+        pricetags: true,
       },
     });
   }
@@ -29,30 +33,19 @@ export class PhotoSellRepository {
     });
   }
 
-  updateQuery(id: string, photoSell: Partial<PhotoSell>) {
+  updateQuery(
+    where: Prisma.PhotoSellWhereUniqueInput,
+    data: Prisma.PhotoSellUpdateInput,
+  ) {
     return this.prisma.extendedClient().photoSell.update({
-      where: {
-        id: id,
-      },
-      data: photoSell,
+      where,
+      data,
     });
   }
 
-  createAndActiveByPhotoIdQuery(photoSell: PhotoSell) {
+  createAndActiveByPhotoIdQuery(data: Prisma.PhotoSellCreateInput) {
     return this.prisma.extendedClient().photoSell.create({
-      data: {
-        photo: {
-          connect: {
-            id: photoSell.photoId,
-          },
-        },
-        id: photoSell.id,
-        price: photoSell.price,
-        description: photoSell.description,
-        colorGradingPhotoUrl: photoSell.colorGradingPhotoUrl,
-        colorGradingPhotoWatermarkUrl: photoSell.colorGradingPhotoWatermarkUrl,
-        active: true,
-      },
+      data,
     });
   }
 }
