@@ -182,6 +182,28 @@ export class PhotoRepository {
   // async unaccentFindAll() {
   //   await this.prisma.$queryRaw(`SELECT unaccent(lower(title)) FROM "photo"`);
   // }
+  //
+  //
+  async countByGPS(longitude: number, latitude: number, distance: number) {
+    return this.prisma.$queryRaw`
+                        SELECT COUNT(id) FROM 
+                          (SELECT id, point(${longitude}, ${latitude}) <@>  (point((exif->>'longitude')::float, (exif->>'latitude')::float)::point) as distance	
+                          FROM public."Photo" 
+                          WHERE (point(${longitude}, ${latitude}) <@>  (point((exif->>'longitude')::float, (exif->>'latitude')::float)::point) < ${distance}))
+`;
+  }
+
+  async findAllIdsByGPS(
+    longitude: number,
+    latitude: number,
+    distance: number,
+  ): Promise<any[]> {
+    return this.prisma.$queryRaw`
+                          SELECT id, point(${longitude}, ${latitude}) <@>  (point((exif->>'longitude')::float, (exif->>'latitude')::float)::point) as distance	
+                          FROM public."Photo" 
+                          WHERE (point(${longitude}, ${latitude}) <@>  (point((exif->>'longitude')::float, (exif->>'latitude')::float)::point) < ${distance})
+`;
+  }
 
   async findAll(
     where: Prisma.PhotoWhereInput,
