@@ -42,6 +42,13 @@ export class BookingRepository {
           },
         },
         photoshootPackageHistory: true,
+        photos: {
+          include: {
+            camera: true,
+            categories: true,
+            photographer: true,
+          },
+        },
       },
     });
   }

@@ -79,6 +79,29 @@ export class BookingService {
     return plainToInstance(BookingDto, updatedBooking);
   }
 
+  async findById(userId: string, bookingId: string) {
+    const booking = await this.bookingRepository.findUniqueOrThrow({
+      id: bookingId,
+    });
+
+    if (
+      booking.originalPhotoshootPackage.userId !== userId &&
+      booking.userId !== userId
+    ) {
+      throw new BookingNotBelongException();
+    }
+
+    const bookingDto = plainToInstance(BookingDto, booking);
+
+    const signedPhotoDtoPromises = booking.photos.map((p) =>
+      this.photoService.signPhoto(p),
+    );
+    const signedPhotoDtos = await Promise.all(signedPhotoDtoPromises);
+    bookingDto.photos = signedPhotoDtos;
+
+    return bookingDto;
+  }
+
   async findAllByUserId(userId: string, findallDto: BookingFindAllRequestDto) {
     findallDto.userId = userId;
 

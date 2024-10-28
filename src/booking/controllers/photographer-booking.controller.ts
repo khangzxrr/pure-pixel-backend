@@ -57,6 +57,20 @@ export class PhotographerBookingController {
     );
   }
 
+  @Get(':bookingId')
+  @ApiOperation({
+    summary: 'get booking detail by bookingId',
+  })
+  @ApiOkResponsePaginated(BookingDto)
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
+  async getBookingDetail(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Param('bookingId') bookingId: string,
+  ) {
+    return await this.bookingService.findById(user.sub, bookingId);
+  }
+
   @Put(':bookingId/upload')
   @ApiOperation({
     summary: 'upload photo to booking by bookingId',
