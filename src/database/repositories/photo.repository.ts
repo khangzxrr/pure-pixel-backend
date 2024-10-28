@@ -19,6 +19,10 @@ export class PhotoRepository {
     });
   }
 
+  updateManyQuery(args: Prisma.PhotoUpdateManyArgs) {
+    return this.prisma.extendedClient().photo.updateMany(args);
+  }
+
   batchUpdate(photo: Photo[]) {
     return photo.map((p) =>
       this.prisma.extendedClient().photo.update({

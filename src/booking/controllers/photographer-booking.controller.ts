@@ -144,6 +144,22 @@ export class PhotographerBookingController {
     return await this.bookingService.updateById(user.sub, bookingId, updateDto);
   }
 
+  @Patch(':bookingId/paid')
+  @ApiOperation({
+    summary: 'set booking status to paid - unlock watermark photo by bookingId',
+  })
+  @ApiOkResponse({
+    type: BookingDto,
+  })
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
+  async paidBooking(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Param('bookingId') bookingId: string,
+  ) {
+    return await this.bookingService.updateBookingToPaid(user.sub, bookingId);
+  }
+
   @Get(':bookingId/bill-item')
   @ApiOperation({
     summary: 'find all booking bill item by bookingId',

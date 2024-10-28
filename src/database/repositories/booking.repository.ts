@@ -23,6 +23,15 @@ export class BookingRepository {
     });
   }
 
+  updateByIdQuery(id: string, data: Prisma.BookingUpdateInput) {
+    return this.prisma.extendedClient().booking.update({
+      where: {
+        id,
+      },
+      data,
+    });
+  }
+
   async updateById(id: string, data: Prisma.BookingUpdateInput) {
     return this.prisma.extendedClient().booking.update({
       where: {

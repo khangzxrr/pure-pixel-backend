@@ -16,13 +16,14 @@ import { BookingNotBelongException } from '../exceptions/booking-not-belong.exce
 import { BookingNotInRequestedStateException } from '../exceptions/booking-not-in-requested-state.exception';
 import { BookingWithPhotoshootPackageIncludedUser } from 'src/database/types/booking';
 import { BookingUpdateRequestDto } from '../dtos/rest/booking-update.request.dto';
-import { BookingStatus } from '@prisma/client';
-import { BookingStartedException } from '../exceptions/booking-started.exception';
+import { BookingStatus, PrismaPromise } from '@prisma/client';
 import { BothStartEndDateMustSpecifyException } from '../exceptions/start-end-date-must-specify.exception';
 import { BookingNotAcceptedException } from '../exceptions/booking-not-accepted.exception';
 import { BookingUploadRequestDto } from '../dtos/rest/booking-upload.request.dto';
 import { PhotoService } from 'src/photo/services/photo.service';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
+import { BookingNotInValidStateException } from '../exceptions/booking-not-in-valid-state.exception';
+import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
 export class BookingService {
@@ -33,7 +34,45 @@ export class BookingService {
     @Inject() private readonly notificationService: NotificationService,
     @Inject() private readonly photoService: PhotoService,
     @Inject() private readonly photoRepository: PhotoRepository,
+    private readonly prisma: PrismaService,
   ) {}
+
+  async updateBookingToPaid(userId: string, bookingId: string) {
+    const booking = await this.bookingRepository.findUniqueOrThrow({
+      id: bookingId,
+    });
+
+    if (booking.originalPhotoshootPackage.userId !== userId) {
+      throw new BookingNotBelongException();
+    }
+
+    if (booking.status !== 'ACCEPTED') {
+      throw new BookingNotInValidStateException();
+    }
+
+    const prismaPromises: PrismaPromise<any>[] = [];
+
+    prismaPromises.push(
+      this.bookingRepository.updateByIdQuery(bookingId, {
+        status: 'SUCCESSED',
+      }),
+    );
+
+    prismaPromises.push(
+      this.photoRepository.updateManyQuery({
+        where: {
+          bookingId,
+        },
+        data: {
+          watermark: false,
+        },
+      }),
+    );
+
+    await this.prisma.$transaction(prismaPromises);
+
+    return await this.findById(userId, bookingId);
+  }
 
   async updateById(
     userId: string,
@@ -58,7 +97,7 @@ export class BookingService {
     const validStates: BookingStatus[] = ['REQUESTED', 'ACCEPTED'];
 
     if (validStates.indexOf(booking.status) < 0) {
-      throw new BookingStartedException();
+      throw new BookingNotInValidStateException();
     }
 
     if (updateDto.startDate && updateDto.endDate) {
