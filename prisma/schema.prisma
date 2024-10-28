@@ -669,7 +669,6 @@ model PhotoshootPackage {
   showcases PhotoshootPackageShowcasePhoto[]
   reviews   Review[]
   bookings  Booking[]
-  history   PhotoshootPackageHistory[]
 }
 
 model PhotoshootPackageHistory {
@@ -679,10 +678,8 @@ model PhotoshootPackageHistory {
   price     Decimal
   thumbnail String
 
-  originalPhotoshootPackage   PhotoshootPackage @relation(fields: [originalPhotoshootPackageId], references: [id])
-  originalPhotoshootPackageId String
+  booking             Booking[]
 
-  booking Booking[]
 }
 
 enum NotificationStatus {
