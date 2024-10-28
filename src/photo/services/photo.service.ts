@@ -1,5 +1,11 @@
 import { HttpException, Inject, Injectable, Logger } from '@nestjs/common';
-import { Photo, PhotoVisibility, PrismaPromise } from '@prisma/client';
+import {
+  Photo,
+  PhotoType,
+  PhotoVisibility,
+  Prisma,
+  PrismaPromise,
+} from '@prisma/client';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoIsPrivatedException } from '../exceptions/photo-is-private.exception';
 import { PhotoUploadRequestDto } from '../dtos/rest/photo-upload.request';
@@ -342,6 +348,7 @@ export class PhotoService {
 
   async uploadPhoto(
     userId: string,
+    photoType: PhotoType,
     photoUploadDto: PhotoUploadRequestDto,
   ): Promise<SignedPhotoDto> {
     const user = await this.userRepository.findUniqueOrThrow(userId);
@@ -405,7 +412,7 @@ export class PhotoService {
         width: metadata.width,
         height: metadata.height,
         status: 'PARSED',
-        photoType: 'RAW',
+        photoType: photoType,
         watermark: false,
         visibility: 'PRIVATE',
         originalPhotoUrl: storageObjectKey,

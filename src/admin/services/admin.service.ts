@@ -100,6 +100,7 @@ export class AdminService {
         try {
           const photoDto = await this.photoService.uploadPhoto(
             user.id,
+            'RAW',
             photoUploadDto,
           );
 

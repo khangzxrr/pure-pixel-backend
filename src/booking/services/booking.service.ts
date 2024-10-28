@@ -19,6 +19,9 @@ import { BookingUpdateRequestDto } from '../dtos/rest/booking-update.request.dto
 import { BookingStatus } from '@prisma/client';
 import { BookingStartedException } from '../exceptions/booking-started.exception';
 import { BothStartEndDateMustSpecifyException } from '../exceptions/start-end-date-must-specify.exception';
+import { BookingNotAcceptedException } from '../exceptions/booking-not-accepted.exception';
+import { BookingUploadRequestDto } from '../dtos/rest/booking-upload.request.dto';
+import { PhotoService } from 'src/photo/services/photo.service';
 
 @Injectable()
 export class BookingService {
@@ -27,6 +30,7 @@ export class BookingService {
     @Inject()
     private readonly photoshootPackageRepository: PhotoshootRepository,
     @Inject() private readonly notificationService: NotificationService,
+    @Inject() private readonly photoService: PhotoService,
   ) {}
 
   async updateById(
@@ -88,6 +92,40 @@ export class BookingService {
     const bookingDtos = plainToInstance(BookingDto, bookings);
 
     return new BookingFindAllResponseDto(findallDto.limit, count, bookingDtos);
+  }
+
+  async uploadPhoto(
+    userId: string,
+    bookingId: string,
+    bookingUploadDto: BookingUploadRequestDto,
+  ) {
+    const booking = await this.bookingRepository.findUniqueOrThrow({
+      id: bookingId,
+    });
+
+    if (booking.originalPhotoshootPackage.userId !== userId) {
+      throw new BookingNotBelongException();
+    }
+
+    if (
+      booking.status === 'FAILED' ||
+      booking.status === 'REQUESTED' ||
+      booking.status === 'DENIED'
+    ) {
+      throw new BookingNotAcceptedException();
+    }
+
+    const signedPhotoDto = await this.photoService.uploadPhoto(
+      userId,
+      'BOOKING',
+      {
+        file: bookingUploadDto.file,
+      },
+    );
+
+    await this.photoService.sendImageWatermarkQueue(userId, signedPhotoDto.id, {
+      text: 'PXL',
+    });
   }
 
   async accept(bookingId: string, userId: string) {

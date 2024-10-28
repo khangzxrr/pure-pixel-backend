@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -23,6 +24,8 @@ import { BookingUpdateRequestDto } from '../dtos/rest/booking-update.request.dto
 import { BookingBillItemService } from '../services/bill-item.service';
 import { BookingBillItemFindAllRequestDto } from '../dtos/rest/booking-bill-item-find-all.request.dto';
 import { BookingBillItemFindAllResponseDto } from '../dtos/rest/booking-bill-item-find-all.response.dto';
+import { FormDataRequest } from 'nestjs-form-data';
+import { BookingUploadRequestDto } from '../dtos/rest/booking-upload.request.dto';
 
 @Controller('photographer/booking')
 @ApiTags('photographer-booking')
@@ -46,6 +49,28 @@ export class PhotographerBookingController {
     return await this.bookingService.findAllByPhotographerId(
       user.sub,
       findallDto,
+    );
+  }
+
+  @Put(':bookingId/upload')
+  @ApiOperation({
+    summary: 'upload photo to booking by bookingId',
+  })
+  @ApiOkResponse({
+    type: BookingDto,
+  })
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
+  @FormDataRequest()
+  async uploadPhoto(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Param('bookingId') bookingId: string,
+    @Body() bookingUploadDto: BookingUploadRequestDto,
+  ) {
+    return this.bookingService.uploadPhoto(
+      user.sub,
+      bookingId,
+      bookingUploadDto,
     );
   }
 
