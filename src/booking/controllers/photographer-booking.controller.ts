@@ -10,7 +10,12 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiConsumes,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { BookingService } from '../services/booking.service';
 import { AuthenticatedUser, AuthGuard, Roles } from 'nest-keycloak-connect';
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
@@ -61,6 +66,7 @@ export class PhotographerBookingController {
   })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
+  @ApiConsumes('multipart/form-data')
   @FormDataRequest()
   async uploadPhoto(
     @AuthenticatedUser() user: ParsedUserDto,
