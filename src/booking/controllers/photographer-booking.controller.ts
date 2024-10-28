@@ -26,19 +26,13 @@ import { DenyBookingRequestDto } from '../dtos/rest/deny-booking.request.dto';
 import { BookingDto } from '../dtos/booking.dto';
 import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.response.dto';
 import { BookingUpdateRequestDto } from '../dtos/rest/booking-update.request.dto';
-import { BookingBillItemService } from '../services/bill-item.service';
-import { BookingBillItemFindAllRequestDto } from '../dtos/rest/booking-bill-item-find-all.request.dto';
-import { BookingBillItemFindAllResponseDto } from '../dtos/rest/booking-bill-item-find-all.response.dto';
 import { FormDataRequest } from 'nestjs-form-data';
 import { BookingUploadRequestDto } from '../dtos/rest/booking-upload.request.dto';
 
 @Controller('photographer/booking')
 @ApiTags('photographer-booking')
 export class PhotographerBookingController {
-  constructor(
-    @Inject() private readonly bookingService: BookingService,
-    @Inject() private readonly bookingBillItemService: BookingBillItemService,
-  ) {}
+  constructor(@Inject() private readonly bookingService: BookingService) {}
 
   @Get('me')
   @ApiOperation({
@@ -158,24 +152,5 @@ export class PhotographerBookingController {
     @Param('bookingId') bookingId: string,
   ) {
     return await this.bookingService.updateBookingToPaid(user.sub, bookingId);
-  }
-
-  @Get(':bookingId/bill-item')
-  @ApiOperation({
-    summary: 'find all booking bill item by bookingId',
-  })
-  @ApiOkResponse({ type: BookingBillItemFindAllResponseDto })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
-  async findAllBookingBillItems(
-    @AuthenticatedUser() user: ParsedUserDto,
-    @Param('bookingId') bookingId: string,
-    @Query() findallDto: BookingBillItemFindAllRequestDto,
-  ) {
-    return await this.bookingBillItemService.findAll(
-      user.sub,
-      bookingId,
-      findallDto,
-    );
   }
 }

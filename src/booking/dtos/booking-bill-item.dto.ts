@@ -1,19 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Exclude, Type } from 'class-transformer';
+import { Exclude } from 'class-transformer';
+import { BookingBillItemCreateDto } from './booking-bill-item.create.dto';
 
-export class BookingBillItemDto {
+export class BookingBillItemDto extends BookingBillItemCreateDto {
   @ApiProperty()
   id: string;
-
-  @ApiProperty()
-  title: string;
-
-  @ApiProperty()
-  description: string;
-
-  @ApiProperty()
-  @Type(() => Number)
-  price: number;
 
   @ApiProperty()
   createdAt: Date;

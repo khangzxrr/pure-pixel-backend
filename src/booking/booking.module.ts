@@ -9,6 +9,7 @@ import { NotificationModule } from 'src/notification/notification.module';
 import { BookingBillItemService } from './services/bill-item.service';
 import { PhotoModule } from 'src/photo/photo.module';
 import { NestjsFormDataModule } from 'nestjs-form-data';
+import { PhotographerBookingBillItemController } from './controllers/photographer-booking-bill-item.controller';
 
 @Module({
   imports: [
@@ -20,6 +21,10 @@ import { NestjsFormDataModule } from 'nestjs-form-data';
     NestjsFormDataModule,
   ],
   providers: [BookingService, BookingBillItemService],
-  controllers: [CustomerBookingController, PhotographerBookingController],
+  controllers: [
+    CustomerBookingController,
+    PhotographerBookingController,
+    PhotographerBookingBillItemController,
+  ],
 })
 export class BookingModule {}

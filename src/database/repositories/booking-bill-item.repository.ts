@@ -12,15 +12,25 @@ export class BookingBillItemRepository {
     });
   }
 
-  async deleteById(id: string) {
+  async deleteById(bookingId: string, id: string) {
     return this.prisma.extendedClient().bookingBillItem.delete({
       where: {
         id,
+        bookingId,
       },
     });
   }
 
-  async createBy(data: Prisma.BookingBillItemCreateInput) {
+  async updateById(id: string, data: Prisma.BookingBillItemUpdateInput) {
+    return this.prisma.extendedClient().bookingBillItem.update({
+      where: {
+        id,
+      },
+      data,
+    });
+  }
+
+  async create(data: Prisma.BookingBillItemCreateInput) {
     return this.prisma.extendedClient().bookingBillItem.create({
       data,
     });
