@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { BookingStatus } from '@prisma/client';
 import { Exclude, Type } from 'class-transformer';
+import { PhotoshootPackageHistoryDto } from 'src/photoshoot-package/dtos/photoshoot-package-history.dto';
 import { PhotoshootPackageDto } from 'src/photoshoot-package/dtos/photoshoot-package.dto';
 import { UserDto } from 'src/user/dtos/me.dto';
 
@@ -27,8 +28,12 @@ export class BookingDto {
   userId: string;
 
   @ApiPropertyOptional()
+  @Type(() => PhotoshootPackageHistoryDto)
+  photoshootPackageHistory?: PhotoshootPackageHistoryDto;
+
+  @ApiPropertyOptional()
   @Type(() => PhotoshootPackageDto)
-  photoshootPackage?: PhotoshootPackageDto;
+  originalPhotoshootPackage?: PhotoshootPackageDto;
 
   @ApiPropertyOptional()
   @Type(() => UserDto)

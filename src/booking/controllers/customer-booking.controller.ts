@@ -28,7 +28,7 @@ export class CustomerBookingController {
     @Inject() private readonly bookingBillItemService: BookingBillItemService,
   ) {}
 
-  @Get('')
+  @Get('me')
   @ApiOperation({
     summary: 'find all booking by current user',
   })

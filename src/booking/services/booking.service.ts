@@ -22,6 +22,7 @@ import { BothStartEndDateMustSpecifyException } from '../exceptions/start-end-da
 import { BookingNotAcceptedException } from '../exceptions/booking-not-accepted.exception';
 import { BookingUploadRequestDto } from '../dtos/rest/booking-upload.request.dto';
 import { PhotoService } from 'src/photo/services/photo.service';
+import { PhotoRepository } from 'src/database/repositories/photo.repository';
 
 @Injectable()
 export class BookingService {
@@ -31,6 +32,7 @@ export class BookingService {
     private readonly photoshootPackageRepository: PhotoshootRepository,
     @Inject() private readonly notificationService: NotificationService,
     @Inject() private readonly photoService: PhotoService,
+    @Inject() private readonly photoRepository: PhotoRepository,
   ) {}
 
   async updateById(
@@ -126,6 +128,17 @@ export class BookingService {
     await this.photoService.sendImageWatermarkQueue(userId, signedPhotoDto.id, {
       text: 'PXL',
     });
+
+    await this.photoRepository.updateById(signedPhotoDto.id, {
+      watermark: true,
+      booking: {
+        connect: {
+          id: bookingId,
+        },
+      },
+    });
+
+    return this.photoService.getSignedPhotoById(userId, signedPhotoDto.id);
   }
 
   async accept(bookingId: string, userId: string) {
@@ -291,13 +304,13 @@ export class BookingService {
           price: photoshootPackage.price,
         },
       },
+      originalPhotoshootPackage: {
+        connect: {
+          id: photoshootPackage.id,
+        },
+      },
       photoshootPackageHistory: {
         create: {
-          originalPhotoshootPackage: {
-            connect: {
-              id: photoshootPackage.id,
-            },
-          },
           price: photoshootPackage.price,
           title: photoshootPackage.title,
           subtitle: photoshootPackage.subtitle,
