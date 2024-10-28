@@ -1,5 +1,5 @@
 import { HttpService } from '@nestjs/axios';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { lastValueFrom } from 'rxjs';
 import { FailedToGenerateThumbnailException } from '../exceptions/failed-to-generate-thumbnail.exception';
 
@@ -10,8 +10,6 @@ import { BunnyService } from 'src/storage/services/bunny.service';
 
 @Injectable()
 export class PhotoProcessService {
-  private readonly logger = new Logger(PhotoProcessService.name);
-
   constructor(
     private readonly httpService: HttpService,
     @Inject() private readonly bunnyService: BunnyService,

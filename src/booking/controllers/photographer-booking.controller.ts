@@ -32,7 +32,7 @@ export class PhotographerBookingController {
     @Inject() private readonly bookingBillItemService: BookingBillItemService,
   ) {}
 
-  @Get('')
+  @Get('me')
   @ApiOperation({
     summary: 'get all booking from current photographer',
   })

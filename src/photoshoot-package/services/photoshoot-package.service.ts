@@ -156,6 +156,24 @@ export class PhotoshootPackageService {
     return await this.findAllByUserId(photographerId, findAllDto);
   }
 
+  async findAll(findAllDto: PhotoshootPackageFindAllDto) {
+    const count = await this.photoshootRepository.count(findAllDto.toWhere());
+
+    const packages = await this.photoshootRepository.findAll(
+      findAllDto.limit,
+      findAllDto.toSkip(),
+      findAllDto.toWhere(),
+    );
+
+    const packageDtos = plainToInstance(PhotoshootPackageDto, packages, {});
+
+    return new PhotoshootPackageFindAllResponseDto(
+      findAllDto.limit,
+      count,
+      packageDtos,
+    );
+  }
+
   async findAllByUserId(
     userId: string,
     findAllDto: PhotoshootPackageFindAllDto,
