@@ -18,7 +18,6 @@ import { Constants } from 'src/infrastructure/utils/constants';
 import { BookingFindAllRequestDto } from '../dtos/rest/booking-find-all.request.dto';
 import { BookingBillItemFindAllRequestDto } from '../dtos/rest/booking-bill-item-find-all.request.dto';
 import { BookingBillItemService } from '../services/bill-item.service';
-import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.response.dto';
 import { BookingBillItemFindAllResponseDto } from '../dtos/rest/booking-bill-item-find-all.response.dto';
 
 @Controller('customer/booking')

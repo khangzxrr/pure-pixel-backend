@@ -41,7 +41,6 @@ export class PhotoShootPackageController {
     summary: 'find all photoshoot package',
   })
   @ApiOkResponsePaginated(PhotoshootPackageDto)
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
   async findAll(@Query() findAllDto: PhotoshootPackageFindAllDto) {
     return await this.photoshootPackageService.findAll(findAllDto);
   }

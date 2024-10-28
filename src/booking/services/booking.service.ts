@@ -184,7 +184,7 @@ export class BookingService {
       throw new StartDateMustLargerThanCurrentDateByOneDayException();
     }
 
-    const diffBetweenStartAndEndDate = end.getTime() - end.getTime();
+    const diffBetweenStartAndEndDate = end.getTime() - start.getTime();
     const hourDiffBetweenStartAndEnd =
       diffBetweenStartAndEndDate / 1000 / 60 / 60;
 
