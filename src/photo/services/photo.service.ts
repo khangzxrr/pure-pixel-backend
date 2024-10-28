@@ -244,6 +244,11 @@ export class PhotoService {
       );
     }
 
+    //prevent empty value
+    if (!photoUpdateDto.categoryIds) {
+      photoUpdateDto.categoryIds = [];
+    }
+
     prismaPromises.push(
       this.photoRepository.updateByIdQuery(id, {
         categories: {
