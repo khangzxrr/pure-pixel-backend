@@ -57,7 +57,7 @@ export class PhotoRepository {
     });
   }
 
-  async updateById(id: string, photo: Partial<Photo>) {
+  async updateById(id: string, photo: Prisma.PhotoUpdateInput) {
     return this.prisma.extendedClient().photo.update({
       where: {
         id,
