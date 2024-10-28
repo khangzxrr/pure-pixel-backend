@@ -678,8 +678,7 @@ model PhotoshootPackageHistory {
   price     Decimal
   thumbnail String
 
-  booking             Booking[]
-
+  booking Booking[]
 }
 
 enum NotificationStatus {
@@ -726,8 +725,6 @@ enum BookingStatus {
   REQUESTED
   ACCEPTED
   DENIED
-  UPLOADED
-  PAID
   SUCCESSED
   FAILED
 }
