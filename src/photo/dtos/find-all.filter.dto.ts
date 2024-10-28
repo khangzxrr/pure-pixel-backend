@@ -30,6 +30,14 @@ export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
     required: false,
   })
   @IsOptional()
+  @ToBoolean()
+  @IsBoolean()
+  gps?: boolean;
+
+  @ApiProperty({
+    required: false,
+  })
+  @IsOptional()
   @IsString()
   @IsNotEmpty()
   brandId?: string;
@@ -160,6 +168,13 @@ export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
 
   toWhere(): Prisma.PhotoWhereInput {
     const where: Prisma.PhotoWhereInput = {};
+
+    if (this.gps) {
+      where.exif = {
+        path: ['latitude'],
+        not: null,
+      };
+    }
 
     if (this.photoType) {
       where.photoType = this.photoType;
