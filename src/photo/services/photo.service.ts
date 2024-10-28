@@ -266,6 +266,7 @@ export class PhotoService {
   async findPublicPhotos(filter: FindAllPhotoFilterDto) {
     filter.visibility = 'PUBLIC';
     filter.status = 'PARSED';
+    filter.photoType = 'RAW'; //ensure only get RAW photo
 
     return await this.findAll(filter);
   }

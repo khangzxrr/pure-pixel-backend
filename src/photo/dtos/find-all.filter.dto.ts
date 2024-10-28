@@ -1,5 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { PhotoStatus, PhotoVisibility, Prisma } from '@prisma/client';
+import {
+  PhotoStatus,
+  PhotoType,
+  PhotoVisibility,
+  Prisma,
+} from '@prisma/client';
 import { Exclude } from 'class-transformer';
 import {
   IsArray,
@@ -13,6 +18,14 @@ import { PagingPaginatedRequestDto } from 'src/infrastructure/restful/paging-pag
 import { ToBoolean } from 'src/infrastructure/transforms/to-boolean';
 
 export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
+  @ApiProperty({
+    required: false,
+    enum: PhotoType,
+  })
+  @IsOptional()
+  @IsEnum(PhotoType)
+  photoType?: PhotoType;
+
   @ApiProperty({
     required: false,
   })
@@ -147,6 +160,10 @@ export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
 
   toWhere(): Prisma.PhotoWhereInput {
     const where: Prisma.PhotoWhereInput = {};
+
+    if (this.photoType) {
+      where.photoType = this.photoType;
+    }
 
     if (this.cameraId) {
       where.camera = {
