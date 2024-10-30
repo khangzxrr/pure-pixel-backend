@@ -1,20 +1,4 @@
 ###################
-# BUILD FOR LOCAL DEVELOPMENT
-###################
-
-FROM node:18.19.1-alpine As development
-
-WORKDIR /usr/src/app
-
-COPY --chown=node:node package*.json ./
-
-RUN npm ci --include=dev
-
-COPY --chown=node:node . .
-
-USER node
-
-###################
 # BUILD FOR PRODUCTION
 ###################
 
@@ -24,11 +8,11 @@ WORKDIR /usr/src/app
 
 COPY --chown=node:node package*.json ./
 
-COPY --chown=node:node --from=development /usr/src/app/node_modules ./node_modules
-
 COPY --chown=node:node . .
 
 RUN npm ci --include=dev && npm cache clean --force
+
+RUN node -e 'console.log(process.arch)'
 
 RUN npx prisma generate 
 
