@@ -1,4 +1,4 @@
-import { Controller, Inject, Post, UseGuards } from '@nestjs/common';
+import { Controller, Inject, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AdminService } from '../services/admin.service';
 import { AuthGuard, Roles } from 'nest-keycloak-connect';
@@ -8,6 +8,8 @@ import { Constants } from 'src/infrastructure/utils/constants';
 
 @Controller('admin')
 @ApiTags('admin')
+@UseGuards(AuthGuard, KeycloakRoleGuard)
+@Roles({ roles: [Constants.MANAGER_ROLE] })
 export class AdminController {
   constructor(
     @Inject() private readonly adminService: AdminService,
@@ -18,8 +20,6 @@ export class AdminController {
   @ApiOperation({
     summary: 'seed database',
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: [Constants.MANAGER_ROLE] })
   async seedDatabase() {
     return await this.adminService.seed();
   }
@@ -32,5 +32,13 @@ export class AdminController {
   @Roles({ roles: [Constants.MANAGER_ROLE] })
   async triggerPopularCameraGraph() {
     return await this.updateTimelineService.triggerCron();
+  }
+
+  @Post('/photo/:photoId/process')
+  @ApiOperation({
+    summary: 'trigger process photo',
+  })
+  async triggerProcessPhoto(@Param('photoId') photoId: string) {
+    return await this.adminService.triggerProcess(photoId);
   }
 }

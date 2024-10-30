@@ -3,7 +3,6 @@ import {
   Photo,
   PhotoType,
   PhotoVisibility,
-  Prisma,
   PrismaPromise,
 } from '@prisma/client';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
@@ -34,7 +33,6 @@ import { DuplicatedTagFoundException } from '../exceptions/duplicated-tag-found.
 import { CategoryRepository } from 'src/database/repositories/category.repository';
 import { CategoryNotFoundException } from '../exceptions/category-not-found.exception';
 import { PhotoTagRepository } from 'src/database/repositories/photo-tag.repository';
-import { NotificationConstant } from 'src/notification/constants/notification.constant';
 import { BunnyService } from 'src/storage/services/bunny.service';
 import { UploadPhotoFailedException } from '../exceptions/upload-photo-failed.exception';
 import { ExifNotFoundException } from '../exceptions/exif-not-found.exception';
@@ -44,6 +42,7 @@ import { SignedUrl } from '../dtos/photo-signed-url.dto';
 import { GenerateWatermarkRequestDto } from '../dtos/rest/generate-watermark.request.dto';
 import { PhotoGenerateWatermarkService } from './photo-generate-watermark.service';
 import { CameraConstant } from 'src/camera/constants/camera.constant';
+import { FailToPerformOnDuplicatedPhotoException } from '../exceptions/fail-to-perform-on-duplicated-photo.exception';
 
 @Injectable()
 export class PhotoService {
@@ -59,8 +58,6 @@ export class PhotoService {
     @Inject() private readonly bunnyService: BunnyService,
     @Inject()
     private readonly photoGenerateWatermarkService: PhotoGenerateWatermarkService,
-    @InjectQueue(NotificationConstant.NOTIFICATION_QUEUE)
-    private readonly notificationQueue: Queue,
     @InjectQueue(PhotoConstant.PHOTO_PROCESS_QUEUE)
     private readonly photoProcessQueue: Queue,
     @InjectQueue(CameraConstant.CAMERA_PROCESS_QUEUE)
@@ -75,10 +72,14 @@ export class PhotoService {
     photoId: string,
     generateWatermarkRequest: GenerateWatermarkRequestDto,
   ) {
-    const photo = await this.photoRepository.findUniqueOrThrow(photoId);
+    const photo =
+      await this.findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
+        userId,
+        photoId,
+      );
 
-    if (photo.photographerId !== userId) {
-      throw new NotBelongPhotoException();
+    if (photo.status === 'DUPLICATED') {
+      throw new FailToPerformOnDuplicatedPhotoException();
     }
 
     const updatedPhoto =
@@ -109,6 +110,10 @@ export class PhotoService {
         userId,
         shareRequest.photoId,
       );
+
+    if (photo.status === 'DUPLICATED') {
+      throw new FailToPerformOnDuplicatedPhotoException();
+    }
 
     const availableRes = await this.getAvailablePhotoResolution(photo.id);
 
@@ -197,6 +202,10 @@ export class PhotoService {
         id,
       );
 
+    if (photo.status === 'DUPLICATED') {
+      throw new FailToPerformOnDuplicatedPhotoException();
+    }
+
     const exif = photo.exif;
 
     const prismaPromises: PrismaPromise<any>[] = [];
@@ -263,7 +272,6 @@ export class PhotoService {
 
   async findPublicPhotos(filter: FindAllPhotoFilterDto) {
     filter.visibility = 'PUBLIC';
-    filter.status = 'PARSED';
     filter.photoType = 'RAW'; //ensure only get RAW photo
 
     return await this.findAll(filter);
@@ -309,7 +317,7 @@ export class PhotoService {
 
     count = await this.photoRepository.count(filter);
 
-    let photos = await this.photoRepository.findAll(
+    const photos = await this.photoRepository.findAll(
       filter.toWhere(),
       filter.toOrderBy(),
       filter.toSkip(),

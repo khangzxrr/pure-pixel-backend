@@ -9,6 +9,7 @@ import * as path from 'path';
 import { PhotoService } from 'src/photo/services/photo.service';
 import { PhotoUploadRequestDto } from 'src/photo/dtos/rest/photo-upload.request';
 import { MemoryStoredFile } from 'nestjs-form-data';
+import { PhotoProcessConsumer } from 'src/photo/consumers/photo-process.consumer';
 
 @Injectable()
 export class AdminService {
@@ -17,7 +18,12 @@ export class AdminService {
     @Inject() private readonly keycloakService: KeycloakService,
     @Inject() private readonly storageService: StorageService,
     @Inject() private readonly photoService: PhotoService,
+    @Inject() private readonly photoProcessConsumer: PhotoProcessConsumer,
   ) {}
+
+  async triggerProcess(photoId: string) {
+    return this.photoProcessConsumer.processPhoto(photoId);
+  }
 
   readRandomUsernames() {
     const usernames = fs

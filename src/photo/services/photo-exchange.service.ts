@@ -2,7 +2,6 @@ import { Inject, Injectable } from '@nestjs/common';
 import { PhotoBuyRepository } from 'src/database/repositories/photo-buy.repository';
 import { PhotoSellRepository } from 'src/database/repositories/photo-sell.repository';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
-import { SepayService } from 'src/payment/services/sepay.service';
 import { PrismaService } from 'src/prisma.service';
 import { plainToInstance } from 'class-transformer';
 import { CreatePhotoSellingDto } from '../dtos/rest/create-photo-selling.request.dto';
@@ -16,13 +15,12 @@ import { PhotoService } from './photo.service';
 import { PhotoSellPriceTagRepository } from 'src/database/repositories/photo-sell-price-tag.repository';
 import { SellQualityNotExistException } from '../exceptions/sell-quality-is-not-exist.exception';
 import { PhotoBuyTransactionIsNotSuccessException } from '../exceptions/photo-buy-transaction-is-not-success.exception';
-import { BunnyService } from 'src/storage/services/bunny.service';
 import { PhotoProcessService } from './photo-process.service';
+import { FailToPerformOnDuplicatedPhotoException } from '../exceptions/fail-to-perform-on-duplicated-photo.exception';
 
 @Injectable()
 export class PhotoExchangeService {
   constructor(
-    @Inject() private readonly sepayService: SepayService,
     @Inject() private readonly photoRepository: PhotoRepository,
     @Inject() private readonly photoSellRepository: PhotoSellRepository,
     @Inject() private readonly photoBuyRepository: PhotoBuyRepository,
@@ -76,6 +74,10 @@ export class PhotoExchangeService {
         userId,
         photoId,
       );
+
+    if (photo.status === 'DUPLICATED') {
+      throw new FailToPerformOnDuplicatedPhotoException();
+    }
 
     const previousActivePhotoSell = await this.photoSellRepository.findFirst({
       active: true,
