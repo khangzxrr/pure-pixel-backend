@@ -148,7 +148,9 @@ export class UserRepository {
       where: {
         id: user.id,
       },
-      update: {},
+      update: {
+        normalizedName: user.normalizedName,
+      },
       create: user,
     });
   }
@@ -156,10 +158,14 @@ export class UserRepository {
   async findMany(
     where: Prisma.UserWhereInput,
     orderBy: Prisma.UserOrderByWithRelationInput[],
+    skip: number,
+    take: number,
   ) {
     return this.prisma.extendedClient().user.findMany({
       where,
       orderBy,
+      skip,
+      take,
     });
   }
 }

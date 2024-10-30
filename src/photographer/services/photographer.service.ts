@@ -72,6 +72,8 @@ export class PhotographerService {
         ...findAllRequestDto.toWhere(),
       },
       findAllRequestDto.toOrderBy(),
+      findAllRequestDto.toSkip(),
+      findAllRequestDto.limit,
     );
 
     const dtoPromises = photographers.map(async (p) => {
