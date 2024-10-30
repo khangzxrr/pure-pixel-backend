@@ -17,7 +17,7 @@ export class ChatService {
   }
 
   async syncAllUsers() {
-    const users = await this.userRepository.findMany({});
+    const users = await this.userRepository.findMany({}, []);
 
     users.forEach(async (user) => {
       await this.getStream().upsertUser({
