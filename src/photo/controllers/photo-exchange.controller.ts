@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Inject,
+  NotImplementedException,
   Param,
   Patch,
   Post,
@@ -56,7 +57,11 @@ export class PhotoExchangeController {
   async updatePhoto(
     @AuthenticatedUser() user: ParsedUserDto,
     @Param('photoId') id: string,
-  ) {}
+  ) {
+    //TODO: implement update sell
+    throw new NotImplementedException();
+  }
+
   @Post('/:photoId/photo-sell/:photoSellId/price-tag/:pricetagId')
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
