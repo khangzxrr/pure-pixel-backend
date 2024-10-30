@@ -89,12 +89,6 @@ export class StorageService {
     return await getSignedUrl(this.getS3(), command, {});
   }
 
-  async signUrlUsingCDN(key: string) {
-    // return this.getS3SignedUrl(key);
-
-    return this.signUrlByCloudfront(key);
-  }
-
   async getObjectToByteArray(key: string) {
     const command = new GetObjectCommand({
       Key: key,

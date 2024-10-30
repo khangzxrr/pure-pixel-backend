@@ -1,6 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { BlogStatus } from '@prisma/client';
 import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
+import {
+  HasMimeType,
+  IsFile,
+  MaxFileSize,
+  MemoryStoredFile,
+} from 'nestjs-form-data';
 
 export class BlogCreateRequestDto {
   @ApiProperty({
@@ -20,9 +26,11 @@ export class BlogCreateRequestDto {
   title: string;
 
   @ApiProperty({
-    type: 'string',
-    format: 'binary',
-    required: true,
+    type: 'file',
   })
-  thumbnailFile: Express.Multer.File;
+  @IsFile()
+  @IsFile()
+  @MaxFileSize(5e7)
+  @HasMimeType(['image/*'])
+  thumbnailFile: MemoryStoredFile;
 }

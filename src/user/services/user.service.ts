@@ -2,7 +2,6 @@ import { Inject, Injectable } from '@nestjs/common';
 import { UserRepository } from 'src/database/repositories/user.repository';
 import { UserFilterDto } from '../dtos/user-filter.dto';
 import { UserDto } from '../dtos/me.dto';
-import { KeycloakService } from 'src/authen/services/keycloak.service';
 import { UserNotFoundException } from '../exceptions/user-not-found.exception';
 import { StorageService } from 'src/storage/services/storage.service';
 import { PresignedUploadMediaDto } from '../dtos/presigned-upload-media.dto';
@@ -13,7 +12,6 @@ import { plainToInstance } from 'class-transformer';
 export class UserService {
   constructor(
     @Inject() private readonly userRepository: UserRepository,
-    @Inject() private readonly keycloakService: KeycloakService,
     @Inject() private readonly storageService: StorageService,
   ) {}
 
