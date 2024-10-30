@@ -35,7 +35,7 @@ export class PhotographerController {
 
   @Get('')
   @ApiOperation({
-    summary: 'get all photographers. Ah yes I KNOW! doesnt have filter yet',
+    summary: 'get all photographers',
   })
   @ApiOkResponsePaginated(PhotographerDTO)
   @UseGuards(AuthGuard, KeycloakRoleGuard)
@@ -61,15 +61,6 @@ export class PhotographerController {
   @Public(false)
   async getPhotographerProfile(@Param('id') id: string) {
     return await this.photographerService.getPhotographerProfileById(id);
-  }
-
-  //TODO: finish get all packages of photographer API
-  @Get('/:id/package')
-  @ApiOperation({
-    summary: 'get all packages of photographer',
-  })
-  async findAllPackages() {
-    throw new NotImplementedException();
   }
 
   @Get('/me/photo')
