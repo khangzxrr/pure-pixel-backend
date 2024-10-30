@@ -31,6 +31,9 @@ model User {
 
   name        String   @default("")
   mail        String   @default("")
+
+  normalizedName String @default("")
+
   phonenumber String   @default("")
   socialLinks String[]
   expertises  String[]
