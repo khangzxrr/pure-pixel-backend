@@ -118,18 +118,18 @@ export class PhotoProcessConsumer extends WorkerHost {
       console.log(e);
     }
 
+    try {
+      const data = await this.tineyeService.add(signedPhotoUrl);
+
+      if (data.status === 200) {
+        this.logger.log(`uploaded photo ${photo.originalPhotoUrl} to tineye`);
+      }
+    } catch (e) {
+      console.log(e);
+    }
+
     await this.photoRepository.updateById(photoId, {
       hash,
     });
-
-    // try {
-    //   const data = await this.tineyeService.add(signedPhotoUrl);
-    //
-    //   if (data.status === 200) {
-    //     this.logger.log(`uploaded photo ${photo.originalPhotoUrl} to tineye`);
-    //   }
-    // } catch (e) {
-    //   console.log(e);
-    // }
   }
 }
