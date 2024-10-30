@@ -43,7 +43,6 @@ export class CameraRepository {
   async findTopUsageAtTimestamp(
     dateSeperator: string,
     limit: number,
-    startDate: Date,
     endDate: Date,
   ): Promise<any[]> {
     //date_trunc(${dateSeperator}, "public"."Camera"."createdAt") "date",
@@ -51,7 +50,7 @@ export class CameraRepository {
       .$queryRaw`SELECT "public"."Camera"."id", "public"."Camera"."name", count("userId") as "userCount", date_trunc(${dateSeperator}, "public"."CameraOnUsers"."createdAt") "date"
                 FROM "public"."Camera"
                 INNER JOIN "public"."CameraOnUsers" ON "public"."Camera".id = "public"."CameraOnUsers"."cameraId"
-                WHERE "public"."CameraOnUsers"."createdAt" >= ${startDate} AND  "public"."CameraOnUsers"."createdAt" < ${endDate}
+                WHERE "public"."CameraOnUsers"."createdAt" < ${endDate}
                 GROUP BY "public"."Camera"."id", "public"."Camera"."name", "date"
                 ORDER BY "userCount" DESC
                 LIMIT ${limit}

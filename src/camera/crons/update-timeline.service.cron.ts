@@ -19,24 +19,12 @@ export class UpdateTimelineService {
     private readonly prismaService: PrismaService,
   ) {}
 
-  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
-  async triggerCron() {
-    const previousDate = new Date(new Date().getTime() - 1000 * 60 * 60 * 24);
-    const nextDate = new Date(new Date().getTime() + 1000 * 60 * 60 * 24);
-
-    const startDate = new Date(previousDate.toDateString());
-    const endDate = new Date(nextDate.toDateString());
-
-    console.log(`upsert ${startDate.toString()} popular camera timeline`);
-
-    const timeline =
-      await this.popularCameraTimelineRepository.upsert(startDate);
-
+  private async generateDataForTimestamp(date: Date) {
+    const timeline = await this.popularCameraTimelineRepository.upsert(date);
     const topUsage = (await this.cameraRepository.findTopUsageAtTimestamp(
       'day',
       5,
-      startDate,
-      endDate,
+      date,
     )) as any[];
 
     const dtos = plainToInstance(CameraUsageDto, topUsage);
@@ -50,7 +38,29 @@ export class UpdateTimelineService {
     );
 
     await this.prismaService.$transaction(prismaPromises);
+  }
 
-    console.log(`add ${dtos.length} camera to data point`);
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  async triggerCron() {
+    const date = new Date();
+
+    const countPreviousTimeline =
+      await this.popularCameraTimelineRepository.count({
+        timestamp: {
+          lte: date,
+        },
+      });
+
+    if (countPreviousTimeline < 7) {
+      for (let i = 1; i <= 7; i++) {
+        const preDate = new Date(date.getTime() - 1000 * 60 * 60 * 24 * i);
+        await this.generateDataForTimestamp(preDate);
+
+        console.log(`generate camera to data point for timestamp ${preDate}`);
+      }
+    }
+
+    await this.generateDataForTimestamp(date);
+    console.log(`generate camera to data point for timestamp ${date}`);
   }
 }
