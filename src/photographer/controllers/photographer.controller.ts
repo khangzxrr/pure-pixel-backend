@@ -2,7 +2,6 @@ import {
   Controller,
   Get,
   Inject,
-  NotImplementedException,
   Param,
   Query,
   UseGuards,
@@ -44,10 +43,7 @@ export class PhotographerController {
     @AuthenticatedUser() user: ParsedUserDto,
     @Query() findAllRequestDto: FindAllPhotographerRequestDto,
   ) {
-    return this.photographerService.getAllPhotographer(
-      user.sub,
-      findAllRequestDto,
-    );
+    return this.photographerService.getAllPhotographer(findAllRequestDto);
   }
 
   @Get('/:id/profile')

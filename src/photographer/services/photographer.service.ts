@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotImplementedException } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
 import { PhotoService } from 'src/photo/services/photo.service';
 import { FindAllPhotoFilterDto } from 'src/photo/dtos/find-all.filter.dto';
@@ -34,7 +34,6 @@ export class PhotographerService {
   }
 
   async getAllPhotographer(
-    userId: string,
     findAllRequestDto: FindAllPhotographerRequestDto,
   ): Promise<FindAllPhotographerResponseDto> {
     let skip = 0;
