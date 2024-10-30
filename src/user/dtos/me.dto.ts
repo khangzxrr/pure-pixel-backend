@@ -39,6 +39,9 @@ export class UserDto extends ResponseBaseDto {
   @ApiProperty()
   expertises: string[];
 
+  @Exclude()
+  normalizedName: string;
+
   @ApiProperty()
   id: string;
 

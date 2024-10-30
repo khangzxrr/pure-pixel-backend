@@ -20,6 +20,7 @@ import { UserController } from './controllers/user.controller';
     PaymentModule,
     CachingModule,
   ],
+  exports: [UserService],
   providers: [UserService],
 })
 export class UserModule {}

@@ -2,20 +2,61 @@ import { Inject, Injectable } from '@nestjs/common';
 import { UserRepository } from 'src/database/repositories/user.repository';
 import { UserFilterDto } from '../dtos/user-filter.dto';
 import { UserDto } from '../dtos/me.dto';
-import { KeycloakService } from 'src/authen/services/keycloak.service';
 import { UserNotFoundException } from '../exceptions/user-not-found.exception';
 import { StorageService } from 'src/storage/services/storage.service';
 import { PresignedUploadMediaDto } from '../dtos/presigned-upload-media.dto';
 import { UpdateProfileDto } from '../dtos/rest/update-profile.request.dto';
 import { plainToInstance } from 'class-transformer';
+import { KeycloakService } from 'src/authen/services/keycloak.service';
+import { Constants } from 'src/infrastructure/utils/constants';
 
 @Injectable()
 export class UserService {
   constructor(
     @Inject() private readonly userRepository: UserRepository,
-    @Inject() private readonly keycloakService: KeycloakService,
     @Inject() private readonly storageService: StorageService,
+    @Inject() private readonly keycloakService: KeycloakService,
   ) {}
+
+  async syncKeycloakWithDatabase() {
+    let skip = 0;
+
+    while (true) {
+      const keycloakUsers = await this.keycloakService.findUsers(skip, 10);
+
+      keycloakUsers.forEach(async (ku) => {
+        await this.userRepository.upsert({
+          id: ku.id,
+          mail: ku.email,
+          name: ku.username,
+          cover: Constants.DEFAULT_COVER,
+          quote: '',
+          avatar: Constants.DEFAULT_AVATAR,
+          normalizedName: ku.username,
+          location: 'TP.Hồ Chí Minh',
+          phonenumber: '',
+          expertises: [''],
+          ftpPassword: '',
+          ftpUsername: '',
+          socialLinks: [''],
+          packageCount: BigInt('0'),
+          maxPhotoQuota: BigInt('0'),
+          maxPackageCount: BigInt('0'),
+          photoQuotaUsage: BigInt('0'),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+
+        console.log(`insert ${ku.username} to database`);
+      });
+
+      if (keycloakUsers.length === 0) {
+        break;
+      }
+
+      skip += 10;
+    }
+  }
 
   async generatePresignedUploadMedia(userId: string) {
     const user = await this.userRepository.findUnique(userId);

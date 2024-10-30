@@ -12,6 +12,8 @@ import { PhotographerNotFoundException } from '../exceptions/photographer-not-fo
 import { PhotographerProfileDto } from '../dtos/photographer-profile.dto';
 import { UserFilterDto } from 'src/user/dtos/user-filter.dto';
 import { plainToInstance } from 'class-transformer';
+import { PhotoRepository } from 'src/database/repositories/photo.repository';
+import { PhotoVoteRepository } from 'src/database/repositories/photo-vote.repository';
 
 @Injectable()
 export class PhotographerService {
@@ -19,6 +21,8 @@ export class PhotographerService {
     @Inject() private readonly photoService: PhotoService,
     @Inject() private readonly keycloakService: KeycloakService,
     @Inject() private readonly userRepository: UserRepository,
+    @Inject() private readonly photoRepository: PhotoRepository,
+    @Inject() private readonly photoVoteRepository: PhotoVoteRepository,
     private readonly prisma: PrismaService,
   ) {}
   async getInfo(userId: string): Promise<UserEntity> {
@@ -29,42 +33,73 @@ export class PhotographerService {
     });
   }
 
-  async getAllPhotographerExceptUserId(
-    userId: string,
+  async getAllPhotographer(
     findAllRequestDto: FindAllPhotographerRequestDto,
   ): Promise<FindAllPhotographerResponseDto> {
-    const count = await this.keycloakService.countPhotographer();
+    let skip = 0;
 
-    const keycloakPhotographers =
-      await this.keycloakService.findAllPhotographers(
-        findAllRequestDto.toSkip(),
-        findAllRequestDto.limit,
+    const keycloakUserIds: string[] = [];
+
+    while (true) {
+      const users = await this.keycloakService.findUsersHasRole(
+        'photographer',
+        skip,
+        10,
       );
 
-    const photographerDtoPromises = keycloakPhotographers.map(async (p) => {
-      const applicationUser = await this.userRepository.findUnique(p.id);
+      users.forEach((u) => keycloakUserIds.push(u.id));
 
-      if (!applicationUser) {
-        return null;
+      if (users.length === 0) {
+        break;
       }
 
-      return plainToInstance(PhotographerDTO, applicationUser);
+      skip += 10;
+    }
+
+    const count = await this.userRepository.count({
+      id: {
+        in: keycloakUserIds,
+      },
+      ...findAllRequestDto.toWhere(),
     });
 
-    const photographerDtos = await Promise.all(photographerDtoPromises);
-
-    //filter out any null keycloak user
-    //because sometime we use the same keycloak instance for both local and server
-    //some user may appear in production, some may appear in local
-    //that's why we have null user
-    const photographerDtosWithNullFilter = photographerDtos.filter(
-      (p) => p != null && p.id != userId,
+    const photographers = await this.userRepository.findMany(
+      {
+        id: {
+          in: keycloakUserIds,
+        },
+        ...findAllRequestDto.toWhere(),
+      },
+      findAllRequestDto.toOrderBy(),
+      findAllRequestDto.toSkip(),
+      findAllRequestDto.limit,
     );
+
+    const dtoPromises = photographers.map(async (p) => {
+      const dto = plainToInstance(PhotographerDTO, p);
+
+      dto.photoCount = await this.photoRepository.count({
+        photographerId: p.id,
+      });
+
+      const voteAggregate = await this.photoVoteRepository.aggregate({
+        isUpvote: true,
+        photo: {
+          photographerId: p.id,
+        },
+      });
+
+      dto.voteCount = voteAggregate._count.id;
+
+      return dto;
+    });
+
+    const dtos = await Promise.all(dtoPromises);
 
     return new FindAllPhotographerResponseDto(
       findAllRequestDto.limit,
       count,
-      photographerDtosWithNullFilter,
+      dtos,
     );
   }
 

@@ -2,7 +2,6 @@ import {
   Controller,
   Get,
   Inject,
-  NotImplementedException,
   Param,
   Query,
   UseGuards,
@@ -21,7 +20,7 @@ import { FindAllPhotoFilterDto } from 'src/photo/dtos/find-all.filter.dto';
 import { FindAllPhotographerRequestDto } from '../dtos/find-all-photographer-dtos/find-all-photographer.request.dto';
 import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.response.dto';
 import { PhotographerDTO } from '../dtos/photographer.dto';
-import { PagingPaginatedResposneDto } from 'src/infrastructure/restful/paging-paginated.response.dto';
+
 import { PhotographerProfileDto } from '../dtos/photographer-profile.dto';
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
 import { SignedPhotoDto } from 'src/photo/dtos/signed-photo.dto';
@@ -35,7 +34,7 @@ export class PhotographerController {
 
   @Get('')
   @ApiOperation({
-    summary: 'get all photographers. Ah yes I KNOW! doesnt have filter yet',
+    summary: 'get all photographers',
   })
   @ApiOkResponsePaginated(PhotographerDTO)
   @UseGuards(AuthGuard, KeycloakRoleGuard)
@@ -43,20 +42,8 @@ export class PhotographerController {
   async findAllPhotographers(
     @AuthenticatedUser() user: ParsedUserDto,
     @Query() findAllRequestDto: FindAllPhotographerRequestDto,
-  ): Promise<PagingPaginatedResposneDto<PhotographerDTO>> {
-    console.log(findAllRequestDto);
-
-    if (user) {
-      return this.photographerService.getAllPhotographerExceptUserId(
-        user.sub,
-        findAllRequestDto,
-      );
-    }
-
-    return this.photographerService.getAllPhotographerExceptUserId(
-      '',
-      findAllRequestDto,
-    );
+  ) {
+    return this.photographerService.getAllPhotographer(findAllRequestDto);
   }
 
   @Get('/:id/profile')
@@ -70,15 +57,6 @@ export class PhotographerController {
   @Public(false)
   async getPhotographerProfile(@Param('id') id: string) {
     return await this.photographerService.getPhotographerProfileById(id);
-  }
-
-  //TODO: finish get all packages of photographer API
-  @Get('/:id/package')
-  @ApiOperation({
-    summary: 'get all packages of photographer',
-  })
-  async findAllPackages() {
-    throw new NotImplementedException();
   }
 
   @Get('/me/photo')

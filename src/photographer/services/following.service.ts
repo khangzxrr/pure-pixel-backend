@@ -15,27 +15,27 @@ export class FollowingService {
   async getPhotographerWithFollow(
     userId: string,
     findAllFollowingRequestDto: FindAllFollowingRequestDto,
-  ): Promise<FindAllFollowingResponseDto> {
-    const photographerDtos =
-      await this.photographerService.getAllPhotographerExceptUserId(
-        userId,
-        findAllFollowingRequestDto,
-      );
-
-    const user = await this.userRepository.findOneByIdWithFollowings(userId);
-
-    const followingDtos = photographerDtos.objects.map((p) => {
-      const isFollowThisPhotographer = user.followings.some(
-        (f) => f.followingId == p.id,
-      );
-
-      return new FollowingDto(p, isFollowThisPhotographer);
-    });
-
-    return new FindAllFollowingResponseDto(
-      findAllFollowingRequestDto.limit,
-      photographerDtos.totalRecord,
-      followingDtos,
-    );
+  ) {
+    // const photographerDtos =
+    //   await this.photographerService.getAllPhotographerExceptUserId(
+    //     userId,
+    //     findAllFollowingRequestDto,
+    //   );
+    //
+    // const user = await this.userRepository.findOneByIdWithFollowings(userId);
+    //
+    // const followingDtos = photographerDtos.objects.map((p) => {
+    //   const isFollowThisPhotographer = user.followings.some(
+    //     (f) => f.followingId == p.id,
+    //   );
+    //
+    //   return new FollowingDto(p, isFollowThisPhotographer);
+    // });
+    //
+    // return new FindAllFollowingResponseDto(
+    //   findAllFollowingRequestDto.limit,
+    //   photographerDtos.totalRecord,
+    //   followingDtos,
+    // );
   }
 }

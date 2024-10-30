@@ -7,7 +7,7 @@ export class KeycloakService {
   private kcInstance: KeycloakAdminClient;
   private clientInstance: ClientRepresentation;
 
-  private refreshTokenDate: Date = new Date('2023-10-24');
+  private refreshTokenDate: Date = new Date('2022-10-24');
 
   private async getClient() {
     if (this.clientInstance) {
@@ -17,7 +17,7 @@ export class KeycloakService {
     const kc = await this.getInstance();
 
     const clientByIdResult = await kc.clients.find({
-      clientId: 'purepixel',
+      clientId: process.env.KEYCLOAK_CLIENT_ID,
     });
 
     this.clientInstance = clientByIdResult[0];
@@ -48,21 +48,25 @@ export class KeycloakService {
       return this.kcInstance;
     }
 
-    this.kcInstance = new KeycloakAdminClient({
-      baseUrl: process.env.KEYCLOAK_AUTH_URL,
-      realmName: process.env.KEYCLOAK_REALM,
-    });
+    try {
+      this.kcInstance = new KeycloakAdminClient({
+        baseUrl: process.env.KEYCLOAK_AUTH_URL,
+        realmName: process.env.KEYCLOAK_REALM,
+      });
 
-    await this.kcInstance.auth({
-      username: process.env.KEYCLOAK_REALM_ADMIN_USERNAME,
-      password: process.env.KEYCLOAK_REALM_ADMIN_PASSWORD,
-      grantType: 'password',
-      clientId: process.env.KEYCLOAK_CLIENT_ID,
-    });
+      await this.kcInstance.auth({
+        username: process.env.KEYCLOAK_REALM_ADMIN_USERNAME,
+        password: process.env.KEYCLOAK_REALM_ADMIN_PASSWORD,
+        grantType: 'password',
+        clientId: process.env.KEYCLOAK_CLIENT_ID,
+      });
 
-    this.refreshTokenDate = new Date('2023-10-24');
+      this.refreshTokenDate = new Date('2023-10-24');
 
-    return this.kcInstance;
+      return this.kcInstance;
+    } catch (e) {
+      console.log(e);
+    }
   }
 
   async createUser(username: string, role: string) {
@@ -159,27 +163,30 @@ export class KeycloakService {
     });
   }
 
-  async countPhotographer() {
+  async findUsersHasRole(roleName: string, skip: number, take: number) {
     const kc = await this.getInstance();
     const client = await this.getClient();
 
     const users = await kc.clients.findUsersWithRole({
       id: client.id,
-      roleName: 'photographer',
+      roleName,
+      max: take,
+      first: skip,
     });
 
-    return users.length;
+    return users;
   }
 
-  async findAllPhotographers(first: number, max: number) {
+  async findUsers(skip: number, take: number) {
     const kc = await this.getInstance();
     const client = await this.getClient();
 
-    return kc.clients.findUsersWithRole({
+    const users = await kc.users.find({
       id: client.id,
-      roleName: 'photographer',
-      first,
-      max,
+      first: skip,
+      max: take,
     });
+
+    return users;
   }
 }

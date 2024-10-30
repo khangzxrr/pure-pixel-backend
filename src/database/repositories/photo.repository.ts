@@ -173,9 +173,9 @@ export class PhotoRepository {
     });
   }
 
-  async count(filter: FindAllPhotoFilterDto) {
+  async count(where: Prisma.PhotoWhereInput) {
     return this.prisma.extendedClient().photo.count({
-      where: filter.toWhere(),
+      where,
     });
   }
 

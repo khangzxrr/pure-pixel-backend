@@ -12,7 +12,6 @@ import {
   Query,
   UploadedFile,
   UseGuards,
-  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiConsumes,
@@ -36,7 +35,7 @@ import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { BlogCreateRequestDto } from '../dtos/rest/blog-create.request.dto';
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FormDataRequest } from 'nestjs-form-data';
 
 @Controller('blog')
 @ApiTags('blog')
@@ -83,53 +82,21 @@ export class BlogController {
   @ApiOperation({
     summary: 'create a new blog',
   })
-  @UseInterceptors(FileInterceptor('thumbnailFile'))
   @ApiOkResponse({
     type: BlogDto,
   })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.MANAGER_ROLE] })
+  @FormDataRequest()
   async createBlog(
     @AuthenticatedUser() user: ParsedUserDto,
     @Body() blog: BlogCreateRequestDto,
-    @UploadedFile(
-      new ParseFilePipe({
-        validators: [
-          new FileTypeValidator({ fileType: '.(png|jpeg|jpg|PNG|JPG|JPEG)' }),
-        ],
-      }),
-    )
-    thumbnailFile: Express.Multer.File,
   ) {
-    return await this.blogService.create(user.sub, blog, thumbnailFile);
-  }
-
-  @Patch(':id/thumbnail')
-  @ApiOkResponse({
-    type: BlogDto,
-  })
-  @ApiConsumes('multipart/form-data')
-  @ApiOperation({
-    summary: 'update blog thumbnail by blogId',
-  })
-  @UseInterceptors(FileInterceptor('thumbnailFile'))
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: [Constants.MANAGER_ROLE] })
-  async updateThumbnail(
-    @Param('id') id: string,
-    @UploadedFile(
-      new ParseFilePipe({
-        validators: [
-          new FileTypeValidator({ fileType: '.(png|jpeg|jpg|PNG|JPG|JPEG)' }),
-        ],
-      }),
-    )
-    thumbnailFile: Express.Multer.File,
-  ) {
-    return await this.blogService.updateThumbnail(id, thumbnailFile);
+    return await this.blogService.create(user.sub, blog);
   }
 
   @Patch(':id')
+  @ApiConsumes('multipart/form-data')
   @ApiOkResponse({
     type: BlogDto,
   })
@@ -138,6 +105,7 @@ export class BlogController {
   })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.MANAGER_ROLE] })
+  @FormDataRequest()
   async updateById(
     @Param('id') id: string,
     @Body() blogUpdateRequestDto: BlogPatchUpdateRequestDto,
@@ -152,22 +120,14 @@ export class BlogController {
   @ApiOperation({
     summary: 'replace blog info by blogId',
   })
-  @UseInterceptors(FileInterceptor('thumbnailFile'))
   @ApiConsumes('multipart/form-data')
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.MANAGER_ROLE] })
+  @FormDataRequest()
   async putUpdateById(
     @Param('id') id: string,
     @Body() blogPutUpdateDto: BlogPutUpdateRequestDto,
-    @UploadedFile(
-      new ParseFilePipe({
-        validators: [
-          new FileTypeValidator({ fileType: '.(png|jpeg|jpg|PNG|JPG|JPEG)' }),
-        ],
-      }),
-    )
-    thumbnailFile: Express.Multer.File,
   ) {
-    return await this.blogService.replace(id, blogPutUpdateDto, thumbnailFile);
+    return await this.blogService.replace(id, blogPutUpdateDto);
   }
 }

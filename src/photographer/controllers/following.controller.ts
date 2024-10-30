@@ -13,9 +13,9 @@ import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
 @ApiTags('following')
 export class FollowingController {
   constructor(@Inject() private readonly followingService: FollowingService) {}
-  @Get('')
+  @Get()
   @ApiOperation({
-    summary: 'get all photographers. Ah yes I KNOW! doesnt have filter yet',
+    summary: 'get all photographers',
   })
   @ApiOkResponsePaginated(FollowingDto)
   @UseGuards(AuthGuard, KeycloakRoleGuard)

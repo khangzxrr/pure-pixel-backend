@@ -41,4 +41,12 @@ export class AdminController {
   async triggerProcessPhoto(@Param('photoId') photoId: string) {
     return await this.adminService.triggerProcess(photoId);
   }
+
+  @Post('/user/sync')
+  @ApiOperation({
+    summary: 'sync keycloak database with application database',
+  })
+  async syncUsers() {
+    return await this.adminService.syncUsers();
+  }
 }

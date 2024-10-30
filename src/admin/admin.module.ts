@@ -6,6 +6,7 @@ import { AdminService } from './services/admin.service';
 import { AdminController } from './controllers/admin.controller';
 import { PhotoModule } from 'src/photo/photo.module';
 import { CameraModule } from 'src/camera/camera.module';
+import { UserModule } from 'src/user/user.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { CameraModule } from 'src/camera/camera.module';
     StorageModule,
     AuthenModule,
     PhotoModule,
+    UserModule,
     CameraModule,
   ],
   providers: [AdminService],

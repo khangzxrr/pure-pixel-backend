@@ -17,6 +17,26 @@ export class BunnyService {
     };
   }
 
+  private getEdgeStorageUrl(key: string) {
+    return `${process.env.BUNNY_EDGE_STORAGE_CDN}/${process.env.BUNNY_STORAGE_BUCKET}/${key}`;
+  }
+
+  async delete(key: string) {
+    if (key == null) {
+      throw new FileShouldNotBeNullException();
+    }
+
+    const response = await firstValueFrom(
+      this.httpService.delete(this.getEdgeStorageUrl(key), {
+        headers: {
+          accessKey: process.env.BUNNY_EDGE_STORAGE_ACCESS_KEY,
+        },
+      }),
+    );
+
+    return response.data;
+  }
+
   async download(key: string) {
     if (key == null) {
       throw new FileShouldNotBeNullException();

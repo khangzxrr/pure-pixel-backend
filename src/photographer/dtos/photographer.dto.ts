@@ -3,6 +3,15 @@ import { User } from '@prisma/client';
 import { Exclude } from 'class-transformer';
 
 export class PhotographerDTO implements User {
+  @ApiProperty()
+  photoCount: number = 0;
+
+  @ApiProperty()
+  voteCount: number = 0;
+
+  @ApiProperty()
+  normalizedName: string;
+
   @Exclude()
   maxPhotoQuota: bigint;
 

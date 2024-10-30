@@ -2,7 +2,6 @@ import { Inject, Injectable } from '@nestjs/common';
 import { KeycloakService } from 'src/authen/services/keycloak.service';
 import { UserRepository } from 'src/database/repositories/user.repository';
 import { Constants } from 'src/infrastructure/utils/constants';
-import { StorageService } from 'src/storage/services/storage.service';
 
 import * as fs from 'fs';
 import * as path from 'path';
@@ -10,16 +9,21 @@ import { PhotoService } from 'src/photo/services/photo.service';
 import { PhotoUploadRequestDto } from 'src/photo/dtos/rest/photo-upload.request';
 import { MemoryStoredFile } from 'nestjs-form-data';
 import { PhotoProcessConsumer } from 'src/photo/consumers/photo-process.consumer';
+import { UserService } from 'src/user/services/user.service';
 
 @Injectable()
 export class AdminService {
   constructor(
     @Inject() private readonly userRepository: UserRepository,
     @Inject() private readonly keycloakService: KeycloakService,
-    @Inject() private readonly storageService: StorageService,
     @Inject() private readonly photoService: PhotoService,
     @Inject() private readonly photoProcessConsumer: PhotoProcessConsumer,
+    @Inject() private readonly userService: UserService,
   ) {}
+
+  async syncUsers() {
+    return this.userService.syncKeycloakWithDatabase();
+  }
 
   async triggerProcess(photoId: string) {
     return this.photoProcessConsumer.processPhoto(photoId);
@@ -68,13 +72,14 @@ export class AdminService {
         trimmedUsername,
         'photographer',
       );
-      const user = await this.userRepository.createIfNotExist({
+      const user = await this.userRepository.upsert({
         id: keycloakUser.id,
         mail: `${trimmedUsername}@gmail.com`,
         name: trimmedUsername,
         cover: Constants.DEFAULT_COVER,
         quote: '',
         avatar: Constants.DEFAULT_AVATAR,
+        normalizedName: trimmedUsername,
         location: 'TP.Hồ Chí Minh',
         phonenumber: '',
         expertises: ['phong cảnh'],

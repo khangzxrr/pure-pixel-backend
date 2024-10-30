@@ -11,6 +11,12 @@ export class UserRepository {
 
   constructor(private readonly prisma: PrismaService) {}
 
+  count(where: Prisma.UserWhereInput) {
+    return this.prisma.extendedClient().user.count({
+      where,
+    });
+  }
+
   updateMaxQuotaByUserId(
     id: string,
     maxPhotoQuota: bigint,
@@ -137,27 +143,29 @@ export class UserRepository {
     }
   }
 
-  async createIfNotExist(user: UserEntity) {
-    try {
-      return this.prisma.user.upsert({
-        where: {
-          id: user.id,
-        },
-        update: {},
-        create: user,
-      });
-    } catch (e) {
-      if (e instanceof Prisma.PrismaClientKnownRequestError) {
-        if (e.code === 'P2002') {
-          throw new DuplicatedUserIdException();
-        }
-      }
-    }
+  async upsert(user: UserEntity) {
+    return this.prisma.user.upsert({
+      where: {
+        id: user.id,
+      },
+      update: {
+        normalizedName: user.normalizedName,
+      },
+      create: user,
+    });
   }
 
-  async findMany(where: Prisma.UserWhereInput) {
+  async findMany(
+    where: Prisma.UserWhereInput,
+    orderBy: Prisma.UserOrderByWithRelationInput[],
+    skip: number,
+    take: number,
+  ) {
     return this.prisma.extendedClient().user.findMany({
       where,
+      orderBy,
+      skip,
+      take,
     });
   }
 }
