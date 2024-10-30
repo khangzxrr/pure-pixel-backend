@@ -152,11 +152,6 @@ export class UpgradeOrderService {
             tx,
           );
 
-        const paymentUrl = this.sepayService.generatePaymentUrl(
-          newUpgradeOrder.id,
-          calculatedPrice.toNumber(),
-        );
-
         const requestUpgradeResponse = new RequestUpgradeOrderResponseDto();
         requestUpgradeResponse.id = newUpgradeOrder.id;
 
@@ -166,14 +161,16 @@ export class UpgradeOrderService {
 
         requestUpgradeResponse.upgradePackageHistoryId =
           newUpgradeOrder.upgradePackageHistory.id;
-        requestUpgradeResponse.paymentQrcodeUrl = paymentUrl;
 
         //IMPORTANT: must using transactionId instead of serviceTransactionId
-        requestUpgradeResponse.mockQrcode =
-          await this.sepayService.generateMockIpnQrCode(
-            newUpgradeOrder.serviceTransaction.transactionId,
-            calculatedPrice.toNumber(),
-          );
+
+        const paymentDto = await this.sepayService.generatePayment(
+          newUpgradeOrder.serviceTransaction.transactionId,
+          calculatedPrice.toNumber(),
+        );
+
+        requestUpgradeResponse.paymentUrl = paymentDto.paymentUrl;
+        requestUpgradeResponse.mockQrCode = paymentDto.mockQrCode;
 
         return requestUpgradeResponse;
       },

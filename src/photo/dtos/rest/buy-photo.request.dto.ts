@@ -1,10 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, Min } from 'class-validator';
-import { PhotoConstant } from 'src/photo/constants/photo.constant';
+import { PaymentMethod } from '@prisma/client';
+import { IsEnum } from 'class-validator';
 
 export class BuyPhotoRequestDto {
-  @ApiProperty()
-  @IsNumber()
-  @Min(PhotoConstant.MIN_PHOTO_WIDTH)
-  size: number;
+  @ApiProperty({
+    enum: PaymentMethod,
+  })
+  @IsEnum(PaymentMethod)
+  paymentMethod: PaymentMethod;
 }

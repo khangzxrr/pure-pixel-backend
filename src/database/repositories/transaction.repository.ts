@@ -61,11 +61,9 @@ export class TransactionRepository {
     });
   }
 
-  async findById(id: string) {
-    return this.prisma.transaction.findUnique({
-      where: {
-        id,
-      },
+  async findUniqueOrThrow(where: Prisma.TransactionWhereUniqueInput) {
+    return this.prisma.transaction.findUniqueOrThrow({
+      where,
       include: {
         toUserTransaction: {
           select: {

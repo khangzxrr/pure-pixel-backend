@@ -12,13 +12,15 @@ import { AuthenticatedUser, AuthGuard, Roles } from 'nest-keycloak-connect';
 import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
-import { paymentUrlDto } from '../dtos/payment-url.dto';
+import { PaymentUrlDto } from '../dtos/payment-url.dto';
+import { SepayService } from '../services/sepay.service';
 
 @Controller('payment')
 @ApiTags('payment')
 export class TransactionController {
   constructor(
     @Inject() private readonly transactionService: TransactionService,
+    @Inject() private readonly sepayService: SepayService,
   ) {}
 
   @Get('/transaction/:id')
@@ -35,7 +37,7 @@ export class TransactionController {
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
   @ApiOkResponse({
-    type: paymentUrlDto,
+    type: PaymentUrlDto,
   })
   async generatePaymentUrl(
     @AuthenticatedUser() user: ParsedUserDto,
