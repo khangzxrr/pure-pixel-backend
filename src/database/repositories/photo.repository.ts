@@ -205,6 +205,12 @@ export class PhotoRepository {
 `;
   }
 
+  async findFirst(where: Prisma.PhotoWhereInput) {
+    return this.prisma.extendedClient().photo.findFirst({
+      where,
+    });
+  }
+
   async findAll(
     where: Prisma.PhotoWhereInput,
     orderBy: Prisma.PhotoOrderByWithRelationInput[],

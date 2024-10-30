@@ -36,7 +36,12 @@ import { PhotoVoteService } from './services/photo-vote.service';
     PhotoExchangeService,
     PhotoVoteService,
   ],
-  exports: [PhotoService, PhotoProcessService, PhotoCategoryService],
+  exports: [
+    PhotoService,
+    PhotoProcessService,
+    PhotoCategoryService,
+    PhotoProcessConsumer,
+  ],
   controllers: [
     PhotoController,
     PhotoCategoryController,

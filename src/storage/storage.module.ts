@@ -7,6 +7,7 @@ import axiosRetry from 'axios-retry';
 import { BunnyService } from './services/bunny.service';
 import { BunnyController } from './controllers/bunny.controller';
 import { NestjsFormDataModule } from 'nestjs-form-data';
+import { TineyeService } from './services/tineye.service';
 
 @Module({
   imports: [
@@ -23,8 +24,8 @@ import { NestjsFormDataModule } from 'nestjs-form-data';
     }),
     NestjsFormDataModule,
   ],
-  exports: [StorageService, SftpService, BunnyService],
+  exports: [StorageService, SftpService, BunnyService, TineyeService],
   controllers: [StorageController, BunnyController],
-  providers: [StorageService, SftpService, BunnyService],
+  providers: [StorageService, SftpService, BunnyService, TineyeService],
 })
 export class StorageModule {}

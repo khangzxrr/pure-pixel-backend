@@ -7,6 +7,7 @@ import exifr from 'exifr';
 import * as SharpLib from 'sharp';
 import { PhotoConstant } from '../constants/photo.constant';
 import { BunnyService } from 'src/storage/services/bunny.service';
+import * as phash from 'sharp-phash';
 
 @Injectable()
 export class PhotoProcessService {
@@ -14,6 +15,14 @@ export class PhotoProcessService {
     private readonly httpService: HttpService,
     @Inject() private readonly bunnyService: BunnyService,
   ) {}
+
+  async getHashFromKey(key: string) {
+    const buffer = await this.getBufferFromKey(key);
+
+    const hash = await phash(buffer);
+
+    return hash;
+  }
 
   async uploadFromBuffer(key: string, buffer: Buffer) {
     return this.bunnyService.uploadFromBuffer(key, buffer);
