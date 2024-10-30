@@ -7,10 +7,24 @@ import { CustomerBookingController } from './controllers/customer-booking.contro
 import { PhotographerBookingController } from './controllers/photographer-booking.controller';
 import { NotificationModule } from 'src/notification/notification.module';
 import { BookingBillItemService } from './services/bill-item.service';
+import { PhotoModule } from 'src/photo/photo.module';
+import { NestjsFormDataModule } from 'nestjs-form-data';
+import { PhotographerBookingBillItemController } from './controllers/photographer-booking-bill-item.controller';
 
 @Module({
-  imports: [DatabaseModule, StorageModule, AuthenModule, NotificationModule],
+  imports: [
+    DatabaseModule,
+    StorageModule,
+    PhotoModule,
+    AuthenModule,
+    NotificationModule,
+    NestjsFormDataModule,
+  ],
   providers: [BookingService, BookingBillItemService],
-  controllers: [CustomerBookingController, PhotographerBookingController],
+  controllers: [
+    CustomerBookingController,
+    PhotographerBookingController,
+    PhotographerBookingBillItemController,
+  ],
 })
 export class BookingModule {}

@@ -1,6 +1,11 @@
 import { Controller, Inject, Post, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { AuthenticatedUser, AuthGuard, Roles } from 'nest-keycloak-connect';
+import {
+  AuthenticatedUser,
+  AuthGuard,
+  Public,
+  Roles,
+} from 'nest-keycloak-connect';
 import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { ChatService } from '../services/chat.service';
@@ -31,6 +36,7 @@ export class ChatController {
       Constants.MANAGER_ROLE,
     ],
   })
+  @Public(false)
   async authChatToken(@AuthenticatedUser() user: ParsedUserDto) {
     return await this.chatService.signChatToken(user.sub);
   }

@@ -350,7 +350,7 @@ model Category {
 
 enum PhotoType {
   RAW
-  EDITED
+  BOOKING
 }
 
 enum PhotoVisibility {
@@ -407,6 +407,9 @@ model Photo {
   photoSellings PhotoSell[]
   photoTags     PhotoTag[]
   bookmarks     Bookmark[]
+
+  booking   Booking? @relation(fields: [bookingId], references: [id])
+  bookingId String?
 }
 
 model Chatroom {
@@ -666,7 +669,6 @@ model PhotoshootPackage {
   showcases PhotoshootPackageShowcasePhoto[]
   reviews   Review[]
   bookings  Booking[]
-  history   PhotoshootPackageHistory[]
 }
 
 model PhotoshootPackageHistory {
@@ -675,9 +677,6 @@ model PhotoshootPackageHistory {
   subtitle  String
   price     Decimal
   thumbnail String
-
-  originalPhotoshootPackage   PhotoshootPackage @relation(fields: [originalPhotoshootPackageId], references: [id])
-  originalPhotoshootPackageId String
 
   booking Booking[]
 }
@@ -726,10 +725,6 @@ enum BookingStatus {
   REQUESTED
   ACCEPTED
   DENIED
-  STARTED
-  ENDED
-  UPLOADED
-  PAID
   SUCCESSED
   FAILED
 }
@@ -774,6 +769,7 @@ model Booking {
 
   reviews   Review[]
   billItems BookingBillItem[]
+  photos    Photo[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt

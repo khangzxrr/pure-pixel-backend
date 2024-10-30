@@ -38,12 +38,21 @@ export class PhotoShootPackageController {
 
   @Get()
   @ApiOperation({
+    summary: 'find all photoshoot package',
+  })
+  @ApiOkResponsePaginated(PhotoshootPackageDto)
+  async findAll(@Query() findAllDto: PhotoshootPackageFindAllDto) {
+    return await this.photoshootPackageService.findAll(findAllDto);
+  }
+
+  @Get('me')
+  @ApiOperation({
     summary: 'get all photoshoot package of current photographer',
   })
   @ApiOkResponsePaginated(PhotoshootPackageDto)
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
-  async findAll(
+  async findAllByPhotographer(
     @AuthenticatedUser() user: ParsedUserDto,
     @Query() findAllDto: PhotoshootPackageFindAllDto,
   ) {

@@ -1,18 +1,65 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { PhotoStatus, PhotoVisibility, Prisma } from '@prisma/client';
-import { Exclude } from 'class-transformer';
+import {
+  PhotoStatus,
+  PhotoType,
+  PhotoVisibility,
+  Prisma,
+} from '@prisma/client';
+import { Exclude, Type } from 'class-transformer';
 import {
   IsArray,
   IsBoolean,
   IsEnum,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsString,
 } from 'class-validator';
 import { PagingPaginatedRequestDto } from 'src/infrastructure/restful/paging-paginated.request.dto';
 import { ToBoolean } from 'src/infrastructure/transforms/to-boolean';
+import { GpsDto } from './gps.dto';
 
 export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
+  @ApiProperty({
+    required: false,
+    enum: PhotoType,
+  })
+  @IsOptional()
+  @IsEnum(PhotoType)
+  photoType?: PhotoType;
+
+  @ApiProperty({
+    required: false,
+  })
+  @IsOptional()
+  @ToBoolean()
+  @IsBoolean()
+  gps?: boolean;
+
+  @ApiProperty({
+    required: false,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  longitude?: number;
+
+  @ApiProperty({
+    required: false,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  latitude?: number;
+
+  @ApiProperty({
+    required: false,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  distance?: number;
+
   @ApiProperty({
     required: false,
   })
@@ -119,6 +166,9 @@ export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
   @IsEnum(Prisma.SortOrder)
   orderByUpvote?: Prisma.SortOrder;
 
+  @Exclude()
+  ids?: string[];
+
   toOrderBy(): Prisma.PhotoOrderByWithRelationInput[] {
     const orderBys: Prisma.PhotoOrderByWithRelationInput[] = [];
 
@@ -147,6 +197,23 @@ export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
 
   toWhere(): Prisma.PhotoWhereInput {
     const where: Prisma.PhotoWhereInput = {};
+
+    if (this.ids) {
+      where.id = {
+        in: this.ids,
+      };
+    }
+
+    if (this.gps) {
+      where.exif = {
+        path: ['latitude'],
+        not: null,
+      };
+    }
+
+    if (this.photoType) {
+      where.photoType = this.photoType;
+    }
 
     if (this.cameraId) {
       where.camera = {

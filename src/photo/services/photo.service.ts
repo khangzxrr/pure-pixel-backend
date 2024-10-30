@@ -1,5 +1,11 @@
 import { HttpException, Inject, Injectable, Logger } from '@nestjs/common';
-import { Photo, PhotoVisibility, PrismaPromise } from '@prisma/client';
+import {
+  Photo,
+  PhotoType,
+  PhotoVisibility,
+  Prisma,
+  PrismaPromise,
+} from '@prisma/client';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoIsPrivatedException } from '../exceptions/photo-is-private.exception';
 import { PhotoUploadRequestDto } from '../dtos/rest/photo-upload.request';
@@ -22,18 +28,13 @@ import { plainToInstance } from 'class-transformer';
 import { PhotoSellRepository } from 'src/database/repositories/photo-sell.repository';
 
 import { PrismaService } from 'src/prisma.service';
-import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { PhotoUpdateRequestDto } from '../dtos/rest/photo-update.request.dto';
 import { SignedPhotoDto } from '../dtos/signed-photo.dto';
 import { DuplicatedTagFoundException } from '../exceptions/duplicated-tag-found.exception';
 import { CategoryRepository } from 'src/database/repositories/category.repository';
 import { CategoryNotFoundException } from '../exceptions/category-not-found.exception';
 import { PhotoTagRepository } from 'src/database/repositories/photo-tag.repository';
-import { PhotoVoteRequestDto } from '../dtos/rest/photo-vote.request.dto';
-import { PhotoVoteRepository } from 'src/database/repositories/photo-vote.repository';
-import { PhotoVoteDto } from '../dtos/photo-vote.dto';
 import { NotificationConstant } from 'src/notification/constants/notification.constant';
-import { NotificationCreateDto } from 'src/notification/dtos/rest/notification-create.dto';
 import { BunnyService } from 'src/storage/services/bunny.service';
 import { UploadPhotoFailedException } from '../exceptions/upload-photo-failed.exception';
 import { ExifNotFoundException } from '../exceptions/exif-not-found.exception';
@@ -43,7 +44,6 @@ import { SignedUrl } from '../dtos/photo-signed-url.dto';
 import { GenerateWatermarkRequestDto } from '../dtos/rest/generate-watermark.request.dto';
 import { PhotoGenerateWatermarkService } from './photo-generate-watermark.service';
 import { CameraConstant } from 'src/camera/constants/camera.constant';
-import { PhotoDto } from '../dtos/photo.dto';
 
 @Injectable()
 export class PhotoService {
@@ -56,7 +56,6 @@ export class PhotoService {
     @Inject() private readonly photoSellRepository: PhotoSellRepository,
     @Inject() private readonly photoTagRepository: PhotoTagRepository,
     @Inject() private readonly categoryRepository: CategoryRepository,
-    @Inject() private readonly photoVoteRepository: PhotoVoteRepository,
     @Inject() private readonly bunnyService: BunnyService,
     @Inject()
     private readonly photoGenerateWatermarkService: PhotoGenerateWatermarkService,
@@ -238,6 +237,11 @@ export class PhotoService {
       );
     }
 
+    //prevent empty value
+    if (!photoUpdateDto.categoryIds) {
+      photoUpdateDto.categoryIds = [];
+    }
+
     prismaPromises.push(
       this.photoRepository.updateByIdQuery(id, {
         categories: {
@@ -260,6 +264,7 @@ export class PhotoService {
   async findPublicPhotos(filter: FindAllPhotoFilterDto) {
     filter.visibility = 'PUBLIC';
     filter.status = 'PARSED';
+    filter.photoType = 'RAW'; //ensure only get RAW photo
 
     return await this.findAll(filter);
   }
@@ -274,16 +279,42 @@ export class PhotoService {
     this.logger.log(`findall with filter:`);
     this.logger.log(JSON.stringify(filter));
 
-    const count = await this.photoRepository.count(filter);
+    let idFilterByGPS = [];
+    let count = 0;
 
-    const photos = await this.photoRepository.findAll(
+    if (
+      filter.gps &&
+      filter.latitude !== undefined &&
+      filter.longitude !== undefined &&
+      filter.distance !== undefined
+    ) {
+      const countByGPS = await this.photoRepository.countByGPS(
+        filter.longitude,
+        filter.latitude,
+        filter.distance,
+      );
+      count = countByGPS[0]['count'];
+
+      const idWithDistances = await this.photoRepository.findAllIdsByGPS(
+        filter.longitude,
+        filter.latitude,
+        filter.distance,
+      );
+      idFilterByGPS = idWithDistances.map((iwd) => iwd['id']);
+    }
+
+    if (idFilterByGPS.length > 0) {
+      filter.ids = idFilterByGPS;
+    }
+
+    count = await this.photoRepository.count(filter);
+
+    let photos = await this.photoRepository.findAll(
       filter.toWhere(),
       filter.toOrderBy(),
       filter.toSkip(),
       filter.limit,
     );
-
-    // console.log(photos);
 
     const signedPhotoDtoPromises = photos.map(async (p) => {
       const signedPhotoDto = await this.signPhoto(p);
@@ -342,6 +373,7 @@ export class PhotoService {
 
   async uploadPhoto(
     userId: string,
+    photoType: PhotoType,
     photoUploadDto: PhotoUploadRequestDto,
   ): Promise<SignedPhotoDto> {
     const user = await this.userRepository.findUniqueOrThrow(userId);
@@ -405,7 +437,7 @@ export class PhotoService {
         width: metadata.width,
         height: metadata.height,
         status: 'PARSED',
-        photoType: 'RAW',
+        photoType: photoType,
         watermark: false,
         visibility: 'PRIVATE',
         originalPhotoUrl: storageObjectKey,

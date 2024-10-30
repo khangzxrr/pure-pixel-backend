@@ -6,10 +6,16 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiConsumes,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { BookingService } from '../services/booking.service';
 import { AuthenticatedUser, AuthGuard, Roles } from 'nest-keycloak-connect';
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
@@ -20,19 +26,15 @@ import { DenyBookingRequestDto } from '../dtos/rest/deny-booking.request.dto';
 import { BookingDto } from '../dtos/booking.dto';
 import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.response.dto';
 import { BookingUpdateRequestDto } from '../dtos/rest/booking-update.request.dto';
-import { BookingBillItemService } from '../services/bill-item.service';
-import { BookingBillItemFindAllRequestDto } from '../dtos/rest/booking-bill-item-find-all.request.dto';
-import { BookingBillItemFindAllResponseDto } from '../dtos/rest/booking-bill-item-find-all.response.dto';
+import { FormDataRequest } from 'nestjs-form-data';
+import { BookingUploadRequestDto } from '../dtos/rest/booking-upload.request.dto';
 
 @Controller('photographer/booking')
 @ApiTags('photographer-booking')
 export class PhotographerBookingController {
-  constructor(
-    @Inject() private readonly bookingService: BookingService,
-    @Inject() private readonly bookingBillItemService: BookingBillItemService,
-  ) {}
+  constructor(@Inject() private readonly bookingService: BookingService) {}
 
-  @Get('')
+  @Get('me')
   @ApiOperation({
     summary: 'get all booking from current photographer',
   })
@@ -46,6 +48,43 @@ export class PhotographerBookingController {
     return await this.bookingService.findAllByPhotographerId(
       user.sub,
       findallDto,
+    );
+  }
+
+  @Get(':bookingId')
+  @ApiOperation({
+    summary: 'get booking detail by bookingId',
+  })
+  @ApiOkResponsePaginated(BookingDto)
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
+  async getBookingDetail(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Param('bookingId') bookingId: string,
+  ) {
+    return await this.bookingService.findById(user.sub, bookingId);
+  }
+
+  @Put(':bookingId/upload')
+  @ApiOperation({
+    summary: 'upload photo to booking by bookingId',
+  })
+  @ApiOkResponse({
+    type: BookingDto,
+  })
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
+  @ApiConsumes('multipart/form-data')
+  @FormDataRequest()
+  async uploadPhoto(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Param('bookingId') bookingId: string,
+    @Body() bookingUploadDto: BookingUploadRequestDto,
+  ) {
+    return this.bookingService.uploadPhoto(
+      user.sub,
+      bookingId,
+      bookingUploadDto,
     );
   }
 
@@ -99,22 +138,19 @@ export class PhotographerBookingController {
     return await this.bookingService.updateById(user.sub, bookingId, updateDto);
   }
 
-  @Get(':bookingId/bill-item')
+  @Patch(':bookingId/paid')
   @ApiOperation({
-    summary: 'find all booking bill item by bookingId',
+    summary: 'set booking status to paid - unlock watermark photo by bookingId',
   })
-  @ApiOkResponse({ type: BookingBillItemFindAllResponseDto })
+  @ApiOkResponse({
+    type: BookingDto,
+  })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
-  async findAllBookingBillItems(
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
+  async paidBooking(
     @AuthenticatedUser() user: ParsedUserDto,
     @Param('bookingId') bookingId: string,
-    @Query() findallDto: BookingBillItemFindAllRequestDto,
   ) {
-    return await this.bookingBillItemService.findAll(
-      user.sub,
-      bookingId,
-      findallDto,
-    );
+    return await this.bookingService.updateBookingToPaid(user.sub, bookingId);
   }
 }

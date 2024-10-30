@@ -21,6 +21,9 @@ export class PhotoshootPackageDto {
   thumbnail: string;
 
   @ApiProperty()
+  description: string;
+
+  @ApiProperty()
   status: PhotoshootPackageStatus;
 
   @Exclude()

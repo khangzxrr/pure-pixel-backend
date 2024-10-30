@@ -1,13 +1,16 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { BookingBillItemRepository } from 'src/database/repositories/booking-bill-item.repository';
 import { BookingBillItemFindAllRequestDto } from '../dtos/rest/booking-bill-item-find-all.request.dto';
-import { BookingBillItem } from '@prisma/client';
+import { BookingBillItem, BookingStatus } from '@prisma/client';
 import { plainToInstance } from 'class-transformer';
 import { BookingBillItemDto } from '../dtos/booking-bill-item.dto';
 import { BookingBillItemFindAllResponseDto } from '../dtos/rest/booking-bill-item-find-all.response.dto';
 import { BookingRepository } from 'src/database/repositories/booking.repository';
 import { BookingNotBelongException } from '../exceptions/booking-not-belong.exception';
 import { Decimal } from '@prisma/client/runtime/library';
+import { BookingBillItemCreateDto } from '../dtos/booking-bill-item.create.dto';
+import { BookingNotInValidStateException } from '../exceptions/booking-not-in-valid-state.exception';
+import { BookingBillItemUpdateDto } from '../dtos/booking-bill-item.update.dto';
 
 @Injectable()
 export class BookingBillItemService {
@@ -17,6 +20,94 @@ export class BookingBillItemService {
     @Inject()
     private readonly bookinRepository: BookingRepository,
   ) {}
+
+  async updateBillItem(
+    userId: string,
+    bookingId: string,
+    billItemId: string,
+    billItemUpdateDto: BookingBillItemUpdateDto,
+  ) {
+    const booking = await this.bookinRepository.findUniqueOrThrow({
+      id: bookingId,
+    });
+
+    if (booking.originalPhotoshootPackage.userId !== userId) {
+      throw new BookingNotBelongException();
+    }
+
+    const validState: BookingStatus[] = [
+      BookingStatus.REQUESTED,
+      BookingStatus.ACCEPTED,
+    ];
+    if (validState.indexOf(booking.status) < 0) {
+      throw new BookingNotInValidStateException();
+    }
+
+    const billitem = await this.bookingBillItemRepository.updateById(
+      billItemId,
+      billItemUpdateDto,
+    );
+
+    return plainToInstance(BookingBillItemDto, billitem);
+  }
+
+  async deleteBillItem(userId: string, bookingId: string, billItemId: string) {
+    const booking = await this.bookinRepository.findUniqueOrThrow({
+      id: bookingId,
+    });
+
+    if (booking.originalPhotoshootPackage.userId !== userId) {
+      throw new BookingNotBelongException();
+    }
+
+    const validState: BookingStatus[] = [
+      BookingStatus.REQUESTED,
+      BookingStatus.ACCEPTED,
+    ];
+    if (validState.indexOf(booking.status) < 0) {
+      throw new BookingNotInValidStateException();
+    }
+
+    const billItem = await this.bookingBillItemRepository.deleteById(
+      bookingId,
+      billItemId,
+    );
+
+    return plainToInstance(BookingBillItemDto, billItem);
+  }
+
+  async createBillItem(
+    userId: string,
+    bookingId: string,
+    bookingBillItemCreateDto: BookingBillItemCreateDto,
+  ) {
+    const booking = await this.bookinRepository.findUniqueOrThrow({
+      id: bookingId,
+    });
+
+    if (booking.originalPhotoshootPackage.userId !== userId) {
+      throw new BookingNotBelongException();
+    }
+
+    const validState: BookingStatus[] = [
+      BookingStatus.REQUESTED,
+      BookingStatus.ACCEPTED,
+    ];
+    if (validState.indexOf(booking.status) < 0) {
+      throw new BookingNotInValidStateException();
+    }
+
+    const bookingBillItem = await this.bookingBillItemRepository.create({
+      ...bookingBillItemCreateDto,
+      booking: {
+        connect: {
+          id: booking.id,
+        },
+      },
+    });
+
+    return plainToInstance(BookingBillItemDto, bookingBillItem);
+  }
 
   async sumBookingBill(bookingId: string) {
     const sumIncrease = await this.bookingBillItemRepository.aggregate({
@@ -67,6 +158,8 @@ export class BookingBillItemService {
     ) {
       throw new BookingNotBelongException();
     }
+
+    findAllDto.bookingId = bookingId;
 
     const count = await this.bookingBillItemRepository.count(
       findAllDto.toWhere(),

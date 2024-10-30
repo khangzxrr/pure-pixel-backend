@@ -16,9 +16,14 @@ import { BookingNotBelongException } from '../exceptions/booking-not-belong.exce
 import { BookingNotInRequestedStateException } from '../exceptions/booking-not-in-requested-state.exception';
 import { BookingWithPhotoshootPackageIncludedUser } from 'src/database/types/booking';
 import { BookingUpdateRequestDto } from '../dtos/rest/booking-update.request.dto';
-import { BookingStatus } from '@prisma/client';
-import { BookingStartedException } from '../exceptions/booking-started.exception';
+import { BookingStatus, PrismaPromise } from '@prisma/client';
 import { BothStartEndDateMustSpecifyException } from '../exceptions/start-end-date-must-specify.exception';
+import { BookingNotAcceptedException } from '../exceptions/booking-not-accepted.exception';
+import { BookingUploadRequestDto } from '../dtos/rest/booking-upload.request.dto';
+import { PhotoService } from 'src/photo/services/photo.service';
+import { PhotoRepository } from 'src/database/repositories/photo.repository';
+import { BookingNotInValidStateException } from '../exceptions/booking-not-in-valid-state.exception';
+import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
 export class BookingService {
@@ -27,7 +32,47 @@ export class BookingService {
     @Inject()
     private readonly photoshootPackageRepository: PhotoshootRepository,
     @Inject() private readonly notificationService: NotificationService,
+    @Inject() private readonly photoService: PhotoService,
+    @Inject() private readonly photoRepository: PhotoRepository,
+    private readonly prisma: PrismaService,
   ) {}
+
+  async updateBookingToPaid(userId: string, bookingId: string) {
+    const booking = await this.bookingRepository.findUniqueOrThrow({
+      id: bookingId,
+    });
+
+    if (booking.originalPhotoshootPackage.userId !== userId) {
+      throw new BookingNotBelongException();
+    }
+
+    if (booking.status !== 'ACCEPTED') {
+      throw new BookingNotInValidStateException();
+    }
+
+    const prismaPromises: PrismaPromise<any>[] = [];
+
+    prismaPromises.push(
+      this.bookingRepository.updateByIdQuery(bookingId, {
+        status: 'SUCCESSED',
+      }),
+    );
+
+    prismaPromises.push(
+      this.photoRepository.updateManyQuery({
+        where: {
+          bookingId,
+        },
+        data: {
+          watermark: false,
+        },
+      }),
+    );
+
+    await this.prisma.$transaction(prismaPromises);
+
+    return await this.findById(userId, bookingId);
+  }
 
   async updateById(
     userId: string,
@@ -52,7 +97,7 @@ export class BookingService {
     const validStates: BookingStatus[] = ['REQUESTED', 'ACCEPTED'];
 
     if (validStates.indexOf(booking.status) < 0) {
-      throw new BookingStartedException();
+      throw new BookingNotInValidStateException();
     }
 
     if (updateDto.startDate && updateDto.endDate) {
@@ -73,6 +118,29 @@ export class BookingService {
     return plainToInstance(BookingDto, updatedBooking);
   }
 
+  async findById(userId: string, bookingId: string) {
+    const booking = await this.bookingRepository.findUniqueOrThrow({
+      id: bookingId,
+    });
+
+    if (
+      booking.originalPhotoshootPackage.userId !== userId &&
+      booking.userId !== userId
+    ) {
+      throw new BookingNotBelongException();
+    }
+
+    const bookingDto = plainToInstance(BookingDto, booking);
+
+    const signedPhotoDtoPromises = booking.photos.map((p) =>
+      this.photoService.signPhoto(p),
+    );
+    const signedPhotoDtos = await Promise.all(signedPhotoDtoPromises);
+    bookingDto.photos = signedPhotoDtos;
+
+    return bookingDto;
+  }
+
   async findAllByUserId(userId: string, findallDto: BookingFindAllRequestDto) {
     findallDto.userId = userId;
 
@@ -88,6 +156,51 @@ export class BookingService {
     const bookingDtos = plainToInstance(BookingDto, bookings);
 
     return new BookingFindAllResponseDto(findallDto.limit, count, bookingDtos);
+  }
+
+  async uploadPhoto(
+    userId: string,
+    bookingId: string,
+    bookingUploadDto: BookingUploadRequestDto,
+  ) {
+    const booking = await this.bookingRepository.findUniqueOrThrow({
+      id: bookingId,
+    });
+
+    if (booking.originalPhotoshootPackage.userId !== userId) {
+      throw new BookingNotBelongException();
+    }
+
+    if (
+      booking.status === 'FAILED' ||
+      booking.status === 'REQUESTED' ||
+      booking.status === 'DENIED'
+    ) {
+      throw new BookingNotAcceptedException();
+    }
+
+    const signedPhotoDto = await this.photoService.uploadPhoto(
+      userId,
+      'BOOKING',
+      {
+        file: bookingUploadDto.file,
+      },
+    );
+
+    await this.photoService.sendImageWatermarkQueue(userId, signedPhotoDto.id, {
+      text: 'PXL',
+    });
+
+    await this.photoRepository.updateById(signedPhotoDto.id, {
+      watermark: true,
+      booking: {
+        connect: {
+          id: bookingId,
+        },
+      },
+    });
+
+    return this.photoService.getSignedPhotoById(userId, signedPhotoDto.id);
   }
 
   async accept(bookingId: string, userId: string) {
@@ -184,7 +297,7 @@ export class BookingService {
       throw new StartDateMustLargerThanCurrentDateByOneDayException();
     }
 
-    const diffBetweenStartAndEndDate = end.getTime() - end.getTime();
+    const diffBetweenStartAndEndDate = end.getTime() - start.getTime();
     const hourDiffBetweenStartAndEnd =
       diffBetweenStartAndEndDate / 1000 / 60 / 60;
 
@@ -253,13 +366,13 @@ export class BookingService {
           price: photoshootPackage.price,
         },
       },
+      originalPhotoshootPackage: {
+        connect: {
+          id: photoshootPackage.id,
+        },
+      },
       photoshootPackageHistory: {
         create: {
-          originalPhotoshootPackage: {
-            connect: {
-              id: photoshootPackage.id,
-            },
-          },
           price: photoshootPackage.price,
           title: photoshootPackage.title,
           subtitle: photoshootPackage.subtitle,
