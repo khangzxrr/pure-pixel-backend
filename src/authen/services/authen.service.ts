@@ -2,12 +2,14 @@ import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { UserRepository } from 'src/database/repositories/user.repository';
+import { Constants } from 'src/infrastructure/utils/constants';
 import { Utils } from 'src/infrastructure/utils/utils';
 import { PrismaService } from 'src/prisma.service';
 import { SftpService } from 'src/storage/services/sftp.service';
 import { UserFilterDto } from 'src/user/dtos/user-filter.dto';
 import { UserEntity } from 'src/user/entities/user.entity';
 import { StreamChat } from 'stream-chat';
+import * as tvkd from 'tieng-viet-khong-dau';
 
 @Injectable()
 export class AuthenService {
@@ -51,8 +53,9 @@ export class AuthenService {
         });
         newUser.ftpUsername = `${username}${Utils.randomString(5)}`;
         newUser.name = username;
-        newUser.avatar =
-          'https://s3-hcm-r1.s3cloud.vn/sftpgo/avatar%2Favatar.png';
+        newUser.avatar = Constants.DEFAULT_AVATAR;
+        newUser.cover = Constants.DEFAULT_COVER;
+        newUser.normalizedName = tvkd.cLowerCase(username);
 
         newUser.ftpPassword = Utils.randomString(12);
 

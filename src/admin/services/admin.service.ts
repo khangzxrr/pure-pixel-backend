@@ -68,13 +68,14 @@ export class AdminService {
         trimmedUsername,
         'photographer',
       );
-      const user = await this.userRepository.createIfNotExist({
+      const user = await this.userRepository.upsert({
         id: keycloakUser.id,
         mail: `${trimmedUsername}@gmail.com`,
         name: trimmedUsername,
         cover: Constants.DEFAULT_COVER,
         quote: '',
         avatar: Constants.DEFAULT_AVATAR,
+        normalizedName: trimmedUsername,
         location: 'TP.Hồ Chí Minh',
         phonenumber: '',
         expertises: ['phong cảnh'],

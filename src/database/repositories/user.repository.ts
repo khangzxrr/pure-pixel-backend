@@ -137,22 +137,14 @@ export class UserRepository {
     }
   }
 
-  async createIfNotExist(user: UserEntity) {
-    try {
-      return this.prisma.user.upsert({
-        where: {
-          id: user.id,
-        },
-        update: {},
-        create: user,
-      });
-    } catch (e) {
-      if (e instanceof Prisma.PrismaClientKnownRequestError) {
-        if (e.code === 'P2002') {
-          throw new DuplicatedUserIdException();
-        }
-      }
-    }
+  async upsert(user: UserEntity) {
+    return this.prisma.user.upsert({
+      where: {
+        id: user.id,
+      },
+      update: {},
+      create: user,
+    });
   }
 
   async findMany(where: Prisma.UserWhereInput) {
