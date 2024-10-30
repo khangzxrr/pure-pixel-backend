@@ -17,7 +17,6 @@ import {
 } from 'class-validator';
 import { PagingPaginatedRequestDto } from 'src/infrastructure/restful/paging-paginated.request.dto';
 import { ToBoolean } from 'src/infrastructure/transforms/to-boolean';
-import { GpsDto } from './gps.dto';
 
 export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
   @ApiProperty({
@@ -129,7 +128,12 @@ export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
   @Exclude()
   visibility?: PhotoVisibility;
 
-  @Exclude()
+  @ApiProperty({
+    required: false,
+    enum: PhotoStatus,
+  })
+  @IsOptional()
+  @IsEnum(PhotoStatus)
   status?: PhotoStatus;
 
   @ApiProperty({

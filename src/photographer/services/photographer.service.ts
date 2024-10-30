@@ -1,7 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
 import { PhotoService } from 'src/photo/services/photo.service';
-import { PhotoStatus } from '@prisma/client';
 import { FindAllPhotoFilterDto } from 'src/photo/dtos/find-all.filter.dto';
 import { UserEntity } from 'src/user/entities/user.entity';
 import { KeycloakService } from 'src/authen/services/keycloak.service';
@@ -99,7 +98,6 @@ export class PhotographerService {
   }
 
   async getPhotosOfMe(userId: string, filter: FindAllPhotoFilterDto) {
-    filter.status = PhotoStatus.PARSED;
     filter.photographerId = userId;
 
     return await this.photoService.findAll(filter);
