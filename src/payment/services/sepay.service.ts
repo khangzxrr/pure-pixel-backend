@@ -27,6 +27,7 @@ import { PrismaService } from 'src/prisma.service';
 import { plainToInstance } from 'class-transformer';
 import { UserToUserRepository } from 'src/database/repositories/user-to-user-transaction.repository';
 import { PaymentUrlDto } from '../dtos/payment-url.dto';
+import { TransactionNotInPendingException } from '../exceptions/transaction-not-in-pending.exception';
 
 @Injectable()
 export class SepayService {
@@ -327,6 +328,14 @@ export class SepayService {
     transactionId: string,
     amount: number,
   ): Promise<PaymentUrlDto> {
+    const transaction = await this.transactionRepository.findUniqueOrThrow({
+      id: transactionId,
+    });
+
+    if (transaction.status !== 'PENDING') {
+      throw new TransactionNotInPendingException();
+    }
+
     const url = this.generatePaymentUrl(transactionId, amount);
 
     const qrcode = await this.generateMockIpnQrCode(transactionId, amount);

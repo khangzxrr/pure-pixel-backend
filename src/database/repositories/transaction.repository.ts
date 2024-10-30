@@ -40,6 +40,16 @@ export class TransactionRepository {
     });
   }
 
+  async update(
+    where: Prisma.TransactionWhereInput,
+    update: Prisma.TransactionUpdateInput,
+  ) {
+    return this.prisma.transaction.updateMany({
+      where,
+      data: update,
+    });
+  }
+
   async findAll(
     where: Prisma.TransactionWhereInput,
     skip?: number,

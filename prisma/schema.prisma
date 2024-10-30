@@ -114,6 +114,7 @@ enum TransactionStatus {
   FAILED
   PENDING
   CANCEL
+  EXPIRED
 }
 
 enum PaymentMethod {
