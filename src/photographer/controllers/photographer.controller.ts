@@ -21,7 +21,7 @@ import { FindAllPhotoFilterDto } from 'src/photo/dtos/find-all.filter.dto';
 import { FindAllPhotographerRequestDto } from '../dtos/find-all-photographer-dtos/find-all-photographer.request.dto';
 import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.response.dto';
 import { PhotographerDTO } from '../dtos/photographer.dto';
-import { PagingPaginatedResposneDto } from 'src/infrastructure/restful/paging-paginated.response.dto';
+
 import { PhotographerProfileDto } from '../dtos/photographer-profile.dto';
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
 import { SignedPhotoDto } from 'src/photo/dtos/signed-photo.dto';
@@ -43,18 +43,9 @@ export class PhotographerController {
   async findAllPhotographers(
     @AuthenticatedUser() user: ParsedUserDto,
     @Query() findAllRequestDto: FindAllPhotographerRequestDto,
-  ): Promise<PagingPaginatedResposneDto<PhotographerDTO>> {
-    console.log(findAllRequestDto);
-
-    if (user) {
-      return this.photographerService.getAllPhotographerExceptUserId(
-        user.sub,
-        findAllRequestDto,
-      );
-    }
-
-    return this.photographerService.getAllPhotographerExceptUserId(
-      '',
+  ) {
+    return this.photographerService.getAllPhotographer(
+      user.sub,
       findAllRequestDto,
     );
   }

@@ -1,9 +1,19 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
 export class PhotoVoteRepository {
   constructor(private readonly prisma: PrismaService) {}
+
+  aggregate(where: Prisma.VoteWhereInput) {
+    return this.prisma.vote.aggregate({
+      where,
+      _count: {
+        id: true,
+      },
+    });
+  }
 
   delete(voteId: string, photoId: string, userId: string) {
     return this.prisma.vote.delete({

@@ -35,6 +35,31 @@ export class FindAllPhotographerRequestDto extends PagingPaginatedRequestDto {
     const where: Prisma.UserWhereInput = {};
 
     if (this.search) {
+      where.normalizedName = {
+        contains: this.search,
+      };
     }
+
+    return where;
+  }
+
+  toOrderBy() {
+    const orderBys: Prisma.UserOrderByWithRelationInput[] = [];
+
+    if (this.orderByCreatedAt) {
+      orderBys.push({
+        createdAt: this.orderByCreatedAt,
+      });
+    }
+
+    if (this.orderByPhotoCount) {
+      orderBys.push({
+        photos: {
+          _count: this.orderByPhotoCount,
+        },
+      });
+    }
+
+    return orderBys;
   }
 }

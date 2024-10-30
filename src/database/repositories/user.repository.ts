@@ -11,6 +11,12 @@ export class UserRepository {
 
   constructor(private readonly prisma: PrismaService) {}
 
+  count(where: Prisma.UserWhereInput) {
+    return this.prisma.extendedClient().user.count({
+      where,
+    });
+  }
+
   updateMaxQuotaByUserId(
     id: string,
     maxPhotoQuota: bigint,
@@ -147,9 +153,13 @@ export class UserRepository {
     });
   }
 
-  async findMany(where: Prisma.UserWhereInput) {
+  async findMany(
+    where: Prisma.UserWhereInput,
+    orderBy: Prisma.UserOrderByWithRelationInput[],
+  ) {
     return this.prisma.extendedClient().user.findMany({
       where,
+      orderBy,
     });
   }
 }
