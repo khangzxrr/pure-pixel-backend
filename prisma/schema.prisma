@@ -364,7 +364,7 @@ enum PhotoVisibility {
 enum PhotoStatus {
   PENDING
   PARSED
-  VERIFYING
+  DUPLICATED
 }
 
 model Photo {
@@ -399,6 +399,8 @@ model Photo {
   status PhotoStatus @default(PENDING)
 
   size Int @default(0)
+
+  hash String @default("")
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
