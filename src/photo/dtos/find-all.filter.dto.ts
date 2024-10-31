@@ -21,6 +21,14 @@ import { ToBoolean } from 'src/infrastructure/transforms/to-boolean';
 export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
   @ApiProperty({
     required: false,
+  })
+  @IsOptional()
+  @ToBoolean()
+  @IsBoolean()
+  bookmarked: boolean;
+
+  @ApiProperty({
+    required: false,
     enum: PhotoType,
   })
   @IsOptional()
