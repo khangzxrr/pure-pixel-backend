@@ -3,7 +3,8 @@ import { ReportStatus, ReportType } from '@prisma/client';
 import { Exclude, Type } from 'class-transformer';
 import { UserDto } from 'src/user/dtos/me.dto';
 import { PhotoDto } from 'src/photo/dtos/photo.dto';
-import { CommentEntity } from 'src/photo/entities/comment.entity';
+
+import { CommentDto } from 'src/photo/dtos/comment-dto';
 
 export class ReportDto {
   @ApiProperty()
@@ -42,5 +43,5 @@ export class ReportDto {
   referencedPhoto?: PhotoDto;
 
   @ApiPropertyOptional()
-  referencedComment?: CommentEntity;
+  referencedComment?: CommentDto;
 }

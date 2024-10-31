@@ -14,8 +14,8 @@ export class ReportRepository {
     });
   }
 
-  async findById(id: string) {
-    return this.prisma.report.findUnique({
+  async findUniqueOrThrow(id: string) {
+    return this.prisma.report.findUniqueOrThrow({
       where: {
         id,
       },
