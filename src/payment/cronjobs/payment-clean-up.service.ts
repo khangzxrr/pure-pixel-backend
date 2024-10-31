@@ -20,7 +20,7 @@ export class PaymentCleanUpCronJob {
         },
       },
       {
-        status: 'FAILED',
+        status: 'EXPIRED',
       },
     );
 
