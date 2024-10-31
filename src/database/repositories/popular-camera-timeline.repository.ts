@@ -6,6 +6,12 @@ import { PrismaService } from 'src/prisma.service';
 export class PopularCameraTimelineRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
+  async count(where: Prisma.PopularCameraTimelineWhereInput) {
+    return this.prismaService.extendedClient().popularCameraTimeline.count({
+      where,
+    });
+  }
+
   async findMany(where: Prisma.PopularCameraTimelineWhereInput) {
     return this.prismaService.popularCameraTimeline.findMany({
       where,

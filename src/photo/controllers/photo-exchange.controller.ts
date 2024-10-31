@@ -22,6 +22,7 @@ import { PhotoSellDto } from '../dtos/photo-sell.dto';
 import { SignedPhotoBuyDto } from '../dtos/rest/signed-photo-buy.response.dto';
 import { PhotoExchangeService } from '../services/photo-exchange.service';
 import { Response } from 'express';
+import { BuyPhotoRequestDto } from '../dtos/rest/buy-photo.request.dto';
 
 @Controller('photo')
 @ApiTags('photo-exchange')
@@ -62,7 +63,7 @@ export class PhotoExchangeController {
     throw new NotImplementedException();
   }
 
-  @Post('/:photoId/photo-sell/:photoSellId/price-tag/:pricetagId')
+  @Post('/:photoId/photo-sell/:photoSellId/price-tag/:pricetagId/buy')
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
   @ApiOkResponse({
@@ -73,12 +74,14 @@ export class PhotoExchangeController {
     @Param('photoId') photoId: string,
     @Param('photoSellId') photoSellId: string,
     @Param('pricetagId') pricetagId: string,
+    @Body() buyPhotoDto: BuyPhotoRequestDto,
   ) {
     return await this.photoExchangeService.buyPhotoRequest(
       user.sub,
       photoId,
       photoSellId,
       pricetagId,
+      buyPhotoDto,
     );
   }
 

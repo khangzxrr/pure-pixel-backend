@@ -3,7 +3,7 @@ import { TransactionRepository } from 'src/database/repositories/transaction.rep
 import { TransactionNotFoundException } from '../exceptions/transaction-not-found.exception';
 import { NotBelongTransactionException } from '../exceptions/not-belong-transaction.exception';
 import { SepayService } from './sepay.service';
-import { paymentUrlDto } from '../dtos/payment-url.dto';
+import { PaymentUrlDto } from '../dtos/payment-url.dto';
 
 @Injectable()
 export class TransactionService {
@@ -13,47 +13,23 @@ export class TransactionService {
   ) {}
 
   async findById(userId: string, id: string) {
-    const transaction = await this.transactionRepository.findById(id);
-
-    if (!transaction) {
-      throw new TransactionNotFoundException();
-    }
-
-    // if (transaction. !== userId) {
-    //   throw new NotBelongTransactionException();
-    // }
+    const transaction = await this.transactionRepository.findUniqueOrThrow({
+      id,
+      userId,
+    });
 
     return transaction;
   }
 
-  async generatePaymentUrl(
-    userId: string,
-    transactionId: string,
-  ): Promise<paymentUrlDto> {
-    const transaction =
-      await this.transactionRepository.findById(transactionId);
+  async generatePaymentUrl(userId: string, id: string) {
+    const transaction = await this.transactionRepository.findUniqueOrThrow({
+      id,
+      userId,
+    });
 
-    if (!transaction) {
-      throw new TransactionNotFoundException();
-    }
-
-    if (transaction.userId !== userId) {
-      throw new NotBelongTransactionException();
-    }
-
-    const mockQrCode = await this.sepayService.generateMockIpnQrCode(
-      transactionId,
+    return await this.sepayService.generatePayment(
+      transaction.id,
       transaction.amount.toNumber(),
     );
-
-    const paymentUrl = this.sepayService.generatePaymentUrl(
-      transactionId,
-      transaction.amount.toNumber(),
-    );
-
-    return {
-      mockQrCode,
-      paymentUrl,
-    };
   }
 }

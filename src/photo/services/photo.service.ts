@@ -315,7 +315,7 @@ export class PhotoService {
       filter.ids = idFilterByGPS;
     }
 
-    count = await this.photoRepository.count(filter);
+    count = await this.photoRepository.count(filter.toWhere());
 
     const photos = await this.photoRepository.findAll(
       filter.toWhere(),

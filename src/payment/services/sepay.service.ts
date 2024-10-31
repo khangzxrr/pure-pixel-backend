@@ -26,6 +26,8 @@ import { DepositTransactionRepository } from 'src/database/repositories/deposit-
 import { PrismaService } from 'src/prisma.service';
 import { plainToInstance } from 'class-transformer';
 import { UserToUserRepository } from 'src/database/repositories/user-to-user-transaction.repository';
+import { PaymentUrlDto } from '../dtos/payment-url.dto';
+import { TransactionNotInPendingException } from '../exceptions/transaction-not-in-pending.exception';
 
 @Injectable()
 export class SepayService {
@@ -275,8 +277,9 @@ export class SepayService {
   async processTransaction(sepay: SepayRequestDto) {
     const transactionId = sepay.content.replaceAll(' ', '-');
 
-    const transaction =
-      await this.transactionRepository.findById(transactionId);
+    const transaction = await this.transactionRepository.findUniqueOrThrow({
+      id: transactionId,
+    });
 
     if (transaction == null) {
       throw new TransactionNotFoundException();
@@ -321,13 +324,35 @@ export class SepayService {
     return HttpStatus.OK;
   }
 
-  generatePaymentUrl(transactionId: string, amount: number) {
+  async generatePayment(
+    transactionId: string,
+    amount: number,
+  ): Promise<PaymentUrlDto> {
+    const transaction = await this.transactionRepository.findUniqueOrThrow({
+      id: transactionId,
+    });
+
+    if (transaction.status !== 'PENDING') {
+      throw new TransactionNotInPendingException();
+    }
+
+    const url = this.generatePaymentUrl(transactionId, amount);
+
+    const qrcode = await this.generateMockIpnQrCode(transactionId, amount);
+
+    return {
+      mockQrCode: qrcode,
+      paymentUrl: url,
+    };
+  }
+
+  private generatePaymentUrl(transactionId: string, amount: number) {
     const removedDashTransactionId = transactionId.trim().replaceAll('-', ' ');
 
     return `https://qr.sepay.vn/img?acc=${process.env.SEPAY_ACC}&bank=${process.env.SEPAY_BANK}&amount=${amount}&des=${encodeURIComponent(removedDashTransactionId)}&template=TEMPLATE`;
   }
 
-  async generateMockIpnQrCode(
+  private async generateMockIpnQrCode(
     transactionId: string,
     amount: number,
   ): Promise<string> {
