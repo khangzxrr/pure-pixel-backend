@@ -13,6 +13,29 @@ export class UserToUserRepository {
       },
     });
   }
+
+  async findMany(where: Prisma.UserToUserTransactionWhereInput) {
+    return this.prisma.extendedClient().userToUserTransaction.findMany({
+      where,
+      select: {
+        id: true,
+      },
+    });
+  }
+
+  async updateById(
+    id: string,
+    update: Prisma.UserToUserTransactionUpdateInput,
+    tx: Prisma.TransactionClient,
+  ) {
+    return tx.userToUserTransaction.update({
+      where: {
+        id,
+      },
+      data: update,
+    });
+  }
+
   async markSucccessAndCreateToUserTransaction(
     id: string,
     paymentPayload: object,

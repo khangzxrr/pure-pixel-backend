@@ -74,8 +74,11 @@ export class PhotoBuyRepository {
     });
   }
 
-  async createWithTransaction(data: Prisma.PhotoBuyCreateInput) {
-    return this.prisma.photoBuy.create({
+  async createWithTransaction(
+    data: Prisma.PhotoBuyCreateInput,
+    tx: Prisma.TransactionClient,
+  ) {
+    return tx.photoBuy.create({
       include: {
         userToUserTransaction: {
           include: {
