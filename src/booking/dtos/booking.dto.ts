@@ -4,7 +4,7 @@ import { Exclude, Type } from 'class-transformer';
 import { SignedPhotoDto } from 'src/photo/dtos/signed-photo.dto';
 import { PhotoshootPackageHistoryDto } from 'src/photoshoot-package/dtos/photoshoot-package-history.dto';
 import { PhotoshootPackageDto } from 'src/photoshoot-package/dtos/photoshoot-package.dto';
-import { UserDto } from 'src/user/dtos/me.dto';
+import { UserDto } from 'src/user/dtos/user.dto';
 
 export class BookingDto {
   @ApiProperty()

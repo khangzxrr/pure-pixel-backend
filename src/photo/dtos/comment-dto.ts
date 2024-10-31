@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Exclude, Type } from 'class-transformer';
-import { UserDto } from 'src/user/dtos/me.dto';
+import { UserDto } from 'src/user/dtos/user.dto';
 
 export class CommentReplyCountDto {
   @ApiProperty()
