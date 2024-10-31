@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ReportType } from '@prisma/client';
-import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
+import { IsString, IsNotEmpty, IsEnum } from 'class-validator';
 
-export class ReportCreateRequestDto {
+export class UserReportPutUpdateRequestDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, Report, ReportStatus, ReportType } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
@@ -33,7 +33,7 @@ export class ReportRepository {
     skip: number,
     where: Prisma.ReportWhereInput,
     orderBy: Prisma.ReportOrderByWithRelationInput[],
-  ): Promise<Report[]> {
+  ) {
     return this.prisma.report.findMany({
       skip,
       take,
@@ -45,31 +45,14 @@ export class ReportRepository {
     });
   }
 
-  async create(
-    userId: string,
-    content: string,
-    reportType: ReportType,
-    reportStatus: ReportStatus,
-    referenceId: string,
-  ) {
+  async create(data: Prisma.ReportCreateInput) {
+    console.log(data);
     return this.prisma.report.create({
-      data: {
-        referenceId,
-        reportStatus,
-        reportType,
-        content,
-        archived: false,
-
-        user: {
-          connect: {
-            id: userId,
-          },
-        },
-      },
+      data,
     });
   }
 
-  async updateById(id: string, report: Partial<Report>) {
+  async updateById(id: string, report: Prisma.ReportUpdateInput) {
     return this.prisma.report.update({
       where: {
         id,

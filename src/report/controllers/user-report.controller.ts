@@ -19,9 +19,9 @@ import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
 import { ReportDto } from '../dtos/report.dto';
 import { ReportCreateRequestDto } from '../dtos/rest/report-create.request.dto';
 import { ReportFindAllRequestDto } from '../dtos/rest/report-find-all.request.dto';
-import { ReportPathUpdateDto } from '../dtos/rest/report-patch-update.request.dto';
 import { ReportPutUpdateRequestDto } from '../dtos/rest/report-put-update.request.dto';
 import { Constants } from 'src/infrastructure/utils/constants';
+import { UserReportPathUpdateDto } from '../dtos/rest/user-report-patch-update.request.dto';
 
 @Controller('user/report')
 @ApiTags('user-report')
@@ -48,7 +48,7 @@ export class UserReportController {
   async patchUpdateReport(
     @AuthenticatedUser() user: ParsedUserDto,
     @Param('id') id: string,
-    @Body() reportPatchUpdateDto: ReportPathUpdateDto,
+    @Body() reportPatchUpdateDto: UserReportPathUpdateDto,
   ) {
     return await this.reportService.patchUpdateOfUser(
       user.sub,

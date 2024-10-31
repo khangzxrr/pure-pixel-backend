@@ -19,6 +19,8 @@ import { PhotoService } from 'src/photo/services/photo.service';
 import { UserDto } from 'src/user/dtos/me.dto';
 import { CommentDto } from 'src/photo/dtos/comment-dto';
 import { NotBelongReportException } from '../exceptions/not-belong-report.exception';
+import { UserReportPathUpdateDto } from '../dtos/rest/user-report-patch-update.request.dto';
+import { UserReportPutUpdateRequestDto } from '../dtos/rest/user-report-put-update.request.dto';
 
 @Injectable()
 export class ReportService {
@@ -94,13 +96,18 @@ export class ReportService {
       reportCreateRequestDto.referenceId,
     );
 
-    const report = await this.reportRepository.create(
-      userId,
-      reportCreateRequestDto.content,
-      reportCreateRequestDto.reportType,
-      reportCreateRequestDto.reportStatus,
-      reportCreateRequestDto.referenceId,
-    );
+    const report = await this.reportRepository.create({
+      user: {
+        connect: {
+          id: userId,
+        },
+      },
+      content: reportCreateRequestDto.content,
+      archived: false,
+      reportType: reportCreateRequestDto.reportType,
+      referenceId: reportCreateRequestDto.referenceId,
+      reportStatus: 'OPEN',
+    });
 
     return plainToInstance(ReportDto, report);
   }
@@ -194,7 +201,7 @@ export class ReportService {
   async patchUpdateOfUser(
     userId: string,
     id: string,
-    reportPatchUpdateDto: ReportPathUpdateDto,
+    reportPatchUpdateDto: UserReportPathUpdateDto,
   ) {
     const report = await this.reportRepository.findUniqueOrThrow(id);
 
@@ -202,13 +209,18 @@ export class ReportService {
       throw new NotBelongReportException();
     }
 
-    return await this.patchUpdate(id, reportPatchUpdateDto);
+    const updateDto = plainToInstance(
+      ReportPathUpdateDto,
+      reportPatchUpdateDto,
+    );
+
+    return await this.patchUpdate(id, updateDto);
   }
 
   async replaceOfUser(
     userId: string,
     id: string,
-    updateDto: ReportPutUpdateRequestDto,
+    updateDto: UserReportPutUpdateRequestDto,
   ) {
     const report = await this.reportRepository.findUniqueOrThrow(id);
 
@@ -216,6 +228,8 @@ export class ReportService {
       throw new NotBelongReportException();
     }
 
-    return await this.replace(id, updateDto);
+    const replaceDto = plainToInstance(ReportPutUpdateRequestDto, updateDto);
+
+    return await this.replace(id, replaceDto);
   }
 }
