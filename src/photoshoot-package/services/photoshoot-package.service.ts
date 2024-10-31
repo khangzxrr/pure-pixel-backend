@@ -13,6 +13,7 @@ import { v4 } from 'uuid';
 import { PhotoshootPackageNotBelongException } from '../exceptions/photoshoot-package-not-belong.exception';
 import { PhotoshootPackageUpdateRequestDto } from '../dtos/rest/photoshoot-package-update.request.dto';
 import { PhotoshootPackageReplaceRequestDto } from '../dtos/rest/photoshoot-package-replace.request.dto';
+import { BunnyService } from 'src/storage/services/bunny.service';
 
 @Injectable()
 export class PhotoshootPackageService {
@@ -20,6 +21,7 @@ export class PhotoshootPackageService {
     @Inject() private readonly photoshootRepository: PhotoshootRepository,
     @Inject() private readonly userRepository: UserRepository,
     @Inject() private readonly photoProcessService: PhotoProcessService,
+    @Inject() private readonly bunnyService: BunnyService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -52,7 +54,16 @@ export class PhotoshootPackageService {
       },
     );
 
-    return plainToInstance(PhotoshootPackageDto, updatedPhotoshootPackage);
+    const photoshootPackageDto = plainToInstance(
+      PhotoshootPackageDto,
+      updatedPhotoshootPackage,
+    );
+
+    photoshootPackageDto.thumbnail = this.bunnyService.getPresignedFile(
+      photoshootPackageDto.thumbnail,
+    );
+
+    return photoshootPackageDto;
   }
 
   async delete(userId: string, id: string) {
@@ -65,7 +76,16 @@ export class PhotoshootPackageService {
 
     const deletedPhotoshootPacakge = await this.photoshootRepository.delete(id);
 
-    return plainToInstance(PhotoshootPackageDto, deletedPhotoshootPacakge);
+    const photoshootPackageDto = plainToInstance(
+      PhotoshootPackageDto,
+      deletedPhotoshootPacakge,
+    );
+
+    photoshootPackageDto.thumbnail = this.bunnyService.getPresignedFile(
+      photoshootPackageDto.thumbnail,
+    );
+
+    return photoshootPackageDto;
   }
 
   async update(
@@ -97,7 +117,16 @@ export class PhotoshootPackageService {
       },
     );
 
-    return plainToInstance(PhotoshootPackageDto, updatedPhotoshootPackage);
+    const photoshootPackageDto = plainToInstance(
+      PhotoshootPackageDto,
+      updatedPhotoshootPackage,
+    );
+
+    photoshootPackageDto.thumbnail = this.bunnyService.getPresignedFile(
+      photoshootPackageDto.thumbnail,
+    );
+
+    return photoshootPackageDto;
   }
 
   async create(userId: string, createDto: PhotoshootPackageCreateRequestDto) {
@@ -137,14 +166,32 @@ export class PhotoshootPackageService {
       .extendedClient()
       .$transaction([photoshootPackageCreateQuery, updatePackageQuotaQuery]);
 
-    return plainToInstance(PhotoshootPackageDto, photoshootPackage);
+    const photoshootPackageDto = plainToInstance(
+      PhotoshootPackageDto,
+      photoshootPackage,
+    );
+
+    photoshootPackageDto.thumbnail = this.bunnyService.getPresignedFile(
+      photoshootPackageDto.thumbnail,
+    );
+
+    return photoshootPackageDto;
   }
 
   async getById(id: string) {
     const photoshootPackage =
       await this.photoshootRepository.findUniqueOrThrow(id);
 
-    return plainToInstance(PhotoshootPackageDto, photoshootPackage);
+    const photoshootPackageDto = plainToInstance(
+      PhotoshootPackageDto,
+      photoshootPackage,
+    );
+
+    photoshootPackageDto.thumbnail = this.bunnyService.getPresignedFile(
+      photoshootPackageDto.thumbnail,
+    );
+
+    return photoshootPackageDto;
   }
 
   async findAllEnabledPackageByPhotographerId(
@@ -153,7 +200,9 @@ export class PhotoshootPackageService {
   ) {
     findAllDto.status = 'ENABLED';
 
-    return await this.findAllByUserId(photographerId, findAllDto);
+    const packageDtos = await this.findAllByUserId(photographerId, findAllDto);
+
+    return packageDtos;
   }
 
   async findAll(findAllDto: PhotoshootPackageFindAllDto) {
@@ -165,7 +214,12 @@ export class PhotoshootPackageService {
       findAllDto.toWhere(),
     );
 
-    const packageDtos = plainToInstance(PhotoshootPackageDto, packages, {});
+    const packageDtos = packages.map((p) => {
+      const dto = plainToInstance(PhotoshootPackageDto, p);
+      dto.thumbnail = this.bunnyService.getPresignedFile(p.thumbnail);
+
+      return dto;
+    });
 
     return new PhotoshootPackageFindAllResponseDto(
       findAllDto.limit,
@@ -188,7 +242,12 @@ export class PhotoshootPackageService {
       findAllDto.toWhere(),
     );
 
-    const packageDtos = plainToInstance(PhotoshootPackageDto, packages, {});
+    const packageDtos = packages.map((p) => {
+      const dto = plainToInstance(PhotoshootPackageDto, p);
+      dto.thumbnail = this.bunnyService.getPresignedFile(p.thumbnail);
+
+      return dto;
+    });
 
     return new PhotoshootPackageFindAllResponseDto(
       findAllDto.limit,

@@ -14,9 +14,13 @@ import { ReferenceIdNotFoundException } from '../exceptions/referenced-id-is-not
 import { ReportType } from '@prisma/client';
 import { ReportPutUpdateRequestDto } from '../dtos/rest/report-put-update.request.dto';
 import { PhotoDto } from 'src/photo/dtos/photo.dto';
-import { CommentEntity } from 'src/photo/entities/comment.entity';
+
 import { PhotoService } from 'src/photo/services/photo.service';
 import { UserDto } from 'src/user/dtos/me.dto';
+import { CommentDto } from 'src/photo/dtos/comment-dto';
+import { NotBelongReportException } from '../exceptions/not-belong-report.exception';
+import { UserReportPathUpdateDto } from '../dtos/rest/user-report-patch-update.request.dto';
+import { UserReportPutUpdateRequestDto } from '../dtos/rest/user-report-put-update.request.dto';
 
 @Injectable()
 export class ReportService {
@@ -55,7 +59,7 @@ export class ReportService {
   }
 
   async delete(id: string) {
-    const report = await this.reportRepository.findById(id);
+    const report = await this.reportRepository.findUniqueOrThrow(id);
 
     if (!report) {
       throw new ReportNotFoundException();
@@ -66,12 +70,8 @@ export class ReportService {
     return plainToInstance(ReportDto, deletedReport);
   }
 
-  async replace(
-    id: string,
-    userId: string,
-    reportPutUpdateDto: ReportPutUpdateRequestDto,
-  ) {
-    const report = await this.reportRepository.findById(id);
+  async replace(id: string, reportPutUpdateDto: ReportPutUpdateRequestDto) {
+    const report = await this.reportRepository.findUniqueOrThrow(id);
 
     if (!report) {
       throw new ReportNotFoundException();
@@ -96,21 +96,24 @@ export class ReportService {
       reportCreateRequestDto.referenceId,
     );
 
-    console.log(reportCreateRequestDto);
-
-    const report = await this.reportRepository.create(
-      userId,
-      reportCreateRequestDto.content,
-      reportCreateRequestDto.reportType,
-      reportCreateRequestDto.reportStatus,
-      reportCreateRequestDto.referenceId,
-    );
+    const report = await this.reportRepository.create({
+      user: {
+        connect: {
+          id: userId,
+        },
+      },
+      content: reportCreateRequestDto.content,
+      archived: false,
+      reportType: reportCreateRequestDto.reportType,
+      referenceId: reportCreateRequestDto.referenceId,
+      reportStatus: 'OPEN',
+    });
 
     return plainToInstance(ReportDto, report);
   }
 
   async patchUpdate(id: string, reportUpdateDto: ReportPathUpdateDto) {
-    const report = await this.reportRepository.findById(id);
+    const report = await this.reportRepository.findUniqueOrThrow(id);
 
     if (!report) {
       throw new ReportNotFoundException();
@@ -163,7 +166,7 @@ export class ReportService {
           const comment = await this.commentRepository.findUniqueOrThrow({
             id: r.referenceId,
           });
-          r.referencedComment = plainToInstance(CommentEntity, comment);
+          r.referencedComment = plainToInstance(CommentDto, comment);
           break;
         case 'BOOKING':
           throw new NotImplementedException();
@@ -184,5 +187,49 @@ export class ReportService {
       count,
       reportWithEntities,
     );
+  }
+
+  async findAllOfUser(
+    userId: string,
+    reportFindAllDto: ReportFindAllRequestDto,
+  ) {
+    reportFindAllDto.userId = userId;
+
+    return await this.findAll(reportFindAllDto);
+  }
+
+  async patchUpdateOfUser(
+    userId: string,
+    id: string,
+    reportPatchUpdateDto: UserReportPathUpdateDto,
+  ) {
+    const report = await this.reportRepository.findUniqueOrThrow(id);
+
+    if (report.userId !== userId) {
+      throw new NotBelongReportException();
+    }
+
+    const updateDto = plainToInstance(
+      ReportPathUpdateDto,
+      reportPatchUpdateDto,
+    );
+
+    return await this.patchUpdate(id, updateDto);
+  }
+
+  async replaceOfUser(
+    userId: string,
+    id: string,
+    updateDto: UserReportPutUpdateRequestDto,
+  ) {
+    const report = await this.reportRepository.findUniqueOrThrow(id);
+
+    if (report.userId !== userId) {
+      throw new NotBelongReportException();
+    }
+
+    const replaceDto = plainToInstance(ReportPutUpdateRequestDto, updateDto);
+
+    return await this.replace(id, replaceDto);
   }
 }

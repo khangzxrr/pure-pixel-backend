@@ -17,6 +17,11 @@ export class CreateUpgradePackageDto {
   name: string;
 
   @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  summary: string;
+
+  @ApiProperty()
   @Type(() => Number)
   @IsNumber()
   @Min(10000)

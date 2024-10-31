@@ -24,6 +24,14 @@ export class PatchUpdateUpgradePackageDto {
     required: false,
   })
   @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  summary?: string;
+
+  @ApiProperty({
+    required: false,
+  })
+  @IsOptional()
   @Type(() => Number)
   @IsNumber()
   @Min(10000)

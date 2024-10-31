@@ -346,13 +346,13 @@ export class SepayService {
     };
   }
 
-  private generatePaymentUrl(transactionId: string, amount: number) {
+  generatePaymentUrl(transactionId: string, amount: number) {
     const removedDashTransactionId = transactionId.trim().replaceAll('-', ' ');
 
     return `https://qr.sepay.vn/img?acc=${process.env.SEPAY_ACC}&bank=${process.env.SEPAY_BANK}&amount=${amount}&des=${encodeURIComponent(removedDashTransactionId)}&template=TEMPLATE`;
   }
 
-  private async generateMockIpnQrCode(
+  async generateMockIpnQrCode(
     transactionId: string,
     amount: number,
   ): Promise<string> {

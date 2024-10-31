@@ -14,6 +14,7 @@ async function main() {
   const basicUpgradePackage: Prisma.UpgradePackageCreateInput = {
     name: 'Cơ bản',
     minOrderMonth: 3,
+    summary: 'đây là mô tả tóm tắt,...',
     descriptions: ['description 1', 'description 2', 'description 3'],
     maxPhotoQuota: 5 * 1024 * 1024 * 1024,
     maxPackageCount: 10,
@@ -23,6 +24,7 @@ async function main() {
 
   const premiumUpgradePackage: Prisma.UpgradePackageCreateInput = {
     name: 'Nâng cao',
+    summary: 'đây là mô tả tóm tắt,...',
     minOrderMonth: 6,
     descriptions: ['description 1', 'description 2', 'description 3'],
     maxPhotoQuota: 10 * 1024 * 1024 * 1024,
@@ -34,6 +36,7 @@ async function main() {
   const signatureUpgradePackage: Prisma.UpgradePackageCreateInput = {
     name: 'Cao cấp',
     minOrderMonth: 12,
+    summary: 'đây là mô tả tóm tắt,...',
     descriptions: ['description 1', 'description 2', 'description 3'],
     maxPhotoQuota: 20 * 1024 * 1024 * 1024,
     maxPackageCount: 100,

@@ -8,7 +8,7 @@ import { CreatePhotoSellingDto } from '../dtos/rest/create-photo-selling.request
 import { PhotoBuyResponseDto } from '../dtos/rest/photo-buy.response.dto';
 import { SignedPhotoBuyDto } from '../dtos/rest/signed-photo-buy.response.dto';
 import { CannotBuyOwnedPhotoException } from '../exceptions/cannot-buy-owned-photo.exception';
-import { ExistPhotoBuyWithChoosedResolutionException } from '../exceptions/exist-photo-buy-with-choosed-resolution.exception';
+import { ExistSuccessedPhotoBuyException } from '../exceptions/exist-photo-buy-with-choosed-resolution.exception';
 import { PrismaPromise } from '@prisma/client';
 import { PhotoSellDto } from '../dtos/photo-sell.dto';
 import { PhotoService } from './photo.service';
@@ -20,12 +20,17 @@ import { FailToPerformOnDuplicatedPhotoException } from '../exceptions/fail-to-p
 import { BuyPhotoRequestDto } from '../dtos/rest/buy-photo.request.dto';
 import { SepayService } from 'src/payment/services/sepay.service';
 
+import { UserToUserRepository } from 'src/database/repositories/user-to-user-transaction.repository';
+
 @Injectable()
 export class PhotoExchangeService {
   constructor(
     @Inject() private readonly photoRepository: PhotoRepository,
     @Inject() private readonly photoSellRepository: PhotoSellRepository,
-    @Inject() private readonly photoBuyRepository: PhotoBuyRepository,
+    @Inject()
+    private readonly photoBuyRepository: PhotoBuyRepository,
+    @Inject()
+    private readonly userToUserTransactionRepository: UserToUserRepository,
     @Inject()
     private readonly photoSellPriceTagRepository: PhotoSellPriceTagRepository,
     @Inject() private readonly photoService: PhotoService,
@@ -185,6 +190,12 @@ export class PhotoExchangeService {
       buyer: {
         id: userId,
       },
+      userToUserTransaction: {
+        fromUserTransaction: {
+          userId,
+          status: 'SUCCESS',
+        },
+      },
       photoSellHistory: {
         size: pricetag.size,
         originalPhotoSell: {
@@ -194,139 +205,185 @@ export class PhotoExchangeService {
     });
 
     if (previousPhotoBuy) {
-      throw new ExistPhotoBuyWithChoosedResolutionException();
+      throw new ExistSuccessedPhotoBuyException();
     }
 
     const priceOfSelectedRes = pricetag.price;
     const fee = priceOfSelectedRes.mul(10).div(100);
 
-    if (buyPhotoDto.paymentMethod === 'WALLET') {
-      await this.sepayService.validateWalletBalanceIsEnough(
-        userId,
-        priceOfSelectedRes.toNumber(),
+    const previousPendingTransaction =
+      await this.userToUserTransactionRepository.findMany({
+        photoBuy: {
+          buyerId: userId,
+          photoSellHistory: {
+            size: pricetag.size,
+            price: pricetag.price,
+            originalPhotoSellId: photoSell.id,
+          },
+        },
+        fromUserTransaction: {
+          status: 'PENDING',
+        },
+      });
+
+    return await this.prisma.$transaction(async (tx) => {
+      previousPendingTransaction.forEach(
+        async (p) =>
+          await this.userToUserTransactionRepository.updateById(
+            p.id,
+            {
+              fromUserTransaction: {
+                update: {
+                  data: {
+                    status: 'CANCEL',
+                  },
+                },
+              },
+            },
+            tx,
+          ),
       );
 
-      const newPhotoBuyByWallet =
-        await this.photoBuyRepository.createWithTransaction({
-          buyer: {
-            connect: {
-              id: userId,
-            },
-          },
-          photoSellHistory: {
-            create: {
-              size: pricetag.size,
-              price: pricetag.price,
-              description: photoSell.description,
-              originalPhotoSell: {
+      if (buyPhotoDto.paymentMethod === 'WALLET') {
+        await this.sepayService.validateWalletBalanceIsEnough(
+          userId,
+          priceOfSelectedRes.toNumber(),
+        );
+
+        const newPhotoBuyByWallet =
+          await this.photoBuyRepository.createWithTransaction(
+            {
+              buyer: {
                 connect: {
-                  id: photoSell.id,
+                  id: userId,
                 },
               },
-            },
-          },
-          userToUserTransaction: {
-            create: {
-              toUser: {
-                connect: {
-                  id: photoSell.photo.photographerId,
-                },
-              },
-              toUserTransaction: {
+              photoSellHistory: {
                 create: {
-                  paymentPayload: '',
-                  type: 'IMAGE_SELL',
-                  fee,
-                  user: {
+                  size: pricetag.size,
+                  price: pricetag.price,
+                  description: photoSell.description,
+                  originalPhotoSell: {
+                    connect: {
+                      id: photoSell.id,
+                    },
+                  },
+                },
+              },
+              userToUserTransaction: {
+                create: {
+                  toUser: {
                     connect: {
                       id: photoSell.photo.photographerId,
                     },
                   },
-                  amount: pricetag.price,
-                  status: 'SUCCESS',
-                  paymentMethod: 'WALLET',
-                },
-              },
-              fromUserTransaction: {
-                create: {
-                  type: 'IMAGE_BUY',
-                  fee,
-                  user: {
-                    connect: {
-                      id: userId,
+                  toUserTransaction: {
+                    create: {
+                      paymentPayload: '',
+                      type: 'IMAGE_SELL',
+                      fee,
+                      user: {
+                        connect: {
+                          id: photoSell.photo.photographerId,
+                        },
+                      },
+                      amount: pricetag.price,
+                      status: 'SUCCESS',
+                      paymentMethod: 'WALLET',
                     },
                   },
-                  amount: pricetag.price,
-                  status: 'SUCCESS',
-                  paymentMethod: 'WALLET',
-                  paymentPayload: {},
-                },
-              },
-            },
-          },
-        });
-
-      return plainToInstance(PhotoBuyResponseDto, newPhotoBuyByWallet);
-    }
-
-    const newPhotoBuyBySepay =
-      await this.photoBuyRepository.createWithTransaction({
-        buyer: {
-          connect: {
-            id: userId,
-          },
-        },
-        photoSellHistory: {
-          create: {
-            size: pricetag.size,
-            price: pricetag.price,
-            description: photoSell.description,
-            originalPhotoSell: {
-              connect: {
-                id: photoSell.id,
-              },
-            },
-          },
-        },
-        userToUserTransaction: {
-          create: {
-            toUser: {
-              connect: {
-                id: photoSell.photo.photographerId,
-              },
-            },
-            fromUserTransaction: {
-              create: {
-                type: 'IMAGE_BUY',
-                fee,
-                user: {
-                  connect: {
-                    id: userId,
+                  fromUserTransaction: {
+                    create: {
+                      type: 'IMAGE_BUY',
+                      fee,
+                      user: {
+                        connect: {
+                          id: userId,
+                        },
+                      },
+                      amount: pricetag.price,
+                      status: 'SUCCESS',
+                      paymentMethod: 'WALLET',
+                      paymentPayload: {},
+                    },
                   },
                 },
-                amount: pricetag.price,
-                status: 'PENDING',
-                paymentMethod: 'SEPAY',
-                paymentPayload: {},
+              },
+            },
+            tx,
+          );
+
+        return plainToInstance(PhotoBuyResponseDto, newPhotoBuyByWallet);
+      }
+
+      console.log(`reach here`);
+
+      const newPhotoBuyBySepay =
+        await this.photoBuyRepository.createWithTransaction(
+          {
+            buyer: {
+              connect: {
+                id: userId,
+              },
+            },
+            photoSellHistory: {
+              create: {
+                size: pricetag.size,
+                price: pricetag.price,
+                description: photoSell.description,
+                originalPhotoSell: {
+                  connect: {
+                    id: photoSell.id,
+                  },
+                },
+              },
+            },
+            userToUserTransaction: {
+              create: {
+                toUser: {
+                  connect: {
+                    id: photoSell.photo.photographerId,
+                  },
+                },
+                fromUserTransaction: {
+                  create: {
+                    type: 'IMAGE_BUY',
+                    fee,
+                    user: {
+                      connect: {
+                        id: userId,
+                      },
+                    },
+                    amount: pricetag.price,
+                    status: 'PENDING',
+                    paymentMethod: 'SEPAY',
+                    paymentPayload: {},
+                  },
+                },
               },
             },
           },
-        },
-      });
+          tx,
+        );
 
-    const paymentUrlDto = await this.sepayService.generatePayment(
-      newPhotoBuyBySepay.userToUserTransaction.fromUserTransaction.id,
-      pricetag.price.toNumber(),
-    );
+      const photoBuyResponseDto = plainToInstance(
+        PhotoBuyResponseDto,
+        newPhotoBuyBySepay,
+      );
 
-    const photoBuyResponseDto = plainToInstance(
-      PhotoBuyResponseDto,
-      newPhotoBuyBySepay,
-    );
+      const paymentUrl = this.sepayService.generatePaymentUrl(
+        newPhotoBuyBySepay.userToUserTransaction.fromUserTransaction.id,
+        newPhotoBuyBySepay.userToUserTransaction.fromUserTransaction.amount.toNumber(),
+      );
+      const mockQrcode = await this.sepayService.generateMockIpnQrCode(
+        newPhotoBuyBySepay.userToUserTransaction.fromUserTransaction.id,
+        newPhotoBuyBySepay.userToUserTransaction.fromUserTransaction.amount.toNumber(),
+      );
 
-    photoBuyResponseDto.paymentUrl = paymentUrlDto.paymentUrl;
-    photoBuyResponseDto.mockQrCode = paymentUrlDto.mockQrCode;
+      photoBuyResponseDto.paymentUrl = paymentUrl;
+      photoBuyResponseDto.mockQrCode = mockQrcode;
 
-    return photoBuyResponseDto;
+      return photoBuyResponseDto;
+    });
   }
 }

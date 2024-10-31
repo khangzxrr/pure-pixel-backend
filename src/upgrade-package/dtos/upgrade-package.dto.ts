@@ -16,6 +16,9 @@ export class UpgradePackageDto {
   description: string[];
 
   @ApiProperty()
+  summary: string;
+
+  @ApiProperty()
   status: string;
 
   @ApiProperty()

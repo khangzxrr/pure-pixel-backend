@@ -24,15 +24,15 @@ import { Constants } from 'src/infrastructure/utils/constants';
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
 import { ReportPutUpdateRequestDto } from '../dtos/rest/report-put-update.request.dto';
 
-@Controller('report')
+@Controller('manager/report')
 @ApiTags('manager-report')
-export class ReportController {
+@UseGuards(AuthGuard, KeycloakRoleGuard)
+@Roles({ roles: [Constants.MANAGER_ROLE] })
+export class ManagerReportController {
   constructor(@Inject() private readonly reportService: ReportService) {}
 
   @Get()
   @ApiOkResponsePaginated(ReportDto)
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: [Constants.MANAGER_ROLE] })
   async getReports(@Query() reportFindAllDto: ReportFindAllRequestDto) {
     return await this.reportService.findAll(reportFindAllDto);
   }
@@ -41,8 +41,6 @@ export class ReportController {
   @ApiOkResponse({
     type: ReportDto,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: [Constants.MANAGER_ROLE] })
   async patchUpdateReport(
     @Param('id') id: string,
     @Body() reportPatchUpdateDto: ReportPathUpdateDto,
@@ -54,8 +52,6 @@ export class ReportController {
   @ApiOkResponse({
     type: ReportDto,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: [Constants.MANAGER_ROLE] })
   async createReport(
     @AuthenticatedUser() user: ParsedUserDto,
     @Body() report: ReportCreateRequestDto,
@@ -67,8 +63,6 @@ export class ReportController {
   @ApiOkResponse({
     type: ReportDto,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: [Constants.MANAGER_ROLE] })
   async deleteReport(@Param('id') id: string) {
     return await this.reportService.delete(id);
   }
@@ -77,13 +71,10 @@ export class ReportController {
   @ApiOkResponse({
     type: ReportDto,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: [Constants.MANAGER_ROLE] })
   async putUpdateReport(
-    @AuthenticatedUser() user: ParsedUserDto,
     @Param('id') id: string,
     @Body() updateDto: ReportPutUpdateRequestDto,
   ) {
-    return await this.reportService.replace(id, user.sub, updateDto);
+    return await this.reportService.replace(id, updateDto);
   }
 }

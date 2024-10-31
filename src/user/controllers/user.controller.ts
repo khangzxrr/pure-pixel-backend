@@ -1,11 +1,8 @@
-import { Controller, Get, Inject, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Inject, Param } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserService } from '../services/user.service';
-import { AuthGuard, Roles } from 'nest-keycloak-connect';
-import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
-import { Constants } from 'src/infrastructure/utils/constants';
 
-@Controller('user')
+@Controller('manager/user')
 @ApiTags('manager-user')
 export class UserController {
   constructor(@Inject() private readonly userService: UserService) {}
@@ -14,8 +11,6 @@ export class UserController {
   @ApiOperation({
     summary: 'get user from id',
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: [Constants.MANAGER_ROLE] })
   async getUserById(@Param('id') id: string) {
     return this.userService.findOne({
       id,

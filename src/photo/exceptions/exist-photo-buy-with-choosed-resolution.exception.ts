@@ -1,7 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 
-export class ExistPhotoBuyWithChoosedResolutionException extends BadRequestException {
+export class ExistSuccessedPhotoBuyException extends BadRequestException {
   constructor() {
-    super(ExistPhotoBuyWithChoosedResolutionException.name);
+    super(ExistSuccessedPhotoBuyException.name);
   }
 }

@@ -135,6 +135,6 @@ export class PhotographerService {
   async getPhotosOfMe(userId: string, filter: FindAllPhotoFilterDto) {
     filter.photographerId = userId;
 
-    return await this.photoService.findAll(filter);
+    return await this.photoService.findAll(userId, filter);
   }
 }

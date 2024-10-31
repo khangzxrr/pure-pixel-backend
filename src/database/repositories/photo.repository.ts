@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Photo, PhotoVisibility, Prisma } from '@prisma/client';
 
-import { FindAllPhotoFilterDto } from 'src/photo/dtos/find-all.filter.dto';
 import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
