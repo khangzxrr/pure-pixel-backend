@@ -2,6 +2,7 @@ import { $Enums, UpgradePackage } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 
 export class UpgradePackageEntity implements UpgradePackage {
+  summary: string;
   deletedAt: Date;
 
   id: string;

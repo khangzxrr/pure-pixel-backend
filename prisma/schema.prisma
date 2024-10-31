@@ -239,6 +239,8 @@ model UpgradePackageHistory {
   maxPhotoQuota   BigInt @default(0)
   maxPackageCount BigInt @default(0)
 
+  summary String @default("")
+
   descriptions String[]
 
   originalUpgradePackage   UpgradePackage @relation(fields: [originalUpgradePackageId], references: [id])
@@ -264,6 +266,8 @@ model UpgradePackage {
 
   maxPhotoQuota   BigInt @default(0)
   maxPackageCount BigInt @default(0)
+
+  summary String @default("")
 
   descriptions String[]
 
