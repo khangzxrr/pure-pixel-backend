@@ -54,8 +54,14 @@ export class PhotoController {
   @ApiOkResponsePaginated(SignedPhotoDto)
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Public(false)
-  async getAllPublicPhoto(@Query() findPhotoFilter: FindAllPhotoFilterDto) {
-    return await this.photoService.findPublicPhotos(findPhotoFilter);
+  async getAllPublicPhoto(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Query() findPhotoFilter: FindAllPhotoFilterDto,
+  ) {
+    return await this.photoService.findPublicPhotos(
+      user ? user.sub : '',
+      findPhotoFilter,
+    );
   }
 
   @Delete(':id')

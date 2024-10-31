@@ -270,11 +270,11 @@ export class PhotoService {
     return await this.getSignedPhotoById(userId, id);
   }
 
-  async findPublicPhotos(filter: FindAllPhotoFilterDto) {
+  async findPublicPhotos(userId: string, filter: FindAllPhotoFilterDto) {
     filter.visibility = 'PUBLIC';
     filter.photoType = 'RAW'; //ensure only get RAW photo
 
-    return await this.findAll(filter);
+    return await this.findAll(userId, filter);
   }
 
   async findAllWithUpvoteAndCommentCountByUserId(userId: string) {
@@ -283,7 +283,7 @@ export class PhotoService {
     );
   }
 
-  async findAll(filter: FindAllPhotoFilterDto) {
+  async findAll(userId: string, filter: FindAllPhotoFilterDto) {
     this.logger.log(`findall with filter:`);
     this.logger.log(JSON.stringify(filter));
 
@@ -315,10 +315,12 @@ export class PhotoService {
       filter.ids = idFilterByGPS;
     }
 
-    count = await this.photoRepository.count(filter.toWhere());
+    const filterWhere = filter.toWhere(userId);
+
+    count = await this.photoRepository.count(filterWhere);
 
     const photos = await this.photoRepository.findAll(
-      filter.toWhere(),
+      filterWhere,
       filter.toOrderBy(),
       filter.toSkip(),
       filter.limit,

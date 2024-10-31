@@ -25,7 +25,7 @@ export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
   @IsOptional()
   @ToBoolean()
   @IsBoolean()
-  bookmarked: boolean;
+  bookmarked?: boolean;
 
   @ApiProperty({
     required: false,
@@ -207,9 +207,16 @@ export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
     return orderBys;
   }
 
-  toWhere(): Prisma.PhotoWhereInput {
+  toWhere(userId: string): Prisma.PhotoWhereInput {
     const where: Prisma.PhotoWhereInput = {};
 
+    if (this.bookmarked) {
+      where.bookmarks = {
+        some: {
+          userId,
+        },
+      };
+    }
     if (this.ids) {
       where.id = {
         in: this.ids,
