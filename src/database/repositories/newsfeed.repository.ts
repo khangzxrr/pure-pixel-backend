@@ -24,6 +24,12 @@ export class NewsfeedRepository {
     });
   }
 
+  count(where: Prisma.NewsfeedWhereInput) {
+    return this.prismaService.extendedClient().newsfeed.count({
+      where,
+    });
+  }
+
   findMany(where: Prisma.NewsfeedWhereInput, include: Prisma.NewsfeedInclude) {
     return this.prismaService.extendedClient().newsfeed.findMany({
       where,

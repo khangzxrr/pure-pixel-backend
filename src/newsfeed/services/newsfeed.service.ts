@@ -10,6 +10,7 @@ import { SomePhotoNotFoundException } from '../exceptions/some-photo-not-found.e
 import { PhotoService } from 'src/photo/services/photo.service';
 import { plainToInstance } from 'class-transformer';
 import { NewsfeedDto } from '../dtos/newsfeed.dto';
+import { NewsfeedFindAllResponseDto } from '../dtos/rest/newfeed-find-all.response.dto';
 
 @Injectable()
 export class NewsfeedService {
@@ -79,7 +80,10 @@ export class NewsfeedService {
     });
   }
 
-  async findAll(userId: string, findallDto: NewsfeedFindAllDto) {
+  async findAll(
+    userId: string,
+    findallDto: NewsfeedFindAllDto,
+  ): Promise<NewsfeedFindAllResponseDto> {
     console.log(findallDto);
 
     const where: Prisma.NewsfeedWhereInput = {
@@ -115,6 +119,8 @@ export class NewsfeedService {
       }
     }
 
+    const count = await this.newsfeedReposity.count(where);
+
     const newsfeeds = await this.newsfeedReposity.findMany(
       {
         visibility: {
@@ -148,6 +154,12 @@ export class NewsfeedService {
 
     const newsfeedDtos = await Promise.all(promises);
 
-    return newsfeedDtos;
+    const response = new NewsfeedFindAllResponseDto(
+      findallDto.limit,
+      count,
+      newsfeedDtos,
+    );
+
+    return response;
   }
 }
