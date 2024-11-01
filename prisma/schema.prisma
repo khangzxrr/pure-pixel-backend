@@ -15,6 +15,87 @@ datasource db {
   extensions = [earthdistance, cube]
 }
 
+enum NewsFeedVisibility {
+  PUBLIC
+  ONLY_FOLLOWER
+  ONLY_ME
+}
+
+enum ViewPermission {
+  ALLOW
+  DENY
+}
+
+model NewsFeed {
+  id String @id @unique
+
+  title       String
+  description String
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  visibility NewsFeedVisibility
+
+  photos      Photo[]
+  likes       NewsFeedLike[]
+  comments    NewsFeedComment[]
+  permissions NewsFeedViewPermission[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model NewsFeedViewPermission {
+  id String @id @default(uuid())
+
+  newsFeed   NewsFeed @relation(fields: [newsFeedId], references: [id])
+  newsFeedId String
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  permission ViewPermission
+
+  createdAt DateTime @default(now())
+
+  @@unique([newsFeedId, userId])
+}
+
+model NewsFeedLike {
+  id String @id @default(uuid())
+
+  newsFeed   NewsFeed @relation(fields: [newsFeedId], references: [id])
+  newsFeedId String
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  createdAt DateTime @default(now())
+
+  @@unique([newsFeedId, userId])
+}
+
+model NewsFeedComment {
+  id String @id @default(uuid())
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  newsFeed   NewsFeed @relation(fields: [newsFeedId], references: [id])
+  newsFeedId String
+
+  parent   NewsFeedComment? @relation("parentComment", fields: [parentId], references: [id])
+  parentId String?
+
+  replies NewsFeedComment[] @relation("parentComment")
+
+  content String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model User {
   id        String   @id @unique
   createdAt DateTime @default(now())
@@ -29,8 +110,8 @@ model User {
   avatar String @default("https://s3-hcm-r1.s3cloud.vn/sftpgo/avatar%2Favatar.png")
   cover  String @default("https://s3-hcm-r1.s3cloud.vn/sftpgo/avatar%2Fcover.jpg")
 
-  name        String   @default("")
-  mail        String   @default("")
+  name String @default("")
+  mail String @default("")
 
   normalizedName String @default("")
 
@@ -46,8 +127,8 @@ model User {
   photos        Photo[]
   upgradeOrders UpgradeOrder[]
 
-  Comment Comment[]
-  Vote    Vote[]
+  comments Comment[]
+  votes    Vote[]
 
   followers  Follow[] @relation("follower")
   followings Follow[] @relation("following")
@@ -72,6 +153,11 @@ model User {
   chatmessages  ChatMessage[]
   cameras       Camera[]
   cameraOnUsers CameraOnUsers[]
+
+  newsfeeds               NewsFeed[]
+  newsFeedComments        NewsFeedComment[]
+  newsfeedLikes           NewsFeedLike[]
+  newsFeedViewPermissions NewsFeedViewPermission[]
 }
 
 model BankInfo {
@@ -366,7 +452,6 @@ enum PhotoType {
 enum PhotoVisibility {
   PUBLIC
   PRIVATE
-  SHARE_LINK
 }
 
 enum PhotoStatus {
@@ -419,6 +504,7 @@ model Photo {
   photoSellings PhotoSell[]
   photoTags     PhotoTag[]
   bookmarks     Bookmark[]
+  newsfeeds     NewsFeed[]
 
   booking   Booking? @relation(fields: [bookingId], references: [id])
   bookingId String?
