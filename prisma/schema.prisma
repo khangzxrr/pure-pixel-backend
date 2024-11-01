@@ -15,7 +15,7 @@ datasource db {
   extensions = [earthdistance, cube]
 }
 
-enum NewsFeedVisibility {
+enum NewsfeedVisibility {
   PUBLIC
   ONLY_FOLLOWER
   ONLY_ME
@@ -26,7 +26,7 @@ enum ViewPermission {
   DENY
 }
 
-model NewsFeed {
+model Newsfeed {
   id String @id @unique
 
   title       String
@@ -35,22 +35,22 @@ model NewsFeed {
   user   User   @relation(fields: [userId], references: [id])
   userId String
 
-  visibility NewsFeedVisibility
+  visibility NewsfeedVisibility
 
   photos      Photo[]
-  likes       NewsFeedLike[]
-  comments    NewsFeedComment[]
-  permissions NewsFeedViewPermission[]
+  likes       NewsfeedLike[]
+  comments    NewsfeedComment[]
+  permissions NewsfeedViewPermission[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-model NewsFeedViewPermission {
+model NewsfeedViewPermission {
   id String @id @default(uuid())
 
-  newsFeed   NewsFeed @relation(fields: [newsFeedId], references: [id])
-  newsFeedId String
+  newsfeed   Newsfeed @relation(fields: [newsfeedId], references: [id])
+  newsfeedId String
 
   user   User   @relation(fields: [userId], references: [id])
   userId String
@@ -59,36 +59,36 @@ model NewsFeedViewPermission {
 
   createdAt DateTime @default(now())
 
-  @@unique([newsFeedId, userId])
+  @@unique([newsfeedId, userId])
 }
 
-model NewsFeedLike {
+model NewsfeedLike {
   id String @id @default(uuid())
 
-  newsFeed   NewsFeed @relation(fields: [newsFeedId], references: [id])
-  newsFeedId String
+  newsfeed   Newsfeed @relation(fields: [newsfeedId], references: [id])
+  newsfeedId String
 
   user   User   @relation(fields: [userId], references: [id])
   userId String
 
   createdAt DateTime @default(now())
 
-  @@unique([newsFeedId, userId])
+  @@unique([newsfeedId, userId])
 }
 
-model NewsFeedComment {
+model NewsfeedComment {
   id String @id @default(uuid())
 
   user   User   @relation(fields: [userId], references: [id])
   userId String
 
-  newsFeed   NewsFeed @relation(fields: [newsFeedId], references: [id])
-  newsFeedId String
+  newsfeed   Newsfeed @relation(fields: [newsfeedId], references: [id])
+  newsfeedId String
 
-  parent   NewsFeedComment? @relation("parentComment", fields: [parentId], references: [id])
+  parent   NewsfeedComment? @relation("parentComment", fields: [parentId], references: [id])
   parentId String?
 
-  replies NewsFeedComment[] @relation("parentComment")
+  replies NewsfeedComment[] @relation("parentComment")
 
   content String
 
@@ -154,10 +154,10 @@ model User {
   cameras       Camera[]
   cameraOnUsers CameraOnUsers[]
 
-  newsfeeds               NewsFeed[]
-  newsFeedComments        NewsFeedComment[]
-  newsfeedLikes           NewsFeedLike[]
-  newsFeedViewPermissions NewsFeedViewPermission[]
+  newsfeeds               Newsfeed[]
+  newsfeedComments        NewsfeedComment[]
+  newsfeedLikes           NewsfeedLike[]
+  newsfeedViewPermissions NewsfeedViewPermission[]
 }
 
 model BankInfo {
@@ -504,7 +504,7 @@ model Photo {
   photoSellings PhotoSell[]
   photoTags     PhotoTag[]
   bookmarks     Bookmark[]
-  newsfeeds     NewsFeed[]
+  newsfeeds     Newsfeed[]
 
   booking   Booking? @relation(fields: [bookingId], references: [id])
   bookingId String?
