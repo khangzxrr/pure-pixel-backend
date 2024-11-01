@@ -25,6 +25,7 @@ import { ChatModule } from './chat/chat.module';
 import { CameraModule } from './camera/camera.module';
 import { AdminModule } from './admin/admin.module';
 import { BookmarkModule } from './bookmark/bookmark.module';
+import { NewsfeedModule } from './newsfeed/newsfeed.module';
 
 @Module({
   providers: [
@@ -60,6 +61,7 @@ import { BookmarkModule } from './bookmark/bookmark.module';
     CameraModule,
     AdminModule,
     BookmarkModule,
+    NewsfeedModule,
   ],
   controllers: [AppController],
 })

@@ -156,6 +156,12 @@ export class PhotoService {
     return availableRes;
   }
 
+  async signPhotos(photos: Photo[]) {
+    const promises = photos.map(async (p) => this.signPhoto(p));
+
+    return await Promise.all(promises);
+  }
+
   async signPhoto(photo: Photo): Promise<SignedPhotoDto> {
     const signedPhotoDto = plainToInstance(SignedPhotoDto, photo);
 

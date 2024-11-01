@@ -13,12 +13,6 @@ export class PhotoDto {
   @ApiProperty({})
   shareStatus: string;
 
-  @Exclude()
-  sharePayload: JsonValue;
-
-  @Exclude()
-  photographerId: string;
-
   @ApiProperty({})
   title: string;
 
@@ -43,6 +37,18 @@ export class PhotoDto {
   @Exclude()
   watermarkThumbnailPhotoUrl: string;
 
+  @Exclude()
+  sharePayload: JsonValue;
+
+  @Exclude()
+  deletedAt: Date;
+
+  @Exclude()
+  bookingId: string;
+
+  @Exclude()
+  photographerId: string;
+
   @ApiProperty()
   width: number;
 
@@ -63,9 +69,6 @@ export class PhotoDto {
 
   @ApiProperty({})
   updatedAt: Date;
-
-  @ApiProperty({})
-  deletedAt: Date;
 
   @ApiProperty({})
   @Type(() => PhotographerDTO)
