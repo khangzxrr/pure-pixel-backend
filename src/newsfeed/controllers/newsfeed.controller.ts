@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Inject,
+  Param,
   Patch,
   Post,
   Query,
@@ -68,6 +69,9 @@ export class NewsfeedController {
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   async updateNewsfeed(
     @AuthenticatedUser() user: ParsedUserDto,
+    @Param('id') newsfeedId: string,
     @Body() updateDto: NewsfeedUpdateDto,
-  ) {}
+  ) {
+    return await this.newsfeedService.update(user.sub, newsfeedId, updateDto);
+  }
 }

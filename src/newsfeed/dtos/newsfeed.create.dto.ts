@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { NewsfeedViewPermission, NewsfeedVisibility } from '@prisma/client';
+import { NewsfeedVisibility } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
   ArrayMinSize,
