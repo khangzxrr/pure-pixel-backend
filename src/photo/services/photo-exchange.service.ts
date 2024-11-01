@@ -118,6 +118,8 @@ export class PhotoExchangeService {
       this.photoRepository.updateQueryById(photoId, {
         watermark: true,
         visibility: 'PUBLIC',
+        title: sellPhotoDto.title,
+        description: sellPhotoDto.description,
       });
     prismaQuery.push(updatePhotoToPublicAndWatermarkQuery);
 
