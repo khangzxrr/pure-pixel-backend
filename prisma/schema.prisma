@@ -17,7 +17,7 @@ datasource db {
 
 enum NewsfeedVisibility {
   PUBLIC
-  ONLY_FOLLOWER
+  ONLY_FOLLOWING
   ONLY_ME
 }
 
@@ -27,7 +27,7 @@ enum ViewPermission {
 }
 
 model Newsfeed {
-  id String @id @unique
+  id String @id @default(uuid())
 
   title       String
   description String
