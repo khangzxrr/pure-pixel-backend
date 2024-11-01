@@ -22,8 +22,6 @@ export class NewsfeedService {
   ) {}
 
   async create(userId: string, createDto: NewsfeedCreateDto) {
-    console.log(createDto);
-
     const photos = await this.photoRepository.findAllWithoutPaging({
       id: {
         in: createDto.photos,
@@ -84,49 +82,80 @@ export class NewsfeedService {
     userId: string,
     findallDto: NewsfeedFindAllDto,
   ): Promise<NewsfeedFindAllResponseDto> {
-    console.log(findallDto);
+    const where: Prisma.NewsfeedWhereInput = {};
 
-    const where: Prisma.NewsfeedWhereInput = {
-      permissions: {
-        some: {
-          userId,
-          permission: 'ALLOW',
-        },
-        none: {
-          userId,
-          permission: 'DENY',
-        },
-      },
-    };
+    //permission
+    //userId | ALLOW
+    //
+    if (!findallDto.visibility || findallDto.visibility.length === 0) {
+      findallDto.visibility = ['PUBLIC', 'ONLY_ME', 'ONLY_FOLLOWING'];
+    }
 
     if (findallDto.visibility) {
-      where.visibility = {
-        in: findallDto.visibility,
-      };
+      where.OR = [];
+      if (findallDto.visibility.indexOf('PUBLIC') >= 0) {
+        where.OR.push({
+          visibility: 'PUBLIC',
+        });
+      }
 
       if (findallDto.visibility.indexOf('ONLY_FOLLOWING') >= 0) {
-        where.user = {
-          followers: {
-            some: {
-              followerId: userId,
+        where.OR.push({
+          AND: [
+            { visibility: 'ONLY_FOLLOWING' },
+            {
+              user: {
+                followers: {
+                  some: {
+                    followerId: userId,
+                  },
+                },
+              },
             },
-          },
-        };
+          ],
+        });
       }
 
       if (findallDto.visibility.indexOf('ONLY_ME') >= 0) {
-        where.userId = userId;
+        where.OR.push({
+          AND: [{ visibility: 'ONLY_ME', userId }],
+        });
+      }
+
+      if (findallDto.visibility.indexOf('ONLY_CHOOSED') >= 0) {
+        where.OR.push({
+          AND: [
+            {
+              visibility: 'ONLY_CHOOSED',
+              permissions: {
+                some: {
+                  userId,
+                  permission: 'ALLOW',
+                },
+              },
+            },
+          ],
+        });
       }
     }
+
+    where.AND = [
+      {
+        permissions: {
+          none: {
+            userId,
+            permission: 'DENY',
+          },
+        },
+      },
+    ];
+
+    console.log(where);
 
     const count = await this.newsfeedReposity.count(where);
 
     const newsfeeds = await this.newsfeedReposity.findMany(
-      {
-        visibility: {
-          in: findallDto.visibility,
-        },
-      },
+      where,
       {
         user: {
           include: {
@@ -142,6 +171,8 @@ export class NewsfeedService {
           },
         },
       },
+      findallDto.toSkip(),
+      findallDto.limit,
     );
 
     const promises = newsfeeds.map(async (nf) => {

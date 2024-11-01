@@ -18,6 +18,7 @@ datasource db {
 enum NewsfeedVisibility {
   PUBLIC
   ONLY_FOLLOWING
+  ONLY_CHOOSED
   ONLY_ME
 }
 

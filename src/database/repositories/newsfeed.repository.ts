@@ -30,7 +30,12 @@ export class NewsfeedRepository {
     });
   }
 
-  findMany(where: Prisma.NewsfeedWhereInput, include: Prisma.NewsfeedInclude) {
+  findMany(
+    where: Prisma.NewsfeedWhereInput,
+    include: Prisma.NewsfeedInclude,
+    skip: number,
+    take: number,
+  ) {
     return this.prismaService.extendedClient().newsfeed.findMany({
       where,
       include,
