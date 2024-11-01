@@ -6,6 +6,12 @@ import { PrismaService } from 'src/prisma.service';
 export class NewsfeedRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
+  create(data: Prisma.NewsfeedCreateInput) {
+    return this.prismaService.extendedClient().newsfeed.create({
+      data,
+    });
+  }
+
   upsert(
     where: Prisma.NewsfeedWhereUniqueInput,
     update: Prisma.NewsfeedUpdateInput,

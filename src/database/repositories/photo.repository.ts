@@ -210,6 +210,12 @@ export class PhotoRepository {
     });
   }
 
+  async findAllWithoutPaging(where: Prisma.PhotoWhereInput) {
+    return this.prisma.extendedClient().photo.findMany({
+      where,
+    });
+  }
+
   async findAll(
     where: Prisma.PhotoWhereInput,
     orderBy: Prisma.PhotoOrderByWithRelationInput[],

@@ -29,6 +29,7 @@ import { PopularCameraDatapointRepository } from './repositories/popular-camera-
 import { PopularCameraTimelineRepository } from './repositories/popular-camera-timeline.repository';
 import { PhotoSellPriceTagRepository } from './repositories/photo-sell-price-tag.repository';
 import { BookmarkRepository } from './repositories/bookmark.repository';
+import { NewsfeedRepository } from './repositories/newsfeed.repository';
 @Module({
   providers: [
     PrismaService,
@@ -61,6 +62,7 @@ import { BookmarkRepository } from './repositories/bookmark.repository';
     PopularCameraTimelineRepository,
     PhotoSellPriceTagRepository,
     BookmarkRepository,
+    NewsfeedRepository,
   ],
   exports: [
     PrismaService,
@@ -93,6 +95,7 @@ import { BookmarkRepository } from './repositories/bookmark.repository';
     PopularCameraTimelineRepository,
     PhotoSellPriceTagRepository,
     BookmarkRepository,
+    NewsfeedRepository,
   ],
 })
 export class DatabaseModule {}
