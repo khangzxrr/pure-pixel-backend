@@ -246,19 +246,4 @@ export class PhotoRepository {
       },
     });
   }
-  async findAllByVisibility(visibilityStr: string) {
-    let visibility: PhotoVisibility = PhotoVisibility.PUBLIC;
-
-    if (visibilityStr == PhotoVisibility.PRIVATE) {
-      visibility = PhotoVisibility.PRIVATE;
-    } else if (visibilityStr == PhotoVisibility.SHARE_LINK) {
-      visibility = PhotoVisibility.SHARE_LINK;
-    }
-
-    return this.prisma.extendedClient().photo.findMany({
-      where: {
-        visibility,
-      },
-    });
-  }
 }
