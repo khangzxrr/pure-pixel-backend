@@ -11,6 +11,8 @@ import { PhotoService } from 'src/photo/services/photo.service';
 import { plainToInstance } from 'class-transformer';
 import { NewsfeedDto } from '../dtos/newsfeed.dto';
 import { NewsfeedFindAllResponseDto } from '../dtos/rest/newfeed-find-all.response.dto';
+import { NewsfeedUpdateDto } from '../dtos/newsfeed.update.dto';
+import { NewsfeedNotBelongException } from '../exceptions/newsfeed-not-belong.exception';
 
 @Injectable()
 export class NewsfeedService {
@@ -20,6 +22,85 @@ export class NewsfeedService {
     @Inject() private readonly newsfeedReposity: NewsfeedRepository,
     @Inject() private readonly photoService: PhotoService,
   ) {}
+
+  async update(
+    userId: string,
+    newsfeedId: string,
+    updateDto: NewsfeedUpdateDto,
+  ) {
+    const newsfeed = await this.newsfeedReposity.findUniqueOrThrow(
+      {
+        id: newsfeedId,
+      },
+      {},
+    );
+
+    if (newsfeed.userId !== userId) {
+      throw new NewsfeedNotBelongException();
+    }
+
+    const newsfeedUpdateInput: Prisma.NewsfeedUpdateInput = {
+      title: updateDto.title,
+      description: updateDto.description,
+      visibility: updateDto.visibility,
+    };
+
+    if (updateDto.photos) {
+      const photos = await this.photoRepository.findAllWithoutPaging({
+        id: {
+          in: updateDto.photos,
+        },
+        photographerId: userId,
+      });
+
+      if (photos.length !== updateDto.photos.length) {
+        throw new SomePhotoNotFoundException();
+      }
+
+      newsfeedUpdateInput.photos = {
+        deleteMany: {},
+        connect: updateDto.photos.map((p) => {
+          return {
+            id: p,
+          };
+        }),
+      };
+    }
+
+    if (updateDto.permissions) {
+      const users = await this.userRepository.findManyWithoutPaging({
+        id: {
+          in: updateDto.permissions.map((p) => p.userId),
+        },
+      });
+
+      if (users.length !== updateDto.permissions.length) {
+        throw new SomeUserNotFoundException();
+      }
+
+      newsfeedUpdateInput.permissions = {
+        deleteMany: {},
+        create: updateDto.permissions.map((p) => {
+          return {
+            user: {
+              connect: {
+                id: p.userId,
+              },
+            },
+            permission: p.permission,
+          };
+        }),
+      };
+    }
+
+    await this.newsfeedReposity.update(
+      {
+        id: newsfeedId,
+        userId,
+      },
+      newsfeedUpdateInput,
+    );
+  }
 
   async create(userId: string, createDto: NewsfeedCreateDto) {
     const photos = await this.photoRepository.findAllWithoutPaging({
@@ -149,8 +230,6 @@ export class NewsfeedService {
         },
       },
     ];
-
-    console.log(where);
 
     const count = await this.newsfeedReposity.count(where);
 

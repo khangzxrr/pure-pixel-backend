@@ -12,6 +12,16 @@ export class NewsfeedRepository {
     });
   }
 
+  update(
+    where: Prisma.NewsfeedWhereUniqueInput,
+    data: Prisma.NewsfeedUpdateInput,
+  ) {
+    return this.prismaService.extendedClient().newsfeed.update({
+      where,
+      data,
+    });
+  }
+
   upsert(
     where: Prisma.NewsfeedWhereUniqueInput,
     update: Prisma.NewsfeedUpdateInput,
@@ -39,6 +49,8 @@ export class NewsfeedRepository {
     return this.prismaService.extendedClient().newsfeed.findMany({
       where,
       include,
+      skip,
+      take,
     });
   }
 

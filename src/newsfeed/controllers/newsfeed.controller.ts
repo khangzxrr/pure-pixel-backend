@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Inject,
+  Patch,
   Post,
   Query,
   UseGuards,
@@ -22,6 +23,7 @@ import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
 import { NewsfeedCreateDto } from '../dtos/newsfeed.create.dto';
 import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
+import { NewsfeedUpdateDto } from '../dtos/newsfeed.update.dto';
 
 @Controller('newsfeed')
 @ApiTags('newsfeed')
@@ -57,4 +59,15 @@ export class NewsfeedController {
   ) {
     return await this.newsfeedService.create(user.sub, newsfeedCreateDto);
   }
+
+  @Patch(':id')
+  @ApiOperation({
+    summary: 'update one or more field of newsfeed using newsfeed id',
+  })
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
+  async updateNewsfeed(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Body() updateDto: NewsfeedUpdateDto,
+  ) {}
 }
