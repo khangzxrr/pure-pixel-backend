@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { NewsfeedRepository } from 'src/database/repositories/newsfeed.repository';
 import { NewsfeedFindAllDto } from '../dtos/rest/newsfeed-find-all.dto';
-import { Prisma } from '@prisma/client';
+import { Newsfeed, Prisma } from '@prisma/client';
 import { NewsfeedCreateDto } from '../dtos/newsfeed.create.dto';
 import { UserRepository } from 'src/database/repositories/user.repository';
 import { SomeUserNotFoundException } from '../exceptions/some-user-not-found.exception';
@@ -93,13 +93,17 @@ export class NewsfeedService {
       };
     }
 
-    await this.newsfeedReposity.update(
+    const updatedNewsfeed = await this.newsfeedReposity.update(
       {
         id: newsfeedId,
-        userId,
       },
       newsfeedUpdateInput,
     );
+
+    const dto = plainToInstance(NewsfeedDto, updatedNewsfeed);
+
+    console.log(dto);
+    return dto;
   }
 
   async create(userId: string, createDto: NewsfeedCreateDto) {
