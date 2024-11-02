@@ -31,6 +31,7 @@ import { PhotoSellPriceTagRepository } from './repositories/photo-sell-price-tag
 import { BookmarkRepository } from './repositories/bookmark.repository';
 import { NewsfeedRepository } from './repositories/newsfeed.repository';
 import { NewsfeedCommentRepository } from './repositories/newsfeed-comment.repositort';
+import { NewsfeedLikeRepository } from './repositories/newsfeed-like.repository';
 @Module({
   providers: [
     PrismaService,
@@ -65,6 +66,7 @@ import { NewsfeedCommentRepository } from './repositories/newsfeed-comment.repos
     BookmarkRepository,
     NewsfeedRepository,
     NewsfeedCommentRepository,
+    NewsfeedLikeRepository,
   ],
   exports: [
     PrismaService,
@@ -99,6 +101,7 @@ import { NewsfeedCommentRepository } from './repositories/newsfeed-comment.repos
     BookmarkRepository,
     NewsfeedRepository,
     NewsfeedCommentRepository,
+    NewsfeedLikeRepository,
   ],
 })
 export class DatabaseModule {}
