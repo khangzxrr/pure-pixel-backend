@@ -348,7 +348,7 @@ export class BookingService {
       bookingRequestDto.endDate,
     );
 
-    this.validatePreviousBookingOverlap(
+    await this.validatePreviousBookingOverlap(
       userId,
       bookingRequestDto.startDate,
       bookingRequestDto.endDate,
