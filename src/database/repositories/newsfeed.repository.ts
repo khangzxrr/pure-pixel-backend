@@ -54,6 +54,16 @@ export class NewsfeedRepository {
     });
   }
 
+  findUnique(
+    where: Prisma.NewsfeedWhereUniqueInput,
+    include: Prisma.NewsfeedInclude,
+  ) {
+    return this.prismaService.extendedClient().newsfeed.findUnique({
+      where,
+      include,
+    });
+  }
+
   findUniqueOrThrow(
     where: Prisma.NewsfeedWhereUniqueInput,
     include: Prisma.NewsfeedInclude,
