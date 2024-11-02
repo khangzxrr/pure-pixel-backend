@@ -1,7 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { NewsfeedCommentRepository } from 'src/database/repositories/newsfeed-comment.repositort';
 import { NewsfeedCommentCreateDto } from '../dtos/newsfeed-comment.create.dto';
-import { NewsfeedRepository } from 'src/database/repositories/newsfeed.repository';
 
 import { plainToInstance } from 'class-transformer';
 import { NewsfeedCommentDto } from '../dtos/newsfeed-comment.dto';
@@ -12,7 +11,6 @@ import { NewsfeedService } from './newsfeed.service';
 @Injectable()
 export class NewsfeedCommentService {
   constructor(
-    @Inject() private readonly newsfeedRepository: NewsfeedRepository,
     @Inject()
     private readonly newsfeedCommentRepository: NewsfeedCommentRepository,
     @Inject()

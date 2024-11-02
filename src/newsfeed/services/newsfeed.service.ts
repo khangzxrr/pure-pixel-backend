@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { NewsfeedRepository } from 'src/database/repositories/newsfeed.repository';
 import { NewsfeedFindAllDto } from '../dtos/rest/newsfeed-find-all.dto';
-import { Newsfeed, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { NewsfeedCreateDto } from '../dtos/newsfeed.create.dto';
 import { UserRepository } from 'src/database/repositories/user.repository';
 import { SomeUserNotFoundException } from '../exceptions/some-user-not-found.exception';
@@ -13,6 +13,7 @@ import { NewsfeedDto } from '../dtos/newsfeed.dto';
 import { NewsfeedFindAllResponseDto } from '../dtos/rest/newfeed-find-all.response.dto';
 import { NewsfeedUpdateDto } from '../dtos/newsfeed.update.dto';
 import { NewsfeedNotBelongException } from '../exceptions/newsfeed-not-belong.exception';
+import { InsufficientPermissionToPerformOnNewsfeedException } from '../exceptions/insufficient-permission-to-perform-on-newsfeed.exception';
 
 @Injectable()
 export class NewsfeedService {
