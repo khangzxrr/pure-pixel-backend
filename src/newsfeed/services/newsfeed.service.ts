@@ -23,6 +23,63 @@ export class NewsfeedService {
     @Inject() private readonly photoService: PhotoService,
   ) {}
 
+  async validatePermission(userId: string, newsfeedId: string) {
+    const newsfeedCount = await this.newsfeedReposity.count({
+      id: newsfeedId,
+      AND: [
+        {
+          permissions: {
+            none: {
+              userId,
+              permission: 'DENY',
+            },
+          },
+        },
+      ],
+      OR: [
+        {
+          visibility: 'PUBLIC',
+        },
+        {
+          visibility: 'ONLY_ME',
+          userId,
+        },
+        {
+          visibility: 'ONLY_CHOOSED',
+          OR: [
+            { userId },
+            {
+              permissions: {
+                some: {
+                  userId,
+                  permission: 'ALLOW',
+                },
+              },
+            },
+          ],
+        },
+        {
+          visibility: 'ONLY_FOLLOWING',
+          OR: [
+            { userId },
+            {
+              user: {
+                followers: {
+                  some: {
+                    followerId: userId,
+                  },
+                },
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    if (newsfeedCount <= 0) {
+      throw new InsufficientPermissionToPerformOnNewsfeedException();
+    }
+  }
   async update(
     userId: string,
     newsfeedId: string,

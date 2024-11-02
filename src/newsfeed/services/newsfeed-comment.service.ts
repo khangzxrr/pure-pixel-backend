@@ -2,12 +2,12 @@ import { Inject, Injectable } from '@nestjs/common';
 import { NewsfeedCommentRepository } from 'src/database/repositories/newsfeed-comment.repositort';
 import { NewsfeedCommentCreateDto } from '../dtos/newsfeed-comment.create.dto';
 import { NewsfeedRepository } from 'src/database/repositories/newsfeed.repository';
-import { InsufficientPermissionToPerformOnNewsfeedException } from '../exceptions/insufficient-permission-to-perform-on-newsfeed.exception';
 
 import { plainToInstance } from 'class-transformer';
 import { NewsfeedCommentDto } from '../dtos/newsfeed-comment.dto';
 import { NewsfeedCommentFindAllDto } from '../dtos/rest/newsfeed-comment-find-all.request.dto';
 import { NewsfeedCommentUpdateDto } from '../dtos/newsfeed-comment.update.dto';
+import { NewsfeedService } from './newsfeed.service';
 
 @Injectable()
 export class NewsfeedCommentService {
@@ -15,65 +15,9 @@ export class NewsfeedCommentService {
     @Inject() private readonly newsfeedRepository: NewsfeedRepository,
     @Inject()
     private readonly newsfeedCommentRepository: NewsfeedCommentRepository,
+    @Inject()
+    private readonly newsfeedService: NewsfeedService,
   ) {}
-
-  async validatePermission(userId: string, newsfeedId: string) {
-    const newsfeedCount = await this.newsfeedRepository.count({
-      id: newsfeedId,
-      AND: [
-        {
-          permissions: {
-            none: {
-              userId,
-              permission: 'DENY',
-            },
-          },
-        },
-      ],
-      OR: [
-        {
-          visibility: 'PUBLIC',
-        },
-        {
-          visibility: 'ONLY_ME',
-          userId,
-        },
-        {
-          visibility: 'ONLY_CHOOSED',
-          OR: [
-            { userId },
-            {
-              permissions: {
-                some: {
-                  userId,
-                  permission: 'ALLOW',
-                },
-              },
-            },
-          ],
-        },
-        {
-          visibility: 'ONLY_FOLLOWING',
-          OR: [
-            { userId },
-            {
-              user: {
-                followers: {
-                  some: {
-                    followerId: userId,
-                  },
-                },
-              },
-            },
-          ],
-        },
-      ],
-    });
-
-    if (newsfeedCount <= 0) {
-      throw new InsufficientPermissionToPerformOnNewsfeedException();
-    }
-  }
 
   async update(
     userId: string,
@@ -81,7 +25,7 @@ export class NewsfeedCommentService {
     commentId: string,
     updateDto: NewsfeedCommentUpdateDto,
   ) {
-    await this.validatePermission(userId, newsfeedId);
+    await this.newsfeedService.validatePermission(userId, newsfeedId);
 
     const updatedComment = await this.newsfeedCommentRepository.update(
       {
@@ -102,7 +46,7 @@ export class NewsfeedCommentService {
     newsfeedId: string,
     createDto: NewsfeedCommentCreateDto,
   ) {
-    await this.validatePermission(userId, newsfeedId);
+    await this.newsfeedService.validatePermission(userId, newsfeedId);
 
     const newsfeedComment = await this.newsfeedCommentRepository.create({
       newsfeed: {
@@ -127,7 +71,7 @@ export class NewsfeedCommentService {
     commentId: string,
     createDto: NewsfeedCommentCreateDto,
   ) {
-    await this.validatePermission(userId, newsfeedId);
+    await this.newsfeedService.validatePermission(userId, newsfeedId);
 
     const newsfeedComment = await this.newsfeedCommentRepository.create({
       newsfeed: {
@@ -152,7 +96,7 @@ export class NewsfeedCommentService {
   }
 
   async delete(userId: string, newsfeedId: string, commentId: string) {
-    await this.validatePermission(userId, newsfeedId);
+    await this.newsfeedService.validatePermission(userId, newsfeedId);
 
     const deletedComment = await this.newsfeedCommentRepository.delete({
       userId,
@@ -169,7 +113,7 @@ export class NewsfeedCommentService {
     findAllDto: NewsfeedCommentFindAllDto,
     parentId?: string,
   ) {
-    await this.validatePermission(userId, newsfeedId);
+    await this.newsfeedService.validatePermission(userId, newsfeedId);
 
     const comments = await this.newsfeedCommentRepository.findMany(
       {
