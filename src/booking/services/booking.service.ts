@@ -134,6 +134,11 @@ export class BookingService {
 
     const bookingDto = plainToInstance(BookingDto, booking);
 
+    bookingDto.originalPhotoshootPackage.thumbnail =
+      this.bunnyService.getPresignedFile(
+        bookingDto.originalPhotoshootPackage.thumbnail,
+      );
+
     const signedPhotoDtoPromises = booking.photos.map((p) =>
       this.photoService.signPhoto(p),
     );
