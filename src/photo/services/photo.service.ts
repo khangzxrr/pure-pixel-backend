@@ -117,7 +117,7 @@ export class PhotoService {
 
     const availableRes = await this.getAvailablePhotoResolution(photo.id);
 
-    if (availableRes.indexOf(shareRequest.size) <= 0) {
+    if (availableRes.indexOf(shareRequest.size) < 0) {
       throw new ChoosedShareQualityIsNotFoundException();
     }
 
