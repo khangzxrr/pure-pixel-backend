@@ -16,7 +16,7 @@ import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
 import { CreatePhotoSellingDto } from '../dtos/rest/create-photo-selling.request.dto';
 import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
-import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PhotoBuyResponseDto } from '../dtos/rest/photo-buy.response.dto';
 import { PhotoSellDto } from '../dtos/photo-sell.dto';
 import { SignedPhotoBuyDto } from '../dtos/rest/signed-photo-buy.response.dto';
@@ -32,6 +32,9 @@ export class PhotoExchangeController {
   ) {}
 
   @Post('/:photoId/sell')
+  @ApiOperation({
+    summary: 'sell photo using photoId',
+  })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   @ApiOkResponse({
@@ -50,6 +53,9 @@ export class PhotoExchangeController {
   }
 
   @Patch(':photoId/sell')
+  @ApiOperation({
+    summary: 'update sell photo using photoId (NOT IMPLEMENT YET!)',
+  })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   @ApiOkResponse({
@@ -64,6 +70,10 @@ export class PhotoExchangeController {
   }
 
   @Post('/:photoId/photo-sell/:photoSellId/price-tag/:pricetagId/buy')
+  @ApiOperation({
+    summary:
+      'buy photo using photoId, photoSellId, and pricetagId  (I KNOW, ALOTS)',
+  })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
   @ApiOkResponse({
@@ -86,6 +96,9 @@ export class PhotoExchangeController {
   }
 
   @Get(':photoId/photo-buy/:photoBuyId/download')
+  @ApiOperation({
+    summary: 'download photo using photoBuyId',
+  })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
   @ApiOkResponse({
@@ -112,6 +125,9 @@ export class PhotoExchangeController {
   }
 
   @Get('/:photoId/photo-buy')
+  @ApiOperation({
+    summary: 'get all previous photo-buy using photoId',
+  })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
   @ApiOkResponse({

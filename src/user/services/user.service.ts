@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { UserRepository } from 'src/database/repositories/user.repository';
 import { UserFilterDto } from '../dtos/user-filter.dto';
-import { UserDto } from '../dtos/me.dto';
+import { UserDto } from '../dtos/user.dto';
 import { UserNotFoundException } from '../exceptions/user-not-found.exception';
 import { StorageService } from 'src/storage/services/storage.service';
 import { PresignedUploadMediaDto } from '../dtos/presigned-upload-media.dto';
@@ -9,6 +9,7 @@ import { UpdateProfileDto } from '../dtos/rest/update-profile.request.dto';
 import { plainToInstance } from 'class-transformer';
 import { KeycloakService } from 'src/authen/services/keycloak.service';
 import { Constants } from 'src/infrastructure/utils/constants';
+import { MeDto } from '../dtos/me.dto';
 
 @Injectable()
 export class UserService {
@@ -103,6 +104,6 @@ export class UserService {
       throw new UserNotFoundException();
     }
 
-    return plainToInstance(UserDto, user);
+    return plainToInstance(MeDto, user);
   }
 }

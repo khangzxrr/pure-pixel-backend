@@ -52,8 +52,6 @@ export class PhotoShootPackageController {
   @ApiOkResponse({
     type: PhotoshootPackageDto,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   async findPhotoshootPackageById(
     @AuthenticatedUser() user: ParsedUserDto,
     @Param('id') id: string,
@@ -83,8 +81,6 @@ export class PhotoShootPackageController {
     summary: 'get all photoshoot package of a photographer by photographerId',
   })
   @ApiOkResponsePaginated(PhotoshootPackageDto)
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
   async findAllWithPhotographerId(
     @AuthenticatedUser() user: ParsedUserDto,
     @Param('photographerId') photographerId: string,

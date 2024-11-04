@@ -1,10 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ReportStatus, ReportType } from '@prisma/client';
 import { Exclude, Type } from 'class-transformer';
-import { UserDto } from 'src/user/dtos/me.dto';
 import { PhotoDto } from 'src/photo/dtos/photo.dto';
 
 import { CommentDto } from 'src/photo/dtos/comment-dto';
+import { UserDto } from 'src/user/dtos/user.dto';
 
 export class ReportDto {
   @ApiProperty()

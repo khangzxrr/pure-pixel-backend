@@ -155,6 +155,12 @@ export class UserRepository {
     });
   }
 
+  async findManyWithoutPaging(where: Prisma.UserWhereInput) {
+    return this.prisma.extendedClient().user.findMany({
+      where,
+    });
+  }
+
   async findMany(
     where: Prisma.UserWhereInput,
     orderBy: Prisma.UserOrderByWithRelationInput[],

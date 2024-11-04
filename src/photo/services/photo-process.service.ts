@@ -79,14 +79,6 @@ export class PhotoProcessService {
     const fontSizeScaledByWidth = (metadata.width * 10) / 100;
 
     const svg = `<svg height="${metadata.height}" width="${metadata.width}"> 
-        <text x="0%" y="10%" dominant-baseline="hanging" text-anchor="start" font-family="Roboto"  font-size="${fontSizeScaledByWidth}"  fill="#fff" fill-opacity="0.7">${watermarkText}</text> 
-<text x="100%" y="10%" dominant-baseline="hanging" text-anchor="end" font-family="Roboto"  font-size="${fontSizeScaledByWidth}"  fill="#fff" fill-opacity="0.7">${watermarkText}</text> 
-
-        <text x="0%" y="100%" dominant-baseline="middle" text-anchor="start" font-family="Roboto"  font-size="${fontSizeScaledByWidth}"  fill="#fff" fill-opacity="0.7">${watermarkText}</text> 
-
- 
-        <text x="100%" y="100%" dominant-baseline="middle" text-anchor="end" font-family="Roboto"  font-size="${fontSizeScaledByWidth}"  fill="#fff" fill-opacity="0.7">${watermarkText}</text> 
-
         <text x="50%" y="50%" font-family="Roboto" dominant-baseline="middle" text-anchor="middle" font-size="${fontSizeScaledByWidth}"  fill="#fff" fill-opacity="0.7">${watermarkText}</text>         
 </svg>`;
 

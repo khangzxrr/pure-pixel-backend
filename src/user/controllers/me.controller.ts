@@ -19,13 +19,14 @@ import {
 } from '@nestjs/swagger';
 import { UserFilterDto } from '../dtos/user-filter.dto';
 import { ParsedUserDto } from '../dtos/parsed-user.dto';
-import { UserDto } from '../dtos/me.dto';
+import { UserDto } from '../dtos/user.dto';
 
 import { Response } from 'express';
 import { PresignedUploadMediaDto } from '../dtos/presigned-upload-media.dto';
 import { UpdateProfileDto } from '../dtos/rest/update-profile.request.dto';
 import { UpgradeOrderDto } from 'src/upgrade-order/dtos/upgrade-order.dto';
 import { UpgradeOrderService } from 'src/upgrade-order/services/upgrade-order.service';
+import { MeDto } from '../dtos/me.dto';
 
 @Controller('me')
 @ApiTags('me')
@@ -39,7 +40,7 @@ export class MeController {
     summary: 'get user info base on role ',
   })
   @ApiOkResponse({
-    type: UserDto,
+    type: MeDto,
   })
   @Get()
   @UseGuards(AuthGuard, KeycloakRoleGuard)

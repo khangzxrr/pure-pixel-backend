@@ -24,6 +24,7 @@ import { PhotoService } from 'src/photo/services/photo.service';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { BookingNotInValidStateException } from '../exceptions/booking-not-in-valid-state.exception';
 import { PrismaService } from 'src/prisma.service';
+import { BunnyService } from 'src/storage/services/bunny.service';
 
 @Injectable()
 export class BookingService {
@@ -34,6 +35,7 @@ export class BookingService {
     @Inject() private readonly notificationService: NotificationService,
     @Inject() private readonly photoService: PhotoService,
     @Inject() private readonly photoRepository: PhotoRepository,
+    @Inject() private readonly bunnyService: BunnyService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -132,6 +134,11 @@ export class BookingService {
 
     const bookingDto = plainToInstance(BookingDto, booking);
 
+    bookingDto.originalPhotoshootPackage.thumbnail =
+      this.bunnyService.getPresignedFile(
+        bookingDto.originalPhotoshootPackage.thumbnail,
+      );
+
     const signedPhotoDtoPromises = booking.photos.map((p) =>
       this.photoService.signPhoto(p),
     );
@@ -153,9 +160,23 @@ export class BookingService {
         findallDto.toWhere(),
       );
 
-    const bookingDtos = plainToInstance(BookingDto, bookings);
+    const dtos = bookings.map((b) => {
+      const dto = plainToInstance(BookingDto, b);
 
-    return new BookingFindAllResponseDto(findallDto.limit, count, bookingDtos);
+      dto.photoshootPackageHistory.thumbnail =
+        this.bunnyService.getPresignedFile(
+          dto.photoshootPackageHistory.thumbnail,
+        );
+
+      dto.originalPhotoshootPackage.thumbnail =
+        this.bunnyService.getPresignedFile(
+          dto.originalPhotoshootPackage.thumbnail,
+        );
+
+      return dto;
+    });
+
+    return new BookingFindAllResponseDto(findallDto.limit, count, dtos);
   }
 
   async uploadPhoto(
@@ -281,9 +302,23 @@ export class BookingService {
         findallDto.toWhere(),
       );
 
-    const bookingDtos = plainToInstance(BookingDto, bookings);
+    const dtos = bookings.map((b) => {
+      const dto = plainToInstance(BookingDto, b);
 
-    return new BookingFindAllResponseDto(findallDto.limit, count, bookingDtos);
+      dto.photoshootPackageHistory.thumbnail =
+        this.bunnyService.getPresignedFile(
+          dto.photoshootPackageHistory.thumbnail,
+        );
+
+      dto.originalPhotoshootPackage.thumbnail =
+        this.bunnyService.getPresignedFile(
+          dto.originalPhotoshootPackage.thumbnail,
+        );
+
+      return dto;
+    });
+
+    return new BookingFindAllResponseDto(findallDto.limit, count, dtos);
   }
 
   validateStartEndDateOfUser(start: Date, end: Date) {
@@ -348,7 +383,7 @@ export class BookingService {
       bookingRequestDto.endDate,
     );
 
-    this.validatePreviousBookingOverlap(
+    await this.validatePreviousBookingOverlap(
       userId,
       bookingRequestDto.startDate,
       bookingRequestDto.endDate,

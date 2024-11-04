@@ -114,7 +114,6 @@ export class CommentService {
     const parentComment = await this.commentRepository.findUniqueOrThrow({
       id: commentId,
       photoId,
-      userId,
     });
 
     const comment = new CommentEntity({

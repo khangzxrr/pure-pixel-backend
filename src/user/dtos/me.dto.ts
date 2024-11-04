@@ -2,23 +2,23 @@ import { ApiProperty } from '@nestjs/swagger';
 import { ResponseBaseDto } from 'src/infrastructure/restful/base.response.dto';
 import { Exclude } from 'class-transformer';
 
-export class UserDto extends ResponseBaseDto {
-  @Exclude()
+export class MeDto extends ResponseBaseDto {
+  @ApiProperty()
   photoQuotaUsage: string;
 
-  @Exclude()
+  @ApiProperty()
   packageCount: string;
 
-  @Exclude()
+  @ApiProperty()
   maxPhotoQuota: string;
 
-  @Exclude()
+  @ApiProperty()
   maxPackageCount: string;
 
-  @Exclude()
+  @ApiProperty()
   ftpUsername: string;
 
-  @Exclude()
+  @ApiProperty()
   ftpPassword: string;
 
   @ApiProperty()

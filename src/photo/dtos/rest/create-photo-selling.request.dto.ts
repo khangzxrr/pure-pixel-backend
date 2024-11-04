@@ -16,6 +16,13 @@ export class CreatePhotoSellingDto {
   })
   @IsString()
   @IsNotEmpty()
+  title: string;
+
+  @ApiProperty({
+    required: true,
+  })
+  @IsString()
+  @IsNotEmpty()
   description: string;
 
   @ApiProperty({

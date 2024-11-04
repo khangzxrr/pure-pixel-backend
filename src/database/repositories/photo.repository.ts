@@ -210,6 +210,12 @@ export class PhotoRepository {
     });
   }
 
+  async findAllWithoutPaging(where: Prisma.PhotoWhereInput) {
+    return this.prisma.extendedClient().photo.findMany({
+      where,
+    });
+  }
+
   async findAll(
     where: Prisma.PhotoWhereInput,
     orderBy: Prisma.PhotoOrderByWithRelationInput[],
@@ -243,21 +249,6 @@ export class PhotoRepository {
           },
         },
         photoTags: true,
-      },
-    });
-  }
-  async findAllByVisibility(visibilityStr: string) {
-    let visibility: PhotoVisibility = PhotoVisibility.PUBLIC;
-
-    if (visibilityStr == PhotoVisibility.PRIVATE) {
-      visibility = PhotoVisibility.PRIVATE;
-    } else if (visibilityStr == PhotoVisibility.SHARE_LINK) {
-      visibility = PhotoVisibility.SHARE_LINK;
-    }
-
-    return this.prisma.extendedClient().photo.findMany({
-      where: {
-        visibility,
       },
     });
   }

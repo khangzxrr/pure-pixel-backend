@@ -10,6 +10,25 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
   extendedClient() {
     const prisma = this.$extends({
       query: {
+        newsfeed: {
+          async $allOperations({ operation, args, query }) {
+            if (
+              operation === 'findFirst' ||
+              operation === 'findMany' ||
+              operation === 'findUnique' ||
+              operation === 'findFirstOrThrow' ||
+              operation === 'findUniqueOrThrow' ||
+              operation === 'count' ||
+              operation === 'delete' ||
+              operation === 'update' ||
+              operation === 'updateMany'
+            ) {
+              args.where = { ...args.where, deletedAt: null };
+            }
+
+            return query(args);
+          },
+        },
         photoshootPackage: {
           async count({ args, query }) {
             args.where = { ...args.where, deletedAt: null };

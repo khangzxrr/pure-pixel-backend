@@ -16,11 +16,12 @@ import { ReportPutUpdateRequestDto } from '../dtos/rest/report-put-update.reques
 import { PhotoDto } from 'src/photo/dtos/photo.dto';
 
 import { PhotoService } from 'src/photo/services/photo.service';
-import { UserDto } from 'src/user/dtos/me.dto';
+
 import { CommentDto } from 'src/photo/dtos/comment-dto';
 import { NotBelongReportException } from '../exceptions/not-belong-report.exception';
 import { UserReportPathUpdateDto } from '../dtos/rest/user-report-patch-update.request.dto';
 import { UserReportPutUpdateRequestDto } from '../dtos/rest/user-report-put-update.request.dto';
+import { UserDto } from 'src/user/dtos/user.dto';
 
 @Injectable()
 export class ReportService {
