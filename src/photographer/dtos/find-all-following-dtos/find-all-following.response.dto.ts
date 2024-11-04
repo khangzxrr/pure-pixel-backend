@@ -1,4 +1,4 @@
 import { PagingPaginatedResposneDto } from 'src/infrastructure/restful/paging-paginated.response.dto';
-import { FollowingDto } from '../following-dto';
+import { FollowDto } from '../following-dto';
 
-export class FindAllFollowingResponseDto extends PagingPaginatedResposneDto<FollowingDto> {}
+export class FindAllFollowResponseDto extends PagingPaginatedResposneDto<FollowDto> {}

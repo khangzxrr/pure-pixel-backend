@@ -1,15 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { PhotographerDTO } from './photographer.dto';
+import { Type } from 'class-transformer';
+import { UserDto } from 'src/user/dtos/user.dto';
 
-export class FollowingDto {
+export class FollowDto {
   @ApiProperty()
-  photographer: PhotographerDTO;
+  @Type(() => UserDto)
+  follower: UserDto;
 
   @ApiProperty()
-  isFollowed: boolean;
-
-  constructor(photographer: PhotographerDTO, isFollowed: boolean) {
-    this.photographer = photographer;
-    this.isFollowed = isFollowed;
-  }
+  @Type(() => UserDto)
+  following: UserDto;
 }

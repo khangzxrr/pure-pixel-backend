@@ -32,6 +32,7 @@ import { BookmarkRepository } from './repositories/bookmark.repository';
 import { NewsfeedRepository } from './repositories/newsfeed.repository';
 import { NewsfeedCommentRepository } from './repositories/newsfeed-comment.repositort';
 import { NewsfeedLikeRepository } from './repositories/newsfeed-like.repository';
+import { FollowRepository } from './repositories/follow.repository';
 @Module({
   providers: [
     PrismaService,
@@ -67,6 +68,7 @@ import { NewsfeedLikeRepository } from './repositories/newsfeed-like.repository'
     NewsfeedRepository,
     NewsfeedCommentRepository,
     NewsfeedLikeRepository,
+    FollowRepository,
   ],
   exports: [
     PrismaService,
@@ -102,6 +104,7 @@ import { NewsfeedLikeRepository } from './repositories/newsfeed-like.repository'
     NewsfeedRepository,
     NewsfeedCommentRepository,
     NewsfeedLikeRepository,
+    FollowRepository,
   ],
 })
 export class DatabaseModule {}
