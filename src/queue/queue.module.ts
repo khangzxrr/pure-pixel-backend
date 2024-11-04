@@ -39,7 +39,7 @@ import { UpgradeConstant } from 'src/upgrade-package/constants/upgrade.constant'
     }),
     BullModule.registerQueueAsync({
       imports: [CustomConfigModule],
-      name: PhotoConstant.PHOTO_SHARE_QUEUE,
+      name: PhotoConstant.PHOTO_VIEWCOUNT_QUEUE,
       useExisting: BullMqQueueRegisterService,
       inject: [CustomConfigModule],
     }),

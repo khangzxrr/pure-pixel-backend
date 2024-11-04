@@ -43,6 +43,7 @@ import { GenerateWatermarkRequestDto } from '../dtos/rest/generate-watermark.req
 import { PhotoGenerateWatermarkService } from './photo-generate-watermark.service';
 import { CameraConstant } from 'src/camera/constants/camera.constant';
 import { FailToPerformOnDuplicatedPhotoException } from '../exceptions/fail-to-perform-on-duplicated-photo.exception';
+import { PhotoValidateService } from './photo-validate.service';
 
 @Injectable()
 export class PhotoService {
@@ -56,12 +57,15 @@ export class PhotoService {
     @Inject() private readonly photoTagRepository: PhotoTagRepository,
     @Inject() private readonly categoryRepository: CategoryRepository,
     @Inject() private readonly bunnyService: BunnyService,
+    @Inject() private readonly photoValidateService: PhotoValidateService,
     @Inject()
     private readonly photoGenerateWatermarkService: PhotoGenerateWatermarkService,
     @InjectQueue(PhotoConstant.PHOTO_PROCESS_QUEUE)
     private readonly photoProcessQueue: Queue,
     @InjectQueue(CameraConstant.CAMERA_PROCESS_QUEUE)
     private readonly cameraQueue: Queue,
+    @InjectQueue(PhotoConstant.PHOTO_VIEWCOUNT_QUEUE)
+    private readonly photoViewCountQueue: Queue,
     private readonly prisma: PrismaService,
     // @Inject(CACHE_MANAGER)
     // private readonly cacheManager: Cache,
@@ -117,7 +121,7 @@ export class PhotoService {
 
     const availableRes = await this.getAvailablePhotoResolution(photo.id);
 
-    if (availableRes.indexOf(shareRequest.size) <= 0) {
+    if (availableRes.indexOf(shareRequest.size) < 0) {
       throw new ChoosedShareQualityIsNotFoundException();
     }
 
@@ -353,7 +357,7 @@ export class PhotoService {
         photoId,
       );
 
-    const deleteQuery = this.photoRepository.deleteQuery(photo.id);
+    const deleteQuery = this.photoRepository.deleteById(photo.id);
 
     const deactivePhotoSellQuery =
       this.photoSellRepository.deactivatePhotoSellByPhotoIdQuery(photoId);
@@ -369,6 +373,10 @@ export class PhotoService {
     validateOwnership: boolean = true,
   ) {
     const photo = await this.photoRepository.findUniqueOrThrow(id);
+
+    await this.photoViewCountQueue.add(PhotoConstant.INCREASE_VIEW_COUNT_JOB, {
+      id: photo.id,
+    });
 
     if (!photo) {
       throw new PhotoNotFoundException();
@@ -434,6 +442,11 @@ export class PhotoService {
         throw new MissingModelExifException();
       }
 
+      await this.photoValidateService.validateHashAndMatching(
+        photoUploadDto.file.buffer,
+        photoUploadDto.file.originalName,
+      );
+
       exif['Copyright'] = ` © copyright by ${user.name}`;
 
       const storageObjectKey = await this.bunnyService.upload(
@@ -469,11 +482,11 @@ export class PhotoService {
 
       return this.signPhoto(photo);
     } catch (e) {
-      console.log(e);
-
       if (e instanceof HttpException) {
         throw e;
       }
+
+      console.log(e);
 
       throw new UploadPhotoFailedException();
     }

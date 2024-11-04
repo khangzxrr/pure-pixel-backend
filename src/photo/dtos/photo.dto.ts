@@ -19,6 +19,9 @@ export class PhotoDto {
   @ApiProperty({})
   watermark: boolean;
 
+  @ApiProperty()
+  viewCount: number;
+
   @ApiProperty({})
   exif: JsonValue;
 

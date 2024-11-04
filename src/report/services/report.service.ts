@@ -13,7 +13,6 @@ import { CommentRepository } from 'src/database/repositories/comment.repository'
 import { ReferenceIdNotFoundException } from '../exceptions/referenced-id-is-not-found.exception';
 import { ReportType } from '@prisma/client';
 import { ReportPutUpdateRequestDto } from '../dtos/rest/report-put-update.request.dto';
-import { PhotoDto } from 'src/photo/dtos/photo.dto';
 
 import { PhotoService } from 'src/photo/services/photo.service';
 
@@ -161,7 +160,7 @@ export class ReportService {
             false,
           );
 
-          r.referencedPhoto = plainToInstance(PhotoDto, photo);
+          r.referencedPhoto = photo;
           break;
         case 'COMMENT':
           const comment = await this.commentRepository.findUniqueOrThrow({

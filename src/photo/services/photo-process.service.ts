@@ -16,12 +16,14 @@ export class PhotoProcessService {
     @Inject() private readonly bunnyService: BunnyService,
   ) {}
 
+  async getHashFromBuffer(buffer: Buffer) {
+    return await phash(buffer);
+  }
+
   async getHashFromKey(key: string) {
     const buffer = await this.getBufferFromKey(key);
 
-    const hash = await phash(buffer);
-
-    return hash;
+    return await this.getHashFromBuffer(buffer);
   }
 
   async uploadFromBuffer(key: string, buffer: Buffer) {

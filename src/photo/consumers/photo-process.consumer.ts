@@ -61,13 +61,6 @@ export class PhotoProcessConsumer extends WorkerHost {
     );
   }
 
-  private async updateDuplicatedPhoto(photoId: string) {
-    await this.photoRepository.updateById(photoId, {
-      visibility: 'PRIVATE',
-      status: 'DUPLICATED',
-    });
-  }
-
   async processPhoto(photoId: string) {
     console.log(`process photo id: ${photoId}`);
 
@@ -82,9 +75,8 @@ export class PhotoProcessConsumer extends WorkerHost {
     });
 
     if (existPhotoWithHash) {
-      console.log(hash);
+      await this.photoRepository.deleteById(photoId);
 
-      await this.updateDuplicatedPhoto(photoId);
       await this.sendNotification(photo.title, photo.photographerId, photo.id);
 
       return;
@@ -92,19 +84,18 @@ export class PhotoProcessConsumer extends WorkerHost {
 
     const signedPhotoUrl = this.bunnyService.getPresignedFile(
       photo.originalPhotoUrl,
-      '?width=600',
+      `?width=${PhotoConstant.TINEYE_MIN_PHOTO_WIDTH}`,
     );
 
     try {
       const response = await this.tineyeService.search(signedPhotoUrl);
 
-      console.log(response.data.result);
-
       const result = response.data.result;
 
       if (result) {
         if (result.length > 0 && result[0].match_percent >= 10) {
-          await this.updateDuplicatedPhoto(photoId);
+          await this.photoRepository.deleteById(photoId);
+
           await this.sendNotification(
             photo.title,
             photo.photographerId,

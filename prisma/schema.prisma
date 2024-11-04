@@ -478,6 +478,8 @@ model Photo {
   width  Int
   height Int
 
+  viewCount Int @default(0)
+
   watermark Boolean @default(false)
 
   exif Json
