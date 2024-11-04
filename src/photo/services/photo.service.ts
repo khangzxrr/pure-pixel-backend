@@ -62,6 +62,8 @@ export class PhotoService {
     private readonly photoProcessQueue: Queue,
     @InjectQueue(CameraConstant.CAMERA_PROCESS_QUEUE)
     private readonly cameraQueue: Queue,
+    @InjectQueue(PhotoConstant.PHOTO_VIEWCOUNT_QUEUE)
+    private readonly photoViewCountQueue: Queue,
     private readonly prisma: PrismaService,
     // @Inject(CACHE_MANAGER)
     // private readonly cacheManager: Cache,
@@ -369,6 +371,10 @@ export class PhotoService {
     validateOwnership: boolean = true,
   ) {
     const photo = await this.photoRepository.findUniqueOrThrow(id);
+
+    await this.photoViewCountQueue.add(PhotoConstant.INCREASE_VIEW_COUNT_JOB, {
+      id: photo.id,
+    });
 
     if (!photo) {
       throw new PhotoNotFoundException();
