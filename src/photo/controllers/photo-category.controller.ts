@@ -14,7 +14,7 @@ export class PhotoCategoryController {
   ) {}
 
   @Get()
-  @CacheTTL(3600000)
+  @CacheTTL(3600)
   @ApiOperation({
     summary: 'get all photo categories',
   })

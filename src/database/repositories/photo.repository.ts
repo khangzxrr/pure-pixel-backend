@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Photo, PhotoVisibility, Prisma } from '@prisma/client';
+import { Photo, Prisma } from '@prisma/client';
 
 import { PrismaService } from 'src/prisma.service';
 
@@ -7,13 +7,10 @@ import { PrismaService } from 'src/prisma.service';
 export class PhotoRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  deleteQuery(photoId: string) {
-    return this.prisma.extendedClient().photo.update({
+  deleteById(photoId: string) {
+    return this.prisma.extendedClient().photo.delete({
       where: {
         id: photoId,
-      },
-      data: {
-        deletedAt: new Date(),
       },
     });
   }

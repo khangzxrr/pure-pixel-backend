@@ -16,4 +16,6 @@ export class PhotoConstant {
   static MIN_PHOTO_SIZE = 4000000;
 
   static MIN_PHOTO_WIDTH = 480;
+
+  static TINEYE_MIN_PHOTO_WIDTH = 600;
 }
