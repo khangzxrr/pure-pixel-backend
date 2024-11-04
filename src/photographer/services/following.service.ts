@@ -86,7 +86,7 @@ export class FollowingService {
       followingId: userId,
     });
 
-    const followers = await this.followRepository.findAll(
+    const followers: any[] = await this.followRepository.findAll(
       {
         followingId: userId,
       },
@@ -117,7 +117,7 @@ export class FollowingService {
       followerId: userId,
     });
 
-    const followings = await this.followRepository.findAll(
+    const followings: any[] = await this.followRepository.findAll(
       {
         followerId: userId,
       },
