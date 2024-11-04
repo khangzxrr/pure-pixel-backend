@@ -90,8 +90,6 @@ export class PhotoProcessConsumer extends WorkerHost {
     try {
       const response = await this.tineyeService.search(signedPhotoUrl);
 
-      console.log(response.data.result);
-
       const result = response.data.result;
 
       if (result) {
