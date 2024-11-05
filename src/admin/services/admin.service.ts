@@ -13,6 +13,8 @@ import { UserService } from 'src/user/services/user.service';
 import { DashboardDto } from '../dtos/dashboard.dto';
 import { DashboardRequestDto } from '../dtos/dashboard.request.dto';
 import { UpgradePackageRepository } from 'src/database/repositories/upgrade-package.repository';
+import { plainToInstance } from 'class-transformer';
+import { UpgradePackageDto } from 'src/upgrade-package/dtos/upgrade-package.dto';
 
 @Injectable()
 export class AdminService {
@@ -94,6 +96,11 @@ export class AdminService {
       5,
       {},
       {},
+    );
+
+    dashboardDto.mostUsedUpgradePackages = plainToInstance(
+      UpgradePackageDto,
+      upgradePackages,
     );
 
     return dashboardDto;

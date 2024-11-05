@@ -57,6 +57,10 @@ export class PhotoVoteService {
   }
 
   async deleteVote(userId: string, photoId: string) {
+    const existVote = await this.photoVoteRepository.findFirst(userId, photoId);
+
+    if (!existVote) return;
+
     const deletedPhoto = await this.photoVoteRepository.delete(photoId, userId);
 
     return plainToInstance(PhotoDto, deletedPhoto);
