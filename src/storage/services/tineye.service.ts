@@ -61,6 +61,19 @@ export class TineyeService {
     return response;
   }
 
+  async delete(filepath: string) {
+    const response = await firstValueFrom(
+      this.httpService.delete(
+        `${this.getEndpoint()}/rest/delete/?filepath=${filepath}`,
+        {
+          headers: this.getAuthenticationHeader({}),
+        },
+      ),
+    );
+
+    return response;
+  }
+
   async search(url: string) {
     if (url === null || url.length === 0) {
       throw new FileShouldNotBeNullException();
@@ -68,7 +81,6 @@ export class TineyeService {
 
     const formData = new FormData();
     formData.append('url', url);
-    formData.append('limit', 1);
 
     const response = await firstValueFrom(
       this.httpService.post(`${this.getEndpoint()}/rest/search`, formData, {
@@ -81,14 +93,10 @@ export class TineyeService {
     return response;
   }
 
-  async add(url: string) {
-    if (url === null || url.length === 0) {
-      throw new FileShouldNotBeNullException();
-    }
-
+  async add(originalUrl: string, signedUrl: string) {
     const formData = new FormData();
-    formData.append('url', url);
-    formData.append('filepath', url);
+    formData.append('url', signedUrl);
+    formData.append('filepath', originalUrl);
 
     const response = await firstValueFrom(
       this.httpService.post(`${this.getEndpoint()}/rest/add`, formData, {

@@ -357,6 +357,10 @@ export class PhotoService {
         photoId,
       );
 
+    await this.photoProcessQueue.add(PhotoConstant.DELETE_PHOTO_JOB_NAME, {
+      originalPhotoUrl: photo.originalPhotoUrl,
+    });
+
     const deleteQuery = this.photoRepository.deleteById(photo.id);
 
     const deactivePhotoSellQuery =

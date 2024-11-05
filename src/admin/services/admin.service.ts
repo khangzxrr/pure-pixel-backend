@@ -15,6 +15,7 @@ import { DashboardRequestDto } from '../dtos/dashboard.request.dto';
 import { UpgradePackageRepository } from 'src/database/repositories/upgrade-package.repository';
 import { plainToInstance } from 'class-transformer';
 import { UpgradePackageDto } from 'src/upgrade-package/dtos/upgrade-package.dto';
+import { UpgradePackageOrderRepository } from 'src/database/repositories/upgrade-package-order.repository';
 
 @Injectable()
 export class AdminService {
@@ -25,14 +26,29 @@ export class AdminService {
     @Inject() private readonly photoProcessConsumer: PhotoProcessConsumer,
     @Inject() private readonly userService: UserService,
     @Inject()
+    private readonly upgradeOrderRepository: UpgradePackageOrderRepository,
+    @Inject()
     private readonly upgradePackageRepository: UpgradePackageRepository,
   ) {}
 
   async getDashboard(dashboardRequestDto: DashboardRequestDto) {
     const dashboardDto = new DashboardDto();
 
-    dashboardDto.totalCustomer = 420;
-    dashboardDto.totalPhotographer = 160;
+    const customers = await this.keycloakService.findUsersHasRole(
+      Constants.CUSTOMER_ROLE,
+      0,
+      -1,
+    );
+
+    const photographers = await this.keycloakService.findUsersHasRole(
+      Constants.ADMIN_ROLE,
+      0,
+      -1,
+    );
+
+    dashboardDto.totalCustomer = customers.length;
+    dashboardDto.totalPhotographer = photographers.length;
+
     dashboardDto.totalRevenueFromUpgradePackage = 999999999;
     dashboardDto.totalRevenue = 99999999;
     dashboardDto.totalEmployee = 15;
@@ -93,7 +109,7 @@ export class AdminService {
 
     const upgradePackages = await this.upgradePackageRepository.findAll(
       0,
-      5,
+      dashboardRequestDto.topUsedUpgradePackageCount,
       {},
       {},
     );
