@@ -10,6 +10,9 @@ import { PhotoUploadRequestDto } from 'src/photo/dtos/rest/photo-upload.request'
 import { MemoryStoredFile } from 'nestjs-form-data';
 import { PhotoProcessConsumer } from 'src/photo/consumers/photo-process.consumer';
 import { UserService } from 'src/user/services/user.service';
+import { DashboardDto } from '../dtos/dashboard.dto';
+import { DashboardRequestDto } from '../dtos/dashboard.request.dto';
+import { UpgradePackageRepository } from 'src/database/repositories/upgrade-package.repository';
 
 @Injectable()
 export class AdminService {
@@ -19,7 +22,82 @@ export class AdminService {
     @Inject() private readonly photoService: PhotoService,
     @Inject() private readonly photoProcessConsumer: PhotoProcessConsumer,
     @Inject() private readonly userService: UserService,
+    @Inject()
+    private readonly upgradePackageRepository: UpgradePackageRepository,
   ) {}
+
+  async getDashboard(dashboardRequestDto: DashboardRequestDto) {
+    const dashboardDto = new DashboardDto();
+
+    dashboardDto.totalCustomer = 420;
+    dashboardDto.totalPhotographer = 160;
+    dashboardDto.totalRevenueFromUpgradePackage = 999999999;
+    dashboardDto.totalRevenue = 99999999;
+    dashboardDto.totalEmployee = 15;
+
+    dashboardDto.customerDatapoints = [
+      {
+        total: 15,
+        createdAt: new Date('2019-01-01'),
+      },
+      {
+        total: 50,
+        createdAt: new Date('2020-01-01'),
+      },
+      {
+        total: 70,
+        createdAt: new Date('2021-01-01'),
+      },
+      {
+        total: 102,
+        createdAt: new Date('2022-01-01'),
+      },
+      {
+        total: 300,
+        createdAt: new Date('2023-01-01'),
+      },
+      {
+        total: 420,
+        createdAt: new Date('2024-01-01'),
+      },
+    ];
+
+    dashboardDto.photographerDatapoints = [
+      {
+        total: 5,
+        createdAt: new Date('2019-01-01'),
+      },
+      {
+        total: 15,
+        createdAt: new Date('2020-01-01'),
+      },
+      {
+        total: 23,
+        createdAt: new Date('2021-01-01'),
+      },
+      {
+        total: 50,
+        createdAt: new Date('2022-01-01'),
+      },
+      {
+        total: 135,
+        createdAt: new Date('2023-01-01'),
+      },
+      {
+        total: 160,
+        createdAt: new Date('2024-01-01'),
+      },
+    ];
+
+    const upgradePackages = await this.upgradePackageRepository.findAll(
+      0,
+      5,
+      {},
+      {},
+    );
+
+    return dashboardDto;
+  }
 
   async syncUsers() {
     return this.userService.syncKeycloakWithDatabase();

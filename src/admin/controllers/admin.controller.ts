@@ -1,20 +1,42 @@
-import { Controller, Inject, Param, Post, UseGuards } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  Inject,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AdminService } from '../services/admin.service';
 import { AuthGuard, Roles } from 'nest-keycloak-connect';
 import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { UpdateTimelineService } from 'src/camera/crons/update-timeline.service.cron';
 import { Constants } from 'src/infrastructure/utils/constants';
+import { DashboardDto } from '../dtos/dashboard.dto';
+import { DashboardRequestDto } from '../dtos/dashboard.request.dto';
 
 @Controller('admin')
 @ApiTags('admin')
 @UseGuards(AuthGuard, KeycloakRoleGuard)
-@Roles({ roles: [Constants.MANAGER_ROLE] })
+@Roles({ roles: [Constants.ADMIN_ROLE] })
 export class AdminController {
   constructor(
     @Inject() private readonly adminService: AdminService,
     @Inject() private readonly updateTimelineService: UpdateTimelineService,
   ) {}
+
+  @Get('dashboard')
+  @ApiOperation({
+    summary: 'get dashboard summary',
+  })
+  @ApiOkResponse({
+    type: DashboardDto,
+  })
+  async dashboard(@Query() dashboardRequestDto: DashboardRequestDto) {
+    return await this.adminService.getDashboard(dashboardRequestDto);
+  }
 
   @Post('seed')
   @ApiOperation({
