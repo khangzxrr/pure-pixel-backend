@@ -11,7 +11,7 @@ import { PhotoCategoryController } from './controllers/photo-category.controller
 import { QueueModule } from 'src/queue/queue.module';
 import { PhotoProcessConsumer } from './consumers/photo-process.consumer';
 import { PhotoGateway } from './gateways/socket.io.gateway';
-import { CacheModule } from '@nestjs/cache-manager';
+
 import { CommentService } from './services/comment.service';
 import { PhotoWatermarkConsumer } from './consumers/photo-watermark.consumer';
 import { PhotoSellBuyController } from './controllers/photo-sellbuy.controller';
@@ -25,6 +25,7 @@ import { PhotoVoteService } from './services/photo-vote.service';
 import { PhotoViewCountConsumer } from './consumers/photo-view-count.consumer';
 import { PhotoValidateService } from './services/photo-validate.service';
 import { PhotoExchangeController } from './controllers/photo-exchange.controller';
+import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
   providers: [

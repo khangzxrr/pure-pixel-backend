@@ -362,7 +362,9 @@ export class PhotoService {
     const deactivePhotoSellQuery =
       this.photoSellRepository.deactivatePhotoSellByPhotoIdQuery(photoId);
 
-    await this.prisma.$transaction([deleteQuery, deactivePhotoSellQuery]);
+    await this.prisma
+      .extendedClient()
+      .$transaction([deleteQuery, deactivePhotoSellQuery]);
 
     return true;
   }
