@@ -2,8 +2,8 @@ import { Controller, Get, Inject, Param } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserService } from '../services/user.service';
 
-@Controller('manager/user')
-@ApiTags('manager-user')
+@Controller('user')
+@ApiTags('manage-user')
 export class UserController {
   constructor(@Inject() private readonly userService: UserService) {}
 
@@ -14,8 +14,12 @@ export class UserController {
   async getUserById(@Param('id') id: string) {
     return this.userService.findOne({
       id,
-      followers: true,
-      followings: true,
     });
   }
+
+  @Get()
+  @ApiOperation({
+    summary: 'get all users',
+  })
+  async getAllUsers() {}
 }

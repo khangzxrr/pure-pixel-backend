@@ -60,7 +60,7 @@ export class UserService {
   }
 
   async generatePresignedUploadMedia(userId: string) {
-    const user = await this.userRepository.findUnique(userId);
+    const user = await this.userRepository.findUnique(userId, {});
 
     if (!user) {
       throw new UserNotFoundException();
@@ -83,7 +83,7 @@ export class UserService {
   }
 
   async updateProfile(userId: string, updateProfileDto: UpdateProfileDto) {
-    const user = await this.userRepository.findUnique(userId);
+    const user = await this.userRepository.findUnique(userId, {});
 
     if (!user) {
       throw new UserNotFoundException();
@@ -98,7 +98,7 @@ export class UserService {
   }
 
   async findOne(userFilterDto: UserFilterDto) {
-    const user = await this.userRepository.findOneWithCount(userFilterDto.id);
+    const user = await this.userRepository.findUnique(userFilterDto.id, {});
 
     if (!user) {
       throw new UserNotFoundException();
