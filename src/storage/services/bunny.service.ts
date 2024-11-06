@@ -92,7 +92,7 @@ export class BunnyService {
           headers: {
             'Content-Type': 'application/octet-stream',
             accept: 'application/json',
-            accessKey: process.env.BUNNY_EDGE_STORAGE_ACCESS_KEY,
+            accessKey: process.env.BUNNY_PUBLIC_STORAGE_ACCESS_KEY,
           },
         },
       ),

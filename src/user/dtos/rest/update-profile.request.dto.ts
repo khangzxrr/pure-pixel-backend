@@ -1,4 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import {
   IsArray,
   IsEmail,
@@ -68,18 +69,12 @@ export class UpdateProfileDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsArray()
-  @IsUrl(
-    {},
-    {
-      each: true,
-    },
-  )
+  @Transform(({ value }) => (Array.isArray(value) ? value : value.split(',')))
   socialLinks?: string[];
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsArray()
+  @Transform(({ value }) => (Array.isArray(value) ? value : value.split(',')))
   @IsString({
     each: true,
   })

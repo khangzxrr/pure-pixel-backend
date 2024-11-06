@@ -69,7 +69,7 @@ export class UserService {
       //temporary use user.avatar
       user.avatar = await this.bunnyService.uploadPublic(
         updateProfileDto.avatar,
-        `avatar/${userId}`,
+        `avatar/${userId}.${updateProfileDto.avatar.extension}`,
       );
     }
 
@@ -77,7 +77,7 @@ export class UserService {
       //temporary use user.cover
       user.cover = await this.bunnyService.uploadPublic(
         updateProfileDto.cover,
-        `cover/${userId}`,
+        `cover/${userId}.${updateProfileDto.cover.extension}`,
       );
     }
 
@@ -89,12 +89,16 @@ export class UserService {
       location: updateProfileDto.location,
       mail: updateProfileDto.mail,
       phonenumber: updateProfileDto.phonenumber,
-      socialLinks: {
-        set: updateProfileDto.socialLinks,
-      },
-      expertises: {
-        set: updateProfileDto.expertises,
-      },
+      socialLinks: updateProfileDto.socialLinks
+        ? {
+            set: updateProfileDto.socialLinks,
+          }
+        : undefined,
+      expertises: updateProfileDto.expertises
+        ? {
+            set: updateProfileDto.expertises,
+          }
+        : undefined,
     });
 
     return plainToInstance(UserDto, updatedUser);
