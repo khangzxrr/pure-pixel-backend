@@ -79,7 +79,7 @@ export class UserRepository {
     });
   }
 
-  updateUser(userId: string, user: Prisma.UserUpdateInput) {
+  update(userId: string, user: Prisma.UserUpdateInput) {
     return this.prisma.extendedClient().user.update({
       where: {
         id: userId,

@@ -156,7 +156,7 @@ export class PhotoshootPackageService {
       description: createDto.description,
     });
 
-    const updatePackageQuotaQuery = this.userRepository.updateUser(user.id, {
+    const updatePackageQuotaQuery = this.userRepository.update(user.id, {
       packageCount: {
         increment: 1,
       },

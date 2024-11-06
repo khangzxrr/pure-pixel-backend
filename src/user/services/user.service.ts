@@ -4,18 +4,19 @@ import { UserFilterDto } from '../dtos/user-filter.dto';
 import { UserDto } from '../dtos/user.dto';
 import { UserNotFoundException } from '../exceptions/user-not-found.exception';
 import { StorageService } from 'src/storage/services/storage.service';
-import { PresignedUploadMediaDto } from '../dtos/presigned-upload-media.dto';
+
 import { UpdateProfileDto } from '../dtos/rest/update-profile.request.dto';
 import { plainToInstance } from 'class-transformer';
 import { KeycloakService } from 'src/authen/services/keycloak.service';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { MeDto } from '../dtos/me.dto';
+import { BunnyService } from 'src/storage/services/bunny.service';
 
 @Injectable()
 export class UserService {
   constructor(
     @Inject() private readonly userRepository: UserRepository,
-    @Inject() private readonly storageService: StorageService,
+    @Inject() private readonly bunnyService: BunnyService,
     @Inject() private readonly keycloakService: KeycloakService,
   ) {}
 
@@ -59,40 +60,42 @@ export class UserService {
     }
   }
 
-  async generatePresignedUploadMedia(userId: string) {
-    const user = await this.userRepository.findUnique(userId, {});
-
-    if (!user) {
-      throw new UserNotFoundException();
-    }
-
-    const avatarKey = `avatar/${user.id}.jpg`;
-    const coverKey = `cover/${user.id}.jpg`;
-
-    const presignedUploadAvatar =
-      await this.storageService.getPresignedUploadUrl(avatarKey);
-    const presignedUploadCover =
-      await this.storageService.getPresignedUploadUrl(coverKey);
-
-    return new PresignedUploadMediaDto(
-      avatarKey,
-      coverKey,
-      presignedUploadAvatar,
-      presignedUploadCover,
-    );
-  }
-
   async updateProfile(userId: string, updateProfileDto: UpdateProfileDto) {
-    const user = await this.userRepository.findUnique(userId, {});
+    console.log(updateProfileDto);
 
-    if (!user) {
-      throw new UserNotFoundException();
+    const user = await this.userRepository.findUniqueOrThrow(userId, {});
+
+    if (updateProfileDto.avatar) {
+      //temporary use user.avatar
+      user.avatar = await this.bunnyService.uploadPublic(
+        updateProfileDto.avatar,
+        `avatar/${userId}`,
+      );
     }
 
-    const updatedUser = await this.userRepository.updateUser(
-      userId,
-      updateProfileDto,
-    );
+    if (updateProfileDto.cover) {
+      //temporary use user.cover
+      user.cover = await this.bunnyService.uploadPublic(
+        updateProfileDto.cover,
+        `cover/${userId}`,
+      );
+    }
+
+    const updatedUser = await this.userRepository.update(userId, {
+      avatar: user.avatar,
+      cover: user.cover,
+      name: updateProfileDto.name,
+      quote: updateProfileDto.quote,
+      location: updateProfileDto.location,
+      mail: updateProfileDto.mail,
+      phonenumber: updateProfileDto.phonenumber,
+      socialLinks: {
+        set: updateProfileDto.socialLinks,
+      },
+      expertises: {
+        set: updateProfileDto.expertises,
+      },
+    });
 
     return plainToInstance(UserDto, updatedUser);
   }
