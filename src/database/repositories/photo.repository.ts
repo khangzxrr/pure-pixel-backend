@@ -8,9 +8,12 @@ export class PhotoRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   deleteById(photoId: string) {
-    return this.prisma.extendedClient().photo.delete({
+    return this.prisma.extendedClient().photo.update({
       where: {
         id: photoId,
+      },
+      data: {
+        deletedAt: new Date(),
       },
     });
   }

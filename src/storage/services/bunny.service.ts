@@ -79,6 +79,28 @@ export class BunnyService {
     return key;
   }
 
+  async uploadPublic(file: MemoryStoredFile, filekey: string) {
+    if (file === null) {
+      throw new FileShouldNotBeNullException();
+    }
+
+    await firstValueFrom(
+      this.httpService.put(
+        `${process.env.BUNNY_EDGE_STORAGE_CDN}/${process.env.BUNNY_PUBLIC_STORAGE_BUCKET}/${filekey}`,
+        file.buffer,
+        {
+          headers: {
+            'Content-Type': 'application/octet-stream',
+            accept: 'application/json',
+            accessKey: process.env.BUNNY_PUBLIC_STORAGE_ACCESS_KEY,
+          },
+        },
+      ),
+    );
+
+    return `${process.env.BUNNY_PUBLIC_CDN}/${filekey}`;
+  }
+
   async upload(file: MemoryStoredFile) {
     if (file === null) {
       throw new FileShouldNotBeNullException();

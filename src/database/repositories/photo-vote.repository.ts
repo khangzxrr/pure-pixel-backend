@@ -15,12 +15,13 @@ export class PhotoVoteRepository {
     });
   }
 
-  delete(voteId: string, photoId: string, userId: string) {
+  delete(photoId: string, userId: string) {
     return this.prisma.vote.delete({
       where: {
-        id: voteId,
-        photoId,
-        userId,
+        userId_photoId: {
+          userId,
+          photoId,
+        },
       },
     });
   }

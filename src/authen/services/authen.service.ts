@@ -36,7 +36,7 @@ export class AuthenService {
           return;
         }
 
-        const existUser = await this.userRepository.findOneTransaction(
+        const existUser = await this.userRepository.findUniqueTransaction(
           userFilterDto,
           tx,
         );

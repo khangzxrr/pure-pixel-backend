@@ -357,12 +357,18 @@ export class PhotoService {
         photoId,
       );
 
+    await this.photoProcessQueue.add(PhotoConstant.DELETE_PHOTO_JOB_NAME, {
+      originalPhotoUrl: photo.originalPhotoUrl,
+    });
+
     const deleteQuery = this.photoRepository.deleteById(photo.id);
 
     const deactivePhotoSellQuery =
       this.photoSellRepository.deactivatePhotoSellByPhotoIdQuery(photoId);
 
-    await this.prisma.$transaction([deleteQuery, deactivePhotoSellQuery]);
+    await this.prisma
+      .extendedClient()
+      .$transaction([deleteQuery, deactivePhotoSellQuery]);
 
     return true;
   }

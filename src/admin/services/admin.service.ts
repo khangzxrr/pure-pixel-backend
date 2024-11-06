@@ -10,6 +10,12 @@ import { PhotoUploadRequestDto } from 'src/photo/dtos/rest/photo-upload.request'
 import { MemoryStoredFile } from 'nestjs-form-data';
 import { PhotoProcessConsumer } from 'src/photo/consumers/photo-process.consumer';
 import { UserService } from 'src/user/services/user.service';
+import { DashboardDto } from '../dtos/dashboard.dto';
+import { DashboardRequestDto } from '../dtos/dashboard.request.dto';
+import { UpgradePackageRepository } from 'src/database/repositories/upgrade-package.repository';
+import { plainToInstance } from 'class-transformer';
+import { UpgradePackageDto } from 'src/upgrade-package/dtos/upgrade-package.dto';
+import { UpgradePackageOrderRepository } from 'src/database/repositories/upgrade-package-order.repository';
 
 @Injectable()
 export class AdminService {
@@ -19,7 +25,102 @@ export class AdminService {
     @Inject() private readonly photoService: PhotoService,
     @Inject() private readonly photoProcessConsumer: PhotoProcessConsumer,
     @Inject() private readonly userService: UserService,
+    @Inject()
+    private readonly upgradeOrderRepository: UpgradePackageOrderRepository,
+    @Inject()
+    private readonly upgradePackageRepository: UpgradePackageRepository,
   ) {}
+
+  async getDashboard(dashboardRequestDto: DashboardRequestDto) {
+    const dashboardDto = new DashboardDto();
+
+    const customers = await this.keycloakService.findUsersHasRole(
+      Constants.CUSTOMER_ROLE,
+      0,
+      -1,
+    );
+
+    const photographers = await this.keycloakService.findUsersHasRole(
+      Constants.ADMIN_ROLE,
+      0,
+      -1,
+    );
+
+    dashboardDto.totalCustomer = customers.length;
+    dashboardDto.totalPhotographer = photographers.length;
+
+    dashboardDto.totalRevenueFromUpgradePackage = 999999999;
+    dashboardDto.totalRevenue = 99999999;
+    dashboardDto.totalEmployee = 15;
+
+    dashboardDto.customerDatapoints = [
+      {
+        total: 15,
+        createdAt: new Date('2019-01-01'),
+      },
+      {
+        total: 50,
+        createdAt: new Date('2020-01-01'),
+      },
+      {
+        total: 70,
+        createdAt: new Date('2021-01-01'),
+      },
+      {
+        total: 102,
+        createdAt: new Date('2022-01-01'),
+      },
+      {
+        total: 300,
+        createdAt: new Date('2023-01-01'),
+      },
+      {
+        total: 420,
+        createdAt: new Date('2024-01-01'),
+      },
+    ];
+
+    dashboardDto.photographerDatapoints = [
+      {
+        total: 5,
+        createdAt: new Date('2019-01-01'),
+      },
+      {
+        total: 15,
+        createdAt: new Date('2020-01-01'),
+      },
+      {
+        total: 23,
+        createdAt: new Date('2021-01-01'),
+      },
+      {
+        total: 50,
+        createdAt: new Date('2022-01-01'),
+      },
+      {
+        total: 135,
+        createdAt: new Date('2023-01-01'),
+      },
+      {
+        total: 160,
+        createdAt: new Date('2024-01-01'),
+      },
+    ];
+
+    const upgradePackages = await this.upgradePackageRepository.findAll(
+      0,
+      dashboardRequestDto.topUsedUpgradePackageCount,
+      {},
+      {},
+    );
+
+    dashboardDto.mostUsedUpgradePackages = plainToInstance(
+      UpgradePackageDto,
+      upgradePackages,
+    );
+
+    return dashboardDto;
+  }
 
   async syncUsers() {
     return this.userService.syncKeycloakWithDatabase();

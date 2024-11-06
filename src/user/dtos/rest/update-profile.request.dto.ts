@@ -1,4 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import {
   IsArray,
   IsEmail,
@@ -8,19 +9,31 @@ import {
   IsUrl,
   Matches,
 } from 'class-validator';
+import {
+  HasMimeType,
+  IsFile,
+  MaxFileSize,
+  MemoryStoredFile,
+} from 'nestjs-form-data';
 
 export class UpdateProfileDto {
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    type: 'file',
+  })
   @IsOptional()
-  @IsString()
-  @IsUrl()
-  cover?: string;
+  @IsFile()
+  @MaxFileSize(1e6)
+  @HasMimeType(['image/jpeg', 'image/png'])
+  cover?: MemoryStoredFile;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    type: 'file',
+  })
   @IsOptional()
-  @IsString()
-  @IsUrl()
-  avatar?: string;
+  @IsFile()
+  @MaxFileSize(1e6)
+  @HasMimeType(['image/jpeg', 'image/png'])
+  avatar?: MemoryStoredFile;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -56,21 +69,12 @@ export class UpdateProfileDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsArray()
-  @IsString({
-    each: true,
-  })
-  @IsUrl(
-    {},
-    {
-      each: true,
-    },
-  )
+  @Transform(({ value }) => (Array.isArray(value) ? value : value.split(',')))
   socialLinks?: string[];
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsArray()
+  @Transform(({ value }) => (Array.isArray(value) ? value : value.split(',')))
   @IsString({
     each: true,
   })

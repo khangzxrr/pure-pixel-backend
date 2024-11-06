@@ -33,6 +33,9 @@ export class PhotoProcessConsumer extends WorkerHost {
         case PhotoConstant.PROCESS_PHOTO_JOB_NAME:
           await this.processPhoto(job.data.id);
           break;
+        case PhotoConstant.DELETE_PHOTO_JOB_NAME:
+          await this.deleteTineyePhoto(job.data.originalPhotoUrl);
+          break;
       }
     } catch (e) {
       console.log(e);
@@ -59,6 +62,12 @@ export class PhotoProcessConsumer extends WorkerHost {
       NotificationConstant.TEXT_NOTIFICATION_JOB,
       notificationCreateDto,
     );
+  }
+
+  async deleteTineyePhoto(originalPhotoUrl: string) {
+    await this.tineyeService.delete(originalPhotoUrl);
+
+    this.logger.log(`delete ${originalPhotoUrl} from tineye database`);
   }
 
   async processPhoto(photoId: string) {
@@ -110,7 +119,10 @@ export class PhotoProcessConsumer extends WorkerHost {
     }
 
     try {
-      const data = await this.tineyeService.add(signedPhotoUrl);
+      const data = await this.tineyeService.add(
+        photo.originalPhotoUrl,
+        signedPhotoUrl,
+      );
 
       if (data.status === 200) {
         this.logger.log(`uploaded photo ${photo.originalPhotoUrl} to tineye`);

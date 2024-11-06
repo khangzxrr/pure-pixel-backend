@@ -62,40 +62,24 @@ export class UserRepository {
     });
   }
 
-  async findUniqueOrThrow(id: string) {
+  async findUniqueOrThrow(id: string, include?: Prisma.UserInclude) {
     return this.prisma.user.findUniqueOrThrow({
       where: {
         id,
       },
+      include,
     });
   }
-  async findUnique(userId: string) {
+  async findUnique(userId: string, include?: Prisma.UserInclude) {
     return this.prisma.user.findUnique({
       where: {
         id: userId,
       },
+      include,
     });
   }
 
-  async findOneWithCount(id: string) {
-    return this.prisma.user.findUnique({
-      where: {
-        id,
-      },
-
-      include: {
-        _count: {
-          select: {
-            followers: true,
-            followings: true,
-            photos: true,
-          },
-        },
-      },
-    });
-  }
-
-  updateUser(userId: string, user: Prisma.UserUpdateInput) {
+  update(userId: string, user: Prisma.UserUpdateInput) {
     return this.prisma.extendedClient().user.update({
       where: {
         id: userId,
@@ -104,17 +88,13 @@ export class UserRepository {
     });
   }
 
-  async findOneTransaction(
+  async findUniqueTransaction(
     userFilterDto: UserFilterDto,
     tx: Prisma.TransactionClient,
   ) {
     return tx.user.findUnique({
       where: {
         id: userFilterDto.id,
-      },
-      include: {
-        followers: userFilterDto.followers,
-        followings: userFilterDto.followings,
       },
     });
   }

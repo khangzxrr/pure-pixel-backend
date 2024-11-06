@@ -47,7 +47,7 @@ export class PhotoVoteController {
     return await this.photoVoteService.getVote(user.sub, photoId);
   }
 
-  @Delete(':photoId/vote/:voteId')
+  @Delete(':photoId/vote')
   @ApiOperation({
     summary: 'delete vote by photo id',
   })
@@ -59,8 +59,7 @@ export class PhotoVoteController {
   async deletePhotoById(
     @AuthenticatedUser() user: ParsedUserDto,
     @Param('photoId') photoId: string,
-    @Param('voteId') voteId: string,
   ) {
-    return await this.photoVoteService.deleteVote(user.sub, photoId, voteId);
+    return await this.photoVoteService.deleteVote(user.sub, photoId);
   }
 }

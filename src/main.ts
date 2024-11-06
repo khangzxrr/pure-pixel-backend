@@ -55,6 +55,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, configSwagger);
   SwaggerModule.setup('api', app, document, {
     swaggerOptions: {
+      persistAuthorization: true,
       initOAuth: {
         clientId: config.get<string>('KEYCLOAK_CLIENT_ID'),
         realm: config.get<string>('KEYCLOAK_REALM'),

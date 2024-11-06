@@ -107,7 +107,15 @@ export class PhotographerService {
     const userFilterDto = new UserFilterDto();
     userFilterDto.id = id;
 
-    const photographer = await this.userRepository.findOneWithCount(id);
+    const photographer = await this.userRepository.findUnique(id, {
+      _count: {
+        select: {
+          followers: true,
+          followings: true,
+          photos: true,
+        },
+      },
+    });
 
     if (!photographer) {
       throw new PhotographerNotFoundException();
