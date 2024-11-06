@@ -281,7 +281,6 @@ export class PhotoService {
   }
 
   async findPublicPhotos(userId: string, filter: FindAllPhotoFilterDto) {
-    filter.visibility = 'PUBLIC';
     filter.photoType = 'RAW'; //ensure only get RAW photo
 
     return await this.findAll(userId, filter);
@@ -311,6 +310,7 @@ export class PhotoService {
         filter.latitude,
         filter.distance,
       );
+
       count = countByGPS[0]['count'];
 
       const idWithDistances = await this.photoRepository.findAllIdsByGPS(
@@ -318,6 +318,7 @@ export class PhotoService {
         filter.latitude,
         filter.distance,
       );
+
       idFilterByGPS = idWithDistances.map((iwd) => iwd['id']);
     }
 
@@ -336,7 +337,20 @@ export class PhotoService {
       filter.limit,
     );
 
-    const signedPhotoDtoPromises = photos.map(async (p) => {
+    const sortedPhotos: any[] = [];
+
+    if (idFilterByGPS.length > 0) {
+      idFilterByGPS.forEach((id) => {
+        const photo = photos.find((p) => p.id === id);
+        if (!photo) {
+          return;
+        }
+
+        sortedPhotos.push(photo);
+      });
+    }
+
+    const signedPhotoDtoPromises = sortedPhotos.map(async (p) => {
       const signedPhotoDto = await this.signPhoto(p);
       return signedPhotoDto;
     });

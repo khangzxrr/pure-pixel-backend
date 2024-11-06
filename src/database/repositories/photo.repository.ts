@@ -186,9 +186,9 @@ export class PhotoRepository {
   async countByGPS(longitude: number, latitude: number, distance: number) {
     return this.prisma.$queryRaw`
                         SELECT COUNT(id) FROM 
-                          (SELECT id, point(${longitude}, ${latitude}) <@>  (point((exif->>'longitude')::float, (exif->>'latitude')::float)::point) as distance	
+                          (SELECT id, point(${latitude}, ${longitude}) <@>  (point((exif->>'latitude')::float, (exif->>'longitude')::float)::point) as distance
                           FROM public."Photo" 
-                          WHERE (point(${longitude}, ${latitude}) <@>  (point((exif->>'longitude')::float, (exif->>'latitude')::float)::point) < ${distance}))
+                          WHERE point(${latitude}, ${longitude}) <@>  (point((exif->>'latitude')::float, (exif->>'longitude')::float)::point) < ${distance})
 `;
   }
 
@@ -198,9 +198,10 @@ export class PhotoRepository {
     distance: number,
   ): Promise<any[]> {
     return this.prisma.$queryRaw`
-                          SELECT id, point(${longitude}, ${latitude}) <@>  (point((exif->>'longitude')::float, (exif->>'latitude')::float)::point) as distance	
+                          SELECT id, point(${latitude}, ${longitude}) <@>  (point((exif->>'latitude')::float, (exif->>'longitude')::float)::point) as distance
                           FROM public."Photo" 
-                          WHERE (point(${longitude}, ${latitude}) <@>  (point((exif->>'longitude')::float, (exif->>'latitude')::float)::point) < ${distance})
+                          WHERE  point(${latitude}, ${longitude}) <@>  (point((exif->>'latitude')::float, (exif->>'longitude')::float)::point) < ${distance}
+                          ORDER BY point(${latitude}, ${longitude}) <@>  (point((exif->>'latitude')::float, (exif->>'longitude')::float)::point)
 `;
   }
 
