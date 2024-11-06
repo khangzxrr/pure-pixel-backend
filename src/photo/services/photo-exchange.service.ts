@@ -39,6 +39,41 @@ export class PhotoExchangeService {
     @Inject() private readonly sepayService: SepayService,
   ) {}
 
+  async getAllPreviousBuyPhoto(userId: string) {
+    const photos = await this.photoRepository.findAll(
+      {
+        photoSellings: {
+          some: {
+            photoSellHistories: {
+              some: {
+                PhotoBuy: {
+                  some: {
+                    buyerId: userId,
+                    userToUserTransaction: {
+                      fromUserTransaction: {
+                        status: 'SUCCESS',
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      [],
+      0,
+      10,
+    );
+
+    const signedPhotoPromises = photos.map((p) =>
+      this.photoService.signPhoto(p),
+    );
+    const signedPhotos = await Promise.all(signedPhotoPromises);
+
+    return signedPhotos;
+  }
+
   async downloadBoughtPhoto(
     photoId: string,
     userId: string,

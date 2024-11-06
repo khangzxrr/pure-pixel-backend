@@ -1,6 +1,12 @@
-import { Controller, Get, NotImplementedException } from '@nestjs/common';
+import { Controller, Get, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PhotoExchangeService } from '../services/photo-exchange.service';
+import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.response.dto';
+import { SignedPhotoDto } from '../dtos/signed-photo.dto';
+import { AuthenticatedUser, AuthGuard, Roles } from 'nest-keycloak-connect';
+import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
+import { Constants } from 'src/infrastructure/utils/constants';
+import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
 
 @Controller('photo-exchange')
 @ApiTags('photo-exchange')
@@ -11,7 +17,10 @@ export class PhotoExchangeController {
   @ApiOperation({
     summary: 'get all photo-buys of me',
   })
-  async findAllPhotobuys() {
-    throw new NotImplementedException();
+  @ApiOkResponsePaginated(SignedPhotoDto)
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
+  async findAllPhotobuys(@AuthenticatedUser() user: ParsedUserDto) {
+    return this.photoExchange.getAllPreviousBuyPhoto(user.sub);
   }
 }
