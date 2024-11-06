@@ -36,25 +36,13 @@ export class PhotographerService {
   async getAllPhotographer(
     findAllRequestDto: FindAllPhotographerRequestDto,
   ): Promise<FindAllPhotographerResponseDto> {
-    let skip = 0;
+    const keycloakUsers = await this.keycloakService.findUsersHasRole(
+      'photographer',
+      0,
+      -1,
+    );
 
-    const keycloakUserIds: string[] = [];
-
-    while (true) {
-      const users = await this.keycloakService.findUsersHasRole(
-        'photographer',
-        skip,
-        10,
-      );
-
-      users.forEach((u) => keycloakUserIds.push(u.id));
-
-      if (users.length === 0) {
-        break;
-      }
-
-      skip += 10;
-    }
+    const keycloakUserIds = keycloakUsers.map((u) => u.id);
 
     const count = await this.userRepository.count({
       id: {

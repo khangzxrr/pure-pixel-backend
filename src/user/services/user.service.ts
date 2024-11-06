@@ -105,7 +105,18 @@ export class UserService {
   }
 
   async findOne(userFilterDto: UserFilterDto) {
-    const user = await this.userRepository.findUnique(userFilterDto.id, {});
+    const user = await this.userRepository.findUnique(userFilterDto.id, {
+      _count: {
+        select: {
+          photos: true,
+          cameras: true,
+          bookings: true,
+          comments: true,
+          followers: true,
+          followings: true,
+        },
+      },
+    });
 
     if (!user) {
       throw new UserNotFoundException();

@@ -337,9 +337,11 @@ export class PhotoService {
       filter.limit,
     );
 
-    const sortedPhotos: any[] = [];
+    let sortedPhotos = photos;
 
     if (idFilterByGPS.length > 0) {
+      sortedPhotos = [];
+
       idFilterByGPS.forEach((id) => {
         const photo = photos.find((p) => p.id === id);
         if (!photo) {
