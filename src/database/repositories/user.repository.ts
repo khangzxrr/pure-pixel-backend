@@ -62,14 +62,15 @@ export class UserRepository {
     });
   }
 
-  async findUniqueOrThrow(id: string) {
+  async findUniqueOrThrow(id: string, include?: Prisma.UserInclude) {
     return this.prisma.user.findUniqueOrThrow({
       where: {
         id,
       },
+      include,
     });
   }
-  async findUnique(userId: string, include: Prisma.UserInclude) {
+  async findUnique(userId: string, include?: Prisma.UserInclude) {
     return this.prisma.user.findUnique({
       where: {
         id: userId,
@@ -77,24 +78,6 @@ export class UserRepository {
       include,
     });
   }
-
-  // async findOneWithCount(id: string) {
-  //   return this.prisma.user.findUnique({
-  //     where: {
-  //       id,
-  //     },
-  //
-  //     include: {
-  //       _count: {
-  //         select: {
-  //           followers: true,
-  //           followings: true,
-  //           photos: true,
-  //         },
-  //       },
-  //     },
-  //   });
-  // }
 
   updateUser(userId: string, user: Prisma.UserUpdateInput) {
     return this.prisma.extendedClient().user.update({
