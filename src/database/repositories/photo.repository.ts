@@ -201,6 +201,7 @@ export class PhotoRepository {
                           SELECT id, point(${longitude}, ${latitude}) <@>  (point((exif->>'longitude')::float, (exif->>'latitude')::float)::point) as distance	
                           FROM public."Photo" 
                           WHERE (point(${longitude}, ${latitude}) <@>  (point((exif->>'longitude')::float, (exif->>'latitude')::float)::point) < ${distance})
+                          ORDER BY distance
 `;
   }
 
