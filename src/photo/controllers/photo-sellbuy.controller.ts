@@ -141,15 +141,4 @@ export class PhotoSellBuyController {
   ) {
     return await this.photoExchangeService.getPhotoBuyByPhotoId(user.sub, id);
   }
-
-  @Get('/photo/photo-buy')
-  @ApiOperation({
-    summary: 'get all paid photo buys',
-  })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
-  @ApiOkResponsePaginated(SignedPhotoBuyDto)
-  async getAllPaidPhotobuys(@AuthenticatedUser() user: ParsedUserDto) {
-    console.log('hello world');
-  }
 }
