@@ -11,6 +11,7 @@ import { Constants } from 'src/infrastructure/utils/constants';
 import { MeDto } from '../dtos/me.dto';
 import { BunnyService } from 'src/storage/services/bunny.service';
 import { UserFindAllRequestDto } from '../dtos/rest/user-find-all.request.dto';
+import { CreateUserDto } from '../dtos/create-user.dto';
 
 @Injectable()
 export class UserService {
@@ -19,6 +20,16 @@ export class UserService {
     @Inject() private readonly bunnyService: BunnyService,
     @Inject() private readonly keycloakService: KeycloakService,
   ) {}
+
+  async create(createDto: CreateUserDto) {
+    const createdKeycloakUser = await this.keycloakService.createUser(
+      createDto.username,
+      createDto.mail,
+      createDto.firstname,
+      createDto.lastname,
+      createDto.role,
+    );
+  }
 
   async syncKeycloakWithDatabase() {
     let skip = 0;
@@ -76,6 +87,9 @@ export class UserService {
     users.forEach(async (u) => {
       const keycloakUser = await this.keycloakService.createUser(
         u.name,
+        u.mail,
+        '',
+        '',
         Constants.CUSTOMER_ROLE,
       );
 

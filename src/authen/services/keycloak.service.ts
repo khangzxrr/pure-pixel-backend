@@ -69,7 +69,13 @@ export class KeycloakService {
     }
   }
 
-  async createUser(username: string, role: string) {
+  async createUser(
+    username: string,
+    email: string,
+    firstName: string,
+    lastName: string,
+    role: string,
+  ) {
     const instance = await this.getInstance();
 
     const existUser = await instance.users.find({
@@ -82,11 +88,11 @@ export class KeycloakService {
 
     const user = await instance.users.create({
       username,
-      email: `${username}@gmail.com`,
+      email,
       emailVerified: true,
       enabled: true,
-      firstName: username,
-      lastName: username,
+      firstName,
+      lastName,
       credentials: [
         {
           type: 'password',
@@ -94,6 +100,9 @@ export class KeycloakService {
           temporary: false,
         },
       ],
+      attributes: {
+        cover: 'https://google.com',
+      },
     });
 
     await this.addRoleToUser(user.id, role);

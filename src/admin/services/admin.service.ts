@@ -171,8 +171,12 @@ export class AdminService {
 
       const keycloakUser = await this.keycloakService.createUser(
         trimmedUsername,
-        'photographer',
+        `${trimmedUsername}@gmail.com`,
+        trimmedUsername,
+        trimmedUsername,
+        Constants.PHOTOGRAPHER_ROLE,
       );
+
       const user = await this.userRepository.upsert({
         id: keycloakUser.id,
         mail: `${trimmedUsername}@gmail.com`,
