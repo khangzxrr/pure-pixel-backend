@@ -421,6 +421,15 @@ export class PhotoService {
 
     const signedPhotoDto = await this.signPhoto(photo);
 
+    signedPhotoDto.photoSellings.forEach((photoSelling) => {
+      photoSelling.pricetags.forEach((pricetag) => {
+        pricetag.preview = this.bunnyService.getPresignedFile(
+          photo.watermarkPhotoUrl,
+          `?width=${pricetag.size}`,
+        );
+      });
+    });
+
     return signedPhotoDto;
   }
 
