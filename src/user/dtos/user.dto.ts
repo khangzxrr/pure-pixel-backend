@@ -3,6 +3,9 @@ import { ResponseBaseDto } from 'src/infrastructure/restful/base.response.dto';
 import { Exclude } from 'class-transformer';
 
 export class UserDto extends ResponseBaseDto {
+  @ApiProperty()
+  roles: string[] = [];
+
   @Exclude()
   photoQuotaUsage: string;
 

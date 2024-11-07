@@ -177,6 +177,12 @@ export class KeycloakService {
     return users;
   }
 
+  async countUsers() {
+    const kc = await this.getInstance();
+
+    return await kc.users.count({});
+  }
+
   async findUsers(skip: number, take: number) {
     const kc = await this.getInstance();
     const client = await this.getClient();
