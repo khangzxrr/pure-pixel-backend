@@ -123,14 +123,12 @@ export class UserRepository {
     }
   }
 
-  async upsert(user: UserEntity) {
+  async upsert(user: Prisma.UserCreateInput) {
     return this.prisma.user.upsert({
       where: {
         id: user.id,
       },
-      update: {
-        normalizedName: user.normalizedName,
-      },
+      update: {},
       create: user,
     });
   }

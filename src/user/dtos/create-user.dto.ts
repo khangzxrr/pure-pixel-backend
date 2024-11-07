@@ -13,15 +13,11 @@ import { Constants } from 'src/infrastructure/utils/constants';
 export class CreateUserDto {
   @ApiProperty()
   @IsNotEmpty()
-  firstname: string;
-
-  @ApiProperty()
-  @IsNotEmpty()
-  lastname: string;
-
-  @ApiProperty()
-  @IsNotEmpty()
   username: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  name: string;
 
   @ApiProperty()
   @IsEmail()
@@ -39,6 +35,11 @@ export class CreateUserDto {
 
   @ApiPropertyOptional()
   @IsOptional()
+  @IsNotEmpty()
+  location: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsArray()
   socialLinks: string[];
 
@@ -47,7 +48,14 @@ export class CreateUserDto {
   @IsArray()
   expertises: string[];
 
-  @ApiProperty()
+  @ApiProperty({
+    enum: [
+      Constants.MANAGER_ROLE,
+      Constants.PHOTOGRAPHER_ROLE,
+      Constants.CUSTOMER_ROLE,
+      Constants.ADMIN_ROLE,
+    ],
+  })
   @IsNotEmpty()
   @IsIn([
     Constants.MANAGER_ROLE,

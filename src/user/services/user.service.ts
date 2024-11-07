@@ -1,4 +1,9 @@
-import { Inject, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import { UserRepository } from 'src/database/repositories/user.repository';
 import { UserFilterDto } from '../dtos/user-filter.dto';
 import { UserDto } from '../dtos/user.dto';
@@ -8,10 +13,12 @@ import { UpdateProfileDto } from '../dtos/rest/update-profile.request.dto';
 import { plainToInstance } from 'class-transformer';
 import { KeycloakService } from 'src/authen/services/keycloak.service';
 import { Constants } from 'src/infrastructure/utils/constants';
-import { MeDto } from '../dtos/me.dto';
+
 import { BunnyService } from 'src/storage/services/bunny.service';
 import { UserFindAllRequestDto } from '../dtos/rest/user-find-all.request.dto';
 import { CreateUserDto } from '../dtos/create-user.dto';
+import { CannotCreateNewUserException } from '../exceptions/cannot-create-new-user.exception';
+import { Utils } from 'src/infrastructure/utils/utils';
 
 @Injectable()
 export class UserService {
@@ -22,13 +29,38 @@ export class UserService {
   ) {}
 
   async create(createDto: CreateUserDto) {
-    const createdKeycloakUser = await this.keycloakService.createUser(
-      createDto.username,
-      createDto.mail,
-      createDto.firstname,
-      createDto.lastname,
-      createDto.role,
-    );
+    try {
+      const createdKeycloakUser = await this.keycloakService.create(
+        createDto.username,
+        createDto.mail,
+        createDto.role,
+      );
+
+      const user = await this.userRepository.upsert({
+        id: createdKeycloakUser.id,
+        mail: createDto.mail,
+        name: createDto.name,
+        normalizedName: Utils.normalizeText(createDto.name),
+        phonenumber: createDto.phonenumber,
+        cover: Constants.DEFAULT_COVER,
+        avatar: Constants.DEFAULT_AVATAR,
+        quote: createDto.quote,
+        location: createDto.location,
+        socialLinks: createDto.socialLinks,
+        expertises: createDto.expertises,
+      });
+
+      return await this.findOne({
+        id: user.id,
+      });
+    } catch (e) {
+      if (e.response.status === 409) {
+        throw new BadRequestException(e.responseData.errorMessage);
+      }
+
+      console.log(e);
+      throw new CannotCreateNewUserException();
+    }
   }
 
   async syncKeycloakWithDatabase() {
@@ -85,11 +117,9 @@ export class UserService {
     );
 
     users.forEach(async (u) => {
-      const keycloakUser = await this.keycloakService.createUser(
+      const keycloakUser = await this.keycloakService.upsert(
         u.name,
         u.mail,
-        '',
-        '',
         Constants.CUSTOMER_ROLE,
       );
 
@@ -166,9 +196,8 @@ export class UserService {
   }
 
   async findOne(userFilterDto: UserFilterDto) {
-    const role = await this.keycloakService.getUserRoles(userFilterDto.id);
-
-    console.log(role);
+    const roles = await this.keycloakService.getUserRoles(userFilterDto.id);
+    const roleNames = roles.map((r) => r.name);
 
     const user = await this.userRepository.findUnique(userFilterDto.id, {
       _count: {
@@ -187,7 +216,8 @@ export class UserService {
       throw new UserNotFoundException();
     }
 
-    const meDto = plainToInstance(MeDto, user);
+    const meDto = plainToInstance(UserDto, user, { groups: roleNames });
+    meDto.roles = roleNames;
 
     return meDto;
   }
