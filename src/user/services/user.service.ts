@@ -1,4 +1,9 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import { UserRepository } from 'src/database/repositories/user.repository';
 import { UserFilterDto } from '../dtos/user-filter.dto';
 import { UserDto } from '../dtos/user.dto';
@@ -26,10 +31,12 @@ export class UserService {
   ) {}
 
   async update(id: string, updateDto: UpdateUserDto) {
+    //TODO: update roles
     try {
       await this.keycloakService.updateById(id, {
         mail: updateDto.mail,
         role: updateDto.role,
+        enabled: updateDto.enabled,
       });
 
       const updatedUser = await this.userRepository.update(id, {
@@ -195,22 +202,27 @@ export class UserService {
   }
 
   async findMany(findAllDto: UserFindAllRequestDto) {
-    const users = await this.userRepository.findMany(
-      {},
-      [],
+    const keycloakUsers = await this.keycloakService.findUsers(
       findAllDto.toSkip(),
       findAllDto.limit,
+    );
+
+    const users = await this.userRepository.findMany(
+      {
+        id: {
+          in: keycloakUsers.map((u) => u.id),
+        },
+      },
+      [],
     );
 
     const userDtoPromises = users.map(async (u) => {
       const dto = plainToInstance(UserDto, u);
 
-      try {
-        const roles = await this.keycloakService.getUserRoles(u.id);
-        dto.roles = roles.map((r) => r.name);
-      } catch (e) {
-        console.log(e);
-      }
+      const kcUser = await this.keycloakService.findFirst(u.id);
+
+      dto.enabled = kcUser.enabled;
+      dto.roles = kcUser.realmRoles;
 
       return dto;
     });
@@ -221,8 +233,7 @@ export class UserService {
   }
 
   async findOne(userFilterDto: UserFilterDto) {
-    const roles = await this.keycloakService.getUserRoles(userFilterDto.id);
-    const roleNames = roles.map((r) => r.name);
+    const keycloakUser = await this.keycloakService.findFirst(userFilterDto.id);
 
     const user = await this.userRepository.findUnique(userFilterDto.id, {
       _count: {
@@ -241,9 +252,12 @@ export class UserService {
       throw new UserNotFoundException();
     }
 
-    const meDto = plainToInstance(UserDto, user, { groups: roleNames });
-    meDto.roles = roleNames;
+    const userDto = plainToInstance(UserDto, user, {
+      groups: keycloakUser.realmRoles,
+    });
+    userDto.enabled = keycloakUser.enabled;
+    userDto.roles = keycloakUser.realmRoles;
 
-    return meDto;
+    return userDto;
   }
 }

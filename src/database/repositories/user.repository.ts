@@ -142,8 +142,8 @@ export class UserRepository {
   async findMany(
     where: Prisma.UserWhereInput,
     orderBy: Prisma.UserOrderByWithRelationInput[],
-    skip: number,
-    take: number,
+    skip?: number,
+    take?: number,
   ) {
     return this.prisma.extendedClient().user.findMany({
       where,

@@ -7,6 +7,9 @@ export class UserDto extends ResponseBaseDto {
   @ApiProperty()
   roles: string[] = [];
 
+  @ApiProperty()
+  enabled: boolean;
+
   @Expose({ groups: [Constants.PHOTOGRAPHER_ROLE] })
   photoQuotaUsage: string;
 

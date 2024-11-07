@@ -82,7 +82,7 @@ export class KeycloakService {
       },
       {
         email: updateDto.mail,
-        username: updateDto.username,
+        enabled: updateDto.enabled,
       },
     );
 
@@ -151,6 +151,13 @@ export class KeycloakService {
     return instance.users.listClientRoleMappings({
       id: userId,
       clientUniqueId: client.id!,
+    });
+  }
+
+  async findFirst(id: string) {
+    const kc = await this.getInstance();
+    return kc.users.findOne({
+      id,
     });
   }
 
