@@ -2,6 +2,9 @@ import {
   ClientRepresentation,
   KeycloakAdminClient,
 } from '@s3pweb/keycloak-admin-client-cjs';
+import { CreateKeycloakUserDto } from '../dtos/create-keycloak-user.dto';
+import { UpdateUserDto } from 'src/user/dtos/update-user.dto';
+import { UpdateKeycloakUserDto } from '../dtos/update-keycloak-user.dto';
 
 export class KeycloakService {
   private kcInstance: KeycloakAdminClient;
@@ -69,7 +72,40 @@ export class KeycloakService {
     }
   }
 
-  async createUser(username: string, role: string) {
+  async updateById(id: string, updateDto: UpdateKeycloakUserDto) {
+    const instance = await this.getInstance();
+
+    const user = await instance.users.update(
+      {
+        id,
+        realm: process.env.KEYCLOAK_REALM,
+      },
+      {
+        email: updateDto.mail,
+        enabled: updateDto.enabled,
+      },
+    );
+
+    return user;
+  }
+
+  async create(createDto: CreateKeycloakUserDto) {
+    const instance = await this.getInstance();
+
+    const user = await instance.users.create({
+      username: createDto.username,
+      email: createDto.mail,
+      emailVerified: true,
+      enabled: true,
+      credentials: [],
+    });
+
+    await this.addRoleToUser(user.id, createDto.role);
+
+    return user;
+  }
+
+  async upsert(username: string, email: string, role: string) {
     const instance = await this.getInstance();
 
     const existUser = await instance.users.find({
@@ -82,18 +118,9 @@ export class KeycloakService {
 
     const user = await instance.users.create({
       username,
-      email: `${username}@gmail.com`,
+      email,
       emailVerified: true,
       enabled: true,
-      firstName: username,
-      lastName: username,
-      credentials: [
-        {
-          type: 'password',
-          value: username,
-          temporary: false,
-        },
-      ],
     });
 
     await this.addRoleToUser(user.id, role);
@@ -124,6 +151,13 @@ export class KeycloakService {
     return instance.users.listClientRoleMappings({
       id: userId,
       clientUniqueId: client.id!,
+    });
+  }
+
+  async findFirst(id: string) {
+    const kc = await this.getInstance();
+    return kc.users.findOne({
+      id,
     });
   }
 
@@ -175,6 +209,12 @@ export class KeycloakService {
     });
 
     return users;
+  }
+
+  async countUsers() {
+    const kc = await this.getInstance();
+
+    return await kc.users.count({});
   }
 
   async findUsers(skip: number, take: number) {

@@ -1,16 +1,21 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { UserRepository } from 'src/database/repositories/user.repository';
 import { UserFilterDto } from '../dtos/user-filter.dto';
 import { UserDto } from '../dtos/user.dto';
 import { UserNotFoundException } from '../exceptions/user-not-found.exception';
-import { StorageService } from 'src/storage/services/storage.service';
 
 import { UpdateProfileDto } from '../dtos/rest/update-profile.request.dto';
 import { plainToInstance } from 'class-transformer';
 import { KeycloakService } from 'src/authen/services/keycloak.service';
 import { Constants } from 'src/infrastructure/utils/constants';
-import { MeDto } from '../dtos/me.dto';
+
 import { BunnyService } from 'src/storage/services/bunny.service';
+import { UserFindAllRequestDto } from '../dtos/rest/user-find-all.request.dto';
+import { CreateUserDto } from '../dtos/create-user.dto';
+import { CannotCreateNewUserException } from '../exceptions/cannot-create-new-user.exception';
+import { Utils } from 'src/infrastructure/utils/utils';
+import { UpdateUserDto } from '../dtos/update-user.dto';
+import { FailedToUpdateUserException } from '../exceptions/cannot-update-user.exception';
 
 @Injectable()
 export class UserService {
@@ -20,49 +25,136 @@ export class UserService {
     @Inject() private readonly keycloakService: KeycloakService,
   ) {}
 
-  async syncKeycloakWithDatabase() {
-    let skip = 0;
-
-    while (true) {
-      const keycloakUsers = await this.keycloakService.findUsers(skip, 10);
-
-      keycloakUsers.forEach(async (ku) => {
-        await this.userRepository.upsert({
-          id: ku.id,
-          mail: ku.email,
-          name: ku.username,
-          cover: Constants.DEFAULT_COVER,
-          quote: '',
-          avatar: Constants.DEFAULT_AVATAR,
-          normalizedName: ku.username,
-          location: 'TP.Hồ Chí Minh',
-          phonenumber: '',
-          expertises: [''],
-          ftpPassword: '',
-          ftpUsername: '',
-          socialLinks: [''],
-          packageCount: BigInt('0'),
-          maxPhotoQuota: BigInt('0'),
-          maxPackageCount: BigInt('0'),
-          photoQuotaUsage: BigInt('0'),
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        });
-
-        console.log(`insert ${ku.username} to database`);
+  async update(id: string, updateDto: UpdateUserDto) {
+    //TODO: update roles
+    try {
+      await this.keycloakService.updateById(id, {
+        mail: updateDto.mail,
+        role: updateDto.role,
+        enabled: updateDto.enabled,
       });
 
-      if (keycloakUsers.length === 0) {
-        break;
+      const updatedUser = await this.userRepository.update(id, {
+        mail: updateDto.mail,
+        name: updateDto.name,
+        quote: updateDto.quote,
+        location: updateDto.location,
+        phonenumber: updateDto.phonenumber,
+        socialLinks: updateDto.socialLinks,
+        expertises: updateDto.expertises,
+      });
+
+      return updatedUser;
+    } catch (e) {
+      if (e.response.status === 409) {
+        throw new BadRequestException(e.responseData.errorMessage);
       }
 
-      skip += 10;
+      console.log(e);
+      throw new FailedToUpdateUserException();
     }
   }
 
-  async updateProfile(userId: string, updateProfileDto: UpdateProfileDto) {
-    console.log(updateProfileDto);
+  async create(createDto: CreateUserDto) {
+    try {
+      const createdKeycloakUser = await this.keycloakService.create({
+        role: createDto.role,
+        mail: createDto.mail,
+        username: createDto.username,
+      });
 
+      const user = await this.userRepository.upsert({
+        id: createdKeycloakUser.id,
+        mail: createDto.mail,
+        name: createDto.name,
+        normalizedName: Utils.normalizeText(createDto.name),
+        phonenumber: createDto.phonenumber,
+        cover: Constants.DEFAULT_COVER,
+        avatar: Constants.DEFAULT_AVATAR,
+        quote: createDto.quote,
+        location: createDto.location,
+        socialLinks: createDto.socialLinks,
+        expertises: createDto.expertises,
+      });
+
+      return await this.findOne({
+        id: user.id,
+      });
+    } catch (e) {
+      if (e.response.status === 409) {
+        throw new BadRequestException(e.responseData.errorMessage);
+      }
+
+      console.log(e);
+      throw new CannotCreateNewUserException();
+    }
+  }
+
+  async syncKeycloakWithDatabase() {
+    let skip = 0;
+
+    const keycloakUserCount = await this.keycloakService.countUsers();
+    const applicationUserCount = await this.userRepository.count({});
+
+    if (keycloakUserCount < applicationUserCount) {
+      while (true) {
+        const keycloakUsers = await this.keycloakService.findUsers(skip, -1);
+
+        keycloakUsers.forEach(async (ku) => {
+          await this.userRepository.upsert({
+            id: ku.id,
+            mail: ku.email,
+            name: ku.username,
+            cover: Constants.DEFAULT_COVER,
+            quote: '',
+            avatar: Constants.DEFAULT_AVATAR,
+            normalizedName: ku.username,
+            location: 'TP.Hồ Chí Minh',
+            phonenumber: '',
+            expertises: [''],
+            ftpPassword: '',
+            ftpUsername: '',
+            socialLinks: [''],
+            packageCount: BigInt('0'),
+            maxPhotoQuota: BigInt('0'),
+            maxPackageCount: BigInt('0'),
+            photoQuotaUsage: BigInt('0'),
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          });
+
+          console.log(`insert ${ku.username} to database`);
+        });
+
+        if (keycloakUsers.length === 0) {
+          break;
+        }
+
+        skip += keycloakUsers.length;
+      }
+
+      return;
+    }
+
+    const users = await this.userRepository.findMany(
+      {},
+      [],
+      0,
+      Number.MAX_VALUE,
+    );
+
+    users.forEach(async (u) => {
+      const keycloakUser = await this.keycloakService.upsert(
+        u.name,
+        u.mail,
+        Constants.CUSTOMER_ROLE,
+      );
+
+      console.log(`insert ${keycloakUser.id} to keycloak database`);
+    });
+  }
+
+  async updateProfile(userId: string, updateProfileDto: UpdateProfileDto) {
     const user = await this.userRepository.findUniqueOrThrow(userId, {});
 
     if (updateProfileDto.avatar) {
@@ -104,13 +196,63 @@ export class UserService {
     return plainToInstance(UserDto, updatedUser);
   }
 
+  async findMany(findAllDto: UserFindAllRequestDto) {
+    const keycloakUsers = await this.keycloakService.findUsers(
+      findAllDto.toSkip(),
+      findAllDto.limit,
+    );
+
+    const users = await this.userRepository.findMany(
+      {
+        id: {
+          in: keycloakUsers.map((u) => u.id),
+        },
+      },
+      [],
+    );
+
+    const userDtoPromises = users.map(async (u) => {
+      const dto = plainToInstance(UserDto, u);
+
+      const kcUser = await this.keycloakService.findFirst(u.id);
+
+      dto.enabled = kcUser.enabled;
+      dto.roles = kcUser.realmRoles;
+
+      return dto;
+    });
+
+    const userDtos = await Promise.all(userDtoPromises);
+
+    return userDtos;
+  }
+
   async findOne(userFilterDto: UserFilterDto) {
-    const user = await this.userRepository.findUnique(userFilterDto.id, {});
+    const keycloakUser = await this.keycloakService.findFirst(userFilterDto.id);
+
+    const user = await this.userRepository.findUnique(userFilterDto.id, {
+      _count: {
+        select: {
+          photos: true,
+          cameras: true,
+          bookings: true,
+          comments: true,
+          followers: true,
+          followings: true,
+        },
+      },
+    });
 
     if (!user) {
       throw new UserNotFoundException();
     }
 
-    return plainToInstance(MeDto, user);
+    const userDto = plainToInstance(UserDto, user, {
+      groups: keycloakUser.realmRoles,
+    });
+    userDto.enabled = keycloakUser.enabled;
+    userDto.roles = keycloakUser.realmRoles;
+
+    return userDto;
   }
 }

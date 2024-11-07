@@ -44,6 +44,7 @@ import { PhotoGenerateWatermarkService } from './photo-generate-watermark.servic
 import { CameraConstant } from 'src/camera/constants/camera.constant';
 import { FailToPerformOnDuplicatedPhotoException } from '../exceptions/fail-to-perform-on-duplicated-photo.exception';
 import { PhotoValidateService } from './photo-validate.service';
+import { PhotoSizeDto } from '../dtos/photo-size.dto';
 
 @Injectable()
 export class PhotoService {
@@ -121,7 +122,7 @@ export class PhotoService {
 
     const availableRes = await this.getAvailablePhotoResolution(photo.id);
 
-    if (availableRes.indexOf(shareRequest.size) < 0) {
+    if (availableRes.findIndex((r) => r.width === shareRequest.size) < 0) {
       throw new ChoosedShareQualityIsNotFoundException();
     }
 
@@ -134,28 +135,25 @@ export class PhotoService {
   }
 
   async getAvailablePhotoResolution(id: string) {
-    // const cacheResolutionKey = `PHOTO_RESOLUTION:${id}`;
-    //
-    // const cachedResolution =
-    //   await this.cacheManager.get<string[]>(cacheResolutionKey);
-    //
-    // if (cachedResolution) {
-    //   return cachedResolution;
-    // }
-
     const photo = await this.photoRepository.findUniqueOrThrow(id);
 
-    const availableRes = [];
+    const availableRes: PhotoSizeDto[] = [];
+
+    let height = photo.height;
 
     for (
       let i = photo.width;
       i >= PhotoConstant.MIN_PHOTO_WIDTH;
       i -= Math.floor((i * 20) / 100)
     ) {
-      availableRes.push(i);
-    }
+      const previewUrl = this.bunnyService.getPresignedFile(
+        photo.watermark ? photo.watermarkPhotoUrl : photo.originalPhotoUrl,
+        `?width=${i}`,
+      );
+      availableRes.push(new PhotoSizeDto(i, height, previewUrl));
 
-    // this.cacheManager.set(cacheResolutionKey, availableRes);
+      height -= Math.floor((height * 20) / 100);
+    }
 
     return availableRes;
   }
@@ -337,9 +335,11 @@ export class PhotoService {
       filter.limit,
     );
 
-    const sortedPhotos: any[] = [];
+    let sortedPhotos = photos;
 
     if (idFilterByGPS.length > 0) {
+      sortedPhotos = [];
+
       idFilterByGPS.forEach((id) => {
         const photo = photos.find((p) => p.id === id);
         if (!photo) {
@@ -352,6 +352,15 @@ export class PhotoService {
 
     const signedPhotoDtoPromises = sortedPhotos.map(async (p) => {
       const signedPhotoDto = await this.signPhoto(p);
+
+      signedPhotoDto.photoSellings.forEach((photoSelling) => {
+        photoSelling.pricetags.forEach((pricetag) => {
+          pricetag.preview = this.bunnyService.getPresignedFile(
+            p.watermarkPhotoUrl,
+            `?width=${pricetag.size}`,
+          );
+        });
+      });
       return signedPhotoDto;
     });
 
@@ -411,6 +420,15 @@ export class PhotoService {
     }
 
     const signedPhotoDto = await this.signPhoto(photo);
+
+    signedPhotoDto.photoSellings.forEach((photoSelling) => {
+      photoSelling.pricetags.forEach((pricetag) => {
+        pricetag.preview = this.bunnyService.getPresignedFile(
+          photo.watermarkPhotoUrl,
+          `?width=${pricetag.size}`,
+        );
+      });
+    });
 
     return signedPhotoDto;
   }

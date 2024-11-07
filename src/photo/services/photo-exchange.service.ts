@@ -131,7 +131,7 @@ export class PhotoExchangeService {
       await this.photoService.getAvailablePhotoResolution(photoId);
 
     sellPhotoDto.pricetags.forEach((pricetag) => {
-      if (availableSize.indexOf(pricetag.size) < 0) {
+      if (availableSize.findIndex((p) => p.width === pricetag.size) < 0) {
         throw new SellQualityNotExistException();
       }
     });

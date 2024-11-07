@@ -27,7 +27,7 @@ import { Response } from 'express';
 import { UpdateProfileDto } from '../dtos/rest/update-profile.request.dto';
 import { UpgradeOrderDto } from 'src/upgrade-order/dtos/upgrade-order.dto';
 import { UpgradeOrderService } from 'src/upgrade-order/services/upgrade-order.service';
-import { MeDto } from '../dtos/me.dto';
+
 import { FormDataRequest } from 'nestjs-form-data';
 
 @Controller('me')
@@ -42,7 +42,7 @@ export class MeController {
     summary: 'get user info base on role ',
   })
   @ApiOkResponse({
-    type: MeDto,
+    type: UserDto,
   })
   @Get()
   @UseGuards(AuthGuard, KeycloakRoleGuard)

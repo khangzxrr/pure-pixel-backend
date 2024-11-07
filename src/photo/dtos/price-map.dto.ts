@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNumber, Min } from 'class-validator';
 import { PhotoConstant } from '../constants/photo.constant';
 import { Type } from 'class-transformer';
@@ -14,4 +14,7 @@ export class PricetagDto {
   @IsNumber()
   @Min(1000)
   price: number;
+
+  @ApiPropertyOptional()
+  preview?: string;
 }

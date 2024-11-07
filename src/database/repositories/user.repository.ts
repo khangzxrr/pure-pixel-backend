@@ -123,14 +123,12 @@ export class UserRepository {
     }
   }
 
-  async upsert(user: UserEntity) {
+  async upsert(user: Prisma.UserCreateInput) {
     return this.prisma.user.upsert({
       where: {
         id: user.id,
       },
-      update: {
-        normalizedName: user.normalizedName,
-      },
+      update: {},
       create: user,
     });
   }
@@ -144,8 +142,8 @@ export class UserRepository {
   async findMany(
     where: Prisma.UserWhereInput,
     orderBy: Prisma.UserOrderByWithRelationInput[],
-    skip: number,
-    take: number,
+    skip?: number,
+    take?: number,
   ) {
     return this.prisma.extendedClient().user.findMany({
       where,

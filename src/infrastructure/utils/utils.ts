@@ -5,9 +5,15 @@ import {
   KeycloakConnectConfig,
 } from 'nest-keycloak-connect';
 
+import * as tvkd from 'tieng-viet-khong-dau';
+
 type GqlContextType = 'graphql' | ContextType;
 
 export class Utils {
+  static normalizeText(text: string) {
+    return tvkd.cLowerCase(text);
+  }
+
   static randomString(length: number) {
     let result = '';
     const characters =
