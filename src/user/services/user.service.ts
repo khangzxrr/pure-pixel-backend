@@ -16,6 +16,7 @@ import { CannotCreateNewUserException } from '../exceptions/cannot-create-new-us
 import { Utils } from 'src/infrastructure/utils/utils';
 import { UpdateUserDto } from '../dtos/update-user.dto';
 import { FailedToUpdateUserException } from '../exceptions/cannot-update-user.exception';
+import { UserFindAllResponseDto } from '../dtos/rest/user-find-all.response.dto';
 
 @Injectable()
 export class UserService {
@@ -106,21 +107,9 @@ export class UserService {
             mail: ku.email,
             name: ku.username,
             cover: Constants.DEFAULT_COVER,
-            quote: '',
             avatar: Constants.DEFAULT_AVATAR,
             normalizedName: ku.username,
             location: 'TP.Hồ Chí Minh',
-            phonenumber: '',
-            expertises: [''],
-            ftpPassword: '',
-            ftpUsername: '',
-            socialLinks: [''],
-            packageCount: BigInt('0'),
-            maxPhotoQuota: BigInt('0'),
-            maxPackageCount: BigInt('0'),
-            photoQuotaUsage: BigInt('0'),
-            createdAt: new Date(),
-            updatedAt: new Date(),
           });
 
           console.log(`insert ${ku.username} to database`);
@@ -136,12 +125,7 @@ export class UserService {
       return;
     }
 
-    const users = await this.userRepository.findMany(
-      {},
-      [],
-      0,
-      Number.MAX_VALUE,
-    );
+    const users = await this.userRepository.findMany({}, []);
 
     users.forEach(async (u) => {
       const keycloakUser = await this.keycloakService.upsert(
@@ -202,6 +186,8 @@ export class UserService {
       findAllDto.limit,
     );
 
+    const count = await this.userRepository.count({});
+
     const users = await this.userRepository.findMany(
       {
         id: {
@@ -216,19 +202,23 @@ export class UserService {
 
       const kcUser = await this.keycloakService.findFirst(u.id);
 
+      const roles = await this.keycloakService.getUserRoles(u.id);
+
       dto.enabled = kcUser.enabled;
-      dto.roles = kcUser.realmRoles;
+      dto.roles = roles.map((r) => r.name);
 
       return dto;
     });
 
     const userDtos = await Promise.all(userDtoPromises);
 
-    return userDtos;
+    return new UserFindAllResponseDto(findAllDto.limit, count, userDtos);
   }
 
   async findOne(userFilterDto: UserFilterDto) {
     const keycloakUser = await this.keycloakService.findFirst(userFilterDto.id);
+
+    const roles = await this.keycloakService.getUserRoles(keycloakUser.id);
 
     const user = await this.userRepository.findUnique(userFilterDto.id, {
       _count: {
@@ -251,7 +241,7 @@ export class UserService {
       groups: keycloakUser.realmRoles,
     });
     userDto.enabled = keycloakUser.enabled;
-    userDto.roles = keycloakUser.realmRoles;
+    userDto.roles = roles.map((r) => r.name);
 
     return userDto;
   }
