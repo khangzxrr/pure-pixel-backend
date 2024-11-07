@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class PhotoSizeDto {
   @ApiProperty()
@@ -7,8 +7,13 @@ export class PhotoSizeDto {
   @ApiProperty()
   height: number;
 
-  constructor(width: number, height: number) {
+  @ApiPropertyOptional()
+  preview?: string;
+
+  constructor(width: number, height: number, preview?: string) {
     this.width = width;
     this.height = height;
+
+    this.preview = preview;
   }
 }

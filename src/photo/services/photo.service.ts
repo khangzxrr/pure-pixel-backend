@@ -135,15 +135,6 @@ export class PhotoService {
   }
 
   async getAvailablePhotoResolution(id: string) {
-    // const cacheResolutionKey = `PHOTO_RESOLUTION:${id}`;
-    //
-    // const cachedResolution =
-    //   await this.cacheManager.get<string[]>(cacheResolutionKey);
-    //
-    // if (cachedResolution) {
-    //   return cachedResolution;
-    // }
-
     const photo = await this.photoRepository.findUniqueOrThrow(id);
 
     const availableRes: PhotoSizeDto[] = [];
@@ -155,12 +146,14 @@ export class PhotoService {
       i >= PhotoConstant.MIN_PHOTO_WIDTH;
       i -= Math.floor((i * 20) / 100)
     ) {
-      availableRes.push(new PhotoSizeDto(i, height));
+      const previewUrl = this.bunnyService.getPresignedFile(
+        photo.watermark ? photo.watermarkPhotoUrl : photo.originalPhotoUrl,
+        `?width=${i}`,
+      );
+      availableRes.push(new PhotoSizeDto(i, height, previewUrl));
 
       height -= Math.floor((height * 20) / 100);
     }
-
-    // this.cacheManager.set(cacheResolutionKey, availableRes);
 
     return availableRes;
   }
