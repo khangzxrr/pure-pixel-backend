@@ -14,6 +14,8 @@ import { UserFindAllRequestDto } from '../dtos/rest/user-find-all.request.dto';
 import { CreateUserDto } from '../dtos/create-user.dto';
 import { CannotCreateNewUserException } from '../exceptions/cannot-create-new-user.exception';
 import { Utils } from 'src/infrastructure/utils/utils';
+import { UpdateUserDto } from '../dtos/update-user.dto';
+import { FailedToUpdateUserException } from '../exceptions/cannot-update-user.exception';
 
 @Injectable()
 export class UserService {
@@ -23,13 +25,41 @@ export class UserService {
     @Inject() private readonly keycloakService: KeycloakService,
   ) {}
 
+  async update(id: string, updateDto: UpdateUserDto) {
+    try {
+      await this.keycloakService.updateById(id, {
+        mail: updateDto.mail,
+        role: updateDto.role,
+      });
+
+      const updatedUser = await this.userRepository.update(id, {
+        mail: updateDto.mail,
+        name: updateDto.name,
+        quote: updateDto.quote,
+        location: updateDto.location,
+        phonenumber: updateDto.phonenumber,
+        socialLinks: updateDto.socialLinks,
+        expertises: updateDto.expertises,
+      });
+
+      return updatedUser;
+    } catch (e) {
+      if (e.response.status === 409) {
+        throw new BadRequestException(e.responseData.errorMessage);
+      }
+
+      console.log(e);
+      throw new FailedToUpdateUserException();
+    }
+  }
+
   async create(createDto: CreateUserDto) {
     try {
-      const createdKeycloakUser = await this.keycloakService.create(
-        createDto.username,
-        createDto.mail,
-        createDto.role,
-      );
+      const createdKeycloakUser = await this.keycloakService.create({
+        role: createDto.role,
+        mail: createDto.mail,
+        username: createDto.username,
+      });
 
       const user = await this.userRepository.upsert({
         id: createdKeycloakUser.id,

@@ -2,6 +2,9 @@ import {
   ClientRepresentation,
   KeycloakAdminClient,
 } from '@s3pweb/keycloak-admin-client-cjs';
+import { CreateKeycloakUserDto } from '../dtos/create-keycloak-user.dto';
+import { UpdateUserDto } from 'src/user/dtos/update-user.dto';
+import { UpdateKeycloakUserDto } from '../dtos/update-keycloak-user.dto';
 
 export class KeycloakService {
   private kcInstance: KeycloakAdminClient;
@@ -69,18 +72,35 @@ export class KeycloakService {
     }
   }
 
-  async create(username: string, email: string, role: string) {
+  async updateById(id: string, updateDto: UpdateKeycloakUserDto) {
+    const instance = await this.getInstance();
+
+    const user = await instance.users.update(
+      {
+        id,
+        realm: process.env.KEYCLOAK_REALM,
+      },
+      {
+        email: updateDto.mail,
+        username: updateDto.username,
+      },
+    );
+
+    return user;
+  }
+
+  async create(createDto: CreateKeycloakUserDto) {
     const instance = await this.getInstance();
 
     const user = await instance.users.create({
-      username,
-      email,
+      username: createDto.username,
+      email: createDto.mail,
       emailVerified: true,
       enabled: true,
       credentials: [],
     });
 
-    await this.addRoleToUser(user.id, role);
+    await this.addRoleToUser(user.id, createDto.role);
 
     return user;
   }
