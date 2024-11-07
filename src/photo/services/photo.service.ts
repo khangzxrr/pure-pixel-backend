@@ -44,6 +44,7 @@ import { PhotoGenerateWatermarkService } from './photo-generate-watermark.servic
 import { CameraConstant } from 'src/camera/constants/camera.constant';
 import { FailToPerformOnDuplicatedPhotoException } from '../exceptions/fail-to-perform-on-duplicated-photo.exception';
 import { PhotoValidateService } from './photo-validate.service';
+import { PhotoSizeDto } from '../dtos/photo-size.dto';
 
 @Injectable()
 export class PhotoService {
@@ -121,7 +122,7 @@ export class PhotoService {
 
     const availableRes = await this.getAvailablePhotoResolution(photo.id);
 
-    if (availableRes.indexOf(shareRequest.size) < 0) {
+    if (availableRes.findIndex((r) => r.width === shareRequest.size) < 0) {
       throw new ChoosedShareQualityIsNotFoundException();
     }
 
@@ -145,14 +146,18 @@ export class PhotoService {
 
     const photo = await this.photoRepository.findUniqueOrThrow(id);
 
-    const availableRes = [];
+    const availableRes: PhotoSizeDto[] = [];
+
+    let height = photo.height;
 
     for (
       let i = photo.width;
       i >= PhotoConstant.MIN_PHOTO_WIDTH;
       i -= Math.floor((i * 20) / 100)
     ) {
-      availableRes.push(i);
+      availableRes.push(new PhotoSizeDto(i, height));
+
+      height -= Math.floor((height * 20) / 100);
     }
 
     // this.cacheManager.set(cacheResolutionKey, availableRes);

@@ -139,8 +139,6 @@ export class UserService {
       try {
         const roles = await this.keycloakService.getUserRoles(u.id);
         dto.roles = roles.map((r) => r.name);
-
-        console.log(dto, roles);
       } catch (e) {
         console.log(e);
       }
