@@ -7,13 +7,21 @@ import { PaymentUrlDto } from 'src/payment/dtos/payment-url.dto';
 
 //TODO: add signed url to dto if user is paid
 export class PhotoBuyResponseDto extends PaymentUrlDto {
+  @Exclude()
+  photoSellHistoryId: string;
+
+  @Exclude()
+  userToUserTransactionId: string;
+
   @ApiProperty()
   transactionId: string;
 
   @ApiProperty()
   photoSellId: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    type: () => PhotoSellHistoryDto,
+  })
   @Type(() => PhotoSellHistoryDto)
   photoSellHistory: PhotoSellHistoryDto;
 

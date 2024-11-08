@@ -43,8 +43,8 @@ model Newsfeed {
   comments    NewsfeedComment[]
   permissions NewsfeedViewPermission[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 }
 
@@ -557,8 +557,9 @@ model PhotoTag {
 model Pricetag {
   id String @id @default(uuid())
 
-  size  Int
-  price Decimal
+  width  Int     @default(0)
+  height Int     @default(0)
+  price  Decimal
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -592,11 +593,12 @@ model PhotoSellHistory {
 
   description String
 
-  size  Int
-  price Decimal
+  width  Int @default(0)
+  height Int @default(0)
+  price  Decimal
 
   createdAt DateTime   @default(now())
-  PhotoBuy  PhotoBuy[]
+  photoBuy  PhotoBuy[]
 }
 
 model PhotoBuy {

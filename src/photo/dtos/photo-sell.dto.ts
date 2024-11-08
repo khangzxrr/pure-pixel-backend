@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { PricetagDto } from './price-map.dto';
 import { Type } from 'class-transformer';
+import { PhotoSellHistoryDto } from './photo-sell-history.dto';
 
 export class PhotoSellDto {
   @ApiProperty()
@@ -27,6 +28,13 @@ export class PhotoSellDto {
   })
   @Type(() => PricetagDto)
   pricetags: PricetagDto[];
+
+  @ApiProperty({
+    isArray: true,
+    type: PhotoSellHistoryDto,
+  })
+  @Type(() => PhotoSellHistoryDto)
+  photoSellHistories: PhotoSellHistoryDto[];
 
   //dont exclude parent like Photo, this is a bug from class-transformer cause swagger to be null
   // @Exclude()

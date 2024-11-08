@@ -92,7 +92,7 @@ export class PhotoController {
     @AuthenticatedUser() user: ParsedUserDto,
     @Param('id') id: string,
   ) {
-    return await this.photoService.getSignedPhotoById(user ? user.sub : '', id);
+    return await this.photoService.findById(user ? user.sub : '', id);
   }
 
   @Post(':id/watermark')

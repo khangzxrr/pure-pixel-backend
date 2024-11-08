@@ -78,7 +78,7 @@ export class PhotoProcessService {
   async makeWatermark(sharp: SharpLib.Sharp, watermarkText: string) {
     const metadata = await sharp.metadata();
 
-    const fontSizeScaledByWidth = (metadata.width * 10) / 100;
+    const fontSizeScaledByWidth = (metadata.width * 5) / 100;
 
     const svg = `<svg height="${metadata.height}" width="${metadata.width}"> 
         <text x="50%" y="50%" font-family="Roboto" dominant-baseline="middle" text-anchor="middle" font-size="${fontSizeScaledByWidth}"  fill="#fff" fill-opacity="0.7">${watermarkText}</text>         

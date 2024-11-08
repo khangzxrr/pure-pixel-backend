@@ -45,6 +45,7 @@ import { CameraConstant } from 'src/camera/constants/camera.constant';
 import { FailToPerformOnDuplicatedPhotoException } from '../exceptions/fail-to-perform-on-duplicated-photo.exception';
 import { PhotoValidateService } from './photo-validate.service';
 import { PhotoSizeDto } from '../dtos/photo-size.dto';
+import { PhotoDetail } from 'src/database/types/photo';
 
 @Injectable()
 export class PhotoService {
@@ -122,7 +123,7 @@ export class PhotoService {
 
     const availableRes = await this.getAvailablePhotoResolution(photo.id);
 
-    if (availableRes.findIndex((r) => r.width === shareRequest.size) < 0) {
+    if (availableRes.findIndex((r) => r === shareRequest.size) < 0) {
       throw new ChoosedShareQualityIsNotFoundException();
     }
 
@@ -164,6 +165,58 @@ export class PhotoService {
     return await Promise.all(promises);
   }
 
+  async signPhotoDetail(photoDetail: PhotoDetail) {
+    const signedPhotoDto = plainToInstance(SignedPhotoDto, photoDetail);
+
+    const url = photoDetail.watermark
+      ? photoDetail.watermarkPhotoUrl
+      : photoDetail.originalPhotoUrl;
+
+    const thumbnail = `${
+      photoDetail.watermark
+        ? photoDetail.watermarkPhotoUrl
+        : photoDetail.originalPhotoUrl
+    }`;
+
+    if (url.length == 0) {
+      console.log(
+        `error photo without thumbnail or original: ${photoDetail.id}`,
+      );
+
+      if (photoDetail.watermark) {
+        await this.sendImageWatermarkQueue(
+          photoDetail.photographerId,
+          photoDetail.id,
+          {
+            text: 'PXL',
+          },
+        );
+      } else {
+        throw new EmptyOriginalPhotoException();
+      }
+    }
+
+    const signedUrl = this.bunnyService.getPresignedFile(url);
+    const signedThumbnailUrl = this.bunnyService.getPresignedFile(
+      thumbnail,
+      `?width=${PhotoConstant.THUMBNAIL_WIDTH}`,
+    );
+
+    const signedUrlDto = new SignedUrl(signedUrl, signedThumbnailUrl);
+    signedPhotoDto.signedUrl = signedUrlDto;
+
+    signedPhotoDto.photoSellings?.forEach((photoSelling) => {
+      photoSelling.pricetags.forEach((pricetag) => {
+        pricetag.preview = this.bunnyService.getPresignedFile(
+          photoDetail.watermarkPhotoUrl,
+          `?width=${pricetag.width}`,
+        );
+      });
+    });
+
+    return signedPhotoDto;
+  }
+
   async signPhoto(photo: Photo): Promise<SignedPhotoDto> {
     const signedPhotoDto = plainToInstance(SignedPhotoDto, photo);
 
@@ -186,15 +239,6 @@ export class PhotoService {
         throw new EmptyOriginalPhotoException();
       }
     }
-
-    signedPhotoDto.photoSellings?.forEach((photoSelling) => {
-      photoSelling.pricetags.forEach((pricetag) => {
-        pricetag.preview = this.bunnyService.getPresignedFile(
-          photo.watermarkPhotoUrl,
-          `?width=${pricetag.size}`,
-        );
-      });
-    });
 
     const signedUrl = this.bunnyService.getPresignedFile(url);
     const signedThumbnailUrl = this.bunnyService.getPresignedFile(
@@ -389,12 +433,12 @@ export class PhotoService {
     return true;
   }
 
-  async getSignedPhotoById(
+  async findById(
     userId: string,
     id: string,
     validateOwnership: boolean = true,
   ) {
-    const photo = await this.photoRepository.findUniqueOrThrow(id);
+    const photo = await this.photoRepository.findUniqueOrThrow(id, userId);
 
     await this.photoViewCountQueue.add(PhotoConstant.INCREASE_VIEW_COUNT_JOB, {
       id: photo.id,
@@ -412,7 +456,7 @@ export class PhotoService {
       throw new PhotoIsPrivatedException();
     }
 
-    return await this.signPhoto(photo);
+    return await this.signPhotoDetail(photo);
   }
 
   async uploadPhoto(

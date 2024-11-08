@@ -40,13 +40,14 @@ export class PhotoExchangeService {
   ) {}
 
   async getAllPreviousBuyPhoto(userId: string) {
+    //TODO: paging!
     const photos = await this.photoRepository.findAll(
       {
         photoSellings: {
           some: {
             photoSellHistories: {
               some: {
-                PhotoBuy: {
+                photoBuy: {
                   some: {
                     buyerId: userId,
                     userToUserTransaction: {
@@ -63,7 +64,7 @@ export class PhotoExchangeService {
       },
       [],
       0,
-      10,
+      -1,
     );
 
     const signedPhotoPromises = photos.map((p) =>
@@ -91,7 +92,10 @@ export class PhotoExchangeService {
       throw new PhotoBuyTransactionIsNotSuccessException();
     }
 
-    if (photoBuy.photoSellHistory.size === photo.width) {
+    if (
+      photoBuy.photoSellHistory.width === photo.width &&
+      photoBuy.photoSellHistory.height === photo.height
+    ) {
       return this.photoProcessService.getBufferFromKey(photo.originalPhotoUrl);
     }
 
@@ -101,7 +105,7 @@ export class PhotoExchangeService {
 
     const resizedBuffer = await this.photoProcessService.resizeWithMetadata(
       sharp,
-      photoBuy.photoSellHistory.size,
+      photoBuy.photoSellHistory.width,
     );
 
     return resizedBuffer;
@@ -131,7 +135,11 @@ export class PhotoExchangeService {
       await this.photoService.getAvailablePhotoResolution(photoId);
 
     sellPhotoDto.pricetags.forEach((pricetag) => {
-      if (availableSize.findIndex((p) => p.width === pricetag.size) < 0) {
+      if (
+        availableSize.findIndex(
+          (s) => s.width === pricetag.width && s.height === pricetag.height,
+        ) < 0
+      ) {
         throw new SellQualityNotExistException();
       }
     });
@@ -170,7 +178,8 @@ export class PhotoExchangeService {
         pricetags: {
           create: sellPhotoDto.pricetags.map((p) => {
             return {
-              size: p.size,
+              width: p.width,
+              height: p.height,
               price: p.price,
             };
           }),
@@ -239,7 +248,8 @@ export class PhotoExchangeService {
         },
       },
       photoSellHistory: {
-        size: pricetag.size,
+        width: pricetag.width,
+        height: pricetag.height,
         originalPhotoSell: {
           id: photoSellId,
         },
@@ -258,7 +268,8 @@ export class PhotoExchangeService {
         photoBuy: {
           buyerId: userId,
           photoSellHistory: {
-            size: pricetag.size,
+            width: pricetag.width,
+            height: pricetag.height,
             price: pricetag.price,
             originalPhotoSellId: photoSell.id,
           },
@@ -302,7 +313,8 @@ export class PhotoExchangeService {
               },
               photoSellHistory: {
                 create: {
-                  size: pricetag.size,
+                  width: pricetag.width,
+                  height: pricetag.height,
                   price: pricetag.price,
                   description: photoSell.description,
                   originalPhotoSell: {
@@ -370,7 +382,8 @@ export class PhotoExchangeService {
             },
             photoSellHistory: {
               create: {
-                size: pricetag.size,
+                width: pricetag.width,
+                height: pricetag.height,
                 price: pricetag.price,
                 description: photoSell.description,
                 originalPhotoSell: {
