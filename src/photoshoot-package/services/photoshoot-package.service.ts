@@ -194,17 +194,6 @@ export class PhotoshootPackageService {
     return photoshootPackageDto;
   }
 
-  async findAllEnabledPackageByPhotographerId(
-    photographerId: string,
-    findAllDto: PhotoshootPackageFindAllDto,
-  ) {
-    findAllDto.status = 'ENABLED';
-
-    const packageDtos = await this.findAllByUserId(photographerId, findAllDto);
-
-    return packageDtos;
-  }
-
   async findAll(findAllDto: PhotoshootPackageFindAllDto) {
     const count = await this.photoshootRepository.count(findAllDto.toWhere());
 
