@@ -1,9 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsString, Min } from 'class-validator';
+import {
+  ArrayMaxSize,
+  IsNotEmpty,
+  IsNumber,
+  IsString,
+  Min,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import {
   HasMimeType,
   IsFile,
+  IsFiles,
   MaxFileSize,
   MemoryStoredFile,
 } from 'nestjs-form-data';
@@ -39,4 +46,16 @@ export class PhotoshootPackageCreateRequestDto {
   @MaxFileSize(5e7)
   @HasMimeType(['image/*'])
   thumbnail: MemoryStoredFile;
+
+  @ApiProperty({
+    type: 'file',
+    isArray: true,
+  })
+  @IsFiles()
+  @MaxFileSize(5e7, {
+    each: true,
+  })
+  @HasMimeType(['image/*'], { each: true })
+  @ArrayMaxSize(20)
+  showcases: MemoryStoredFile[];
 }

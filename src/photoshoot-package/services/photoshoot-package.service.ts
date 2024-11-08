@@ -14,6 +14,7 @@ import { PhotoshootPackageNotBelongException } from '../exceptions/photoshoot-pa
 import { PhotoshootPackageUpdateRequestDto } from '../dtos/rest/photoshoot-package-update.request.dto';
 import { PhotoshootPackageReplaceRequestDto } from '../dtos/rest/photoshoot-package-replace.request.dto';
 import { BunnyService } from 'src/storage/services/bunny.service';
+import { PhotoshootPackageDetail } from 'src/database/types/photoshoot-package';
 
 @Injectable()
 export class PhotoshootPackageService {
@@ -137,10 +138,22 @@ export class PhotoshootPackageService {
     }
 
     const thumbnailKey = `photoshoot_thumbnail/${v4()}.jpg`;
-    this.photoProcessService.uploadFromBuffer(
+    await this.photoProcessService.uploadFromBuffer(
       thumbnailKey,
       createDto.thumbnail.buffer,
     );
+
+    const showcaseKeysPromises = createDto.showcases.map(async (showcase) => {
+      const showcaseKey = `photoshoot_showcase/${v4()}.${showcase.extension}`;
+      await this.photoProcessService.uploadFromBuffer(
+        showcaseKey,
+        showcase.buffer,
+      );
+
+      return showcaseKey;
+    });
+
+    const showcaseKeys = await Promise.all(showcaseKeysPromises);
 
     const photoshootPackageCreateQuery = this.photoshootRepository.create({
       user: {
@@ -154,6 +167,13 @@ export class PhotoshootPackageService {
       subtitle: createDto.subtitle,
       thumbnail: thumbnailKey,
       description: createDto.description,
+      showcases: {
+        create: showcaseKeys.map((showcase) => {
+          return {
+            photoUrl: showcase,
+          };
+        }),
+      },
     });
 
     const updatePackageQuotaQuery = this.userRepository.update(user.id, {
@@ -166,14 +186,25 @@ export class PhotoshootPackageService {
       .extendedClient()
       .$transaction([photoshootPackageCreateQuery, updatePackageQuotaQuery]);
 
+    return await this.signPhotoshootPackage(photoshootPackage);
+  }
+  async signPhotoshootPackage(
+    photoshootPackageDetail: PhotoshootPackageDetail,
+  ) {
     const photoshootPackageDto = plainToInstance(
       PhotoshootPackageDto,
-      photoshootPackage,
+      photoshootPackageDetail,
     );
 
     photoshootPackageDto.thumbnail = this.bunnyService.getPresignedFile(
       photoshootPackageDto.thumbnail,
     );
+
+    photoshootPackageDto.showcases.map((showcase) => {
+      showcase.photoUrl = this.bunnyService.getPresignedFile(showcase.photoUrl);
+
+      return showcase;
+    });
 
     return photoshootPackageDto;
   }
@@ -182,16 +213,7 @@ export class PhotoshootPackageService {
     const photoshootPackage =
       await this.photoshootRepository.findUniqueOrThrow(id);
 
-    const photoshootPackageDto = plainToInstance(
-      PhotoshootPackageDto,
-      photoshootPackage,
-    );
-
-    photoshootPackageDto.thumbnail = this.bunnyService.getPresignedFile(
-      photoshootPackageDto.thumbnail,
-    );
-
-    return photoshootPackageDto;
+    return await this.signPhotoshootPackage(photoshootPackage);
   }
 
   async findAll(findAllDto: PhotoshootPackageFindAllDto) {
@@ -203,12 +225,13 @@ export class PhotoshootPackageService {
       findAllDto.toWhere(),
     );
 
-    const packageDtos = packages.map((p) => {
-      const dto = plainToInstance(PhotoshootPackageDto, p);
-      dto.thumbnail = this.bunnyService.getPresignedFile(p.thumbnail);
+    const packageDtoPromises = packages.map(async (p) => {
+      const dto = await this.signPhotoshootPackage(p);
 
       return dto;
     });
+
+    const packageDtos = await Promise.all(packageDtoPromises);
 
     return new PhotoshootPackageFindAllResponseDto(
       findAllDto.limit,
@@ -231,12 +254,13 @@ export class PhotoshootPackageService {
       findAllDto.toWhere(),
     );
 
-    const packageDtos = packages.map((p) => {
-      const dto = plainToInstance(PhotoshootPackageDto, p);
-      dto.thumbnail = this.bunnyService.getPresignedFile(p.thumbnail);
+    const packageDtoPromises = packages.map(async (p) => {
+      const dto = await this.signPhotoshootPackage(p);
 
       return dto;
     });
+
+    const packageDtos = await Promise.all(packageDtoPromises);
 
     return new PhotoshootPackageFindAllResponseDto(
       findAllDto.limit,

@@ -5,3 +5,10 @@ export type PhotoshootWithUser = Prisma.PhotoshootPackageGetPayload<{
     user: true;
   };
 }>;
+
+export type PhotoshootPackageDetail = Prisma.PhotoshootPackageGetPayload<{
+  include: {
+    user: true;
+    showcases: true;
+  };
+}>;

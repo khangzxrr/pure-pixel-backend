@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { PhotoshootPackageStatus } from '@prisma/client';
 import { Exclude, Type } from 'class-transformer';
 import { UserDto } from 'src/user/dtos/user.dto';
+import { PhotoshootPackageShowcaseDto } from './photoshoot-package-showcase.dto';
 
 export class PhotoshootPackageDto {
   @ApiProperty()
@@ -32,4 +33,10 @@ export class PhotoshootPackageDto {
   @ApiProperty()
   @Type(() => UserDto)
   user: UserDto;
+
+  @ApiProperty({
+    isArray: true,
+  })
+  @Type(() => PhotoshootPackageShowcaseDto)
+  showcases: PhotoshootPackageShowcaseDto[];
 }
