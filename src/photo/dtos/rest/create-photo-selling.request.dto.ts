@@ -8,7 +8,8 @@ import {
   IsString,
   ValidateNested,
 } from 'class-validator';
-import { PricetagDto } from '../price-map.dto';
+
+import { CreatePriceMapDto } from '../create-price-map.dto';
 
 export class CreatePhotoSellingDto {
   @ApiProperty({
@@ -28,12 +29,12 @@ export class CreatePhotoSellingDto {
   @ApiProperty({
     required: true,
     isArray: true,
-    type: PricetagDto,
+    type: CreatePriceMapDto,
   })
   @IsArray()
   @ArrayMinSize(1)
   @ArrayUnique()
   @ValidateNested()
-  @Type(() => PricetagDto)
-  pricetags: PricetagDto[];
+  @Type(() => CreatePriceMapDto)
+  pricetags: CreatePriceMapDto[];
 }
