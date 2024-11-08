@@ -480,10 +480,10 @@ export class PhotoService {
         throw new MissingModelExifException();
       }
 
-      await this.photoValidateService.validateHashAndMatching(
-        photoUploadDto.file.buffer,
-        photoUploadDto.file.originalName,
-      );
+      // await this.photoValidateService.validateHashAndMatching(
+      //   photoUploadDto.file.buffer,
+      //   photoUploadDto.file.originalName,
+      // );
 
       exif['Copyright'] = ` © copyright by ${user.name}`;
 
@@ -511,9 +511,9 @@ export class PhotoService {
         watermarkPhotoUrl: '',
       });
 
-      await this.photoProcessQueue.add(PhotoConstant.PROCESS_PHOTO_JOB_NAME, {
-        id: photo.id,
-      });
+      // await this.photoProcessQueue.add(PhotoConstant.PROCESS_PHOTO_JOB_NAME, {
+      //   id: photo.id,
+      // });
       await this.cameraQueue.add(CameraConstant.ADD_NEW_CAMERA_USAGE_JOB, {
         photoId: photo.id,
       });

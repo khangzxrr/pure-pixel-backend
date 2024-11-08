@@ -42,7 +42,7 @@ export class AuthenService {
         );
 
         if (existUser != null) {
-          this.cache.set(`user:${userId}`, existUser);
+          this.cache.set(`user:${userId}`, existUser, 300000);
 
           this.logger.log(`user is exist in DB, skip creation`);
           return;
