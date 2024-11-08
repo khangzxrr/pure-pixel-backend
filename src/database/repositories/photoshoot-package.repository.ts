@@ -13,6 +13,7 @@ export class PhotoshootRepository {
       },
       include: {
         user: true,
+        showcases: true,
       },
     });
   }
@@ -40,6 +41,10 @@ export class PhotoshootRepository {
   create(photoshootPackage: Prisma.PhotoshootPackageCreateInput) {
     return this.prisma.extendedClient().photoshootPackage.create({
       data: photoshootPackage,
+      include: {
+        showcases: true,
+        user: true,
+      },
     });
   }
 
@@ -53,13 +58,14 @@ export class PhotoshootRepository {
     take: number,
     skip: number,
     where: Prisma.PhotoshootPackageWhereInput,
-  ): Promise<PhotoshootWithUser[]> {
+  ) {
     return this.prisma.extendedClient().photoshootPackage.findMany({
       take,
       skip,
       where,
       include: {
         user: true,
+        showcases: true,
       },
     });
   }
