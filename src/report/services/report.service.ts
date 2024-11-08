@@ -154,7 +154,7 @@ export class ReportService {
           r.referencedUser = plainToInstance(UserDto, user);
           break;
         case 'PHOTO':
-          const photo = await this.photoService.getSignedPhotoById(
+          const photo = await this.photoService.findById(
             '',
             r.referenceId,
             false,

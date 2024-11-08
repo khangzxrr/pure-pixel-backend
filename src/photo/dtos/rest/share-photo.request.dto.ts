@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsString, Min } from 'class-validator';
-import { PhotoConstant } from 'src/photo/constants/photo.constant';
+import { IsNotEmpty, IsString } from 'class-validator';
+import { PhotoSizeDto } from '../photo-size.dto';
+import { Type } from 'class-transformer';
 
 export class SharePhotoRequestDto {
   @ApiProperty()
@@ -9,7 +10,6 @@ export class SharePhotoRequestDto {
   photoId: string;
 
   @ApiProperty()
-  @IsNumber()
-  @Min(PhotoConstant.MIN_PHOTO_WIDTH)
-  size: number;
+  @Type(() => PhotoSizeDto)
+  size: PhotoSizeDto;
 }

@@ -221,7 +221,7 @@ export class BookingService {
       },
     });
 
-    return this.photoService.getSignedPhotoById(userId, signedPhotoDto.id);
+    return this.photoService.findById(userId, signedPhotoDto.id);
   }
 
   async accept(bookingId: string, userId: string) {

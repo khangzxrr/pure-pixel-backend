@@ -9,7 +9,6 @@ export class UserToUserTransactionDto {
   @ApiProperty()
   toUserId: string;
 
-  @ApiProperty()
   @Exclude()
   transactionId: string;
 

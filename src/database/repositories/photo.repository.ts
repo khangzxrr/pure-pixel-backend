@@ -141,7 +141,7 @@ export class PhotoRepository {
     });
   }
 
-  async findUniqueOrThrow(id: string) {
+  async findUniqueOrThrow(id: string, userId?: string) {
     return this.prisma.extendedClient().photo.findUniqueOrThrow({
       where: {
         id,
@@ -165,6 +165,20 @@ export class PhotoRepository {
           },
           include: {
             pricetags: true,
+            photoSellHistories: {
+              include: {
+                photoBuy: {
+                  where: {
+                    buyerId: userId,
+                    userToUserTransaction: {
+                      fromUserTransaction: {
+                        status: 'SUCCESS',
+                      },
+                    },
+                  },
+                },
+              },
+            },
           },
         },
         photoTags: true,

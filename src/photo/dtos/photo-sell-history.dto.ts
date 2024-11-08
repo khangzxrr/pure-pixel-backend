@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { PhotoSellDto } from './photo-sell.dto';
+import { Exclude, Type } from 'class-transformer';
+import { SignedPhotoBuyDto } from './rest/signed-photo-buy.response.dto';
 
 export class PhotoSellHistoryDto {
   @ApiProperty()
@@ -16,7 +16,13 @@ export class PhotoSellHistoryDto {
   @Type(() => Number)
   price: number;
 
-  @ApiProperty()
-  @Type(() => PhotoSellDto)
-  originalPhotoSell: PhotoSellDto;
+  @ApiProperty({
+    type: () => SignedPhotoBuyDto,
+  })
+  @Type(() => SignedPhotoBuyDto)
+  photoBuy: SignedPhotoBuyDto;
+
+  // @ApiProperty()
+  // @Type(() => PhotoSellDto)
+  // originalPhotoSell: PhotoSellDto;
 }
