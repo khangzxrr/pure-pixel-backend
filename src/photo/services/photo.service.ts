@@ -187,6 +187,15 @@ export class PhotoService {
       }
     }
 
+    signedPhotoDto.photoSellings?.forEach((photoSelling) => {
+      photoSelling.pricetags.forEach((pricetag) => {
+        pricetag.preview = this.bunnyService.getPresignedFile(
+          photo.watermarkPhotoUrl,
+          `?width=${pricetag.size}`,
+        );
+      });
+    });
+
     const signedUrl = this.bunnyService.getPresignedFile(url);
     const signedThumbnailUrl = this.bunnyService.getPresignedFile(
       thumbnail,
@@ -275,11 +284,12 @@ export class PhotoService {
 
     await this.prisma.extendedClient().$transaction(prismaPromises);
 
-    return await this.getSignedPhotoById(userId, id);
+    return await this.signPhoto(photo);
   }
 
   async findPublicPhotos(userId: string, filter: FindAllPhotoFilterDto) {
     filter.photoType = 'RAW'; //ensure only get RAW photo
+    filter.visibility = 'PUBLIC';
 
     return await this.findAll(userId, filter);
   }
@@ -291,9 +301,6 @@ export class PhotoService {
   }
 
   async findAll(userId: string, filter: FindAllPhotoFilterDto) {
-    this.logger.log(`findall with filter:`);
-    this.logger.log(JSON.stringify(filter));
-
     let idFilterByGPS = [];
     let count = 0;
 
@@ -350,21 +357,7 @@ export class PhotoService {
       });
     }
 
-    const signedPhotoDtoPromises = sortedPhotos.map(async (p) => {
-      const signedPhotoDto = await this.signPhoto(p);
-
-      signedPhotoDto.photoSellings.forEach((photoSelling) => {
-        photoSelling.pricetags.forEach((pricetag) => {
-          pricetag.preview = this.bunnyService.getPresignedFile(
-            p.watermarkPhotoUrl,
-            `?width=${pricetag.size}`,
-          );
-        });
-      });
-      return signedPhotoDto;
-    });
-
-    const signedPhotos = await Promise.all(signedPhotoDtoPromises);
+    const signedPhotos = await this.signPhotos(sortedPhotos);
 
     return new PagingPaginatedResposneDto<SignedPhotoDto>(
       filter.limit,
@@ -419,18 +412,7 @@ export class PhotoService {
       throw new PhotoIsPrivatedException();
     }
 
-    const signedPhotoDto = await this.signPhoto(photo);
-
-    signedPhotoDto.photoSellings.forEach((photoSelling) => {
-      photoSelling.pricetags.forEach((pricetag) => {
-        pricetag.preview = this.bunnyService.getPresignedFile(
-          photo.watermarkPhotoUrl,
-          `?width=${pricetag.size}`,
-        );
-      });
-    });
-
-    return signedPhotoDto;
+    return await this.signPhoto(photo);
   }
 
   async uploadPhoto(

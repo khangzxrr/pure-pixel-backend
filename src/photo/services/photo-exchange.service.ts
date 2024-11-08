@@ -168,7 +168,12 @@ export class PhotoExchangeService {
           },
         },
         pricetags: {
-          create: sellPhotoDto.pricetags,
+          create: sellPhotoDto.pricetags.map((p) => {
+            return {
+              size: p.size,
+              price: p.price,
+            };
+          }),
         },
       });
     prismaQuery.push(createPhotoSellQuery);
