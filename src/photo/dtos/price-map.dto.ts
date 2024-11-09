@@ -15,7 +15,6 @@ export class PricetagDto {
   @ApiProperty()
   @Type(() => Number)
   @IsNumber()
-  @Min(PhotoConstant.MIN_PHOTO_WIDTH)
   height: number;
 
   @ApiProperty()
