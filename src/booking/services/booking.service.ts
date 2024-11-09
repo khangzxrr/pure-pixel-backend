@@ -25,6 +25,9 @@ import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { BookingNotInValidStateException } from '../exceptions/booking-not-in-valid-state.exception';
 import { PrismaService } from 'src/prisma.service';
 import { BunnyService } from 'src/storage/services/bunny.service';
+import { PhotoshootPackageReviewDto } from 'src/photoshoot-package/dtos/photoshoot-package-review.dto';
+import { PhotoshootPackageReviewRepository } from 'src/database/repositories/photoshoot-package-review.repository';
+import { CreatePhotoshootPackageReviewDto } from 'src/photoshoot-package/dtos/rest/create-photoshoot-package-review.dto';
 
 @Injectable()
 export class BookingService {
@@ -33,11 +36,61 @@ export class BookingService {
     @Inject()
     private readonly photoshootPackageRepository: PhotoshootRepository,
     @Inject() private readonly notificationService: NotificationService,
+    @Inject()
+    private readonly photoshootPackageReviewRepository: PhotoshootPackageReviewRepository,
     @Inject() private readonly photoService: PhotoService,
     @Inject() private readonly photoRepository: PhotoRepository,
     @Inject() private readonly bunnyService: BunnyService,
     private readonly prisma: PrismaService,
   ) {}
+
+  async createReview(
+    userId: string,
+    bookingId: string,
+    createDto: CreatePhotoshootPackageReviewDto,
+  ) {
+    const booking = await this.bookingRepository.findUniqueOrThrow({
+      id: bookingId,
+    });
+
+    if (booking.userId !== userId) {
+      throw new BookingNotBelongException();
+    }
+
+    if (booking.status !== 'FAILED' && booking.status !== 'SUCCESSED') {
+      throw new BookingNotInValidStateException();
+    }
+
+    const review = await this.photoshootPackageReviewRepository.upsert(
+      {
+        bookingId_userId: {
+          userId,
+          bookingId,
+        },
+      },
+      {
+        user: {
+          connect: {
+            id: userId,
+          },
+        },
+        booking: {
+          connect: {
+            id: bookingId,
+          },
+        },
+        photoshootPackage: {
+          connect: {
+            id: booking.originalPhotoshootPackageId,
+          },
+        },
+        description: createDto.description,
+        star: createDto.star,
+      },
+    );
+
+    return plainToInstance(PhotoshootPackageReviewDto, review);
+  }
 
   async updateBookingToPaid(userId: string, bookingId: string) {
     const booking = await this.bookingRepository.findUniqueOrThrow({
@@ -213,7 +266,7 @@ export class BookingService {
     });
 
     await this.photoRepository.updateById(signedPhotoDto.id, {
-      watermark: true,
+      watermark: booking.status === 'SUCCESSED' ? false : true,
       booking: {
         connect: {
           id: bookingId,

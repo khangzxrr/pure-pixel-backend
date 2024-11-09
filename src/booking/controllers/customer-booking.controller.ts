@@ -19,6 +19,8 @@ import { BookingFindAllRequestDto } from '../dtos/rest/booking-find-all.request.
 import { BookingBillItemFindAllRequestDto } from '../dtos/rest/booking-bill-item-find-all.request.dto';
 import { BookingBillItemService } from '../services/bill-item.service';
 import { BookingBillItemFindAllResponseDto } from '../dtos/rest/booking-bill-item-find-all.response.dto';
+import { CreatePhotoshootPackageReviewDto } from 'src/photoshoot-package/dtos/rest/create-photoshoot-package-review.dto';
+import { PhotoshootPackageReviewDto } from 'src/photoshoot-package/dtos/photoshoot-package-review.dto';
 
 @Controller('customer/booking')
 @ApiTags('customer-booking')
@@ -76,5 +78,22 @@ export class CustomerBookingController {
       packageId,
       bookingRequestDto,
     );
+  }
+
+  @Post(':bookingId/review')
+  @ApiOperation({
+    summary: 'review a photoshoot package by id',
+  })
+  @ApiOkResponse({
+    type: PhotoshootPackageReviewDto,
+  })
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
+  async createReview(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Param('bookingId') id: string,
+    @Body() createDto: CreatePhotoshootPackageReviewDto,
+  ) {
+    return await this.bookingService.createReview(user.sub, id, createDto);
   }
 }

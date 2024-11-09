@@ -14,7 +14,10 @@ import { PhotoshootPackageNotBelongException } from '../exceptions/photoshoot-pa
 import { PhotoshootPackageUpdateRequestDto } from '../dtos/rest/photoshoot-package-update.request.dto';
 import { PhotoshootPackageReplaceRequestDto } from '../dtos/rest/photoshoot-package-replace.request.dto';
 import { BunnyService } from 'src/storage/services/bunny.service';
-import { PhotoshootPackageDetail } from 'src/database/types/photoshoot-package';
+import {
+  PhotoshootPackage,
+  PhotoshootPackageDetail,
+} from 'src/database/types/photoshoot-package';
 
 @Injectable()
 export class PhotoshootPackageService {
@@ -23,6 +26,7 @@ export class PhotoshootPackageService {
     @Inject() private readonly userRepository: UserRepository,
     @Inject() private readonly photoProcessService: PhotoProcessService,
     @Inject() private readonly bunnyService: BunnyService,
+    @Inject()
     private readonly prisma: PrismaService,
   ) {}
 
@@ -186,9 +190,10 @@ export class PhotoshootPackageService {
       .extendedClient()
       .$transaction([photoshootPackageCreateQuery, updatePackageQuotaQuery]);
 
-    return await this.signPhotoshootPackage(photoshootPackage);
+    return await this.signPhotoshootPackageDetail(photoshootPackage);
   }
-  async signPhotoshootPackage(
+
+  async signPhotoshootPackageDetail(
     photoshootPackageDetail: PhotoshootPackageDetail,
   ) {
     const photoshootPackageDto = plainToInstance(
@@ -209,11 +214,24 @@ export class PhotoshootPackageService {
     return photoshootPackageDto;
   }
 
+  async signPhotoshootPackage(photoshootPackage: PhotoshootPackage) {
+    const photoshootPackageDto = plainToInstance(
+      PhotoshootPackageDto,
+      photoshootPackage,
+    );
+
+    photoshootPackageDto.thumbnail = this.bunnyService.getPresignedFile(
+      photoshootPackageDto.thumbnail,
+    );
+
+    return photoshootPackageDto;
+  }
+
   async getById(id: string) {
     const photoshootPackage =
       await this.photoshootRepository.findUniqueOrThrow(id);
 
-    return await this.signPhotoshootPackage(photoshootPackage);
+    return await this.signPhotoshootPackageDetail(photoshootPackage);
   }
 
   async findAll(findAllDto: PhotoshootPackageFindAllDto) {

@@ -33,6 +33,7 @@ import { NewsfeedRepository } from './repositories/newsfeed.repository';
 import { NewsfeedCommentRepository } from './repositories/newsfeed-comment.repositort';
 import { NewsfeedLikeRepository } from './repositories/newsfeed-like.repository';
 import { FollowRepository } from './repositories/follow.repository';
+import { PhotoshootPackageReviewRepository } from './repositories/photoshoot-package-review.repository';
 @Module({
   providers: [
     PrismaService,
@@ -69,6 +70,7 @@ import { FollowRepository } from './repositories/follow.repository';
     NewsfeedCommentRepository,
     NewsfeedLikeRepository,
     FollowRepository,
+    PhotoshootPackageReviewRepository,
   ],
   exports: [
     PrismaService,
@@ -105,6 +107,7 @@ import { FollowRepository } from './repositories/follow.repository';
     NewsfeedCommentRepository,
     NewsfeedLikeRepository,
     FollowRepository,
+    PhotoshootPackageReviewRepository,
   ],
 })
 export class DatabaseModule {}
