@@ -22,8 +22,8 @@ export class UpdateProfileDto {
   })
   @IsOptional()
   @IsFile()
-  @MaxFileSize(1e6)
-  @HasMimeType(['image/jpeg', 'image/png'])
+  @MaxFileSize(10485760)
+  @HasMimeType(['image/*'])
   cover?: MemoryStoredFile;
 
   @ApiPropertyOptional({
@@ -31,8 +31,8 @@ export class UpdateProfileDto {
   })
   @IsOptional()
   @IsFile()
-  @MaxFileSize(1e6)
-  @HasMimeType(['image/jpeg', 'image/png'])
+  @MaxFileSize(10485760)
+  @HasMimeType(['image/*'])
   avatar?: MemoryStoredFile;
 
   @ApiPropertyOptional()
