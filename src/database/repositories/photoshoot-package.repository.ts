@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
-import { PhotoshootWithUser } from '../types/photoshoot-package';
+import { PhotoshootPackage } from '../types/photoshoot-package';
 
 @Injectable()
 export class PhotoshootRepository {
@@ -12,8 +12,18 @@ export class PhotoshootRepository {
         id,
       },
       include: {
-        user: true,
         showcases: true,
+        user: true,
+        reviews: {
+          include: {
+            user: true,
+          },
+        },
+        _count: {
+          select: {
+            bookings: true,
+          },
+        },
       },
     });
   }
@@ -44,6 +54,16 @@ export class PhotoshootRepository {
       include: {
         showcases: true,
         user: true,
+        reviews: {
+          include: {
+            user: true,
+          },
+        },
+        _count: {
+          select: {
+            bookings: true,
+          },
+        },
       },
     });
   }
@@ -58,14 +78,19 @@ export class PhotoshootRepository {
     take: number,
     skip: number,
     where: Prisma.PhotoshootPackageWhereInput,
-  ) {
+  ): Promise<PhotoshootPackage[]> {
     return this.prisma.extendedClient().photoshootPackage.findMany({
       take,
       skip,
       where,
+
       include: {
+        _count: {
+          select: {
+            bookings: true,
+          },
+        },
         user: true,
-        showcases: true,
       },
     });
   }
