@@ -147,6 +147,8 @@ export class UserService {
         updateProfileDto.avatar,
         `avatar/${userId}.${updateProfileDto.avatar.extension}`,
       );
+
+      await this.bunnyService.pruneCache(user.avatar);
     }
 
     if (updateProfileDto.cover) {
@@ -155,6 +157,8 @@ export class UserService {
         updateProfileDto.cover,
         `cover/${userId}.${updateProfileDto.cover.extension}`,
       );
+
+      await this.bunnyService.pruneCache(user.avatar);
     }
 
     const updatedUser = await this.userRepository.update(userId, {

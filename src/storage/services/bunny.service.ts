@@ -79,12 +79,25 @@ export class BunnyService {
     return key;
   }
 
+  async pruneCache(url: string) {
+    const response = await firstValueFrom(
+      this.httpService.post(`https://api.bunny.net/purge?url=${url}`, null, {
+        headers: {
+          accept: 'application/json',
+          accessKey: process.env.BUNNY_USER_ACCESS_KEY,
+        },
+      }),
+    );
+
+    console.log(response);
+  }
+
   async uploadPublic(file: MemoryStoredFile, filekey: string) {
     if (file === null) {
       throw new FileShouldNotBeNullException();
     }
 
-    await firstValueFrom(
+    const response = await firstValueFrom(
       this.httpService.put(
         `${process.env.BUNNY_EDGE_STORAGE_CDN}/${process.env.BUNNY_PUBLIC_STORAGE_BUCKET}/${filekey}`,
         file.buffer,
