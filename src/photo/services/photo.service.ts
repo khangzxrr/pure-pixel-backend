@@ -46,6 +46,8 @@ import { FailToPerformOnDuplicatedPhotoException } from '../exceptions/fail-to-p
 import { PhotoValidateService } from './photo-validate.service';
 import { PhotoSizeDto } from '../dtos/photo-size.dto';
 import { PhotoDetail } from 'src/database/types/photo';
+import { CannotUpdateWatermarkPhotoHasActiveSellingException } from '../exceptions/cannot-update-watermark-photo-has-active-selling.exception';
+import { CannotUpdateVisibilityPhotoHasActiveSellingException } from '../exceptions/cannot-update-visibility-photo-has-active-selling.exception';
 
 @Injectable()
 export class PhotoService {
@@ -310,6 +312,18 @@ export class PhotoService {
     //prevent empty value
     if (!photoUpdateDto.categoryIds) {
       photoUpdateDto.categoryIds = [];
+    }
+
+    const activePhotoSellings = photo.photoSellings.find(
+      (s) => s.active === true,
+    );
+
+    if (photoUpdateDto.watermark && activePhotoSellings) {
+      throw new CannotUpdateWatermarkPhotoHasActiveSellingException();
+    }
+
+    if (photoUpdateDto.visibility && activePhotoSellings) {
+      throw new CannotUpdateVisibilityPhotoHasActiveSellingException();
     }
 
     prismaPromises.push(
