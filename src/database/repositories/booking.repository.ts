@@ -72,6 +72,7 @@ export class BookingRepository {
       take,
       where,
       include: {
+        user: true,
         photoshootPackageHistory: true,
         originalPhotoshootPackage: {
           include: {

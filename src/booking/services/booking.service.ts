@@ -14,7 +14,7 @@ import { NotificationService } from 'src/notification/services/notification.serv
 import { DenyBookingRequestDto } from '../dtos/rest/deny-booking.request.dto';
 import { BookingNotBelongException } from '../exceptions/booking-not-belong.exception';
 import { BookingNotInRequestedStateException } from '../exceptions/booking-not-in-requested-state.exception';
-import { BookingWithPhotoshootPackageIncludedUser } from 'src/database/types/booking';
+import { Booking, BookingDetail } from 'src/database/types/booking';
 import { BookingUpdateRequestDto } from '../dtos/rest/booking-update.request.dto';
 import { BookingStatus, PrismaPromise } from '@prisma/client';
 import { BothStartEndDateMustSpecifyException } from '../exceptions/start-end-date-must-specify.exception';
@@ -43,6 +43,42 @@ export class BookingService {
     @Inject() private readonly bunnyService: BunnyService,
     private readonly prisma: PrismaService,
   ) {}
+
+  async signBooking(booking: Booking) {
+    const bookingDto = plainToInstance(BookingDto, booking);
+
+    bookingDto.originalPhotoshootPackage.thumbnail =
+      this.bunnyService.getPresignedFile(
+        bookingDto.originalPhotoshootPackage.thumbnail,
+      );
+
+    bookingDto.photoshootPackageHistory.thumbnail =
+      this.bunnyService.getPresignedFile(
+        bookingDto.photoshootPackageHistory.thumbnail,
+      );
+
+    return bookingDto;
+  }
+
+  async signBookingDetail(bookingDetail: BookingDetail) {
+    const bookingDto = plainToInstance(BookingDto, bookingDetail);
+
+    bookingDto.originalPhotoshootPackage.thumbnail =
+      this.bunnyService.getPresignedFile(
+        bookingDto.originalPhotoshootPackage.thumbnail,
+      );
+
+    bookingDto.photoshootPackageHistory.thumbnail =
+      this.bunnyService.getPresignedFile(
+        bookingDto.photoshootPackageHistory.thumbnail,
+      );
+
+    const signedPhotoDtoPromises = bookingDetail.photos.map((p) =>
+      this.photoService.signPhoto(p),
+    );
+    const signedPhotoDtos = await Promise.all(signedPhotoDtoPromises);
+    bookingDto.photos = signedPhotoDtos;
+  }
 
   async createReview(
     userId: string,
@@ -185,20 +221,7 @@ export class BookingService {
       throw new BookingNotBelongException();
     }
 
-    const bookingDto = plainToInstance(BookingDto, booking);
-
-    bookingDto.originalPhotoshootPackage.thumbnail =
-      this.bunnyService.getPresignedFile(
-        bookingDto.originalPhotoshootPackage.thumbnail,
-      );
-
-    const signedPhotoDtoPromises = booking.photos.map((p) =>
-      this.photoService.signPhoto(p),
-    );
-    const signedPhotoDtos = await Promise.all(signedPhotoDtoPromises);
-    bookingDto.photos = signedPhotoDtos;
-
-    return bookingDto;
+    return await this.signBooking(booking);
   }
 
   async findAllByUserId(userId: string, findallDto: BookingFindAllRequestDto) {
@@ -206,28 +229,15 @@ export class BookingService {
 
     const count = await this.bookingRepository.count(findallDto.toWhere());
 
-    const bookings: BookingWithPhotoshootPackageIncludedUser[] =
+    const bookings: Booking[] =
       await this.bookingRepository.findAllWithIncludedPhotoshootPackage(
         findallDto.toSkip(),
         findallDto.limit,
         findallDto.toWhere(),
       );
 
-    const dtos = bookings.map((b) => {
-      const dto = plainToInstance(BookingDto, b);
-
-      dto.photoshootPackageHistory.thumbnail =
-        this.bunnyService.getPresignedFile(
-          dto.photoshootPackageHistory.thumbnail,
-        );
-
-      dto.originalPhotoshootPackage.thumbnail =
-        this.bunnyService.getPresignedFile(
-          dto.originalPhotoshootPackage.thumbnail,
-        );
-
-      return dto;
-    });
+    const dtoPromises = bookings.map(async (b) => await this.signBooking(b));
+    const dtos = await Promise.all(dtoPromises);
 
     return new BookingFindAllResponseDto(findallDto.limit, count, dtos);
   }
@@ -348,28 +358,15 @@ export class BookingService {
 
     const count = await this.bookingRepository.count(findallDto.toWhere());
 
-    const bookings: BookingWithPhotoshootPackageIncludedUser[] =
+    const bookings: Booking[] =
       await this.bookingRepository.findAllWithIncludedPhotoshootPackage(
         findallDto.toSkip(),
         findallDto.limit,
         findallDto.toWhere(),
       );
 
-    const dtos = bookings.map((b) => {
-      const dto = plainToInstance(BookingDto, b);
-
-      dto.photoshootPackageHistory.thumbnail =
-        this.bunnyService.getPresignedFile(
-          dto.photoshootPackageHistory.thumbnail,
-        );
-
-      dto.originalPhotoshootPackage.thumbnail =
-        this.bunnyService.getPresignedFile(
-          dto.originalPhotoshootPackage.thumbnail,
-        );
-
-      return dto;
-    });
+    const dtoPromises = bookings.map(async (b) => await this.signBooking(b));
+    const dtos = await Promise.all(dtoPromises);
 
     return new BookingFindAllResponseDto(findallDto.limit, count, dtos);
   }

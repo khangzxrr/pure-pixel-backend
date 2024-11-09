@@ -41,7 +41,7 @@ export class PhotographerBookingController {
   @ApiOkResponsePaginated(BookingDto)
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
-  async requestBooking(
+  async findAllBooking(
     @AuthenticatedUser() user: ParsedUserDto,
     @Query() findallDto: BookingFindAllRequestDto,
   ) {
