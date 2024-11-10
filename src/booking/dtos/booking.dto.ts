@@ -5,6 +5,7 @@ import { SignedPhotoDto } from 'src/photo/dtos/signed-photo.dto';
 import { PhotoshootPackageHistoryDto } from 'src/photoshoot-package/dtos/photoshoot-package-history.dto';
 import { PhotoshootPackageDto } from 'src/photoshoot-package/dtos/photoshoot-package.dto';
 import { UserDto } from 'src/user/dtos/user.dto';
+import { BookingBillItemDto } from './booking-bill-item.dto';
 
 export class BookingDto {
   @ApiProperty()
@@ -45,6 +46,14 @@ export class BookingDto {
   @ApiPropertyOptional()
   @Type(() => SignedPhotoDto)
   photos: SignedPhotoDto[];
+
+  @ApiProperty()
+  @Type(() => BookingBillItemDto)
+  billItems: BookingBillItemDto[];
+
+  @ApiProperty()
+  @Type(() => Number)
+  totalBillItem: number;
 
   @ApiPropertyOptional()
   @Type(() => UserDto)

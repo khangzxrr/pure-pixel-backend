@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 import { UserEntity } from 'src/user/entities/user.entity';
 import { DuplicatedUserIdException } from '../exceptions/duplicatedUserId.exception';
@@ -79,7 +79,7 @@ export class UserRepository {
     });
   }
 
-  update(userId: string, user: Prisma.UserUpdateInput) {
+  update(userId: string, user: Prisma.UserUpdateInput): Promise<User> {
     return this.prisma.extendedClient().user.update({
       where: {
         id: userId,
