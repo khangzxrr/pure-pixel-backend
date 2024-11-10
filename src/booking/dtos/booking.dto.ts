@@ -51,6 +51,10 @@ export class BookingDto {
   @Type(() => BookingBillItemDto)
   billItems: BookingBillItemDto[];
 
+  @ApiProperty()
+  @Type(() => Number)
+  totalBillItem: number;
+
   @ApiPropertyOptional()
   @Type(() => UserDto)
   user?: UserDto;

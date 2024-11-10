@@ -28,6 +28,7 @@ import { BunnyService } from 'src/storage/services/bunny.service';
 import { PhotoshootPackageReviewDto } from 'src/photoshoot-package/dtos/photoshoot-package-review.dto';
 import { PhotoshootPackageReviewRepository } from 'src/database/repositories/photoshoot-package-review.repository';
 import { CreatePhotoshootPackageReviewDto } from 'src/photoshoot-package/dtos/rest/create-photoshoot-package-review.dto';
+import { Decimal } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class BookingService {
@@ -76,8 +77,20 @@ export class BookingService {
     const signedPhotoDtoPromises = bookingDetail.photos.map((p) =>
       this.photoService.signPhoto(p),
     );
+
     const signedPhotoDtos = await Promise.all(signedPhotoDtoPromises);
     bookingDto.photos = signedPhotoDtos;
+
+    const initialTotalBilItem = new Decimal(0);
+
+    const totalBillItem = bookingDetail.billItems.reduce(
+      (acc, current) =>
+        current.type === 'INCREASE'
+          ? acc.add(current.price)
+          : acc.sub(current.price),
+      initialTotalBilItem,
+    );
+    bookingDto.totalBillItem = totalBillItem.toNumber();
 
     return bookingDto;
   }
