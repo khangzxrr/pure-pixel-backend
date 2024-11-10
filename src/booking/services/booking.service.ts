@@ -78,6 +78,8 @@ export class BookingService {
     );
     const signedPhotoDtos = await Promise.all(signedPhotoDtoPromises);
     bookingDto.photos = signedPhotoDtos;
+
+    return bookingDto;
   }
 
   async createReview(
@@ -221,7 +223,7 @@ export class BookingService {
       throw new BookingNotBelongException();
     }
 
-    return await this.signBooking(booking);
+    return await this.signBookingDetail(booking);
   }
 
   async findAllByUserId(userId: string, findallDto: BookingFindAllRequestDto) {

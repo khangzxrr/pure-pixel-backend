@@ -45,12 +45,14 @@ export class BookingRepository {
     return this.prisma.extendedClient().booking.findUniqueOrThrow({
       where,
       include: {
+        user: true,
         originalPhotoshootPackage: {
           include: {
             user: true,
           },
         },
         photoshootPackageHistory: true,
+        billItems: true,
         photos: {
           include: {
             camera: true,

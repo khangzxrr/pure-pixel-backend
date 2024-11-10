@@ -14,6 +14,7 @@ export type Booking = Prisma.BookingGetPayload<{
 export type BookingDetail = Prisma.BookingGetPayload<{
   include: {
     photos: true;
+    billItems: true;
     photoshootPackageHistory: true;
     originalPhotoshootPackage: {
       include: {
