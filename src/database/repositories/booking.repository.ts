@@ -59,6 +59,9 @@ export class BookingRepository {
             categories: true,
             photographer: true,
           },
+          where: {
+            deletedAt: null,
+          },
         },
       },
     });

@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Inject,
   Param,
@@ -81,11 +82,26 @@ export class PhotographerBookingController {
     @Param('bookingId') bookingId: string,
     @Body() bookingUploadDto: BookingUploadRequestDto,
   ) {
-    return this.bookingService.uploadPhoto(
+    return await this.bookingService.uploadPhoto(
       user.sub,
       bookingId,
       bookingUploadDto,
     );
+  }
+
+  @Delete(':bookingId/photo/:photoId')
+  @ApiOperation({
+    summary: 'get booking detail by bookingId',
+  })
+  @ApiOkResponsePaginated(BookingDto)
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
+  async deletePhotoBooking(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Param('bookingId') bookingId: string,
+    @Param('photoId') photoId: string,
+  ) {
+    return await this.bookingService.deletePhoto(user.sub, bookingId, photoId);
   }
 
   @Post(':bookingId/accept')

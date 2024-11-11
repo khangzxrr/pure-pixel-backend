@@ -29,6 +29,7 @@ import { PhotoshootPackageReviewDto } from 'src/photoshoot-package/dtos/photosho
 import { PhotoshootPackageReviewRepository } from 'src/database/repositories/photoshoot-package-review.repository';
 import { CreatePhotoshootPackageReviewDto } from 'src/photoshoot-package/dtos/rest/create-photoshoot-package-review.dto';
 import { Decimal } from '@prisma/client/runtime/library';
+import { CannotBookOwnedPhotoshootPackageException } from '../exceptions/cannot-book-owned-photoshoot-package.exception';
 
 @Injectable()
 export class BookingService {
@@ -257,6 +258,23 @@ export class BookingService {
     return new BookingFindAllResponseDto(findallDto.limit, count, dtos);
   }
 
+  async deletePhoto(userId: string, bookingId: string, photoId: string) {
+    const booking = await this.bookingRepository.findUniqueOrThrow({
+      id: bookingId,
+    });
+
+    if (booking.originalPhotoshootPackage.userId !== userId) {
+      throw new BookingNotBelongException();
+    }
+
+    if (booking.status !== 'ACCEPTED') {
+      throw new BookingNotInValidStateException();
+    }
+
+    const photo = await this.photoRepository.deleteById(photoId);
+    return photo;
+  }
+
   async uploadPhoto(
     userId: string,
     bookingId: string,
@@ -442,6 +460,10 @@ export class BookingService {
   ) {
     const photoshootPackage =
       await this.photoshootPackageRepository.findUniqueOrThrow(packageId);
+
+    if (photoshootPackage.userId === userId) {
+      throw new CannotBookOwnedPhotoshootPackageException();
+    }
 
     this.validateStartEndDateOfUser(
       bookingRequestDto.startDate,
