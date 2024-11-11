@@ -17,6 +17,7 @@ import {
 } from 'class-validator';
 import { PagingPaginatedRequestDto } from 'src/infrastructure/restful/paging-paginated.request.dto';
 import { ToBoolean } from 'src/infrastructure/transforms/to-boolean';
+import { Utils } from 'src/infrastructure/utils/utils';
 
 export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
   @ApiProperty({
@@ -291,16 +292,24 @@ export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
       where.photographer = {
         name: {
           mode: 'insensitive',
-          contains: this.photographerName,
+          contains: Utils.normalizeText(this.photographerName),
         },
       };
     }
 
     if (this.title) {
-      where.title = {
-        contains: this.title,
-        mode: 'insensitive',
-      };
+      where.OR = [
+        {
+          title: {
+            contains: this.title,
+          },
+        },
+        {
+          normalizedTitle: {
+            contains: Utils.normalizeText(this.title),
+          },
+        },
+      ];
     }
 
     if (this.watermark) {
