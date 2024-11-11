@@ -290,10 +290,16 @@ export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
 
     if (this.photographerName) {
       where.photographer = {
-        name: {
-          mode: 'insensitive',
-          contains: Utils.normalizeText(this.photographerName),
-        },
+        OR: [
+          {
+            name: {
+              contains: this.photographerName,
+            },
+          },
+          {
+            normalizedName: Utils.normalizeText(this.photographerName),
+          },
+        ],
       };
     }
 
