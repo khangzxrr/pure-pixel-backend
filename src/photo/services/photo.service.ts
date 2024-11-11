@@ -207,7 +207,13 @@ export class PhotoService {
       `?width=${PhotoConstant.THUMBNAIL_WIDTH}`,
     );
 
+    const placeHolderUrl = this.bunnyService.getPresignedFile(
+      thumbnail,
+      `?width=120`,
+    );
+
     const signedUrlDto = new SignedUrl(signedUrl, signedThumbnailUrl);
+    signedUrlDto.placeholder = placeHolderUrl;
     signedPhotoDto.signedUrl = signedUrlDto;
 
     signedPhotoDto.photoSellings?.forEach((photoSelling) => {
@@ -250,8 +256,14 @@ export class PhotoService {
       thumbnail,
       `?width=${PhotoConstant.THUMBNAIL_WIDTH}`,
     );
+    const signedPlaceholderUrl = this.bunnyService.getPresignedFile(
+      thumbnail,
+      `?width=80`,
+    );
 
     const signedUrlDto = new SignedUrl(signedUrl, signedThumbnailUrl);
+    signedUrlDto.placeholder = signedPlaceholderUrl;
+
     signedPhotoDto.signedUrl = signedUrlDto;
 
     return signedPhotoDto;
@@ -596,9 +608,9 @@ export class PhotoService {
         watermarkPhotoUrl: '',
       });
 
-      // await this.photoProcessQueue.add(PhotoConstant.PROCESS_PHOTO_JOB_NAME, {
-      //   id: photo.id,
-      // });
+      await this.photoProcessQueue.add(PhotoConstant.PROCESS_PHOTO_JOB_NAME, {
+        id: photo.id,
+      });
       await this.cameraQueue.add(CameraConstant.ADD_NEW_CAMERA_USAGE_JOB, {
         photoId: photo.id,
       });
