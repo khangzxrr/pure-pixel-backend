@@ -391,6 +391,8 @@ export class PhotoService {
 
     const filterWhere = filter.toWhere(userId);
 
+    this.logger.log(filterWhere);
+
     count = await this.photoRepository.count(filterWhere);
 
     const photos = await this.photoRepository.findAll(

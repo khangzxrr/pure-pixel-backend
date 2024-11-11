@@ -256,12 +256,20 @@ export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
       where.status = this.status;
     }
 
-    if (this.selling) {
-      where.photoSellings = {
-        some: {
-          active: this.selling,
-        },
-      };
+    if (this.selling !== undefined) {
+      if (this.selling === true) {
+        where.photoSellings = {
+          some: {
+            active: true,
+          },
+        };
+      } else {
+        where.photoSellings = {
+          every: {
+            active: false,
+          },
+        };
+      }
     }
 
     if (this.categoryName) {
