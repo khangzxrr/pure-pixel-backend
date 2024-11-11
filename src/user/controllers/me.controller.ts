@@ -18,7 +18,6 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { UserFilterDto } from '../dtos/user-filter.dto';
 import { ParsedUserDto } from '../dtos/parsed-user.dto';
 import { UserDto } from '../dtos/user.dto';
 
