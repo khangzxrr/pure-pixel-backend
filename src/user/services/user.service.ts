@@ -17,6 +17,7 @@ import { Utils } from 'src/infrastructure/utils/utils';
 import { UpdateUserDto } from '../dtos/update-user.dto';
 import { FailedToUpdateUserException } from '../exceptions/cannot-update-user.exception';
 import { UserFindAllResponseDto } from '../dtos/rest/user-find-all.response.dto';
+import { MeDto } from '../dtos/me.dto';
 
 @Injectable()
 export class UserService {
@@ -219,6 +220,36 @@ export class UserService {
     return new UserFindAllResponseDto(findAllDto.limit, count, userDtos);
   }
 
+  async findMe(userId: string) {
+    const keycloakUser = await this.keycloakService.findFirst(userId);
+
+    const roles = await this.keycloakService.getUserRoles(keycloakUser.id);
+
+    const user = await this.userRepository.findUnique(userId, {
+      _count: {
+        select: {
+          photos: true,
+          cameras: true,
+          bookings: true,
+          comments: true,
+          followers: true,
+          followings: true,
+        },
+      },
+    });
+
+    if (!user) {
+      throw new UserNotFoundException();
+    }
+
+    const meDto = plainToInstance(MeDto, user, {});
+
+    meDto.enabled = keycloakUser.enabled;
+    meDto.roles = roles.map((r) => r.name);
+
+    return meDto;
+  }
+
   async findOne(userFilterDto: UserFilterDto) {
     const keycloakUser = await this.keycloakService.findFirst(userFilterDto.id);
 
@@ -242,10 +273,13 @@ export class UserService {
     }
 
     const userDto = plainToInstance(UserDto, user, {
-      groups: keycloakUser.realmRoles,
+      groups: [Constants.PHOTOGRAPHER_ROLE],
     });
+
     userDto.enabled = keycloakUser.enabled;
     userDto.roles = roles.map((r) => r.name);
+
+    console.log(userDto);
 
     return userDto;
   }

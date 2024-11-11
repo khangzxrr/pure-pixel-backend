@@ -50,10 +50,7 @@ export class MeController {
     @AuthenticatedUser()
     user: ParsedUserDto,
   ) {
-    const userFilterDto = new UserFilterDto();
-    userFilterDto.id = user.sub;
-
-    return await this.userService.findOne(userFilterDto);
+    return await this.userService.findMe(user.sub);
   }
 
   @Patch()

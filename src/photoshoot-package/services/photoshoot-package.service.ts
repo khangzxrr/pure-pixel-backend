@@ -18,6 +18,7 @@ import {
   PhotoshootPackage,
   PhotoshootPackageDetail,
 } from 'src/database/types/photoshoot-package';
+import { PrismaPromise } from '@prisma/client';
 
 @Injectable()
 export class PhotoshootPackageService {
@@ -159,26 +160,27 @@ export class PhotoshootPackageService {
 
     const showcaseKeys = await Promise.all(showcaseKeysPromises);
 
-    const photoshootPackageCreateQuery = this.photoshootRepository.create({
-      user: {
-        connect: {
-          id: userId,
+    const photoshootPackageCreateQuery: PrismaPromise<any> =
+      this.photoshootRepository.create({
+        user: {
+          connect: {
+            id: userId,
+          },
         },
-      },
-      status: 'ENABLED',
-      price: createDto.price,
-      title: createDto.title,
-      subtitle: createDto.subtitle,
-      thumbnail: thumbnailKey,
-      description: createDto.description,
-      showcases: {
-        create: showcaseKeys.map((showcase) => {
-          return {
-            photoUrl: showcase,
-          };
-        }),
-      },
-    });
+        status: 'ENABLED',
+        price: createDto.price,
+        title: createDto.title,
+        subtitle: createDto.subtitle,
+        thumbnail: thumbnailKey,
+        description: createDto.description,
+        showcases: {
+          create: showcaseKeys.map((showcase) => {
+            return {
+              photoUrl: showcase,
+            };
+          }),
+        },
+      });
 
     const updatePackageQuotaQuery = this.userRepository.update(user.id, {
       packageCount: {
