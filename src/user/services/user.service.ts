@@ -228,7 +228,11 @@ export class UserService {
     const user = await this.userRepository.findUnique(userId, {
       _count: {
         select: {
-          photos: true,
+          photos: {
+            where: {
+              deletedAt: null,
+            },
+          },
           cameras: true,
           bookings: true,
           comments: true,
@@ -258,7 +262,11 @@ export class UserService {
     const user = await this.userRepository.findUnique(userFilterDto.id, {
       _count: {
         select: {
-          photos: true,
+          photos: {
+            where: {
+              deletedAt: null,
+            },
+          },
           cameras: true,
           bookings: true,
           comments: true,
@@ -278,8 +286,6 @@ export class UserService {
 
     userDto.enabled = keycloakUser.enabled;
     userDto.roles = roles.map((r) => r.name);
-
-    console.log(userDto);
 
     return userDto;
   }
