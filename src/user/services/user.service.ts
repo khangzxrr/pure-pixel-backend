@@ -162,10 +162,15 @@ export class UserService {
       await this.bunnyService.pruneCache(user.avatar);
     }
 
+    const normalizedName = updateProfileDto.name
+      ? Utils.normalizeText(updateProfileDto.name)
+      : Utils.normalizeText(user.name);
+
     const updatedUser = await this.userRepository.update(userId, {
       avatar: user.avatar,
       cover: user.cover,
       name: updateProfileDto.name,
+      normalizedName,
       quote: updateProfileDto.quote,
       location: updateProfileDto.location,
       mail: updateProfileDto.mail,

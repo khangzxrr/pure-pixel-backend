@@ -2,6 +2,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Prisma } from '@prisma/client';
 import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { PagingPaginatedRequestDto } from 'src/infrastructure/restful/paging-paginated.request.dto';
+import { Utils } from 'src/infrastructure/utils/utils';
 
 export class FindAllPhotographerRequestDto extends PagingPaginatedRequestDto {
   @ApiPropertyOptional()
@@ -36,7 +37,7 @@ export class FindAllPhotographerRequestDto extends PagingPaginatedRequestDto {
 
     if (this.search) {
       where.normalizedName = {
-        contains: this.search,
+        contains: Utils.normalizeText(this.search),
       };
     }
 
