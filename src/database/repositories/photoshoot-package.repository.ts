@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, PrismaPromise } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 import { PhotoshootPackage } from '../types/photoshoot-package';
 
