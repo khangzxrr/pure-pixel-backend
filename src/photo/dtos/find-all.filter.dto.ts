@@ -210,8 +210,6 @@ export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
   toWhere(userId: string): Prisma.PhotoWhereInput {
     const where: Prisma.PhotoWhereInput = {};
 
-    this.visibility = 'PUBLIC';
-
     if (this.bookmarked) {
       where.bookmarks = {
         some: {
