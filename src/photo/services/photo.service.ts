@@ -48,6 +48,7 @@ import { PhotoSizeDto } from '../dtos/photo-size.dto';
 import { PhotoDetail } from 'src/database/types/photo';
 import { CannotUpdateWatermarkPhotoHasActiveSellingException } from '../exceptions/cannot-update-watermark-photo-has-active-selling.exception';
 import { CannotUpdateVisibilityPhotoHasActiveSellingException } from '../exceptions/cannot-update-visibility-photo-has-active-selling.exception';
+import { Utils } from 'src/infrastructure/utils/utils';
 
 @Injectable()
 export class PhotoService {
@@ -326,12 +327,17 @@ export class PhotoService {
       throw new CannotUpdateVisibilityPhotoHasActiveSellingException();
     }
 
+    const normalizedTitle = photoUpdateDto.title
+      ? Utils.normalizeText(photoUpdateDto.title)
+      : Utils.normalizeText(photo.title);
+
     prismaPromises.push(
       this.photoRepository.updateByIdQuery(id, {
         categories: {
           connect: photoUpdateDto.categoryIds.map((id) => ({ id })),
         },
         title: photoUpdateDto.title,
+        normalizedTitle,
         watermark: photoUpdateDto.watermark,
         description: photoUpdateDto.description,
         photoType: photoUpdateDto.photoType,
@@ -340,9 +346,13 @@ export class PhotoService {
       }),
     );
 
-    await this.prisma.extendedClient().$transaction(prismaPromises);
+    const prismaResults = await this.prisma
+      .extendedClient()
+      .$transaction(prismaPromises);
 
-    return await this.signPhoto(photo);
+    const updatedPhoto = prismaResults[prismaResults.length - 1];
+
+    return await this.signPhoto(updatedPhoto);
   }
 
   async findPublicPhotos(userId: string, filter: FindAllPhotoFilterDto) {
@@ -533,6 +543,10 @@ export class PhotoService {
         photoUploadDto.file,
       );
 
+      const normalizedTitle = Utils.normalizeText(
+        photoUploadDto.file.originalName,
+      );
+
       const photo = await this.photoRepository.create({
         photographer: {
           connect: {
@@ -541,6 +555,7 @@ export class PhotoService {
         },
         description: '',
         title: photoUploadDto.file.originalName,
+        normalizedTitle,
         size: photoUploadDto.file.size,
         exif,
         width: metadata.width,

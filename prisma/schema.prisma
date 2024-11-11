@@ -474,6 +474,7 @@ model Photo {
   cameraId String?
 
   title String
+  normalizedTitle String @default("")
 
   width  Int
   height Int
