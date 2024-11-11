@@ -3,6 +3,7 @@ import {
   Photo,
   PhotoType,
   PhotoVisibility,
+  Prisma,
   PrismaPromise,
 } from '@prisma/client';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
@@ -49,6 +50,7 @@ import { PhotoDetail } from 'src/database/types/photo';
 import { CannotUpdateWatermarkPhotoHasActiveSellingException } from '../exceptions/cannot-update-watermark-photo-has-active-selling.exception';
 import { CannotUpdateVisibilityPhotoHasActiveSellingException } from '../exceptions/cannot-update-visibility-photo-has-active-selling.exception';
 import { Utils } from 'src/infrastructure/utils/utils';
+import { FindNextPhotoFilterDto } from '../dtos/find-next.filter.dto';
 
 @Injectable()
 export class PhotoService {
@@ -353,6 +355,32 @@ export class PhotoService {
     const updatedPhoto = prismaResults[prismaResults.length - 1];
 
     return await this.signPhoto(updatedPhoto);
+  }
+
+  async findNextPublicPhotos(userId: string, filter: FindNextPhotoFilterDto) {
+    const count = await this.photoRepository.count({
+      visibility: 'PUBLIC',
+      photoType: 'RAW',
+    });
+
+    const photos = await this.photoRepository.findAll(
+      {
+        visibility: 'PUBLIC',
+        photoType: 'RAW',
+      },
+      [],
+      1,
+      filter.forward ? 1 : -1,
+      filter.toCursor(),
+    );
+
+    const signedPhotos = await this.signPhotos(photos);
+
+    return new PagingPaginatedResposneDto<SignedPhotoDto>(
+      1,
+      count,
+      signedPhotos,
+    );
   }
 
   async findPublicPhotos(userId: string, filter: FindAllPhotoFilterDto) {

@@ -41,11 +41,31 @@ import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
 import { ResolutionDto } from '../dtos/resolution.dto';
 import { SignedPhotoDto } from '../dtos/signed-photo.dto';
 import { FormDataRequest } from 'nestjs-form-data';
+import { FindNextPhotoFilterDto } from '../dtos/find-next.filter.dto';
 
 @Controller('photo')
 @ApiTags('photo')
 export class PhotoController {
   constructor(@Inject() private readonly photoService: PhotoService) {}
+
+  @Get('/public/next')
+  @ApiOperation({
+    summary: 'get next public photo',
+  })
+  @ApiOkResponse({
+    type: SignedPhotoDto,
+  })
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Public(false)
+  async getNextPublicPhoto(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Query() findNextPhotoFilterDto: FindNextPhotoFilterDto,
+  ) {
+    return await this.photoService.findNextPublicPhotos(
+      user ? user.sub : '',
+      findNextPhotoFilterDto,
+    );
+  }
 
   @Get('/public')
   @ApiOperation({

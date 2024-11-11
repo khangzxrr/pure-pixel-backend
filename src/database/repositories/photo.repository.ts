@@ -236,12 +236,14 @@ export class PhotoRepository {
     orderBy: Prisma.PhotoOrderByWithRelationInput[],
     skip: number,
     take: number,
+    cursor?: Prisma.PhotoWhereUniqueInput,
   ) {
     return this.prisma.extendedClient().photo.findMany({
       where,
       skip,
       take,
       orderBy,
+      cursor,
       include: {
         _count: {
           select: {
