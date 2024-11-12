@@ -410,6 +410,7 @@ model Camera {
 
   name      String @unique
   thumbnail String
+  description String @default("")
 
   cameraMaker   CameraMaker @relation(fields: [cameraMakerId], references: [id])
   cameraMakerId String
