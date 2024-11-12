@@ -150,6 +150,7 @@ export class PhotoRepository {
         _count: {
           select: {
             votes: true,
+            comments: true,
           },
         },
         photographer: true,
@@ -236,16 +237,19 @@ export class PhotoRepository {
     orderBy: Prisma.PhotoOrderByWithRelationInput[],
     skip: number,
     take: number,
+    cursor?: Prisma.PhotoWhereUniqueInput,
   ) {
     return this.prisma.extendedClient().photo.findMany({
       where,
       skip,
       take,
       orderBy,
+      cursor,
       include: {
         _count: {
           select: {
             votes: true,
+            comments: true,
           },
         },
         photographer: true,

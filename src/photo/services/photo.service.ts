@@ -49,6 +49,7 @@ import { PhotoDetail } from 'src/database/types/photo';
 import { CannotUpdateWatermarkPhotoHasActiveSellingException } from '../exceptions/cannot-update-watermark-photo-has-active-selling.exception';
 import { CannotUpdateVisibilityPhotoHasActiveSellingException } from '../exceptions/cannot-update-visibility-photo-has-active-selling.exception';
 import { Utils } from 'src/infrastructure/utils/utils';
+import { FindNextPhotoFilterDto } from '../dtos/find-next.filter.dto';
 
 @Injectable()
 export class PhotoService {
@@ -205,7 +206,13 @@ export class PhotoService {
       `?width=${PhotoConstant.THUMBNAIL_WIDTH}`,
     );
 
+    const placeHolderUrl = this.bunnyService.getPresignedFile(
+      thumbnail,
+      `?width=120`,
+    );
+
     const signedUrlDto = new SignedUrl(signedUrl, signedThumbnailUrl);
+    signedUrlDto.placeholder = placeHolderUrl;
     signedPhotoDto.signedUrl = signedUrlDto;
 
     signedPhotoDto.photoSellings?.forEach((photoSelling) => {
@@ -248,8 +255,14 @@ export class PhotoService {
       thumbnail,
       `?width=${PhotoConstant.THUMBNAIL_WIDTH}`,
     );
+    const signedPlaceholderUrl = this.bunnyService.getPresignedFile(
+      thumbnail,
+      `?width=80`,
+    );
 
     const signedUrlDto = new SignedUrl(signedUrl, signedThumbnailUrl);
+    signedUrlDto.placeholder = signedPlaceholderUrl;
+
     signedPhotoDto.signedUrl = signedUrlDto;
 
     return signedPhotoDto;
@@ -353,6 +366,32 @@ export class PhotoService {
     const updatedPhoto = prismaResults[prismaResults.length - 1];
 
     return await this.signPhoto(updatedPhoto);
+  }
+
+  async findNextPublicPhotos(userId: string, filter: FindNextPhotoFilterDto) {
+    const count = await this.photoRepository.count({
+      visibility: 'PUBLIC',
+      photoType: 'RAW',
+    });
+
+    const photos = await this.photoRepository.findAll(
+      {
+        visibility: 'PUBLIC',
+        photoType: 'RAW',
+      },
+      [],
+      1,
+      filter.forward ? 1 : -1,
+      filter.toCursor(),
+    );
+
+    const signedPhotos = await this.signPhotos(photos);
+
+    return new PagingPaginatedResposneDto<SignedPhotoDto>(
+      1,
+      count,
+      signedPhotos,
+    );
   }
 
   async findPublicPhotos(userId: string, filter: FindAllPhotoFilterDto) {
@@ -568,9 +607,9 @@ export class PhotoService {
         watermarkPhotoUrl: '',
       });
 
-      // await this.photoProcessQueue.add(PhotoConstant.PROCESS_PHOTO_JOB_NAME, {
-      //   id: photo.id,
-      // });
+      await this.photoProcessQueue.add(PhotoConstant.PROCESS_PHOTO_JOB_NAME, {
+        id: photo.id,
+      });
       await this.cameraQueue.add(CameraConstant.ADD_NEW_CAMERA_USAGE_JOB, {
         photoId: photo.id,
       });

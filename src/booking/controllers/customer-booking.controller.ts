@@ -43,6 +43,19 @@ export class CustomerBookingController {
     return await this.bookingService.findAllByUserId(user.sub, findallDto);
   }
 
+  @Get(':bookingId')
+  @ApiOperation({
+    summary: 'get booking detail by ID',
+  })
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
+  async getBookingId(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Param('bookingId') bookingId: string,
+  ) {
+    return await this.bookingService.findById(user.sub, bookingId);
+  }
+
   @Get(':bookingId/bill-item')
   @ApiOperation({
     summary: 'find all booking bill item by bookingId',
