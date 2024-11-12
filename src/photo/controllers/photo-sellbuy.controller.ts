@@ -3,9 +3,7 @@ import {
   Controller,
   Get,
   Inject,
-  NotImplementedException,
   Param,
-  Patch,
   Post,
   Res,
   StreamableFile,
@@ -23,7 +21,6 @@ import { SignedPhotoBuyDto } from '../dtos/rest/signed-photo-buy.response.dto';
 import { PhotoExchangeService } from '../services/photo-exchange.service';
 import { Response } from 'express';
 import { BuyPhotoRequestDto } from '../dtos/rest/buy-photo.request.dto';
-import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.response.dto';
 
 @Controller('photo')
 @ApiTags('photo-exchange')
@@ -53,22 +50,22 @@ export class PhotoSellBuyController {
     );
   }
 
-  @Patch(':photoId/sell')
-  @ApiOperation({
-    summary: 'update sell photo using photoId (NOT IMPLEMENT YET!)',
-  })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
-  @ApiOkResponse({
-    type: PhotoSellDto,
-  })
-  async updatePhoto(
-    @AuthenticatedUser() user: ParsedUserDto,
-    @Param('photoId') id: string,
-  ) {
-    //TODO: implement update sell
-    throw new NotImplementedException();
-  }
+  // @Patch(':photoId/sell')
+  // @ApiOperation({
+  //   summary: 'update sell photo using photoId (NOT IMPLEMENT YET!)',
+  // })
+  // @UseGuards(AuthGuard, KeycloakRoleGuard)
+  // @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
+  // @ApiOkResponse({
+  //   type: PhotoSellDto,
+  // })
+  // async updatePhoto(
+  //   @AuthenticatedUser() user: ParsedUserDto,
+  //   @Param('photoId') id: string,
+  // ) {
+  //   //TODO: implement update sell
+  //   throw new NotImplementedException();
+  // }
 
   @Post('/:photoId/photo-sell/:photoSellId/price-tag/:pricetagId/buy')
   @ApiOperation({

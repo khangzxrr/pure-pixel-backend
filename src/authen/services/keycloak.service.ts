@@ -3,7 +3,7 @@ import {
   KeycloakAdminClient,
 } from '@s3pweb/keycloak-admin-client-cjs';
 import { CreateKeycloakUserDto } from '../dtos/create-keycloak-user.dto';
-import { UpdateUserDto } from 'src/user/dtos/update-user.dto';
+
 import { UpdateKeycloakUserDto } from '../dtos/update-keycloak-user.dto';
 
 export class KeycloakService {
@@ -86,6 +86,11 @@ export class KeycloakService {
       },
     );
 
+    if (updateDto.role) {
+      await this.deleteRolesFromUser(id);
+      await this.addRoleToUser(id, updateDto.role);
+    }
+
     return user;
   }
 
@@ -158,6 +163,15 @@ export class KeycloakService {
     const kc = await this.getInstance();
     return kc.users.findOne({
       id,
+    });
+  }
+
+  async deleteRolesFromUser(userId: string) {
+    const roles = await this.getUserRoles(userId);
+
+    roles.forEach(async (role) => {
+      console.log(role);
+      await this.deleteRoleFromUser(userId, role.name);
     });
   }
 
