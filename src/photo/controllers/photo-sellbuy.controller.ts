@@ -23,7 +23,6 @@ import { SignedPhotoBuyDto } from '../dtos/rest/signed-photo-buy.response.dto';
 import { PhotoExchangeService } from '../services/photo-exchange.service';
 import { Response } from 'express';
 import { BuyPhotoRequestDto } from '../dtos/rest/buy-photo.request.dto';
-import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.response.dto';
 
 @Controller('photo')
 @ApiTags('photo-exchange')
