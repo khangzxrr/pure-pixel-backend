@@ -1,10 +1,41 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
 export class CameraRepository {
   constructor(private readonly prismaService: PrismaService) {}
+
+  async findUniqueOrThrow(where: Prisma.CameraWhereUniqueInput) {
+    return this.prismaService.extendedClient().camera.findUniqueOrThrow({
+      where,
+    });
+  }
+
+  async update(
+    where: Prisma.CameraWhereUniqueInput,
+    data: Prisma.CameraUpdateInput,
+  ) {
+    return this.prismaService.extendedClient().camera.update({
+      where,
+      data,
+    });
+  }
+
+  count(where?: Prisma.CameraWhereInput) {
+    return this.prismaService.extendedClient().camera.count({
+      where,
+    });
+  }
+
+  findMany(where?: Prisma.CameraWhereInput, skip?: number, take?: number) {
+    return this.prismaService.extendedClient().camera.findMany({
+      where,
+      skip,
+      take,
+    });
+  }
 
   async findByMakerId(makerId: string, take: number) {
     return this.prismaService.camera.findMany({

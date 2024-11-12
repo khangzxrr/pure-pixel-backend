@@ -9,6 +9,9 @@ export class CameraDto {
   @ApiProperty()
   thumbnail: string;
 
+  @ApiProperty()
+  description: string;
+
   @Exclude()
   cameraOnUsers: CameraOnUserDto[];
 
