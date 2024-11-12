@@ -67,7 +67,7 @@ export class CameraService {
 
   async findAll(findAllDto: FindAllCameraDto) {
     const count = await this.cameraRepository.count({});
-    const cameras = await this.cameraRepository.findMany(
+    const cameras: any[] = await this.cameraRepository.findMany(
       {},
       findAllDto.toSkip(),
       findAllDto.limit,
