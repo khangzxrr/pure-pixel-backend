@@ -13,6 +13,12 @@ export class CameraRepository {
     });
   }
 
+  async delete(where: Prisma.CameraWhereUniqueInput) {
+    return this.prismaService.extendedClient().camera.delete({
+      where,
+    });
+  }
+
   async update(
     where: Prisma.CameraWhereUniqueInput,
     data: Prisma.CameraUpdateInput,
