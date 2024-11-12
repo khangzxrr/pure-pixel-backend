@@ -150,6 +150,7 @@ export class PhotoRepository {
         _count: {
           select: {
             votes: true,
+            comments: true,
           },
         },
         photographer: true,
@@ -248,6 +249,7 @@ export class PhotoRepository {
         _count: {
           select: {
             votes: true,
+            comments: true,
           },
         },
         photographer: true,

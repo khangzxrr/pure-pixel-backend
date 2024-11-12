@@ -3,7 +3,6 @@ import {
   Photo,
   PhotoType,
   PhotoVisibility,
-  Prisma,
   PrismaPromise,
 } from '@prisma/client';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';

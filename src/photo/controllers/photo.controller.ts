@@ -108,7 +108,7 @@ export class PhotoController {
   })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Public(false)
-  async getPhoto(
+  async findPhotoById(
     @AuthenticatedUser() user: ParsedUserDto,
     @Param('id') id: string,
   ) {
