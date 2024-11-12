@@ -5,6 +5,7 @@ import { PhotoDto } from 'src/photo/dtos/photo.dto';
 
 import { CommentDto } from 'src/photo/dtos/comment-dto';
 import { UserDto } from 'src/user/dtos/user.dto';
+import { BookingDto } from 'src/booking/dtos/booking.dto';
 
 export class ReportDto {
   @ApiProperty()
@@ -40,8 +41,14 @@ export class ReportDto {
   referencedUser?: UserDto;
 
   @ApiPropertyOptional()
+  @Type(() => PhotoDto)
   referencedPhoto?: PhotoDto;
 
   @ApiPropertyOptional()
+  @Type(() => CommentDto)
   referencedComment?: CommentDto;
+
+  @ApiPropertyOptional()
+  @Type(() => BookingDto)
+  referencedBooking?: BookingDto;
 }

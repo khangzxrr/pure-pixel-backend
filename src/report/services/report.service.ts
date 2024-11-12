@@ -21,6 +21,8 @@ import { NotBelongReportException } from '../exceptions/not-belong-report.except
 import { UserReportPathUpdateDto } from '../dtos/rest/user-report-patch-update.request.dto';
 import { UserReportPutUpdateRequestDto } from '../dtos/rest/user-report-put-update.request.dto';
 import { UserDto } from 'src/user/dtos/user.dto';
+import { BookingRepository } from 'src/database/repositories/booking.repository';
+import { BookingDto } from 'src/booking/dtos/booking.dto';
 
 @Injectable()
 export class ReportService {
@@ -30,6 +32,7 @@ export class ReportService {
     @Inject() private readonly photoRepository: PhotoRepository,
     @Inject() private readonly commentRepository: CommentRepository,
     @Inject() private readonly photoService: PhotoService,
+    @Inject() private readonly bookingRepository: BookingRepository,
   ) {}
 
   async validateReferenceId(reportType: ReportType, referenceId: string) {
@@ -148,31 +151,41 @@ export class ReportService {
     const reportDtos = plainToInstance(ReportDto, reports);
 
     const reportWithReferenceEntityPromises = reportDtos.map(async (r) => {
-      switch (r.reportType) {
-        case 'USER':
-          const user = await this.userRepository.findUnique(r.referenceId, {});
-          r.referencedUser = plainToInstance(UserDto, user);
-          break;
-        case 'PHOTO':
-          const photo = await this.photoService.findById(
-            '',
-            r.referenceId,
-            false,
-          );
+      try {
+        switch (r.reportType) {
+          case 'USER':
+            const user = await this.userRepository.findUnique(
+              r.referenceId,
+              {},
+            );
+            r.referencedUser = plainToInstance(UserDto, user);
+            break;
+          case 'PHOTO':
+            const photo = await this.photoService.findById(
+              '',
+              r.referenceId,
+              false,
+            );
 
-          r.referencedPhoto = photo;
-          break;
-        case 'COMMENT':
-          const comment = await this.commentRepository.findUniqueOrThrow({
-            id: r.referenceId,
-          });
-          r.referencedComment = plainToInstance(CommentDto, comment);
-          break;
-        case 'BOOKING':
-          throw new NotImplementedException();
+            r.referencedPhoto = photo;
+            break;
+          case 'COMMENT':
+            const comment = await this.commentRepository.findUniqueOrThrow({
+              id: r.referenceId,
+            });
+            r.referencedComment = plainToInstance(CommentDto, comment);
+            break;
+          case 'BOOKING':
+            const booking = await this.bookingRepository.findUniqueOrThrow({
+              id: r.referenceId,
+            });
+            r.referencedBooking = plainToInstance(BookingDto, booking);
 
-        default:
-          break;
+          default:
+            break;
+        }
+      } catch (e) {
+        return null;
       }
 
       return r;
@@ -182,10 +195,12 @@ export class ReportService {
       reportWithReferenceEntityPromises,
     );
 
+    const notNullReports = reportWithEntities.filter((v) => v !== null);
+
     return new ReportFindAllResponseDto(
       reportFindAllDto.limit,
       count,
-      reportWithEntities,
+      notNullReports,
     );
   }
 
