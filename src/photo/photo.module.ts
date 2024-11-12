@@ -26,6 +26,8 @@ import { PhotoViewCountConsumer } from './consumers/photo-view-count.consumer';
 import { PhotoValidateService } from './services/photo-validate.service';
 import { PhotoExchangeController } from './controllers/photo-exchange.controller';
 import { CacheModule } from '@nestjs/cache-manager';
+import { ManagePhotoController } from './controllers/manage-photo.controller';
+import { ManagePhotoService } from './services/manage-photo.service';
 
 @Module({
   providers: [
@@ -41,6 +43,7 @@ import { CacheModule } from '@nestjs/cache-manager';
     PhotoExchangeService,
     PhotoVoteService,
     PhotoValidateService,
+    ManagePhotoService,
   ],
   exports: [
     PhotoService,
@@ -55,6 +58,7 @@ import { CacheModule } from '@nestjs/cache-manager';
     PhotoVoteController,
     PhotoCommentController,
     PhotoExchangeController,
+    ManagePhotoController,
   ],
   imports: [
     HttpModule.register({
