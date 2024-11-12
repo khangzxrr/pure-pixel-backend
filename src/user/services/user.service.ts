@@ -28,7 +28,6 @@ export class UserService {
   ) {}
 
   async update(id: string, updateDto: UpdateUserDto) {
-    //TODO: update roles
     try {
       await this.keycloakService.updateById(id, {
         mail: updateDto.mail,
@@ -46,7 +45,7 @@ export class UserService {
         expertises: updateDto.expertises,
       });
 
-      return updatedUser;
+      return await this.findOne({ id: updatedUser.id });
     } catch (e) {
       if (e.response.status === 409) {
         throw new BadRequestException(e.responseData.errorMessage);
