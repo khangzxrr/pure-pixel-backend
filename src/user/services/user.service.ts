@@ -18,6 +18,8 @@ import { UpdateUserDto } from '../dtos/update-user.dto';
 import { FailedToUpdateUserException } from '../exceptions/cannot-update-user.exception';
 import { UserFindAllResponseDto } from '../dtos/rest/user-find-all.response.dto';
 import { MeDto } from '../dtos/me.dto';
+import { UserInReport } from 'src/database/types/user';
+
 
 @Injectable()
 export class UserService {
@@ -26,6 +28,7 @@ export class UserService {
     @Inject() private readonly bunnyService: BunnyService,
     @Inject() private readonly keycloakService: KeycloakService,
   ) { }
+
 
   async update(id: string, updateDto: UpdateUserDto) {
     try {
@@ -200,7 +203,7 @@ export class UserService {
 
     const count = await this.userRepository.count({});
 
-    const users = await this.userRepository.findMany(
+    const users: UserInReport[] = await this.userRepository.findMany(
       {
         id: {
           in: keycloakUsers.map((u) => u.id),
