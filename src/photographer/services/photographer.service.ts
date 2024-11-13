@@ -25,7 +25,7 @@ export class PhotographerService {
     @Inject() private readonly photoRepository: PhotoRepository,
     @Inject() private readonly photoVoteRepository: PhotoVoteRepository,
     private readonly prisma: PrismaService,
-  ) {}
+  ) { }
   async getInfo(userId: string): Promise<UserEntity> {
     return this.prisma.user.findUnique({
       where: {
@@ -44,21 +44,37 @@ export class PhotographerService {
       -1,
     );
 
+    const where = findAllRequestDto.toWhere(userId)
+
+    console.log(where)
+
     const keycloakUserIds = keycloakUsers.map((u) => u.id);
 
     const count = await this.userRepository.count({
-      id: {
-        in: keycloakUserIds,
-      },
-      ...findAllRequestDto.toWhere(userId),
+      AND: [
+        {
+          id: {
+            in: keycloakUserIds,
+          },
+        },
+        {
+          ...where
+        }
+      ]
     });
 
     const photographers = await this.userRepository.findMany(
       {
-        id: {
-          in: keycloakUserIds,
-        },
-        ...findAllRequestDto.toWhere(userId),
+        AND: [
+          {
+            id: {
+              in: keycloakUserIds,
+            },
+          },
+          {
+            ...where
+          }
+        ]
       },
       findAllRequestDto.toOrderBy(),
       findAllRequestDto.toSkip(),

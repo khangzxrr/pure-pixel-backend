@@ -54,13 +54,26 @@ export class FindAllPhotographerRequestDto extends PagingPaginatedRequestDto {
       };
     }
 
-    if (this.isFollowed) {
-      where.followers = {
-        some: {
-          followerId: userId,
-        },
-      };
+    if (this.isFollowed !== undefined) {
+
+      //user 
+      //followers     followings
+      //
+      if (this.isFollowed) {
+        where.followings = {
+          some: {
+            followerId: userId
+          }
+        };
+      } else {
+        where.followings = {
+          none: {
+            followerId: userId
+          }
+        }
+      }
     }
+
 
     return where;
   }

@@ -30,7 +30,7 @@ import { SignedPhotoDto } from 'src/photo/dtos/signed-photo.dto';
 export class PhotographerController {
   constructor(
     @Inject() private readonly photographerService: PhotographerService,
-  ) {}
+  ) { }
 
   @Get('')
   @ApiOperation({
