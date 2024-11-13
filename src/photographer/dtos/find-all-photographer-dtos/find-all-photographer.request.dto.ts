@@ -55,10 +55,6 @@ export class FindAllPhotographerRequestDto extends PagingPaginatedRequestDto {
     }
 
     if (this.isFollowed !== undefined) {
-
-      //user 
-      //followers     followings
-      //
       if (this.isFollowed) {
         where.followings = {
           some: {
