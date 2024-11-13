@@ -29,7 +29,7 @@ export class PhotoshootPackageService {
     @Inject() private readonly bunnyService: BunnyService,
     @Inject()
     private readonly prisma: PrismaService,
-  ) {}
+  ) { }
 
   async replace(
     userId: string,
@@ -243,6 +243,7 @@ export class PhotoshootPackageService {
       findAllDto.limit,
       findAllDto.toSkip(),
       findAllDto.toWhere(),
+      findAllDto.toOrderBy(),
     );
 
     const packageDtoPromises = packages.map(async (p) => {
@@ -272,6 +273,7 @@ export class PhotoshootPackageService {
       findAllDto.limit,
       findAllDto.toSkip(),
       findAllDto.toWhere(),
+      findAllDto.toOrderBy(),
     );
 
     const packageDtoPromises = packages.map(async (p) => {

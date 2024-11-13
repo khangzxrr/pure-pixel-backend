@@ -1,3 +1,4 @@
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { PhotoshootPackageStatus, Prisma } from '@prisma/client';
 import { Exclude } from 'class-transformer';
 import { PagingPaginatedRequestDto } from 'src/infrastructure/restful/paging-paginated.request.dto';
@@ -8,6 +9,16 @@ export class PhotoshootPackageFindAllDto extends PagingPaginatedRequestDto {
 
   @Exclude()
   status?: PhotoshootPackageStatus;
+
+  @ApiPropertyOptional({
+    enum: Prisma.SortOrder
+  })
+  orderByCreateAt?: Prisma.SortOrder
+
+  @ApiPropertyOptional({
+    enum: Prisma.SortOrder
+  })
+  orderByBookingCount?: Prisma.SortOrder
 
   toWhere(): Prisma.PhotoshootPackageWhereInput {
     const where: Prisma.PhotoshootPackageWhereInput = {};
@@ -21,5 +32,26 @@ export class PhotoshootPackageFindAllDto extends PagingPaginatedRequestDto {
     }
 
     return where;
+  }
+
+  toOrderBy(): Prisma.PhotoshootPackageOrderByWithRelationInput[] {
+
+    const orderBy: Prisma.PhotoshootPackageOrderByWithRelationInput[] = []
+
+    if (this.orderByCreateAt) {
+      orderBy.push({
+        createdAt: this.orderByCreateAt
+      })
+    }
+
+    if (this.status) {
+      orderBy.push(({
+        bookings: {
+          _count: this.orderByBookingCount
+        }
+      }))
+    }
+
+    return orderBy
   }
 }
