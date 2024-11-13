@@ -43,7 +43,10 @@ export class PhotographerController {
     @AuthenticatedUser() user: ParsedUserDto,
     @Query() findAllRequestDto: FindAllPhotographerRequestDto,
   ) {
-    return this.photographerService.getAllPhotographer(findAllRequestDto);
+    return this.photographerService.getAllPhotographer(
+      user ? user.sub : '',
+      findAllRequestDto,
+    );
   }
 
   @Get('/:id/profile')

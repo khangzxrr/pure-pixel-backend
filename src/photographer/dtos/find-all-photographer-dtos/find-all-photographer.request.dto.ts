@@ -1,7 +1,14 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Prisma } from '@prisma/client';
-import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import { PagingPaginatedRequestDto } from 'src/infrastructure/restful/paging-paginated.request.dto';
+import { ToBoolean } from 'src/infrastructure/transforms/to-boolean';
 import { Utils } from 'src/infrastructure/utils/utils';
 
 export class FindAllPhotographerRequestDto extends PagingPaginatedRequestDto {
@@ -10,6 +17,12 @@ export class FindAllPhotographerRequestDto extends PagingPaginatedRequestDto {
   @IsString()
   @IsNotEmpty()
   search?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @ToBoolean()
+  @IsBoolean()
+  isFollowed?: boolean;
 
   @ApiPropertyOptional({
     enum: Prisma.SortOrder,
@@ -32,12 +45,20 @@ export class FindAllPhotographerRequestDto extends PagingPaginatedRequestDto {
   @IsEnum(Prisma.SortOrder)
   orderByVoteCount?: Prisma.SortOrder;
 
-  toWhere() {
+  toWhere(userId: string) {
     const where: Prisma.UserWhereInput = {};
 
     if (this.search) {
       where.normalizedName = {
         contains: Utils.normalizeText(this.search),
+      };
+    }
+
+    if (this.isFollowed) {
+      where.followers = {
+        some: {
+          followerId: userId,
+        },
       };
     }
 

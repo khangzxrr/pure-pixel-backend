@@ -14,6 +14,7 @@ import { UserFilterDto } from 'src/user/dtos/user-filter.dto';
 import { plainToInstance } from 'class-transformer';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoVoteRepository } from 'src/database/repositories/photo-vote.repository';
+import { Constants } from 'src/infrastructure/utils/constants';
 
 @Injectable()
 export class PhotographerService {
@@ -34,10 +35,11 @@ export class PhotographerService {
   }
 
   async getAllPhotographer(
+    userId: string,
     findAllRequestDto: FindAllPhotographerRequestDto,
   ): Promise<FindAllPhotographerResponseDto> {
     const keycloakUsers = await this.keycloakService.findUsersHasRole(
-      'photographer',
+      Constants.PHOTOGRAPHER_ROLE,
       0,
       -1,
     );
@@ -48,7 +50,7 @@ export class PhotographerService {
       id: {
         in: keycloakUserIds,
       },
-      ...findAllRequestDto.toWhere(),
+      ...findAllRequestDto.toWhere(userId),
     });
 
     const photographers = await this.userRepository.findMany(
@@ -56,7 +58,7 @@ export class PhotographerService {
         id: {
           in: keycloakUserIds,
         },
-        ...findAllRequestDto.toWhere(),
+        ...findAllRequestDto.toWhere(userId),
       },
       findAllRequestDto.toOrderBy(),
       findAllRequestDto.toSkip(),
