@@ -7,6 +7,7 @@ import { AdminController } from './controllers/admin.controller';
 import { PhotoModule } from 'src/photo/photo.module';
 import { CameraModule } from 'src/camera/camera.module';
 import { UserModule } from 'src/user/user.module';
+import { QueueModule } from 'src/queue/queue.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { UserModule } from 'src/user/user.module';
     PhotoModule,
     UserModule,
     CameraModule,
+    QueueModule,
   ],
   providers: [AdminService],
   controllers: [AdminController],

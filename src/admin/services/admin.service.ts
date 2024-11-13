@@ -16,6 +16,10 @@ import { UpgradePackageRepository } from 'src/database/repositories/upgrade-pack
 import { plainToInstance } from 'class-transformer';
 import { UpgradePackageDto } from 'src/upgrade-package/dtos/upgrade-package.dto';
 import { UpgradePackageOrderRepository } from 'src/database/repositories/upgrade-package-order.repository';
+import { PhotoRepository } from 'src/database/repositories/photo.repository';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
+import { PhotoConstant } from 'src/photo/constants/photo.constant';
 
 @Injectable()
 export class AdminService {
@@ -29,6 +33,10 @@ export class AdminService {
     private readonly upgradeOrderRepository: UpgradePackageOrderRepository,
     @Inject()
     private readonly upgradePackageRepository: UpgradePackageRepository,
+    @Inject() private readonly photoRepository: PhotoRepository,
+
+    @InjectQueue(PhotoConstant.PHOTO_PROCESS_QUEUE)
+    private readonly photoProcessQueue: Queue,
   ) {}
 
   async getDashboard(dashboardRequestDto: DashboardRequestDto) {
@@ -124,6 +132,19 @@ export class AdminService {
 
   async syncUsers() {
     return this.userService.syncKeycloakWithDatabase();
+  }
+
+  async triggerProcessAllPhotos() {
+    const photos = await this.photoRepository.findAll({}, [], 0, -1);
+
+    const photoJobs = photos.map((p) => ({
+      name: PhotoConstant.PROCESS_PHOTO_JOB_NAME,
+      data: {
+        id: p.id,
+      },
+    }));
+
+    await this.photoProcessQueue.addBulk(photoJobs);
   }
 
   async triggerProcess(photoId: string) {

@@ -201,18 +201,16 @@ export class PhotoService {
     }
 
     const signedUrl = this.bunnyService.getPresignedFile(url);
-    const signedThumbnailUrl = this.bunnyService.getPresignedFile(
-      thumbnail,
-      `?width=${PhotoConstant.THUMBNAIL_WIDTH}`,
-    );
 
-    const placeHolderUrl = this.bunnyService.getPresignedFile(
-      thumbnail,
-      `?width=120`,
+    const signedThumbnailUrl = this.bunnyService.getPresignedFile(
+      `thumbnail/${photoDetail.id}.jpg`,
+    );
+    const signedPlaceholderUrl = this.bunnyService.getPresignedFile(
+      `placeholder/${photoDetail.id}.jpg`,
     );
 
     const signedUrlDto = new SignedUrl(signedUrl, signedThumbnailUrl);
-    signedUrlDto.placeholder = placeHolderUrl;
+    signedUrlDto.placeholder = signedPlaceholderUrl;
     signedPhotoDto.signedUrl = signedUrlDto;
 
     signedPhotoDto.photoSellings?.forEach((photoSelling) => {
@@ -234,10 +232,6 @@ export class PhotoService {
       ? photo.watermarkPhotoUrl
       : photo.originalPhotoUrl;
 
-    const thumbnail = `${
-      photo.watermark ? photo.watermarkPhotoUrl : photo.originalPhotoUrl
-    }`;
-
     if (url.length == 0) {
       console.log(`error photo without thumbnail or original: ${photo.id}`);
 
@@ -252,12 +246,10 @@ export class PhotoService {
 
     const signedUrl = this.bunnyService.getPresignedFile(url);
     const signedThumbnailUrl = this.bunnyService.getPresignedFile(
-      thumbnail,
-      `?width=${PhotoConstant.THUMBNAIL_WIDTH}`,
+      `thumbnail/${photo.id}.jpg`,
     );
     const signedPlaceholderUrl = this.bunnyService.getPresignedFile(
-      thumbnail,
-      `?width=80`,
+      `placeholder/${photo.id}.jpg`,
     );
 
     const signedUrlDto = new SignedUrl(signedUrl, signedThumbnailUrl);
@@ -610,6 +602,7 @@ export class PhotoService {
       await this.photoProcessQueue.add(PhotoConstant.PROCESS_PHOTO_JOB_NAME, {
         id: photo.id,
       });
+
       await this.cameraQueue.add(CameraConstant.ADD_NEW_CAMERA_USAGE_JOB, {
         photoId: photo.id,
       });

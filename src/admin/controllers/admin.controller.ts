@@ -38,6 +38,14 @@ export class AdminController {
     return await this.adminService.getDashboard(dashboardRequestDto);
   }
 
+  @Post('/photo-trigger/process')
+  @ApiOperation({
+    summary: 'trigger process all photos',
+  })
+  async triggerProcessAllPhotos() {
+    await this.adminService.triggerProcessAllPhotos();
+  }
+
   @Post('seed')
   @ApiOperation({
     summary: 'seed database',
@@ -50,8 +58,6 @@ export class AdminController {
   @ApiOperation({
     summary: 'trigger popular camera graph cron job',
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: [Constants.MANAGER_ROLE] })
   async triggerPopularCameraGraph() {
     return await this.updateTimelineService.triggerCron();
   }
