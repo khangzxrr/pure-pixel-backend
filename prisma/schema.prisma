@@ -27,6 +27,13 @@ enum ViewPermission {
   DENY
 }
 
+model DashboardReport {
+  id String @id @default(uuid())
+  data Json
+  
+  createdAt DateTime  @default(now())
+}
+
 model Newsfeed {
   id String @id @default(uuid())
 
