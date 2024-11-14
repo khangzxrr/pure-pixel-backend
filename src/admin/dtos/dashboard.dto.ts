@@ -1,32 +1,41 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { UserTimelineDatapointDto } from './user-timeline-datapoint.dto';
-import { UpgradePackageDto } from 'src/upgrade-package/dtos/upgrade-package.dto';
+import { TimelineDatapointDto } from './timeline-datapoint.dto';
+import { Type } from 'class-transformer';
 
 export class DashboardDto {
   @ApiProperty()
-  totalCustomer: number;
+  @Type(() => TimelineDatapointDto)
+  totalCustomer: TimelineDatapointDto;
 
   @ApiProperty()
-  totalPhotographer: number;
+  @Type(() => TimelineDatapointDto)
+  totalPhotographer: TimelineDatapointDto;
 
   @ApiProperty()
-  totalEmployee: number;
+  @Type(() => TimelineDatapointDto)
+  totalEmployeGraph: TimelineDatapointDto;
 
   @ApiProperty()
-  totalRevenue: number;
+  @Type(() => TimelineDatapointDto)
+  totalRevenueGraph: TimelineDatapointDto[];
 
   @ApiProperty()
-  totalRevenueFromUpgradePackage: number;
+  @Type(() => TimelineDatapointDto)
+  revenueFromUpgradePackageGraph: TimelineDatapointDto[];
 
   @ApiProperty()
-  totalRevenueFromSellingPhoto: number;
+  @Type(() => TimelineDatapointDto)
+  revenueFromSellingPhotoGraph: TimelineDatapointDto[];
 
   @ApiProperty()
-  photographerDatapoints: UserTimelineDatapointDto[];
+  @Type(() => TimelineDatapointDto)
+  photoTotalGraph: TimelineDatapointDto[];
 
   @ApiProperty()
-  customerDatapoints: UserTimelineDatapointDto[];
+  @Type(() => TimelineDatapointDto)
+  userTotalGraph: TimelineDatapointDto[];
 
   @ApiProperty()
-  mostUsedUpgradePackages: UpgradePackageDto[];
+  @Type(() => TimelineDatapointDto)
+  topUsedPackageGraph: TimelineDatapointDto[];
 }

@@ -17,8 +17,9 @@ export class UserToUserRepository {
   async findMany(where: Prisma.UserToUserTransactionWhereInput) {
     return this.prisma.extendedClient().userToUserTransaction.findMany({
       where,
-      select: {
-        id: true,
+      include: {
+        fromUserTransaction: true,
+        toUserTransaction: true,
       },
     });
   }

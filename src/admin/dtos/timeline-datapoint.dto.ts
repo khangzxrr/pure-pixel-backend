@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class UserTimelineDatapointDto {
+export class TimelineDatapointDto {
   @ApiProperty()
   total: number;
 

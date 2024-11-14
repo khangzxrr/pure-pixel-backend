@@ -19,6 +19,12 @@ export class UpgradePackageOrderRepository {
     });
   }
 
+  async count(where: Prisma.UpgradeOrderWhereInput) {
+    return this.prisma.extendedClient().upgradeOrder.count({
+      where,
+    });
+  }
+
   async findManyActivateOrder() {
     return this.prisma.upgradeOrder.findMany({
       where: {
