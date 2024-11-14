@@ -563,6 +563,10 @@ export class PhotoService {
         throw new MissingModelExifException();
       }
 
+      const blurHash: string = await this.photoProcessService.bufferToBlurhash(
+        photoUploadDto.file.buffer,
+      );
+
       // await this.photoValidateService.validateHashAndMatching(
       //   photoUploadDto.file.buffer,
       //   photoUploadDto.file.originalName,
@@ -593,6 +597,7 @@ export class PhotoService {
         height: metadata.height,
         status: 'PARSED',
         photoType: photoType,
+        blurHash,
         watermark: false,
         visibility: 'PRIVATE',
         originalPhotoUrl: storageObjectKey,

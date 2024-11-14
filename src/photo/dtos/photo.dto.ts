@@ -10,8 +10,8 @@ export class PhotoDto {
   @ApiProperty()
   id: string;
 
-  @ApiProperty({})
-  shareStatus: string;
+  @ApiProperty()
+  blurHash: string;
 
   @ApiProperty({})
   title: string;
@@ -36,12 +36,6 @@ export class PhotoDto {
 
   @Exclude()
   thumbnailPhotoUrl: string;
-
-  @Exclude()
-  watermarkThumbnailPhotoUrl: string;
-
-  @Exclude()
-  sharePayload: JsonValue;
 
   @Exclude()
   deletedAt: Date;

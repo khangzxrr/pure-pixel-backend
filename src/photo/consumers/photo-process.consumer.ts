@@ -109,6 +109,8 @@ export class PhotoProcessConsumer extends WorkerHost {
 
     const hash = await this.photoProcessService.getHashFromBuffer(buffer);
 
+    const blurHash = await this.photoProcessService.bufferToBlurhash(buffer);
+
     // const existPhotoWithHash = await this.photoRepository.findFirst({
     //   hash,
     // });
@@ -162,6 +164,7 @@ export class PhotoProcessConsumer extends WorkerHost {
 
     await this.photoRepository.updateById(photoId, {
       hash,
+      blurHash,
     });
   }
 }

@@ -51,6 +51,7 @@
     "aws-sdk": "^2.1686.0",
     "axios": "^1.7.7",
     "axios-retry": "^4.5.0",
+    "blurhash": "^2.0.5",
     "bullmq": "^5.13.0",
     "bunny-sdk": "^0.0.28",
     "cache-manager": "^5.7.6",

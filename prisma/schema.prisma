@@ -508,6 +508,8 @@ model Photo {
 
   hash String @default("")
 
+  blurHash String @default("")
+
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
