@@ -69,19 +69,6 @@ export class UpgradeOrderService {
     return upgradePackage;
   }
 
-  private async checkPendingOrderAndAcceptCancelPending(userId: string) {
-    const pendingOrders =
-      await this.upgradePackageOrderRepository.findManyPendingOrderByUserId(
-        userId,
-      );
-
-    if (pendingOrders.length > 0) {
-      throw new ExistPendingUpgradeOrderException();
-    }
-
-    return pendingOrders;
-  }
-
   async requestUpgradePayment(
     userId: string,
     requestUpgrade: RequestUpgradeDto,
@@ -95,7 +82,9 @@ export class UpgradeOrderService {
       await this.checkUpgradePackageMustExist(requestUpgrade);
 
     const pendingOrders =
-      await this.checkPendingOrderAndAcceptCancelPending(userId);
+      await this.upgradePackageOrderRepository.findManyPendingOrderByUserId(
+        userId,
+      );
 
     //TODO: handle transfer upgrade packages
 

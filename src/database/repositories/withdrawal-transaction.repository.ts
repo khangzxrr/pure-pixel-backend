@@ -23,7 +23,7 @@ export class WithdrawalTransactionRepository {
         amount,
         paymentPayload: {},
         type: 'WITHDRAWAL',
-        paymentMethod: 'SEPAY',
+        paymentMethod: 'WALLET',
         withdrawalTransaction: {
           create: {
             bankInfo: {

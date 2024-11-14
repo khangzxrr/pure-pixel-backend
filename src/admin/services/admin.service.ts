@@ -11,25 +11,11 @@ import { MemoryStoredFile } from 'nestjs-form-data';
 import { PhotoProcessConsumer } from 'src/photo/consumers/photo-process.consumer';
 import { UserService } from 'src/user/services/user.service';
 
-import { UpgradePackageRepository } from 'src/database/repositories/upgrade-package.repository';
-
-import { UpgradePackageOrderRepository } from 'src/database/repositories/upgrade-package-order.repository';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { PhotoConstant } from 'src/photo/constants/photo.constant';
-import { UserToUserRepository } from 'src/database/repositories/user-to-user-transaction.repository';
-import { Decimal } from '@prisma/client/runtime/library';
 
-import { TransactionRepository } from 'src/database/repositories/transaction.repository';
-import { DashboardReportDto } from '../dtos/dashboard-report.dto';
-import { PhotoshootRepository } from 'src/database/repositories/photoshoot-package.repository';
-import { TopUsedUpgradePackageDto } from '../dtos/top-used-upgrade-package.dto';
-import { plainToInstance } from 'class-transformer';
-import { UpgradePackageDto } from 'src/upgrade-package/dtos/upgrade-package.dto';
-import { PhotoSellRepository } from 'src/database/repositories/photo-sell.repository';
-import { TopSellingPhotoDto } from '../dtos/top-selled-photo.dto';
-import { SignedPhotoDto } from 'src/photo/dtos/signed-photo.dto';
 import { DashboardRequestDto } from '../dtos/dashboard.request.dto';
 import { DashboardReportRepository } from 'src/database/repositories/dashboard-report.repository';
 
@@ -41,21 +27,9 @@ export class AdminService {
     @Inject() private readonly photoService: PhotoService,
     @Inject() private readonly photoProcessConsumer: PhotoProcessConsumer,
     @Inject() private readonly userService: UserService,
-    @Inject()
-    private readonly upgradeOrderRepository: UpgradePackageOrderRepository,
-    @Inject()
-    private readonly upgradePackageRepository: UpgradePackageRepository,
     @Inject() private readonly photoRepository: PhotoRepository,
-    @Inject()
-    private readonly userToUserTransactionRepository: UserToUserRepository,
-    @Inject()
-    private readonly transactionRepository: TransactionRepository,
     @InjectQueue(PhotoConstant.PHOTO_PROCESS_QUEUE)
     private readonly photoProcessQueue: Queue,
-    @Inject()
-    private readonly photoshootPackageRepository: PhotoshootRepository,
-    @Inject()
-    private readonly photoSellRepository: PhotoSellRepository,
     @Inject()
     private readonly dashboardReportRepository: DashboardReportRepository,
   ) {}
