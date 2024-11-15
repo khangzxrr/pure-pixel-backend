@@ -206,6 +206,7 @@ export class PhotoController {
 
     res.status(200).send(result);
   }
+
   @Post('/share')
   @ApiOperation({
     summary: 'generate share url by photo id',

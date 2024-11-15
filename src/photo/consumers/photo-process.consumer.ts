@@ -70,69 +70,101 @@ export class PhotoProcessConsumer extends WorkerHost {
     this.logger.log(`delete ${originalPhotoUrl} from tineye database`);
   }
 
+  async generateThumbnail(photoId: string, buffer: Buffer) {
+    const sharp = await this.photoProcessService.sharpInitFromBuffer(buffer);
+
+    const thumbnailBuffer = await this.photoProcessService.resize(
+      sharp,
+      PhotoConstant.THUMBNAIL_WIDTH,
+    );
+
+    const placeHolderBuffer = await this.photoProcessService.resize(
+      sharp,
+      PhotoConstant.PLACEHOLDER_WIDTH,
+    );
+
+    await this.bunnyService.uploadFromBuffer(
+      `thumbnail/${photoId}.jpg`,
+      thumbnailBuffer,
+    );
+
+    await this.bunnyService.uploadFromBuffer(
+      `placeholder/${photoId}.jpg`,
+      placeHolderBuffer,
+    );
+
+    this.logger.log(`generated thumbnail for photo id: ${photoId}`);
+  }
+
   async processPhoto(photoId: string) {
     console.log(`process photo id: ${photoId}`);
 
     const photo = await this.photoRepository.findUniqueOrThrow(photoId);
 
-    const hash = await this.photoProcessService.getHashFromKey(
+    const buffer = await this.photoProcessService.getBufferFromKey(
       photo.originalPhotoUrl,
     );
 
-    const existPhotoWithHash = await this.photoRepository.findFirst({
-      hash,
-    });
+    await this.generateThumbnail(photoId, buffer);
 
-    if (existPhotoWithHash) {
-      await this.photoRepository.deleteById(photoId);
+    const hash = await this.photoProcessService.getHashFromBuffer(buffer);
 
-      await this.sendNotification(photo.title, photo.photographerId, photo.id);
+    const blurHash = await this.photoProcessService.bufferToBlurhash(buffer);
 
-      return;
-    }
+    // const existPhotoWithHash = await this.photoRepository.findFirst({
+    //   hash,
+    // });
+    // if (existPhotoWithHash) {
+    //   await this.photoRepository.deleteById(photoId);
+    //
+    //   await this.sendNotification(photo.title, photo.photographerId, photo.id);
+    //
+    //   return;
+    // }
 
-    const signedPhotoUrl = this.bunnyService.getPresignedFile(
-      photo.originalPhotoUrl,
-      `?width=${PhotoConstant.TINEYE_MIN_PHOTO_WIDTH}`,
-    );
-
-    try {
-      const response = await this.tineyeService.search(signedPhotoUrl);
-
-      const result = response.data.result;
-
-      if (result) {
-        if (result.length > 0 && result[0].match_percent >= 10) {
-          await this.photoRepository.deleteById(photoId);
-
-          await this.sendNotification(
-            photo.title,
-            photo.photographerId,
-            photo.id,
-          );
-
-          return;
-        }
-      }
-    } catch (e) {
-      console.log(e);
-    }
-
-    try {
-      const data = await this.tineyeService.add(
-        photo.originalPhotoUrl,
-        signedPhotoUrl,
-      );
-
-      if (data.status === 200) {
-        this.logger.log(`uploaded photo ${photo.originalPhotoUrl} to tineye`);
-      }
-    } catch (e) {
-      console.log(e);
-    }
+    // const signedPhotoUrl = this.bunnyService.getPresignedFile(
+    //   photo.originalPhotoUrl,
+    //   `?width=${PhotoConstant.TINEYE_MIN_PHOTO_WIDTH}`,
+    // );
+    //
+    // try {
+    //   const response = await this.tineyeService.search(signedPhotoUrl);
+    //
+    //   const result = response.data.result;
+    //
+    //   if (result) {
+    //     if (result.length > 0 && result[0].match_percent >= 10) {
+    //       await this.photoRepository.deleteById(photoId);
+    //
+    //       await this.sendNotification(
+    //         photo.title,
+    //         photo.photographerId,
+    //         photo.id,
+    //       );
+    //
+    //       return;
+    //     }
+    //   }
+    // } catch (e) {
+    //   console.log(e);
+    // }
+    //
+    // try {
+    //   const data = await this.tineyeService.add(
+    //     photo.originalPhotoUrl,
+    //     signedPhotoUrl,
+    //   );
+    //
+    //   if (data.status === 200) {
+    //     this.logger.log(`uploaded photo ${photo.originalPhotoUrl} to tineye`);
+    //   }
+    // } catch (e) {
+    //   console.log(e);
+    // }
 
     await this.photoRepository.updateById(photoId, {
       hash,
+      blurHash,
     });
   }
 }

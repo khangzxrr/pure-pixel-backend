@@ -30,7 +30,7 @@ import { SignedPhotoDto } from 'src/photo/dtos/signed-photo.dto';
 export class PhotographerController {
   constructor(
     @Inject() private readonly photographerService: PhotographerService,
-  ) {}
+  ) { }
 
   @Get('')
   @ApiOperation({
@@ -43,7 +43,10 @@ export class PhotographerController {
     @AuthenticatedUser() user: ParsedUserDto,
     @Query() findAllRequestDto: FindAllPhotographerRequestDto,
   ) {
-    return this.photographerService.getAllPhotographer(findAllRequestDto);
+    return this.photographerService.getAllPhotographer(
+      user ? user.sub : '',
+      findAllRequestDto,
+    );
   }
 
   @Get('/:id/profile')

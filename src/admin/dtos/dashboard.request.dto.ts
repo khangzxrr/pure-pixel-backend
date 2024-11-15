@@ -1,13 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { IsNumber, Min } from 'class-validator';
+import { IsDate } from 'class-validator';
 
 export class DashboardRequestDto {
   @ApiProperty({
-    example: 5,
+    example: '2024-10-19T01:30:14.761+07:00',
   })
-  @Type(() => Number)
-  @IsNumber()
-  @Min(1)
-  topUsedUpgradePackageCount: number;
+  @IsDate()
+  fromDate: Date;
+
+  @ApiProperty({
+    example: '2024-10-19T01:30:14.761+07:00',
+  })
+  @IsDate()
+  toDate: Date;
 }

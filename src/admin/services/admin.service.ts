@@ -10,12 +10,14 @@ import { PhotoUploadRequestDto } from 'src/photo/dtos/rest/photo-upload.request'
 import { MemoryStoredFile } from 'nestjs-form-data';
 import { PhotoProcessConsumer } from 'src/photo/consumers/photo-process.consumer';
 import { UserService } from 'src/user/services/user.service';
-import { DashboardDto } from '../dtos/dashboard.dto';
+
+import { PhotoRepository } from 'src/database/repositories/photo.repository';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
+import { PhotoConstant } from 'src/photo/constants/photo.constant';
+
 import { DashboardRequestDto } from '../dtos/dashboard.request.dto';
-import { UpgradePackageRepository } from 'src/database/repositories/upgrade-package.repository';
-import { plainToInstance } from 'class-transformer';
-import { UpgradePackageDto } from 'src/upgrade-package/dtos/upgrade-package.dto';
-import { UpgradePackageOrderRepository } from 'src/database/repositories/upgrade-package-order.repository';
+import { DashboardReportRepository } from 'src/database/repositories/dashboard-report.repository';
 
 @Injectable()
 export class AdminService {
@@ -25,105 +27,48 @@ export class AdminService {
     @Inject() private readonly photoService: PhotoService,
     @Inject() private readonly photoProcessConsumer: PhotoProcessConsumer,
     @Inject() private readonly userService: UserService,
+    @Inject() private readonly photoRepository: PhotoRepository,
+    @InjectQueue(PhotoConstant.PHOTO_PROCESS_QUEUE)
+    private readonly photoProcessQueue: Queue,
     @Inject()
-    private readonly upgradeOrderRepository: UpgradePackageOrderRepository,
-    @Inject()
-    private readonly upgradePackageRepository: UpgradePackageRepository,
+    private readonly dashboardReportRepository: DashboardReportRepository,
   ) {}
 
-  async getDashboard(dashboardRequestDto: DashboardRequestDto) {
-    const dashboardDto = new DashboardDto();
-
-    const customers = await this.keycloakService.findUsersHasRole(
-      Constants.CUSTOMER_ROLE,
-      0,
-      -1,
-    );
-
-    const photographers = await this.keycloakService.findUsersHasRole(
-      Constants.ADMIN_ROLE,
-      0,
-      -1,
-    );
-
-    dashboardDto.totalCustomer = customers.length;
-    dashboardDto.totalPhotographer = photographers.length;
-
-    dashboardDto.totalRevenueFromUpgradePackage = 999999999;
-    dashboardDto.totalRevenue = 99999999;
-    dashboardDto.totalEmployee = 15;
-
-    dashboardDto.customerDatapoints = [
-      {
-        total: 15,
-        createdAt: new Date('2019-01-01'),
+  async getDashboardReport(dashboardRequestDto: DashboardRequestDto) {
+    return await this.dashboardReportRepository.findMany({
+      createdAt: {
+        gte: dashboardRequestDto.fromDate,
+        lte: dashboardRequestDto.toDate,
       },
-      {
-        total: 50,
-        createdAt: new Date('2020-01-01'),
-      },
-      {
-        total: 70,
-        createdAt: new Date('2021-01-01'),
-      },
-      {
-        total: 102,
-        createdAt: new Date('2022-01-01'),
-      },
-      {
-        total: 300,
-        createdAt: new Date('2023-01-01'),
-      },
-      {
-        total: 420,
-        createdAt: new Date('2024-01-01'),
-      },
-    ];
-
-    dashboardDto.photographerDatapoints = [
-      {
-        total: 5,
-        createdAt: new Date('2019-01-01'),
-      },
-      {
-        total: 15,
-        createdAt: new Date('2020-01-01'),
-      },
-      {
-        total: 23,
-        createdAt: new Date('2021-01-01'),
-      },
-      {
-        total: 50,
-        createdAt: new Date('2022-01-01'),
-      },
-      {
-        total: 135,
-        createdAt: new Date('2023-01-01'),
-      },
-      {
-        total: 160,
-        createdAt: new Date('2024-01-01'),
-      },
-    ];
-
-    const upgradePackages = await this.upgradePackageRepository.findAll(
-      0,
-      dashboardRequestDto.topUsedUpgradePackageCount,
-      {},
-      {},
-    );
-
-    dashboardDto.mostUsedUpgradePackages = plainToInstance(
-      UpgradePackageDto,
-      upgradePackages,
-    );
-
-    return dashboardDto;
+    });
   }
 
   async syncUsers() {
     return this.userService.syncKeycloakWithDatabase();
+  }
+
+  async triggerProcessAllPhotos() {
+    let skip = 0;
+    while (true) {
+      const photos = await this.photoRepository.findAll({}, [], skip, 100);
+
+      const photoJobs = photos.map((p) => ({
+        name: PhotoConstant.PROCESS_PHOTO_JOB_NAME,
+        data: {
+          id: p.id,
+        },
+      }));
+
+      console.log(photoJobs);
+
+      await this.photoProcessQueue.addBulk(photoJobs);
+
+      skip += photos.length;
+
+      if (photos.length === 0) {
+        break;
+      }
+    }
   }
 
   async triggerProcess(photoId: string) {

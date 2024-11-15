@@ -69,6 +69,13 @@ export class UpgradePackageRepository {
       take,
       where,
       orderBy,
+      include: {
+        _count: {
+          select: {
+            upgradePackageHistories: true,
+          },
+        },
+      },
     });
   }
 }

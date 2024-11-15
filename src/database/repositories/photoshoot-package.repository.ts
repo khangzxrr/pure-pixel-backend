@@ -5,7 +5,7 @@ import { PhotoshootPackage } from '../types/photoshoot-package';
 
 @Injectable()
 export class PhotoshootRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
   async findUniqueOrThrow(id: string) {
     return this.prisma.extendedClient().photoshootPackage.findUniqueOrThrow({
       where: {
@@ -78,11 +78,13 @@ export class PhotoshootRepository {
     take: number,
     skip: number,
     where: Prisma.PhotoshootPackageWhereInput,
+    orderBy: Prisma.PhotoshootPackageOrderByWithRelationInput[],
   ): Promise<PhotoshootPackage[]> {
     return this.prisma.extendedClient().photoshootPackage.findMany({
       take,
       skip,
       where,
+      orderBy,
 
       include: {
         _count: {

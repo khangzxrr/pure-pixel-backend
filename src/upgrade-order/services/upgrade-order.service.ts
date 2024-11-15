@@ -49,7 +49,7 @@ export class UpgradeOrderService {
         userId,
       );
 
-    if (activedUpgradePackage != null && !requestUpgrade.acceptTransfer) {
+    if (activedUpgradePackage != null) {
       throw new UserHasActivatedUpgradePackage();
     }
   }
@@ -69,25 +69,6 @@ export class UpgradeOrderService {
     return upgradePackage;
   }
 
-  private async checkPendingOrderAndAcceptCancelPending(
-    userId: string,
-    requestUpgrade: RequestUpgradeDto,
-  ) {
-    const pendingOrders =
-      await this.upgradePackageOrderRepository.findManyPendingOrderByUserId(
-        userId,
-      );
-
-    if (
-      pendingOrders.length > 0 &&
-      !requestUpgrade.acceptRemovePendingUpgradeOrder
-    ) {
-      throw new ExistPendingUpgradeOrderException();
-    }
-
-    return pendingOrders;
-  }
-
   async requestUpgradePayment(
     userId: string,
     requestUpgrade: RequestUpgradeDto,
@@ -100,10 +81,10 @@ export class UpgradeOrderService {
     const upgradePackage =
       await this.checkUpgradePackageMustExist(requestUpgrade);
 
-    const pendingOrders = await this.checkPendingOrderAndAcceptCancelPending(
-      userId,
-      requestUpgrade,
-    );
+    const pendingOrders =
+      await this.upgradePackageOrderRepository.findManyPendingOrderByUserId(
+        userId,
+      );
 
     //TODO: handle transfer upgrade packages
 
@@ -163,14 +144,17 @@ export class UpgradeOrderService {
           newUpgradeOrder.upgradePackageHistory.id;
 
         //IMPORTANT: must using transactionId instead of serviceTransactionId
-
-        const paymentDto = await this.sepayService.generatePayment(
-          newUpgradeOrder.serviceTransaction.transactionId,
-          calculatedPrice.toNumber(),
-        );
-
-        requestUpgradeResponse.paymentUrl = paymentDto.paymentUrl;
-        requestUpgradeResponse.mockQrCode = paymentDto.mockQrCode;
+        //using direct generate payment because in transaction scope, we dont have entity yet
+        requestUpgradeResponse.paymentUrl =
+          this.sepayService.generatePaymentUrl(
+            newUpgradeOrder.serviceTransaction.transactionId,
+            calculatedPrice.toNumber(),
+          );
+        requestUpgradeResponse.mockQrCode =
+          await this.sepayService.generateMockIpnQrCode(
+            newUpgradeOrder.serviceTransaction.transactionId,
+            calculatedPrice.toNumber(),
+          );
 
         return requestUpgradeResponse;
       },

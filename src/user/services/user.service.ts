@@ -18,6 +18,8 @@ import { UpdateUserDto } from '../dtos/update-user.dto';
 import { FailedToUpdateUserException } from '../exceptions/cannot-update-user.exception';
 import { UserFindAllResponseDto } from '../dtos/rest/user-find-all.response.dto';
 import { MeDto } from '../dtos/me.dto';
+import { UserInReport } from 'src/database/types/user';
+
 
 @Injectable()
 export class UserService {
@@ -25,7 +27,8 @@ export class UserService {
     @Inject() private readonly userRepository: UserRepository,
     @Inject() private readonly bunnyService: BunnyService,
     @Inject() private readonly keycloakService: KeycloakService,
-  ) {}
+  ) { }
+
 
   async update(id: string, updateDto: UpdateUserDto) {
     try {
@@ -97,7 +100,10 @@ export class UserService {
     const keycloakUserCount = await this.keycloakService.countUsers();
     const applicationUserCount = await this.userRepository.count({});
 
-    if (keycloakUserCount < applicationUserCount) {
+    console.log(keycloakUserCount, applicationUserCount)
+
+    if (keycloakUserCount > applicationUserCount) {
+
       while (true) {
         const keycloakUsers = await this.keycloakService.findUsers(skip, -1);
 
@@ -108,7 +114,7 @@ export class UserService {
             name: ku.username,
             cover: Constants.DEFAULT_COVER,
             avatar: Constants.DEFAULT_AVATAR,
-            normalizedName: ku.username,
+            normalizedName: Utils.normalizeText(ku.username),
             location: 'TP.Hồ Chí Minh',
           });
 
@@ -176,13 +182,13 @@ export class UserService {
       phonenumber: updateProfileDto.phonenumber,
       socialLinks: updateProfileDto.socialLinks
         ? {
-            set: updateProfileDto.socialLinks,
-          }
+          set: updateProfileDto.socialLinks,
+        }
         : undefined,
       expertises: updateProfileDto.expertises
         ? {
-            set: updateProfileDto.expertises,
-          }
+          set: updateProfileDto.expertises,
+        }
         : undefined,
     });
 
@@ -197,7 +203,7 @@ export class UserService {
 
     const count = await this.userRepository.count({});
 
-    const users = await this.userRepository.findMany(
+    const users: UserInReport[] = await this.userRepository.findMany(
       {
         id: {
           in: keycloakUsers.map((u) => u.id),

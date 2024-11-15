@@ -18,6 +18,8 @@ import { PhotoVoteService } from '../services/photo-vote.service';
 
 @Controller('photo')
 @ApiTags('photo-vote')
+@UseGuards(AuthGuard, KeycloakRoleGuard)
+@Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
 export class PhotoVoteController {
   constructor(@Inject() private readonly photoVoteService: PhotoVoteService) {}
 
@@ -25,8 +27,6 @@ export class PhotoVoteController {
   @ApiOperation({
     summary: 'upvote/downvote an photo',
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
   async upvoteAnPhoto(
     @AuthenticatedUser() user: ParsedUserDto,
     @Param('photoId') id: string,
@@ -39,7 +39,6 @@ export class PhotoVoteController {
   @ApiOperation({
     summary: 'check if user voted by photoId',
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
   async checkVote(
     @AuthenticatedUser() user: ParsedUserDto,
     @Param('photoId') photoId: string,
@@ -54,8 +53,6 @@ export class PhotoVoteController {
   @ApiOkResponse({
     description: 'deleted',
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
   async deletePhotoById(
     @AuthenticatedUser() user: ParsedUserDto,
     @Param('photoId') photoId: string,

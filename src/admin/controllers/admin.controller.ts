@@ -16,6 +16,8 @@ import { UpdateTimelineService } from 'src/camera/crons/update-timeline.service.
 import { Constants } from 'src/infrastructure/utils/constants';
 import { DashboardDto } from '../dtos/dashboard.dto';
 import { DashboardRequestDto } from '../dtos/dashboard.request.dto';
+import { GenerateDashboardReportService } from '../crons/generate-dashboard-report.cron.service';
+import { DashboardReportDto } from '../dtos/dashboard-report.dto';
 
 @Controller('admin')
 @ApiTags('admin')
@@ -24,18 +26,41 @@ import { DashboardRequestDto } from '../dtos/dashboard.request.dto';
 export class AdminController {
   constructor(
     @Inject() private readonly adminService: AdminService,
+    @Inject()
+    private readonly generateDashboardReportService: GenerateDashboardReportService,
     @Inject() private readonly updateTimelineService: UpdateTimelineService,
   ) {}
 
-  @Get('dashboard')
+  @Post('/dashboard-trigger/generate-report')
   @ApiOperation({
     summary: 'get dashboard summary',
   })
   @ApiOkResponse({
     type: DashboardDto,
   })
-  async dashboard(@Query() dashboardRequestDto: DashboardRequestDto) {
-    return await this.adminService.getDashboard(dashboardRequestDto);
+  async generateDashboardReport() {
+    return await this.generateDashboardReportService.generateDashboardData();
+  }
+
+  @Get('/dashboard')
+  @ApiOperation({
+    summary: 'get dashboard report data',
+  })
+  @ApiOkResponse({
+    type: DashboardDto,
+  })
+  async getDashboardReportData(
+    @Query() dashboardRequestDto: DashboardRequestDto,
+  ) {
+    return await this.adminService.getDashboardReport(dashboardRequestDto);
+  }
+
+  @Post('/photo-trigger/process')
+  @ApiOperation({
+    summary: 'trigger process all photos',
+  })
+  async triggerProcessAllPhotos() {
+    await this.adminService.triggerProcessAllPhotos();
   }
 
   @Post('seed')
@@ -50,8 +75,6 @@ export class AdminController {
   @ApiOperation({
     summary: 'trigger popular camera graph cron job',
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: [Constants.MANAGER_ROLE] })
   async triggerPopularCameraGraph() {
     return await this.updateTimelineService.triggerCron();
   }

@@ -2,6 +2,7 @@ import { Prisma } from '@prisma/client';
 
 export type PhotoDetail = Prisma.PhotoGetPayload<{
   include: {
+    categories: true;
     _count: {
       select: {
         comments: true;

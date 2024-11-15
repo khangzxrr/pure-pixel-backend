@@ -48,4 +48,16 @@ export class PhotoSellRepository {
       data,
     });
   }
+
+  async findMany(
+    where: Prisma.PhotoSellWhereInput,
+    orderBy: Prisma.PhotoSellOrderByWithRelationInput[],
+    include: Prisma.PhotoSellInclude,
+  ) {
+    return this.prisma.extendedClient().photoSell.findMany({
+      where,
+      orderBy,
+      include,
+    });
+  }
 }

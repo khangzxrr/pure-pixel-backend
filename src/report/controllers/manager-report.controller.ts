@@ -25,9 +25,9 @@ import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
 import { ReportPutUpdateRequestDto } from '../dtos/rest/report-put-update.request.dto';
 
 @Controller('manager/report')
-@ApiTags('manager-report')
+@ApiTags('manager-manage-report')
 @UseGuards(AuthGuard, KeycloakRoleGuard)
-@Roles({ roles: [Constants.MANAGER_ROLE] })
+@Roles({ roles: [Constants.ADMIN_ROLE, Constants.MANAGER_ROLE] })
 export class ManagerReportController {
   constructor(@Inject() private readonly reportService: ReportService) {}
 

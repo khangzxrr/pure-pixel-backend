@@ -27,6 +27,13 @@ enum ViewPermission {
   DENY
 }
 
+model DashboardReport {
+  id String @id @default(uuid())
+  data Json
+  
+  createdAt DateTime  @default(now()) @unique
+}
+
 model Newsfeed {
   id String @id @default(uuid())
 
@@ -410,6 +417,7 @@ model Camera {
 
   name      String @unique
   thumbnail String
+  description String @default("")
 
   cameraMaker   CameraMaker @relation(fields: [cameraMakerId], references: [id])
   cameraMakerId String
@@ -499,6 +507,8 @@ model Photo {
   size Int @default(0)
 
   hash String @default("")
+
+  blurHash String @default("")
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt

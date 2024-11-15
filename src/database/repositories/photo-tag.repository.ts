@@ -17,6 +17,11 @@ export class PhotoTagRepository {
           photoId: 'desc',
         },
       },
+      where: {
+        photo: {
+          visibility: 'PUBLIC',
+        },
+      },
     });
   }
 

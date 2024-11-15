@@ -1,11 +1,11 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import {
   PhotoStatus,
   PhotoType,
   PhotoVisibility,
   Prisma,
 } from '@prisma/client';
-import { Exclude, Type } from 'class-transformer';
+import { Exclude, Transform, Type } from 'class-transformer';
 import {
   IsArray,
   IsBoolean,
@@ -153,6 +153,7 @@ export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
   @IsArray({})
   @IsString({ each: true })
   @IsNotEmpty({ each: true })
+  @Transform(({ value }) => (Array.isArray(value) ? value : Array(value)))
   tags?: string[];
 
   @ApiProperty({

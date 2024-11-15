@@ -9,7 +9,7 @@ import { UserFilterDto } from 'src/user/dtos/user-filter.dto';
 export class UserRepository {
   private logger = new Logger(UserRepository.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   count(where: Prisma.UserWhereInput) {
     return this.prisma.extendedClient().user.count({
@@ -150,6 +150,13 @@ export class UserRepository {
       orderBy,
       skip,
       take,
+      include: {
+        upgradeOrders: {
+          where: {
+            status: 'ACTIVE'
+          }
+        }
+      }
     });
   }
 }

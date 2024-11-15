@@ -14,6 +14,7 @@ import { UserFilterDto } from 'src/user/dtos/user-filter.dto';
 import { plainToInstance } from 'class-transformer';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoVoteRepository } from 'src/database/repositories/photo-vote.repository';
+import { Constants } from 'src/infrastructure/utils/constants';
 
 @Injectable()
 export class PhotographerService {
@@ -24,7 +25,7 @@ export class PhotographerService {
     @Inject() private readonly photoRepository: PhotoRepository,
     @Inject() private readonly photoVoteRepository: PhotoVoteRepository,
     private readonly prisma: PrismaService,
-  ) {}
+  ) { }
   async getInfo(userId: string): Promise<UserEntity> {
     return this.prisma.user.findUnique({
       where: {
@@ -34,29 +35,46 @@ export class PhotographerService {
   }
 
   async getAllPhotographer(
+    userId: string,
     findAllRequestDto: FindAllPhotographerRequestDto,
   ): Promise<FindAllPhotographerResponseDto> {
     const keycloakUsers = await this.keycloakService.findUsersHasRole(
-      'photographer',
+      Constants.PHOTOGRAPHER_ROLE,
       0,
       -1,
     );
 
+    const where = findAllRequestDto.toWhere(userId)
+
+    console.log(where)
+
     const keycloakUserIds = keycloakUsers.map((u) => u.id);
 
     const count = await this.userRepository.count({
-      id: {
-        in: keycloakUserIds,
-      },
-      ...findAllRequestDto.toWhere(),
+      AND: [
+        {
+          id: {
+            in: keycloakUserIds,
+          },
+        },
+        {
+          ...where
+        }
+      ]
     });
 
     const photographers = await this.userRepository.findMany(
       {
-        id: {
-          in: keycloakUserIds,
-        },
-        ...findAllRequestDto.toWhere(),
+        AND: [
+          {
+            id: {
+              in: keycloakUserIds,
+            },
+          },
+          {
+            ...where
+          }
+        ]
       },
       findAllRequestDto.toOrderBy(),
       findAllRequestDto.toSkip(),
