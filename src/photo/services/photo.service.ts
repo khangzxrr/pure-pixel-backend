@@ -127,13 +127,19 @@ export class PhotoService {
 
     const availableRes = await this.getAvailablePhotoResolution(photo.id);
 
-    if (availableRes.findIndex((r) => r === shareRequest.size) < 0) {
+    if (
+      availableRes.findIndex(
+        (r) =>
+          r.width === shareRequest.size.width &&
+          r.height === shareRequest.size.height,
+      ) < 0
+    ) {
       throw new ChoosedShareQualityIsNotFoundException();
     }
 
     const shareUrl = this.bunnyService.getPresignedFile(
       photo.originalPhotoUrl,
-      `?width=${shareRequest.size}`,
+      `?width=${shareRequest.size.width}`,
     );
 
     return new SharePhotoResponseDto(shareRequest.size, shareUrl);
