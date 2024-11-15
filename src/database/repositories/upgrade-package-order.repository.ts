@@ -85,6 +85,13 @@ export class UpgradePackageOrderRepository {
         userId,
         status: 'ACTIVE',
       },
+      include: {
+        upgradePackageHistory: {
+          include: {
+            originalUpgradePackage: true,
+          },
+        },
+      },
     });
   }
 
