@@ -8,9 +8,15 @@ import { TransactionService } from './services/transaction.service';
 import { TransactionController } from './controllers/transaction.controller';
 import { StorageModule } from 'src/storage/storage.module';
 import { PaymentCleanUpCronJob } from './cronjobs/payment-clean-up.service';
+import { TransactionHandlerService } from './services/transaction-handler.service';
 
 @Module({
-  imports: [DatabaseModule, AuthenModule, StorageModule],
+  imports: [
+    DatabaseModule,
+    AuthenModule,
+    StorageModule,
+    TransactionHandlerService,
+  ],
   providers: [
     PaymentCleanUpCronJob,
     VietQrBasicStrategy,

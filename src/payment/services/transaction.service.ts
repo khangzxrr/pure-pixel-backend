@@ -1,9 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { TransactionRepository } from 'src/database/repositories/transaction.repository';
-import { TransactionNotFoundException } from '../exceptions/transaction-not-found.exception';
-import { NotBelongTransactionException } from '../exceptions/not-belong-transaction.exception';
 import { SepayService } from './sepay.service';
-import { PaymentUrlDto } from '../dtos/payment-url.dto';
 
 @Injectable()
 export class TransactionService {
