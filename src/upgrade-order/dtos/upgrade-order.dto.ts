@@ -1,37 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { UpgradeOrder } from '@prisma/client';
+import { UpgradeOrderStatus } from '@prisma/client';
+import { Exclude, Type } from 'class-transformer';
+import { ServiceTransactionDto } from 'src/payment/dtos/service-transaction.dto';
+import { UpgradePackageHistoryDto } from 'src/upgrade-package/dtos/upgrade-package-history.dto';
 
 export class UpgradeOrderDto {
-  @ApiProperty()
-  name: string;
-
-  @ApiProperty()
-  price: number;
-
-  @ApiProperty()
-  minOrderMonth: number;
-
-  @ApiProperty()
-  maxPhotoQuota: number;
-
-  @ApiProperty()
-  maxPackageCount: number;
-
-  @ApiProperty()
-  maxBookingPhotoQuota: number;
-
-  @ApiProperty()
-  maxBookingVideoQuota: number;
-
-  @ApiProperty()
-  descriptions: string[];
-
-  @ApiProperty()
-  expiredAt: Date;
-
-  @ApiProperty()
-  status: string;
-
   @ApiProperty()
   id: string;
 
@@ -42,19 +15,19 @@ export class UpgradeOrderDto {
   updatedAt: Date;
 
   @ApiProperty()
+  expiredAt: Date;
+
+  @Exclude()
   userId: string;
 
   @ApiProperty()
-  serviceTransactionId: string;
+  status: UpgradeOrderStatus;
 
   @ApiProperty()
-  upgradePackageHistoryId: string;
+  @Type(() => ServiceTransactionDto)
+  serviceTransaction: ServiceTransactionDto;
 
-  constructor({ ...data }: Partial<UpgradeOrder>) {
-    Object.assign(this, data);
-
-    if (data.status) {
-      this.status = data.status.toString();
-    }
-  }
+  @ApiProperty()
+  @Type(() => UpgradePackageHistoryDto)
+  upgradePackageHistory: UpgradePackageHistoryDto;
 }

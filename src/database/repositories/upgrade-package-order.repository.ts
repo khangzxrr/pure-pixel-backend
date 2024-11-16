@@ -79,7 +79,7 @@ export class UpgradePackageOrderRepository {
     });
   }
 
-  async findCurrentUpgradePackageByUserIdOrThrow(userId: string) {
+  async findCurrentUpgradePackageByUserId(userId: string) {
     return this.prisma.upgradeOrder.findFirst({
       where: {
         userId,
@@ -91,6 +91,11 @@ export class UpgradePackageOrderRepository {
             originalUpgradePackage: true,
           },
         },
+        serviceTransaction: {
+          include: {
+            transaction: true,
+          },
+        },
       },
     });
   }
@@ -100,15 +105,6 @@ export class UpgradePackageOrderRepository {
       where: {
         userId,
         status: 'PENDING',
-      },
-    });
-  }
-
-  async findCurrentUpgradePackageByUserId(userId: string) {
-    return this.prisma.upgradeOrder.findFirst({
-      where: {
-        userId,
-        status: 'ACTIVE',
       },
     });
   }
