@@ -79,6 +79,12 @@ export class UpgradeOrderService {
     }
 
     if (
+      upgradeTransferFeeRequestDto.totalMonths < upgradePackage.minOrderMonth
+    ) {
+      throw new TotalMonthLesserThanMinMonthException();
+    }
+
+    if (
       upgradePackage.id ===
       activatedUpgradeOrder?.upgradePackageHistory.originalUpgradePackageId
     ) {
@@ -165,8 +171,10 @@ export class UpgradeOrderService {
       .sub(discoutRemain);
 
     return {
-      remainPrice: remainPrice.gte(0) ? remainPrice.toNumber() : 0,
-      refundPrice: remainPrice.gte(0) ? 0 : remainPrice.abs().toNumber(),
+      remainPrice: remainPrice.gte(0) ? remainPrice.floor().toNumber() : 0,
+      refundPrice: remainPrice.gte(0)
+        ? 0
+        : remainPrice.abs().floor().toNumber(),
       timeSpanPassed: timeSpanRemainOfCurrentUpgradeOrder,
       discountPrice: discoutRemain.floor().toNumber(),
       maxiumDiscoutPrice: maxiumDiscoutPrice.toNumber(),
@@ -214,10 +222,6 @@ export class UpgradeOrderService {
       throw new NotValidExpireDateException();
     }
 
-    const calculatedPrice = upgradePackage.price.mul(
-      new Prisma.Decimal(requestUpgrade.totalMonths),
-    );
-
     const newUpgradeOrder = await this.prisma.$transaction(
       async (tx: Prisma.TransactionClient) => {
         const cancelOrderPromises = pendingOrders.map((po) =>
@@ -239,7 +243,7 @@ export class UpgradeOrderService {
             userId,
             upgradePackage,
             expiredDate,
-            calculatedPrice,
+            new Decimal(transferDto.remainPrice),
             'SEPAY',
             tx,
           );
@@ -260,7 +264,7 @@ export class UpgradeOrderService {
 
     const paymentDto = await this.sepayService.generatePayment(
       requestUpgradeResponse.transactionId,
-      calculatedPrice.toNumber(),
+      transferDto.remainPrice,
     );
 
     requestUpgradeResponse.mockQrCode = paymentDto.mockQrCode;
