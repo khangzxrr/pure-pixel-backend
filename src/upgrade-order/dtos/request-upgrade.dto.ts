@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsString, Max, Min } from 'class-validator';
+import { PaymentMethod } from '@prisma/client';
+import { IsEnum, IsNumber, IsString, Max, Min } from 'class-validator';
 
 export class RequestUpgradeDto {
   @ApiProperty({
@@ -15,4 +16,11 @@ export class RequestUpgradeDto {
   @Min(1)
   @Max(12)
   totalMonths: number;
+
+  @ApiProperty({
+    description: 'payment method',
+    enum: PaymentMethod,
+  })
+  @IsEnum(PaymentMethod)
+  paymentMethod: PaymentMethod;
 }

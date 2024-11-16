@@ -25,26 +25,23 @@ import { WithdrawalTransactionRepository } from 'src/database/repositories/withd
 import { DepositTransactionRepository } from 'src/database/repositories/deposit-transaction.repository';
 import { PrismaService } from 'src/prisma.service';
 import { plainToInstance } from 'class-transformer';
-import { UserToUserRepository } from 'src/database/repositories/user-to-user-transaction.repository';
+
 import { PaymentUrlDto } from '../dtos/payment-url.dto';
 import { TransactionNotInPendingException } from '../exceptions/transaction-not-in-pending.exception';
+import { TransactionHandlerService } from './transaction-handler.service';
 
 @Injectable()
 export class SepayService {
   constructor(
     @Inject()
-    private readonly serviceTransactionRepository: ServiceTransactionRepository,
-    @Inject()
     private readonly transactionRepository: TransactionRepository,
-    @Inject() private readonly databaseService: DatabaseService,
-    @Inject() private readonly keycloakService: KeycloakService,
-    @Inject() private readonly userRepository: UserRepository,
-    @Inject() private readonly userToUserRepository: UserToUserRepository,
     @Inject()
     private readonly withdrawalTransactionRepository: WithdrawalTransactionRepository,
     @Inject()
     private readonly depositTransactionRepository: DepositTransactionRepository,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    @Inject()
+    private readonly transactionHandlerService: TransactionHandlerService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -207,73 +204,6 @@ export class SepayService {
     return walletDto;
   }
 
-  async handleUpgradeToPhotographer(
-    userId: string,
-    serviceTransactionId: string,
-    sepay: SepayRequestDto,
-  ) {
-    const serviceTransaction = await this.serviceTransactionRepository.findById(
-      serviceTransactionId,
-      true,
-    );
-
-    const updateTransactionAndUpgradeOrderQuery =
-      this.serviceTransactionRepository.updateSuccessServiceTransactionAndActivateUpgradeOrder(
-        serviceTransactionId,
-        sepay,
-      );
-
-    const updateUserMaxQuotaQuery = this.userRepository.updateMaxQuotaByUserId(
-      userId,
-      serviceTransaction.upgradeOrder.upgradePackageHistory.maxPhotoQuota,
-      serviceTransaction.upgradeOrder.upgradePackageHistory.maxPackageCount,
-    );
-
-    await this.databaseService.applyTransactionMultipleQueries([
-      updateTransactionAndUpgradeOrderQuery,
-      updateUserMaxQuotaQuery,
-    ]);
-
-    await this.keycloakService.addRoleToUser(
-      userId,
-      Constants.PHOTOGRAPHER_ROLE,
-    );
-  }
-
-  async handleDeposit(transaction: Transaction, sepay: SepayRequestDto) {
-    return await this.transactionRepository.updateStatusAndPayload(
-      transaction.id,
-      'SUCCESS',
-      sepay,
-    );
-  }
-
-  async handleWithdrawal(transaction: Transaction, sepay: SepayRequestDto) {
-    return await this.transactionRepository.updateStatusAndPayload(
-      transaction.id,
-      'SUCCESS',
-      sepay,
-    );
-  }
-
-  async handleBuy(
-    transaction: Transaction,
-    fromUserTransactionId: string,
-    sepay: SepayRequestDto,
-  ) {
-    const fromUserTransaction = await this.userToUserRepository.getById(
-      fromUserTransactionId,
-    );
-
-    await this.userToUserRepository.markSucccessAndCreateToUserTransaction(
-      fromUserTransactionId,
-      sepay,
-      fromUserTransaction.toUserId,
-      transaction.fee,
-      transaction.amount,
-    );
-  }
-
   async processTransaction(sepay: SepayRequestDto) {
     const transactionId = sepay.content.replaceAll(' ', '-');
 
@@ -298,22 +228,25 @@ export class SepayService {
 
     switch (transaction.type) {
       case 'UPGRADE_TO_PHOTOGRAPHER':
-        await this.handleUpgradeToPhotographer(
+        await this.transactionHandlerService.handleUpgradeToPhotographer(
           transaction.userId,
           transaction.serviceTransaction.id,
           sepay,
         );
         break;
       case 'DEPOSIT':
-        await this.handleDeposit(transaction, sepay);
+        await this.transactionHandlerService.handleDeposit(transaction, sepay);
         break;
       case 'WITHDRAWAL':
-        await this.handleWithdrawal(transaction, sepay);
+        await this.transactionHandlerService.handleWithdrawal(
+          transaction,
+          sepay,
+        );
         break;
       case 'IMAGE_SELL':
         break;
       case 'IMAGE_BUY':
-        await this.handleBuy(
+        await this.transactionHandlerService.handleBuy(
           transaction,
           transaction.fromUserTransaction.id,
           sepay,

@@ -3,6 +3,8 @@ import {
   PaymentMethod,
   Prisma,
   PrismaPromise,
+  TransactionStatus,
+  UpgradeOrderStatus,
   UpgradePackage,
 } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
@@ -79,7 +81,7 @@ export class UpgradePackageOrderRepository {
     });
   }
 
-  async findCurrentUpgradePackageByUserIdOrThrow(userId: string) {
+  async findCurrentUpgradePackageByUserId(userId: string) {
     return this.prisma.upgradeOrder.findFirst({
       where: {
         userId,
@@ -89,6 +91,11 @@ export class UpgradePackageOrderRepository {
         upgradePackageHistory: {
           include: {
             originalUpgradePackage: true,
+          },
+        },
+        serviceTransaction: {
+          include: {
+            transaction: true,
           },
         },
       },
@@ -104,21 +111,15 @@ export class UpgradePackageOrderRepository {
     });
   }
 
-  async findCurrentUpgradePackageByUserId(userId: string) {
-    return this.prisma.upgradeOrder.findFirst({
-      where: {
-        userId,
-        status: 'ACTIVE',
-      },
-    });
-  }
-
   async createUpgradeOrder(
     userId: string,
     upgradePackage: UpgradePackage,
     expiredAt: Date,
-    calculatedPrice: Prisma.Decimal,
+    amount: Prisma.Decimal,
+    refundAmount: Prisma.Decimal,
     paymentMethod: PaymentMethod,
+    upgradeOrderStatus: UpgradeOrderStatus,
+    transactionStatus: TransactionStatus,
     tx: Prisma.TransactionClient,
   ) {
     return tx.upgradeOrder.create({
@@ -137,7 +138,7 @@ export class UpgradePackageOrderRepository {
       },
       data: {
         expiredAt,
-        status: 'PENDING',
+        status: upgradeOrderStatus,
         user: {
           connect: {
             id: userId,
@@ -168,9 +169,10 @@ export class UpgradePackageOrderRepository {
                   },
                 },
                 type: 'UPGRADE_TO_PHOTOGRAPHER',
-                amount: calculatedPrice,
+                amount,
+                fee: refundAmount,
                 paymentMethod,
-                status: 'PENDING',
+                status: transactionStatus,
                 paymentPayload: {},
               },
             },

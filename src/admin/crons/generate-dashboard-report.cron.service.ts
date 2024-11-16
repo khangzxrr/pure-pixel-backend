@@ -84,7 +84,8 @@ export class GenerateDashboardReportService {
       },
     );
     const revenueFromUpgradePackage = successUpgradeTransactions.reduce(
-      (acc, current) => acc.add(current.amount),
+      //we have to add current and fee because some upgrade transaction may have refund price which converted to fee
+      (acc, current) => acc.add(current.amount).add(current.fee),
       new Decimal(0),
     );
 
