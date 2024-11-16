@@ -222,6 +222,13 @@ export class UpgradeOrderService {
       throw new NotValidExpireDateException();
     }
 
+    if (requestUpgrade.paymentMethod === 'WALLET') {
+      await this.sepayService.validateWalletBalanceIsEnough(
+        userId,
+        transferDto.remainPrice,
+      );
+    }
+
     const newUpgradeOrder = await this.prisma.$transaction(
       async (tx: Prisma.TransactionClient) => {
         const cancelOrderPromises = pendingOrders.map((po) =>
@@ -246,7 +253,9 @@ export class UpgradeOrderService {
             new Decimal(transferDto.remainPrice),
             //convert discout
             new Decimal(transferDto.discountPrice),
-            'SEPAY',
+            requestUpgrade.paymentMethod,
+            requestUpgrade.paymentMethod === 'WALLET' ? 'ACTIVE' : 'PENDING',
+            requestUpgrade.paymentMethod === 'WALLET' ? 'SUCCESS' : 'PENDING',
             tx,
           );
 
@@ -264,13 +273,15 @@ export class UpgradeOrderService {
     requestUpgradeResponse.upgradePackageHistoryId =
       newUpgradeOrder.upgradePackageHistory.id;
 
-    const paymentDto = await this.sepayService.generatePayment(
-      requestUpgradeResponse.transactionId,
-      transferDto.remainPrice,
-    );
+    if (requestUpgrade.paymentMethod === 'SEPAY') {
+      const paymentDto = await this.sepayService.generatePayment(
+        requestUpgradeResponse.transactionId,
+        transferDto.remainPrice,
+      );
 
-    requestUpgradeResponse.mockQrCode = paymentDto.mockQrCode;
-    requestUpgradeResponse.paymentUrl = paymentDto.paymentUrl;
+      requestUpgradeResponse.mockQrCode = paymentDto.mockQrCode;
+      requestUpgradeResponse.paymentUrl = paymentDto.paymentUrl;
+    }
 
     return requestUpgradeResponse;
   }

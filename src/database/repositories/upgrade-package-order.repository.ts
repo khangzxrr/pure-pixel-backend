@@ -3,6 +3,8 @@ import {
   PaymentMethod,
   Prisma,
   PrismaPromise,
+  TransactionStatus,
+  UpgradeOrderStatus,
   UpgradePackage,
 } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
@@ -116,6 +118,8 @@ export class UpgradePackageOrderRepository {
     amount: Prisma.Decimal,
     refundAmount: Prisma.Decimal,
     paymentMethod: PaymentMethod,
+    upgradeOrderStatus: UpgradeOrderStatus,
+    transactionStatus: TransactionStatus,
     tx: Prisma.TransactionClient,
   ) {
     return tx.upgradeOrder.create({
@@ -134,7 +138,7 @@ export class UpgradePackageOrderRepository {
       },
       data: {
         expiredAt,
-        status: 'PENDING',
+        status: upgradeOrderStatus,
         user: {
           connect: {
             id: userId,
@@ -168,7 +172,7 @@ export class UpgradePackageOrderRepository {
                 amount,
                 fee: refundAmount,
                 paymentMethod,
-                status: 'PENDING',
+                status: transactionStatus,
                 paymentPayload: {},
               },
             },
