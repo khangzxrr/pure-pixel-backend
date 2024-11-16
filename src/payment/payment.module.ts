@@ -11,16 +11,12 @@ import { PaymentCleanUpCronJob } from './cronjobs/payment-clean-up.service';
 import { TransactionHandlerService } from './services/transaction-handler.service';
 
 @Module({
-  imports: [
-    DatabaseModule,
-    AuthenModule,
-    StorageModule,
-    TransactionHandlerService,
-  ],
+  imports: [DatabaseModule, AuthenModule, StorageModule],
   providers: [
     PaymentCleanUpCronJob,
     VietQrBasicStrategy,
     SepayService,
+    TransactionHandlerService,
     TransactionService,
   ],
   exports: [SepayService],

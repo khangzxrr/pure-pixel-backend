@@ -244,6 +244,8 @@ export class UpgradeOrderService {
             upgradePackage,
             expiredDate,
             new Decimal(transferDto.remainPrice),
+            //convert discout
+            new Decimal(transferDto.discountPrice),
             'SEPAY',
             tx,
           );
