@@ -20,7 +20,6 @@ import { SepayService } from '../services/sepay.service';
 export class TransactionController {
   constructor(
     @Inject() private readonly transactionService: TransactionService,
-    @Inject() private readonly sepayService: SepayService,
   ) {}
 
   @Get('/transaction/:id')

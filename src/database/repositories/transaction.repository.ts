@@ -61,6 +61,7 @@ export class TransactionRepository {
       skip,
       take,
       include: {
+        user: true,
         toUserTransaction: true,
         fromUserTransaction: true,
         depositTransaction: true,

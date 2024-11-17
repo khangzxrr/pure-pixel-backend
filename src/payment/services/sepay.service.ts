@@ -99,8 +99,6 @@ export class SepayService {
     userId: string,
     findAllTransactionDto: FindAllTransactionDto,
   ): Promise<PagingPaginatedResposneDto<TransactionDto>> {
-    console.log(findAllTransactionDto);
-
     const where = {
       type: findAllTransactionDto.type,
       status: findAllTransactionDto.status,
