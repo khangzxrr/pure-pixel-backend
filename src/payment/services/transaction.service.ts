@@ -34,8 +34,6 @@ export class TransactionService {
         status: updateDto.status,
       },
     );
-
-    return plainToInstance(TransactionDto, updatedTransaction);
   }
 
   async findAll(findAllDto: FindAllTransactionDto) {
@@ -78,7 +76,15 @@ export class TransactionService {
     return response;
   }
 
-  async findById(userId: string, id: string) {
+  async findById(id: string) {
+    const transaction = await this.transactionRepository.findUniqueOrThrow({
+      id,
+    });
+
+    return plainToInstance(TransactionDto, transaction);
+  }
+
+  async findByUserIdAndId(userId: string, id: string) {
     const transaction = await this.transactionRepository.findUniqueOrThrow({
       id,
       userId,

@@ -36,7 +36,7 @@ export class ManageTransactionController {
     return await this.transactionService.findAll(findAllDto);
   }
 
-  @Patch('id')
+  @Patch(':id')
   @ApiOperation({
     summary: 'update transaction by id',
   })
@@ -48,5 +48,16 @@ export class ManageTransactionController {
     @Body() updateDto: TransactionUpdateDto,
   ) {
     return await this.transactionService.update(id, updateDto);
+  }
+
+  @Get(':id')
+  @ApiOperation({
+    summary: 'get transaction by id',
+  })
+  @ApiOkResponse({
+    type: TransactionDto,
+  })
+  async findById(@Param('id') id: string) {
+    return await this.transactionService.findById(id);
   }
 }
