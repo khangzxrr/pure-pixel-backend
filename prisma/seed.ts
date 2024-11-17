@@ -12,6 +12,7 @@ async function main() {
   };
 
   const basicUpgradePackage: Prisma.UpgradePackageCreateInput = {
+    id: 'a384f1c1-0cf9-462c-b777-0cd46defc9bc',
     name: 'Cơ bản',
     minOrderMonth: 3,
     summary: 'đây là mô tả tóm tắt,...',
@@ -23,6 +24,7 @@ async function main() {
   };
 
   const premiumUpgradePackage: Prisma.UpgradePackageCreateInput = {
+    id: 'aca2f420-9d03-4cd1-934d-7d1a1a318804',
     name: 'Nâng cao',
     summary: 'đây là mô tả tóm tắt,...',
     minOrderMonth: 6,
@@ -34,6 +36,7 @@ async function main() {
   };
 
   const signatureUpgradePackage: Prisma.UpgradePackageCreateInput = {
+    id: 'a53c55cb-9376-4038-99e1-2ba9f233d0ec',
     name: 'Cao cấp',
     minOrderMonth: 12,
     summary: 'đây là mô tả tóm tắt,...',
@@ -60,7 +63,7 @@ async function main() {
   //insert signaure package
   await prisma.upgradePackage.upsert({
     where: {
-      name: signatureUpgradePackage.name,
+      id: signatureUpgradePackage.id,
     },
     update: {
       ...signatureUpgradePackage,
@@ -69,7 +72,7 @@ async function main() {
   });
   await prisma.upgradePackage.upsert({
     where: {
-      name: premiumUpgradePackage.name,
+      id: premiumUpgradePackage.id,
     },
     update: {
       ...premiumUpgradePackage,
@@ -78,7 +81,7 @@ async function main() {
   });
   await prisma.upgradePackage.upsert({
     where: {
-      name: basicUpgradePackage.name,
+      id: basicUpgradePackage.id,
     },
     update: {
       ...basicUpgradePackage,
