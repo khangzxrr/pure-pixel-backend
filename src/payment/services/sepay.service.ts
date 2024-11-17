@@ -3,11 +3,6 @@ import { TransactionRepository } from 'src/database/repositories/transaction.rep
 import { SepayRequestDto } from '../dtos/sepay.request.dto';
 import { TransactionNotFoundException } from '../exceptions/transaction-not-found.exception';
 import { AmountIsNotEqualException } from '../exceptions/amount-is-not-equal.exception';
-import { KeycloakService } from 'src/authen/services/keycloak.service';
-import { Constants } from 'src/infrastructure/utils/constants';
-import { DatabaseService } from 'src/database/database.service';
-import { UserRepository } from 'src/database/repositories/user.repository';
-import { ServiceTransactionRepository } from 'src/database/repositories/service-transaction.repository';
 
 import * as QRCode from 'qrcode';
 import { Transaction } from '@prisma/client';
@@ -18,7 +13,7 @@ import { CreateDepositResponseDto } from 'src/user/dtos/rest/create-deposit.resp
 import { CreateWithdrawalRequestDto } from 'src/user/dtos/rest/create-withdrawal.request.dto';
 import { CreateWithdrawalResponseDto } from 'src/user/dtos/rest/create-withdrawal.response.dto';
 import { TransactionDto } from 'src/user/dtos/transaction.dto';
-import { FindAllTransactionDto } from 'src/user/dtos/rest/find-all-transaction.dto';
+import { FindAllTransactionDto } from 'src/payment/dtos/rest/find-all-transaction.dto';
 import { WalletDto } from 'src/user/dtos/wallet.dto';
 import { NotEnoughBalanceException } from 'src/user/exceptions/not-enought-balance.exception';
 import { WithdrawalTransactionRepository } from 'src/database/repositories/withdrawal-transaction.repository';
