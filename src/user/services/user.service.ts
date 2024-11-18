@@ -126,7 +126,7 @@ export class UserService {
       return;
     }
 
-    const users = await this.userRepository.findMany({}, []);
+    const users = await this.userRepository.findMany({}, [], {});
 
     users.forEach(async (u) => {
       const keycloakUser = await this.keycloakService.upsert(
@@ -205,6 +205,7 @@ export class UserService {
         },
       },
       [],
+      {},
     );
 
     const userDtoPromises = users.map(async (u) => {

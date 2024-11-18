@@ -139,8 +139,8 @@ model User {
   comments Comment[]
   votes    Vote[]
 
-  followers  Follow[] @relation("follower")
-  followings Follow[] @relation("following")
+  followers  Follow[] @relation("following")
+  followings Follow[] @relation("follower")
 
   bankInfos BankInfo[]
 
