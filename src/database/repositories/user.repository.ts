@@ -9,6 +9,26 @@ import { UserFilterDto } from 'src/user/dtos/user-filter.dto';
 export class UserRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  rawCount(
+    userId: string,
+    ids: string[],
+    search?: string,
+    isFollowed?: boolean,
+  ) {
+    if (isFollowed) {
+      return this.prisma.$queryRaw`SELECT COUNT(*)
+                FROM "public"."User" INNER JOIN "public"."Follow"
+                ON public."User"."id" = public."Follow"."followingId"  
+                WHERE id IN (${Prisma.join(ids)})
+                AND "normalizedName" LIKE '%${search}%
+                AND "followerId" = '${userId}'`;
+    }
+
+    return this.prisma.$queryRaw`SELECT COUNT(*) FROM "public"."User"
+                WHERE id IN (${Prisma.join(ids)})
+                AND "normalizedName" LIKE '%${search}%`;
+  }
+
   count(where: Prisma.UserWhereInput) {
     return this.prisma.extendedClient().user.count({
       where,
@@ -146,8 +166,8 @@ export class UserRepository {
   ) {
     return this.prisma.extendedClient().user.findMany({
       where,
-      orderBy,
       include,
+      orderBy,
       skip,
       take,
     });

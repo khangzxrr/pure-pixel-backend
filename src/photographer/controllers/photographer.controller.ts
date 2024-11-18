@@ -58,8 +58,14 @@ export class PhotographerController {
   })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Public(false)
-  async getPhotographerProfile(@Param('id') id: string) {
-    return await this.photographerService.getPhotographerProfileById(id);
+  async getPhotographerProfile(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Param('id') id: string,
+  ) {
+    return await this.photographerService.getPhotographerProfileById(
+      user ? user.sub : '',
+      id,
+    );
   }
 
   @Get('/me/photo')

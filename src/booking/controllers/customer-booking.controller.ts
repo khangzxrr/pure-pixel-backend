@@ -6,6 +6,8 @@ import {
   Param,
   Post,
   Query,
+  Res,
+  StreamableFile,
   UseGuards,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -41,6 +43,26 @@ export class CustomerBookingController {
     @Query() findallDto: BookingFindAllRequestDto,
   ) {
     return await this.bookingService.findAllByUserId(user.sub, findallDto);
+  }
+
+  @Get(':bookingId/download-all')
+  @ApiOperation({
+    summary: 'compress to zip and download (contain all photos) by bookingId',
+  })
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
+  async downloadAll(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Param('bookingId') bookingId: string,
+  ) {
+    const buffer = await this.bookingService.compressZip(user.sub, bookingId);
+
+    const stream = new StreamableFile(buffer, {
+      disposition: `attachment; filename="${bookingId}.zip"`,
+      type: 'application/zip',
+    });
+
+    return stream;
   }
 
   @Get(':bookingId')

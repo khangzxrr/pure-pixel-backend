@@ -48,6 +48,15 @@ export class PhotographerService {
 
     const keycloakUserIds = keycloakUsers.map((u) => u.id);
 
+    const rawCount = await this.userRepository.rawCount(
+      userId,
+      keycloakUserIds,
+      findAllRequestDto.search,
+      findAllRequestDto.isFollowed,
+    );
+
+    console.log(rawCount);
+
     const count = await this.userRepository.count({
       AND: [
         {
@@ -119,7 +128,7 @@ export class PhotographerService {
     );
   }
 
-  async getPhotographerProfileById(id: string) {
+  async getPhotographerProfileById(userId: string, id: string) {
     const userFilterDto = new UserFilterDto();
     userFilterDto.id = id;
 
@@ -129,6 +138,17 @@ export class PhotographerService {
           followers: true,
           followings: true,
           photos: true,
+        },
+      },
+
+      followers: {
+        where: {
+          followerId: userId,
+        },
+      },
+      followings: {
+        where: {
+          followingId: userId,
         },
       },
     });
