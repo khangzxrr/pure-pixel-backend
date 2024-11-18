@@ -23,8 +23,6 @@ import { BookingBillItemService } from '../services/bill-item.service';
 import { BookingBillItemFindAllResponseDto } from '../dtos/rest/booking-bill-item-find-all.response.dto';
 import { CreatePhotoshootPackageReviewDto } from 'src/photoshoot-package/dtos/rest/create-photoshoot-package-review.dto';
 import { PhotoshootPackageReviewDto } from 'src/photoshoot-package/dtos/photoshoot-package-review.dto';
-import { response, Response } from 'express';
-import { Readable } from 'stream';
 
 @Controller('customer/booking')
 @ApiTags('customer-booking')
