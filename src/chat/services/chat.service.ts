@@ -20,6 +20,7 @@ export class ChatService {
     const users = await this.userRepository.findMany(
       {},
       [],
+      {},
       0,
       Number.MAX_VALUE,
     );

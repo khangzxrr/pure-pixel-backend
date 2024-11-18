@@ -45,6 +45,13 @@ export class FindAllPhotographerRequestDto extends PagingPaginatedRequestDto {
   @IsEnum(Prisma.SortOrder)
   orderByVoteCount?: Prisma.SortOrder;
 
+  @ApiPropertyOptional({
+    enum: Prisma.SortOrder,
+  })
+  @IsOptional()
+  @IsEnum(Prisma.SortOrder)
+  orderByFollower?: Prisma.SortOrder;
+
   toWhere(userId: string) {
     const where: Prisma.UserWhereInput = {};
 
@@ -58,18 +65,17 @@ export class FindAllPhotographerRequestDto extends PagingPaginatedRequestDto {
       if (this.isFollowed) {
         where.followings = {
           some: {
-            followerId: userId
-          }
+            followerId: userId,
+          },
         };
       } else {
         where.followings = {
           none: {
-            followerId: userId
-          }
-        }
+            followerId: userId,
+          },
+        };
       }
     }
-
 
     return where;
   }
@@ -87,6 +93,14 @@ export class FindAllPhotographerRequestDto extends PagingPaginatedRequestDto {
       orderBys.push({
         photos: {
           _count: this.orderByPhotoCount,
+        },
+      });
+    }
+
+    if (this.orderByFollower) {
+      orderBys.push({
+        followers: {
+          _count: this.orderByFollower,
         },
       });
     }

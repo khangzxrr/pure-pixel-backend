@@ -41,14 +41,14 @@ export class FollowingService {
         },
       },
       {
-        following: {
-          connect: {
-            id: followingId,
-          },
-        },
         follower: {
           connect: {
             id: followerId,
+          },
+        },
+        following: {
+          connect: {
+            id: followingId,
           },
         },
       },
