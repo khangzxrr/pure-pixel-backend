@@ -9,7 +9,7 @@ import { PhotoBuyResponseDto } from '../dtos/rest/photo-buy.response.dto';
 import { SignedPhotoBuyDto } from '../dtos/rest/signed-photo-buy.response.dto';
 import { CannotBuyOwnedPhotoException } from '../exceptions/cannot-buy-owned-photo.exception';
 import { ExistSuccessedPhotoBuyException } from '../exceptions/exist-photo-buy-with-choosed-resolution.exception';
-import { PrismaPromise } from '@prisma/client';
+import { Prisma, PrismaPromise } from '@prisma/client';
 import { PhotoSellDto } from '../dtos/photo-sell.dto';
 import { PhotoService } from './photo.service';
 import { PhotoSellPriceTagRepository } from 'src/database/repositories/photo-sell-price-tag.repository';
@@ -21,6 +21,8 @@ import { BuyPhotoRequestDto } from '../dtos/rest/buy-photo.request.dto';
 import { SepayService } from 'src/payment/services/sepay.service';
 
 import { UserToUserRepository } from 'src/database/repositories/user-to-user-transaction.repository';
+import { PhotoBuyFindAllDto } from '../dtos/rest/photo-buy-find-all.dto';
+import { PhotoBuyFindAllResponseDto } from '../dtos/rest/photo-buy-find-all.response.dto';
 
 @Injectable()
 export class PhotoExchangeService {
@@ -39,21 +41,18 @@ export class PhotoExchangeService {
     @Inject() private readonly sepayService: SepayService,
   ) {}
 
-  async getAllPreviousBuyPhoto(userId: string) {
-    //TODO: paging!
-    const photos = await this.photoRepository.findAll(
-      {
-        photoSellings: {
-          some: {
-            photoSellHistories: {
-              some: {
-                photoBuy: {
-                  some: {
-                    buyerId: userId,
-                    userToUserTransaction: {
-                      fromUserTransaction: {
-                        status: 'SUCCESS',
-                      },
+  async getAllPreviousBuyPhoto(userId: string, findAllDto: PhotoBuyFindAllDto) {
+    const where: Prisma.PhotoWhereInput = {
+      photoSellings: {
+        some: {
+          photoSellHistories: {
+            some: {
+              photoBuy: {
+                some: {
+                  buyerId: userId,
+                  userToUserTransaction: {
+                    fromUserTransaction: {
+                      status: 'SUCCESS',
                     },
                   },
                 },
@@ -62,9 +61,14 @@ export class PhotoExchangeService {
           },
         },
       },
+    };
+
+    const count = await this.photoRepository.count(where);
+    const photos = await this.photoRepository.findAll(
+      where,
       [],
-      0,
-      -1,
+      findAllDto.toSkip(),
+      findAllDto.limit,
     );
 
     const signedPhotoPromises = photos.map((p) =>
@@ -72,7 +76,13 @@ export class PhotoExchangeService {
     );
     const signedPhotos = await Promise.all(signedPhotoPromises);
 
-    return signedPhotos;
+    const response = new PhotoBuyFindAllResponseDto(
+      findAllDto.limit,
+      count,
+      signedPhotos,
+    );
+
+    return response;
   }
 
   async downloadBoughtPhoto(
