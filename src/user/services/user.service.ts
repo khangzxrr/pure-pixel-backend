@@ -20,15 +20,13 @@ import { UserFindAllResponseDto } from '../dtos/rest/user-find-all.response.dto'
 import { MeDto } from '../dtos/me.dto';
 import { UserInReport } from 'src/database/types/user';
 
-
 @Injectable()
 export class UserService {
   constructor(
     @Inject() private readonly userRepository: UserRepository,
     @Inject() private readonly bunnyService: BunnyService,
     @Inject() private readonly keycloakService: KeycloakService,
-  ) { }
-
+  ) {}
 
   async update(id: string, updateDto: UpdateUserDto) {
     try {
@@ -100,10 +98,7 @@ export class UserService {
     const keycloakUserCount = await this.keycloakService.countUsers();
     const applicationUserCount = await this.userRepository.count({});
 
-    console.log(keycloakUserCount, applicationUserCount)
-
     if (keycloakUserCount > applicationUserCount) {
-
       while (true) {
         const keycloakUsers = await this.keycloakService.findUsers(skip, -1);
 
@@ -182,13 +177,13 @@ export class UserService {
       phonenumber: updateProfileDto.phonenumber,
       socialLinks: updateProfileDto.socialLinks
         ? {
-          set: updateProfileDto.socialLinks,
-        }
+            set: updateProfileDto.socialLinks,
+          }
         : undefined,
       expertises: updateProfileDto.expertises
         ? {
-          set: updateProfileDto.expertises,
-        }
+            set: updateProfileDto.expertises,
+          }
         : undefined,
     });
 
@@ -243,7 +238,7 @@ export class UserService {
               deletedAt: null,
             },
           },
-          cameras: true,
+          cameraOnUsers: true,
           bookings: true,
           comments: true,
           followers: true,
@@ -277,7 +272,7 @@ export class UserService {
               deletedAt: null,
             },
           },
-          cameras: true,
+          cameraOnUsers: true,
           bookings: true,
           comments: true,
           followers: true,

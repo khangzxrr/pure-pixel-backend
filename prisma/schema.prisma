@@ -160,7 +160,7 @@ model User {
   bookmarks     Bookmark[]
   chatrooms     Chatroom[]
   chatmessages  ChatMessage[]
-  cameras       Camera[]
+ 
   cameraOnUsers CameraOnUsers[]
 
   newsfeeds               Newsfeed[]
@@ -423,7 +423,7 @@ model Camera {
   cameraMakerId String
 
   photos Photo[]
-  users  User[]
+
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
