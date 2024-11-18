@@ -98,8 +98,6 @@ export class UserService {
     const keycloakUserCount = await this.keycloakService.countUsers();
     const applicationUserCount = await this.userRepository.count({});
 
-    console.log(keycloakUserCount, applicationUserCount);
-
     if (keycloakUserCount > applicationUserCount) {
       while (true) {
         const keycloakUsers = await this.keycloakService.findUsers(skip, -1);
@@ -241,7 +239,7 @@ export class UserService {
               deletedAt: null,
             },
           },
-          cameras: true,
+          cameraOnUsers: true,
           bookings: true,
           comments: true,
           followers: true,
@@ -275,7 +273,7 @@ export class UserService {
               deletedAt: null,
             },
           },
-          cameras: true,
+          cameraOnUsers: true,
           bookings: true,
           comments: true,
           followers: true,
