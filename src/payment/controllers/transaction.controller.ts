@@ -13,14 +13,12 @@ import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
 import { PaymentUrlDto } from '../dtos/payment-url.dto';
-import { SepayService } from '../services/sepay.service';
 
 @Controller('payment')
 @ApiTags('payment')
 export class TransactionController {
   constructor(
     @Inject() private readonly transactionService: TransactionService,
-    @Inject() private readonly sepayService: SepayService,
   ) {}
 
   @Get('/transaction/:id')
@@ -30,7 +28,7 @@ export class TransactionController {
     @AuthenticatedUser() user: ParsedUserDto,
     @Param('id') id: string,
   ) {
-    return await this.transactionService.findById(user.sub, id);
+    return await this.transactionService.findByUserIdAndId(user.sub, id);
   }
 
   @Post('/transaction/:id/generate-payment-url')

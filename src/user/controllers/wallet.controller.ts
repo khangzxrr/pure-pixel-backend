@@ -14,7 +14,7 @@ import { WalletDto } from '../dtos/wallet.dto';
 import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.response.dto';
 import { TransactionDto } from '../dtos/transaction.dto';
-import { FindAllTransactionDto } from '../dtos/rest/find-all-transaction.dto';
+import { FindAllTransactionDto } from '../../payment/dtos/rest/find-all-transaction.dto';
 import { CreateDepositRequestDto } from '../dtos/rest/create-deposit.request.dto';
 import { CreateDepositResponseDto } from '../dtos/rest/create-deposit.response.dto';
 import { CreateWithdrawalResponseDto } from '../dtos/rest/create-withdrawal.response.dto';

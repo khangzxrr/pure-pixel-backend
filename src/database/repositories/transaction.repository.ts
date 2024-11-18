@@ -61,6 +61,7 @@ export class TransactionRepository {
       skip,
       take,
       include: {
+        user: true,
         toUserTransaction: true,
         fromUserTransaction: true,
         depositTransaction: true,
@@ -74,32 +75,14 @@ export class TransactionRepository {
   async findUniqueOrThrow(where: Prisma.TransactionWhereUniqueInput) {
     return this.prisma.transaction.findUniqueOrThrow({
       where,
+
       include: {
-        toUserTransaction: {
-          select: {
-            id: true,
-          },
-        },
-        fromUserTransaction: {
-          select: {
-            id: true,
-          },
-        },
-        depositTransaction: {
-          select: {
-            id: true,
-          },
-        },
-        serviceTransaction: {
-          select: {
-            id: true,
-          },
-        },
-        withdrawalTransaction: {
-          select: {
-            id: true,
-          },
-        },
+        user: true,
+        toUserTransaction: true,
+        fromUserTransaction: true,
+        depositTransaction: true,
+        serviceTransaction: true,
+        withdrawalTransaction: true,
       },
     });
   }
