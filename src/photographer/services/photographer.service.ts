@@ -48,14 +48,14 @@ export class PhotographerService {
 
     const keycloakUserIds = keycloakUsers.map((u) => u.id);
 
-    const rawCount = await this.userRepository.rawCount(
-      userId,
-      keycloakUserIds,
-      findAllRequestDto.search,
-      findAllRequestDto.isFollowed,
-    );
+    // const rawCount = await this.userRepository.rawCount(
+    //   userId,
+    //   keycloakUserIds,
+    //   findAllRequestDto.search,
+    //   findAllRequestDto.isFollowed,
+    // );
 
-    console.log(rawCount);
+    // console.log(rawCount);
 
     const count = await this.userRepository.count({
       AND: [
