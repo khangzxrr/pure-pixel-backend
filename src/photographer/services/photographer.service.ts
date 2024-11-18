@@ -76,14 +76,20 @@ export class PhotographerService {
       },
       findAllRequestDto.toOrderBy(),
       {
-        followers: true,
-        followings: true,
+        followers: {
+          where: {
+            followerId: userId,
+          },
+        },
+        followings: {
+          where: {
+            followingId: userId,
+          },
+        },
       },
       findAllRequestDto.toSkip(),
       findAllRequestDto.limit,
     );
-
-    console.log(photographers);
 
     const dtoPromises = photographers.map(async (p) => {
       const dto = plainToInstance(PhotographerDTO, p);
