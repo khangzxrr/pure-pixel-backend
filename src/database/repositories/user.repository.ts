@@ -1,5 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Prisma, User } from '@prisma/client';
+import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 import { UserEntity } from 'src/user/entities/user.entity';
 import { DuplicatedUserIdException } from '../exceptions/duplicatedUserId.exception';
@@ -7,9 +7,7 @@ import { UserFilterDto } from 'src/user/dtos/user-filter.dto';
 
 @Injectable()
 export class UserRepository {
-  private logger = new Logger(UserRepository.name);
-
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   count(where: Prisma.UserWhereInput) {
     return this.prisma.extendedClient().user.count({
@@ -142,21 +140,16 @@ export class UserRepository {
   async findMany(
     where: Prisma.UserWhereInput,
     orderBy: Prisma.UserOrderByWithRelationInput[],
+    include: Prisma.UserInclude,
     skip?: number,
     take?: number,
   ) {
     return this.prisma.extendedClient().user.findMany({
       where,
       orderBy,
+      include,
       skip,
       take,
-      include: {
-        upgradeOrders: {
-          where: {
-            status: 'ACTIVE'
-          }
-        }
-      }
     });
   }
 }
