@@ -30,6 +30,8 @@ import { PhotoshootPackageReviewRepository } from 'src/database/repositories/pho
 import { CreatePhotoshootPackageReviewDto } from 'src/photoshoot-package/dtos/rest/create-photoshoot-package-review.dto';
 import { Decimal } from '@prisma/client/runtime/library';
 import { CannotBookOwnedPhotoshootPackageException } from '../exceptions/cannot-book-owned-photoshoot-package.exception';
+import * as AdmZip from 'adm-zip';
+import { PhotoProcessService } from 'src/photo/services/photo-process.service';
 
 @Injectable()
 export class BookingService {
@@ -43,6 +45,7 @@ export class BookingService {
     @Inject() private readonly photoService: PhotoService,
     @Inject() private readonly photoRepository: PhotoRepository,
     @Inject() private readonly bunnyService: BunnyService,
+    @Inject() private readonly photoProcessService: PhotoProcessService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -238,6 +241,31 @@ export class BookingService {
     }
 
     return await this.signBookingDetail(booking);
+  }
+
+  async compressZip(userId: string, bookingId: string) {
+    const booking = await this.bookingRepository.findUniqueOrThrow({
+      id: bookingId,
+    });
+
+    if (
+      booking.originalPhotoshootPackage.userId !== userId &&
+      booking.userId !== userId
+    ) {
+      throw new BookingNotBelongException();
+    }
+
+    const zip = new AdmZip();
+
+    for (const photo of booking.photos) {
+      const buffer = await this.photoProcessService.getBufferFromKey(
+        photo.originalPhotoUrl,
+      );
+
+      zip.addFile(photo.originalPhotoUrl, buffer);
+    }
+
+    return zip.toBuffer();
   }
 
   async findAllByUserId(userId: string, findallDto: BookingFindAllRequestDto) {
