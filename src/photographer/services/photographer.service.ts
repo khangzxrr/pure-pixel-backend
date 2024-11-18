@@ -119,7 +119,7 @@ export class PhotographerService {
     );
   }
 
-  async getPhotographerProfileById(id: string) {
+  async getPhotographerProfileById(userId: string, id: string) {
     const userFilterDto = new UserFilterDto();
     userFilterDto.id = id;
 
@@ -129,6 +129,17 @@ export class PhotographerService {
           followers: true,
           followings: true,
           photos: true,
+        },
+      },
+
+      followers: {
+        where: {
+          followerId: userId,
+        },
+      },
+      followings: {
+        where: {
+          followingId: userId,
         },
       },
     });
