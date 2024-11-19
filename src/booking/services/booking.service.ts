@@ -278,6 +278,7 @@ export class BookingService {
         findallDto.toSkip(),
         findallDto.limit,
         findallDto.toWhere(),
+        findallDto.toOrderBy(),
       );
 
     const dtoPromises = bookings.map(async (b) => await this.signBooking(b));
@@ -424,6 +425,7 @@ export class BookingService {
         findallDto.toSkip(),
         findallDto.limit,
         findallDto.toWhere(),
+        findallDto.toOrderBy(),
       );
 
     const dtoPromises = bookings.map(async (b) => await this.signBooking(b));

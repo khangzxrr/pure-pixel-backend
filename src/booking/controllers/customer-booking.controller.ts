@@ -6,7 +6,6 @@ import {
   Param,
   Post,
   Query,
-  Res,
   StreamableFile,
   UseGuards,
 } from '@nestjs/common';

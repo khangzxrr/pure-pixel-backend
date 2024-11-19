@@ -16,6 +16,7 @@ import { Decimal } from '@prisma/client/runtime/library';
 import { UpgradePackageDto } from 'src/upgrade-package/dtos/upgrade-package.dto';
 import { CannotTransferToTheSameUpgradePackage } from '../exceptions/cannot-transfer-to-the-same-upgrade-package.exception';
 import { UpgradeTransferFeeRequestDto } from '../dtos/rest/upgrade-transfer-fee.request.dto';
+import { TransactionHandlerService } from 'src/payment/services/transaction-handler.service';
 
 @Injectable()
 export class UpgradeOrderService {
@@ -26,6 +27,8 @@ export class UpgradeOrderService {
     private readonly upgradePackageRepository: UpgradePackageRepository,
     @Inject()
     private readonly sepayService: SepayService,
+    @Inject()
+    private readonly transactionHandlerService: TransactionHandlerService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -281,6 +284,15 @@ export class UpgradeOrderService {
 
       requestUpgradeResponse.mockQrCode = paymentDto.mockQrCode;
       requestUpgradeResponse.paymentUrl = paymentDto.paymentUrl;
+
+      return requestUpgradeResponse;
+    }
+    if (requestUpgrade.paymentMethod === 'WALLET') {
+      await this.transactionHandlerService.handleUpgradeToPhotographer(
+        userId,
+        newUpgradeOrder.serviceTransaction.transactionId,
+        transferDto,
+      );
     }
 
     return requestUpgradeResponse;

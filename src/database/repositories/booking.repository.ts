@@ -53,6 +53,11 @@ export class BookingRepository {
         },
         photoshootPackageHistory: true,
         billItems: true,
+        reviews: {
+          include: {
+            user: true,
+          },
+        },
         photos: {
           include: {
             camera: true,
@@ -71,15 +76,22 @@ export class BookingRepository {
     skip: number,
     take: number,
     where: Prisma.BookingWhereInput,
+    orderBy: Prisma.BookingOrderByWithRelationInput[],
   ) {
     return this.prisma.extendedClient().booking.findMany({
       skip,
       take,
       where,
+      orderBy,
       include: {
         user: true,
         photoshootPackageHistory: true,
         originalPhotoshootPackage: {
+          include: {
+            user: true,
+          },
+        },
+        reviews: {
           include: {
             user: true,
           },

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Exclude } from 'class-transformer';
+import { Exclude, Type } from 'class-transformer';
 import { IsNumber, IsString, Max, Min } from 'class-validator';
 import { UserDto } from 'src/user/dtos/user.dto';
 
@@ -24,5 +24,6 @@ export class PhotoshootPackageReviewDto {
   bookingId: string;
 
   @ApiProperty()
+  @Type(() => UserDto)
   user: UserDto;
 }
