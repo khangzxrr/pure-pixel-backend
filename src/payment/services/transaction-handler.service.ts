@@ -26,7 +26,7 @@ export class TransactionHandlerService {
   async handleUpgradeToPhotographer(
     userId: string,
     serviceTransactionId: string,
-    sepay: SepayRequestDto,
+    sepay: object,
   ) {
     const serviceTransaction = await this.serviceTransactionRepository.findById(
       serviceTransactionId,

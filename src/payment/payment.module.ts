@@ -20,7 +20,7 @@ import { ManageTransactionController } from './controllers/manage-transaction.co
     TransactionHandlerService,
     TransactionService,
   ],
-  exports: [SepayService],
+  exports: [SepayService, TransactionHandlerService],
   controllers: [
     SepayController,
     TransactionController,
