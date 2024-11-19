@@ -127,16 +127,20 @@ export class UserService {
     }
 
     const users = await this.userRepository.findMany({}, [], {});
+    for (const user of users) {
+      try {
+        console.log(`inserting ${user.id} to keycloak database..`);
+        const keycloakUser = await this.keycloakService.upsert(
+          user.mail,
+          user.mail,
+          Constants.CUSTOMER_ROLE,
+        );
 
-    users.forEach(async (u) => {
-      const keycloakUser = await this.keycloakService.upsert(
-        u.name,
-        u.mail,
-        Constants.CUSTOMER_ROLE,
-      );
-
-      console.log(`insert ${keycloakUser.id} to keycloak database`);
-    });
+        console.log(`inserted ${keycloakUser.id} to keycloak database`);
+      } catch (e) {
+        console.log(e);
+      }
+    }
   }
 
   async updateProfile(userId: string, updateProfileDto: UpdateProfileDto) {

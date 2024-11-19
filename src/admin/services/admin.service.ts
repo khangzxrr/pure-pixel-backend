@@ -44,7 +44,7 @@ export class AdminService {
   }
 
   async syncUsers() {
-    return this.userService.syncKeycloakWithDatabase();
+    return await this.userService.syncKeycloakWithDatabase();
   }
 
   async triggerProcessAllPhotos() {

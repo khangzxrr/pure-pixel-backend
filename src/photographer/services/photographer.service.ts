@@ -15,6 +15,7 @@ import { plainToInstance } from 'class-transformer';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoVoteRepository } from 'src/database/repositories/photo-vote.repository';
 import { Constants } from 'src/infrastructure/utils/constants';
+import { User } from '@prisma/client';
 
 @Injectable()
 export class PhotographerService {
@@ -44,63 +45,27 @@ export class PhotographerService {
       -1,
     );
 
-    const where = findAllRequestDto.toWhere(userId);
-
     const keycloakUserIds = keycloakUsers.map((u) => u.id);
 
-    // const rawCount = await this.userRepository.rawCount(
-    //   userId,
-    //   keycloakUserIds,
-    //   findAllRequestDto.search,
-    //   findAllRequestDto.isFollowed,
-    // );
-
-    // console.log(rawCount);
-
-    const count = await this.userRepository.count({
-      AND: [
-        {
-          id: {
-            in: keycloakUserIds,
-          },
-        },
-        {
-          ...where,
-        },
-      ],
-    });
-
-    const photographers = await this.userRepository.findMany(
-      {
-        AND: [
-          {
-            id: {
-              in: keycloakUserIds,
-            },
-          },
-          {
-            ...where,
-          },
-        ],
-      },
-      findAllRequestDto.toOrderBy(),
-      {
-        followers: {
-          where: {
-            followerId: userId,
-          },
-        },
-        followings: {
-          where: {
-            followingId: userId,
-          },
-        },
-      },
-      findAllRequestDto.toSkip(),
-      findAllRequestDto.limit,
+    const rawCountQuery = await this.userRepository.rawCount(
+      userId,
+      keycloakUserIds,
+      findAllRequestDto.search ? findAllRequestDto.search : '',
+      findAllRequestDto.isFollowed,
     );
 
-    const dtoPromises = photographers.map(async (p) => {
+    const rawPhotographers = await this.userRepository.rawFindMany(
+      userId,
+      keycloakUserIds,
+      findAllRequestDto.toSkip(),
+      findAllRequestDto.limit,
+      findAllRequestDto.search ? findAllRequestDto.search : '',
+      findAllRequestDto.isFollowed,
+    );
+
+    const count: number = Number(rawCountQuery[0].count);
+
+    const dtoPromises = rawPhotographers.map(async (p) => {
       const dto = plainToInstance(PhotographerDTO, p);
 
       dto.photoCount = await this.photoRepository.count({

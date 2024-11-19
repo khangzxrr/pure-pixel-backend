@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, PrismaPromise, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 import { UserEntity } from 'src/user/entities/user.entity';
 import { DuplicatedUserIdException } from '../exceptions/duplicatedUserId.exception';
@@ -17,16 +17,48 @@ export class UserRepository {
   ) {
     if (isFollowed) {
       return this.prisma.$queryRaw`SELECT COUNT(*)
-                FROM "public"."User" INNER JOIN "public"."Follow"
-                ON public."User"."id" = public."Follow"."followingId"  
-                WHERE id IN (${Prisma.join(ids)})
-                AND "normalizedName" LIKE '%${search}%
-                AND "followerId" = '${userId}'`;
+                FROM public."User" INNER JOIN public."Follow"
+                ON public."User"."id" = public."Follow"."followingId"
+                WHERE public."User"."id" IN (${Prisma.join(ids)})
+                AND "normalizedName" LIKE CONCAT('%', LOWER(${search}), '%')
+                AND "followerId" = ${userId}`;
     }
 
-    return this.prisma.$queryRaw`SELECT COUNT(*) FROM "public"."User"
-                WHERE id IN (${Prisma.join(ids)})
-                AND "normalizedName" LIKE '%${search}%`;
+    return this.prisma.$queryRaw`SELECT COUNT(*)
+                FROM public."User"
+                WHERE public."User"."id" IN (${Prisma.join(ids)})
+                AND "normalizedName" LIKE CONCAT('%', LOWER(${search}), '%')`;
+  }
+
+  rawFindMany(
+    userId: string,
+    ids: string[],
+    skip: number,
+    take: number,
+    search?: string,
+    isFollowed?: boolean,
+  ): PrismaPromise<User[]> {
+    if (isFollowed) {
+      return this.prisma.$queryRaw`SELECT *,
+                ("followerId" IS NOT NULL) as "isFollowed"
+                FROM public."User" INNER JOIN public."Follow"
+                ON public."User"."id" = public."Follow"."followingId"
+                WHERE public."User"."id" IN (${Prisma.join(ids)})
+                AND "normalizedName" LIKE CONCAT('%', LOWER(${search}), '%')
+                AND "followerId" = ${userId}
+                ORDER BY "followerId" DESC NULLS LAST 
+                LIMIT ${take} OFFSET ${skip}
+`;
+    }
+
+    return this.prisma.$queryRaw`SELECT *,
+                (SELECT COUNT(*) > 0 FROM public."Follow" WHERE "followerId" = ${userId} AND "followingId" = "id") as "isFollowed"
+                FROM public."User"
+                WHERE public."User"."id" IN (${Prisma.join(ids)})
+                AND "normalizedName" LIKE CONCAT('%', LOWER(${search}), '%') 
+                ORDER BY "isFollowed" DESC
+                LIMIT ${take} OFFSET ${skip}
+`;
   }
 
   count(where: Prisma.UserWhereInput) {
