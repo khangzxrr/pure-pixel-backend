@@ -10,6 +10,7 @@ import { BookingBillItemService } from './services/bill-item.service';
 import { PhotoModule } from 'src/photo/photo.module';
 import { NestjsFormDataModule } from 'nestjs-form-data';
 import { PhotographerBookingBillItemController } from './controllers/photographer-booking-bill-item.controller';
+import { PaymentModule } from 'src/payment/payment.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { PhotographerBookingBillItemController } from './controllers/photographe
     AuthenModule,
     NotificationModule,
     NestjsFormDataModule,
+    PaymentModule,
   ],
   providers: [BookingService, BookingBillItemService],
   controllers: [

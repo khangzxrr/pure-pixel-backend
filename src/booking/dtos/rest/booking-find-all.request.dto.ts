@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { BookingStatus, Prisma } from '@prisma/client';
 import { Exclude } from 'class-transformer';
 import { IsEnum, IsOptional } from 'class-validator';
@@ -18,6 +18,13 @@ export class BookingFindAllRequestDto extends PagingPaginatedRequestDto {
   @IsEnum(BookingStatus)
   status?: BookingStatus;
 
+  @ApiPropertyOptional({
+    enum: Prisma.SortOrder,
+  })
+  @IsOptional()
+  @IsEnum(Prisma.SortOrder)
+  orderByCreatedAt?: Prisma.SortOrder;
+
   toWhere(): Prisma.BookingWhereInput {
     const where: Prisma.BookingWhereInput = {};
 
@@ -36,5 +43,17 @@ export class BookingFindAllRequestDto extends PagingPaginatedRequestDto {
     }
 
     return where;
+  }
+
+  toOrderBy(): Prisma.BookingOrderByWithRelationInput[] {
+    const orderBy: Prisma.BookingOrderByWithRelationInput[] = [];
+
+    if (this.orderByCreatedAt) {
+      orderBy.push({
+        createdAt: this.orderByCreatedAt,
+      });
+    }
+
+    return orderBy;
   }
 }

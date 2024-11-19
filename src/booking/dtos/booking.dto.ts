@@ -6,6 +6,7 @@ import { PhotoshootPackageHistoryDto } from 'src/photoshoot-package/dtos/photosh
 import { PhotoshootPackageDto } from 'src/photoshoot-package/dtos/photoshoot-package.dto';
 import { UserDto } from 'src/user/dtos/user.dto';
 import { BookingBillItemDto } from './booking-bill-item.dto';
+import { PhotoshootPackageReviewDto } from 'src/photoshoot-package/dtos/photoshoot-package-review.dto';
 
 export class BookingDto {
   @ApiProperty()
@@ -58,4 +59,8 @@ export class BookingDto {
   @ApiPropertyOptional()
   @Type(() => UserDto)
   user?: UserDto;
+
+  @ApiPropertyOptional()
+  @Type(() => PhotoshootPackageReviewDto)
+  reviews: PhotoshootPackageReviewDto;
 }

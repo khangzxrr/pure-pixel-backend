@@ -8,6 +8,11 @@ export type Booking = Prisma.BookingGetPayload<{
         user: true;
       };
     };
+    reviews: {
+      include: {
+        user: true;
+      };
+    };
   };
 }>;
 
@@ -17,6 +22,11 @@ export type BookingDetail = Prisma.BookingGetPayload<{
     billItems: true;
     photoshootPackageHistory: true;
     originalPhotoshootPackage: {
+      include: {
+        user: true;
+      };
+    };
+    reviews: {
       include: {
         user: true;
       };
