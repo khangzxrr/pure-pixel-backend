@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { User } from '@prisma/client';
 import { Exclude } from 'class-transformer';
 
@@ -77,4 +77,7 @@ export class PhotographerDTO implements User {
 
   @ApiProperty()
   updatedAt: Date;
+
+  @ApiPropertyOptional()
+  isFollowed?: boolean;
 }
