@@ -23,10 +23,11 @@ export class TransactionHandlerService {
 
     @Inject() private readonly userToUserRepository: UserToUserRepository,
   ) {}
+
   async handleUpgradeToPhotographer(
     userId: string,
     serviceTransactionId: string,
-    sepay: object,
+    paymentPayload: object,
   ) {
     const serviceTransaction = await this.serviceTransactionRepository.findById(
       serviceTransactionId,
@@ -36,7 +37,7 @@ export class TransactionHandlerService {
     const updateTransactionAndUpgradeOrderQuery =
       this.serviceTransactionRepository.updateSuccessServiceTransactionAndActivateUpgradeOrder(
         serviceTransactionId,
-        sepay,
+        paymentPayload,
       );
 
     const updateUserMaxQuotaQuery = this.userRepository.updateMaxQuotaByUserId(

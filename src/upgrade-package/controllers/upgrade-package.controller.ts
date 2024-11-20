@@ -6,7 +6,7 @@ import { UpgradePackageFindAllDto } from '../dtos/rest/upgrade-package-find-all.
 import { UpgradePackageService } from '../services/upgrade-package.service';
 
 @Controller('upgrade-package')
-@ApiTags('upgrade-package')
+@ApiTags('upgrade-package', 'upgrade-order')
 export class UpgradePackageController {
   constructor(
     @Inject() private readonly upgradePackageService: UpgradePackageService,

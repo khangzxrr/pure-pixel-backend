@@ -67,6 +67,23 @@ export class UserRepository {
     });
   }
 
+  updateMaxQuotaByUserIdTransaction(
+    id: string,
+    maxPhotoQuota: bigint,
+    maxPackageCount: bigint,
+    tx: Prisma.TransactionClient,
+  ) {
+    return tx.user.update({
+      where: {
+        id,
+      },
+      data: {
+        maxPhotoQuota,
+        maxPackageCount,
+      },
+    });
+  }
+
   updateMaxQuotaByUserId(
     id: string,
     maxPhotoQuota: bigint,
