@@ -246,11 +246,6 @@ export class UpgradeOrderService {
 
         await Promise.all(cancelOrderPromises);
 
-        await this.upgradePackageOrderRepository.deactivateCurentUpgradePackageByUserId(
-          userId,
-          tx,
-        );
-
         if (requestUpgrade.paymentMethod === 'SEPAY') {
           const newUpgradeOrder =
             await this.upgradePackageOrderRepository.createUpgradeOrderByBanking(
@@ -268,6 +263,12 @@ export class UpgradeOrderService {
 
         //create success upgrade order with success transaction and upgrade role customer to photographer
         if (requestUpgrade.paymentMethod === 'WALLET') {
+          //only deactivate current pacakge right away when paying with wallet because we know this is a success request
+          await this.upgradePackageOrderRepository.deactivateCurentUpgradePackageByUserId(
+            userId,
+            tx,
+          );
+
           const newUpgradeOrder =
             await this.upgradePackageOrderRepository.createSuccessUpgradeOrderByWallet(
               userId,
