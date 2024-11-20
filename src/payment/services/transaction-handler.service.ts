@@ -40,6 +40,19 @@ export class TransactionHandlerService {
         paymentPayload,
       );
 
+    const deactivatePreviousActiveUpgrade = this.userRepository.update(userId, {
+      upgradeOrders: {
+        updateMany: {
+          where: {
+            status: 'ACTIVE',
+          },
+          data: {
+            status: 'CANCEL',
+          },
+        },
+      },
+    });
+
     const updateUserMaxQuotaQuery = this.userRepository.updateMaxQuotaByUserId(
       userId,
       serviceTransaction.upgradeOrder.upgradePackageHistory.maxPhotoQuota,
@@ -47,6 +60,7 @@ export class TransactionHandlerService {
     );
 
     await this.databaseService.applyTransactionMultipleQueries([
+      deactivatePreviousActiveUpgrade,
       updateTransactionAndUpgradeOrderQuery,
       updateUserMaxQuotaQuery,
     ]);
