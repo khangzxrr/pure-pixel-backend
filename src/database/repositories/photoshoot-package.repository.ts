@@ -5,7 +5,7 @@ import { PhotoshootPackage } from '../types/photoshoot-package';
 
 @Injectable()
 export class PhotoshootRepository {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
   async findUniqueOrThrow(id: string) {
     return this.prisma.extendedClient().photoshootPackage.findUniqueOrThrow({
       where: {
@@ -28,7 +28,7 @@ export class PhotoshootRepository {
     });
   }
 
-  async delete(id: string) {
+  delete(id: string) {
     return this.prisma.extendedClient().photoshootPackage.delete({
       where: {
         id,

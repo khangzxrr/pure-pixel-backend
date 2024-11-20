@@ -1,12 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import {
-  PaymentMethod,
-  Prisma,
-  PrismaPromise,
-  TransactionStatus,
-  UpgradeOrderStatus,
-  UpgradePackage,
-} from '@prisma/client';
+import { Prisma, PrismaPromise, UpgradePackage } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
@@ -111,15 +104,14 @@ export class UpgradePackageOrderRepository {
     });
   }
 
-  async createUpgradeOrder(
+  async createSuccessUpgradeOrderByWallet(
     userId: string,
     upgradePackage: UpgradePackage,
     expiredAt: Date,
     amount: Prisma.Decimal,
     refundAmount: Prisma.Decimal,
-    paymentMethod: PaymentMethod,
-    upgradeOrderStatus: UpgradeOrderStatus,
-    transactionStatus: TransactionStatus,
+
+    paymentPayload: object,
     tx: Prisma.TransactionClient,
   ) {
     return tx.upgradeOrder.create({
@@ -127,7 +119,8 @@ export class UpgradePackageOrderRepository {
         id: true,
         serviceTransaction: {
           select: {
-            transactionId: true,
+            id: true,
+            transaction: true,
           },
         },
         upgradePackageHistory: {
@@ -138,7 +131,7 @@ export class UpgradePackageOrderRepository {
       },
       data: {
         expiredAt,
-        status: upgradeOrderStatus,
+        status: 'ACTIVE',
         user: {
           connect: {
             id: userId,
@@ -171,8 +164,77 @@ export class UpgradePackageOrderRepository {
                 type: 'UPGRADE_TO_PHOTOGRAPHER',
                 amount,
                 fee: refundAmount,
-                paymentMethod,
-                status: transactionStatus,
+                paymentMethod: 'WALLET',
+                status: 'SUCCESS',
+                paymentPayload,
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+
+  async createUpgradeOrderByBanking(
+    userId: string,
+    upgradePackage: UpgradePackage,
+    expiredAt: Date,
+    amount: Prisma.Decimal,
+    refundAmount: Prisma.Decimal,
+    tx: Prisma.TransactionClient,
+  ) {
+    return tx.upgradeOrder.create({
+      select: {
+        id: true,
+        serviceTransaction: {
+          select: {
+            id: true,
+            transaction: true,
+          },
+        },
+        upgradePackageHistory: {
+          select: {
+            id: true,
+          },
+        },
+      },
+      data: {
+        expiredAt,
+        status: 'PENDING',
+        user: {
+          connect: {
+            id: userId,
+          },
+        },
+        upgradePackageHistory: {
+          create: {
+            originalUpgradePackage: {
+              connect: {
+                id: upgradePackage.id,
+              },
+            },
+            price: upgradePackage.price,
+            name: upgradePackage.name,
+            descriptions: upgradePackage.descriptions,
+            maxPhotoQuota: upgradePackage.maxPhotoQuota,
+            minOrderMonth: upgradePackage.minOrderMonth,
+            maxPackageCount: upgradePackage.maxPackageCount,
+          },
+        },
+        serviceTransaction: {
+          create: {
+            transaction: {
+              create: {
+                user: {
+                  connect: {
+                    id: userId,
+                  },
+                },
+                type: 'UPGRADE_TO_PHOTOGRAPHER',
+                amount,
+                fee: refundAmount,
+                paymentMethod: 'SEPAY',
+                status: 'PENDING',
                 paymentPayload: {},
               },
             },

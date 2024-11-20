@@ -16,7 +16,10 @@ import { Decimal } from '@prisma/client/runtime/library';
 import { UpgradePackageDto } from 'src/upgrade-package/dtos/upgrade-package.dto';
 import { CannotTransferToTheSameUpgradePackage } from '../exceptions/cannot-transfer-to-the-same-upgrade-package.exception';
 import { UpgradeTransferFeeRequestDto } from '../dtos/rest/upgrade-transfer-fee.request.dto';
-import { TransactionHandlerService } from 'src/payment/services/transaction-handler.service';
+
+import { UserRepository } from 'src/database/repositories/user.repository';
+import { Constants } from 'src/infrastructure/utils/constants';
+import { KeycloakService } from 'src/authen/services/keycloak.service';
 
 @Injectable()
 export class UpgradeOrderService {
@@ -27,8 +30,8 @@ export class UpgradeOrderService {
     private readonly upgradePackageRepository: UpgradePackageRepository,
     @Inject()
     private readonly sepayService: SepayService,
-    @Inject()
-    private readonly transactionHandlerService: TransactionHandlerService,
+    @Inject() readonly userRepository: UserRepository,
+    @Inject() private readonly keycloakService: KeycloakService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -248,53 +251,66 @@ export class UpgradeOrderService {
           tx,
         );
 
-        const newUpgradeOrder =
-          await this.upgradePackageOrderRepository.createUpgradeOrder(
+        if (requestUpgrade.paymentMethod === 'SEPAY') {
+          const newUpgradeOrder =
+            await this.upgradePackageOrderRepository.createUpgradeOrderByBanking(
+              userId,
+              upgradePackage,
+              expiredDate,
+              new Decimal(transferDto.remainPrice),
+              //convert discout
+              new Decimal(transferDto.discountPrice),
+              tx,
+            );
+
+          return newUpgradeOrder;
+        }
+
+        //create success upgrade order with success transaction and upgrade role customer to photographer
+        if (requestUpgrade.paymentMethod === 'WALLET') {
+          const newUpgradeOrder =
+            await this.upgradePackageOrderRepository.createSuccessUpgradeOrderByWallet(
+              userId,
+              upgradePackage,
+              expiredDate,
+              new Decimal(transferDto.remainPrice),
+              new Decimal(transferDto.discountPrice),
+              transferDto,
+              tx,
+            );
+
+          await this.userRepository.updateMaxQuotaByUserIdTransaction(
             userId,
-            upgradePackage,
-            expiredDate,
-            new Decimal(transferDto.remainPrice),
-            //convert discout
-            new Decimal(transferDto.discountPrice),
-            requestUpgrade.paymentMethod,
-            requestUpgrade.paymentMethod === 'WALLET' ? 'ACTIVE' : 'PENDING',
-            requestUpgrade.paymentMethod === 'WALLET' ? 'SUCCESS' : 'PENDING',
+            upgradePackage.maxPhotoQuota,
+            upgradePackage.maxPackageCount,
             tx,
           );
 
-        return newUpgradeOrder;
+          await this.keycloakService.deleteRolesFromUser(userId);
+          await this.keycloakService.addRoleToUser(
+            userId,
+            Constants.PHOTOGRAPHER_ROLE,
+          );
+
+          return newUpgradeOrder;
+        }
       },
     );
 
-    const requestUpgradeResponse = new RequestUpgradeOrderResponseDto();
-    requestUpgradeResponse.id = newUpgradeOrder.id;
-
-    //IMPORTANT: must using transactionId instead of serviceTransactionId
-    requestUpgradeResponse.transactionId =
-      newUpgradeOrder.serviceTransaction.transactionId;
-
-    requestUpgradeResponse.upgradePackageHistoryId =
-      newUpgradeOrder.upgradePackageHistory.id;
+    const responseDto = plainToInstance(
+      RequestUpgradeOrderResponseDto,
+      newUpgradeOrder,
+    );
 
     if (requestUpgrade.paymentMethod === 'SEPAY') {
       const paymentDto = await this.sepayService.generatePayment(
-        requestUpgradeResponse.transactionId,
-        transferDto.remainPrice,
+        newUpgradeOrder.serviceTransaction.transaction.id,
+        newUpgradeOrder.serviceTransaction.transaction.amount.toNumber(),
       );
-
-      requestUpgradeResponse.mockQrCode = paymentDto.mockQrCode;
-      requestUpgradeResponse.paymentUrl = paymentDto.paymentUrl;
-
-      return requestUpgradeResponse;
-    }
-    if (requestUpgrade.paymentMethod === 'WALLET') {
-      await this.transactionHandlerService.handleUpgradeToPhotographer(
-        userId,
-        newUpgradeOrder.serviceTransaction.transactionId,
-        transferDto,
-      );
+      responseDto.paymentUrl = paymentDto.paymentUrl;
+      responseDto.mockQrCode = paymentDto.mockQrCode;
     }
 
-    return requestUpgradeResponse;
+    return responseDto;
   }
 }

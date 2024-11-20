@@ -29,7 +29,7 @@ export class PhotoshootPackageService {
     @Inject() private readonly bunnyService: BunnyService,
     @Inject()
     private readonly prisma: PrismaService,
-  ) { }
+  ) {}
 
   async replace(
     userId: string,
@@ -80,11 +80,25 @@ export class PhotoshootPackageService {
       throw new PhotoshootPackageNotBelongException();
     }
 
-    const deletedPhotoshootPacakge = await this.photoshootRepository.delete(id);
+    const deletedPhotoshootPackagePromise =
+      this.photoshootRepository.delete(id);
+
+    const updatePackageQuotaPromise = this.userRepository.update(userId, {
+      packageCount: {
+        decrement: 1,
+      },
+    });
+
+    const [deletedPhotoshootPackage, _] = await this.prisma
+      .extendedClient()
+      .$transaction([
+        deletedPhotoshootPackagePromise,
+        updatePackageQuotaPromise,
+      ]);
 
     const photoshootPackageDto = plainToInstance(
       PhotoshootPackageDto,
-      deletedPhotoshootPacakge,
+      deletedPhotoshootPackage,
     );
 
     photoshootPackageDto.thumbnail = this.bunnyService.getPresignedFile(
