@@ -1,6 +1,6 @@
 import { MailerService } from '@nestjs-modules/mailer';
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { App } from '@onesignal/node-onesignal';
+
 import OneSignal = require('@onesignal/node-onesignal');
 import { NotificationCreateDto } from '../dtos/rest/notification-create.dto';
 import { NotificationRepository } from 'src/database/repositories/notification.repository';
@@ -11,12 +11,13 @@ import { NotificationDto } from '../dtos/notification.dto';
 import { InjectQueue } from '@nestjs/bullmq';
 import { NotificationConstant } from '../constants/notification.constant';
 import { Queue } from 'bullmq';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class NotificationService {
   private readonly logger = new Logger(NotificationService.name);
 
-  private oneSignalClient: Promise<App> = null;
+  // private oneSignalClient: Promise<App> = null;
 
   constructor(
     private readonly mailerService: MailerService,
@@ -34,15 +35,15 @@ export class NotificationService {
     return new OneSignal.DefaultApi(config);
   }
 
-  private async getApp(): Promise<App> {
-    if (this.oneSignalClient) {
-      return this.oneSignalClient;
-    }
-
-    this.oneSignalClient = this.client().getApp(process.env.ONESIGNAL_APP_ID);
-
-    return this.oneSignalClient;
-  }
+  // private async getApp(): Promise<App> {
+  //   if (this.oneSignalClient) {
+  //     return this.oneSignalClient;
+  //   }
+  //
+  //   this.oneSignalClient = this.client().getApp(process.env.ONESIGNAL_APP_ID);
+  //
+  //   return this.oneSignalClient;
+  // }
 
   async findAll(
     userId: string,
@@ -69,19 +70,17 @@ export class NotificationService {
     );
   }
 
-  async saveNotification(notificationCreateDto: NotificationCreateDto) {
+  async saveNotification(
+    notificationCreateInput: Prisma.NotificationCreateInput,
+  ) {
     return this.notificationRepository.create({
-      content: notificationCreateDto.content,
-      title: notificationCreateDto.title,
-      type: notificationCreateDto.type,
+      content: notificationCreateInput.content,
+      title: notificationCreateInput.title,
+      type: notificationCreateInput.type,
       status: 'SHOW',
-      referenceType: notificationCreateDto.referenceType,
-      referenceId: notificationCreateDto.referenceId,
-      user: {
-        connect: {
-          id: notificationCreateDto.userId,
-        },
-      },
+      referenceType: notificationCreateInput.referenceType,
+      payload: notificationCreateInput.payload,
+      user: notificationCreateInput.user,
     });
   }
 
@@ -138,10 +137,13 @@ export class NotificationService {
   }
 
   async addNotificationToQueue(notificationDto: NotificationCreateDto) {
-    console.log(notificationDto);
     return await this.queue.add(
       NotificationConstant.TEXT_NOTIFICATION_JOB,
       notificationDto,
+      {
+        delay: 1000,
+        jobId: `${notificationDto.userId}-${notificationDto.type}-${notificationDto.content}`,
+      },
     );
   }
 }

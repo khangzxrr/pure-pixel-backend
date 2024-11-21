@@ -1,13 +1,11 @@
-import { InjectQueue, Processor, WorkerHost } from '@nestjs/bullmq';
+import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { PhotoConstant } from '../constants/photo.constant';
-import { Job, Queue } from 'bullmq';
+import { Job } from 'bullmq';
 import { Inject, Logger } from '@nestjs/common';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoProcessService } from '../services/photo-process.service';
 import { TineyeService } from 'src/storage/services/tineye.service';
 import { BunnyService } from 'src/storage/services/bunny.service';
-import { NotificationConstant } from 'src/notification/constants/notification.constant';
-import { NotificationCreateDto } from 'src/notification/dtos/rest/notification-create.dto';
 
 @Processor(PhotoConstant.PHOTO_PROCESS_QUEUE, {
   concurrency: 2,
@@ -21,8 +19,8 @@ export class PhotoProcessConsumer extends WorkerHost {
     @Inject() private readonly tineyeService: TineyeService,
     @Inject() private readonly bunnyService: BunnyService,
 
-    @InjectQueue(NotificationConstant.NOTIFICATION_QUEUE)
-    private readonly notificationQueue: Queue,
+    // @InjectQueue(NotificationConstant.NOTIFICATION_QUEUE)
+    // private readonly notificationQueue: Queue,
   ) {
     super();
   }
@@ -44,25 +42,25 @@ export class PhotoProcessConsumer extends WorkerHost {
     }
   }
 
-  private async sendNotification(
-    photoTitle: string,
-    userId: string,
-    referenceId: string,
-  ) {
-    const notificationCreateDto: NotificationCreateDto = {
-      userId,
-      referenceType: 'PHOTO',
-      referenceId,
-      type: 'BOTH_INAPP_EMAIL',
-      title: `Ảnh ${photoTitle} của bạn trùng với một ảnh khác!`,
-      content: `Ảnh ${photoTitle} của bạn có dấu hiệu trùng với một ảnh khác, nếu đây là sự sai sót, vui lòng báo cáo lên quản trị viên để được xem xét. Xin cám ơn!`,
-    };
-
-    await this.notificationQueue.add(
-      NotificationConstant.TEXT_NOTIFICATION_JOB,
-      notificationCreateDto,
-    );
-  }
+  // private async sendNotification(
+  //   photoTitle: string,
+  //   userId: string,
+  //   payload: object,
+  // ) {
+  //   const notificationCreateDto: NotificationCreateDto = {
+  //     userId,
+  //     referenceType: 'PHOTO',
+  //
+  //     type: 'BOTH_INAPP_EMAIL',
+  //     title: `Ảnh ${photoTitle} của bạn trùng với một ảnh khác!`,
+  //     content: `Ảnh ${photoTitle} của bạn có dấu hiệu trùng với một ảnh khác, nếu đây là sự sai sót, vui lòng báo cáo lên quản trị viên để được xem xét. Xin cám ơn!`,
+  //   };
+  //
+  //   await this.notificationQueue.add(
+  //     NotificationConstant.TEXT_NOTIFICATION_JOB,
+  //     notificationCreateDto,
+  //   );
+  // }
 
   async deleteTineyePhoto(originalPhotoUrl: string) {
     await this.tineyeService.delete(originalPhotoUrl);

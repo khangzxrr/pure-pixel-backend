@@ -3,6 +3,7 @@ import { PhotoshootPackageStatus } from '@prisma/client';
 import { Exclude, Type } from 'class-transformer';
 import { UserDto } from 'src/user/dtos/user.dto';
 import { PhotoshootPackageShowcaseDto } from './photoshoot-package-showcase.dto';
+import { PhotoshootPackageReviewDto } from './photoshoot-package-review.dto';
 
 export class PhotoshootPackageDto {
   @ApiProperty()
@@ -33,6 +34,12 @@ export class PhotoshootPackageDto {
   @ApiProperty()
   @Type(() => UserDto)
   user: UserDto;
+
+  @ApiProperty({
+    isArray: true,
+  })
+  @Type(() => PhotoshootPackageReviewDto)
+  reviews: PhotoshootPackageReviewDto[];
 
   @ApiProperty({
     isArray: true,

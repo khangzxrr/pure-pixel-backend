@@ -34,8 +34,8 @@ export class NotificationDto {
   })
   referenceType: NotificationReferenceType;
 
-  @ApiProperty({})
-  referenceId: string;
+  @ApiProperty()
+  payload: object;
 
   @ApiProperty()
   createdAt: Date;
