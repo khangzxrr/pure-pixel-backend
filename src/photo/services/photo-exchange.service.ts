@@ -23,6 +23,7 @@ import { SepayService } from 'src/payment/services/sepay.service';
 import { UserToUserRepository } from 'src/database/repositories/user-to-user-transaction.repository';
 import { PhotoBuyFindAllDto } from '../dtos/rest/photo-buy-find-all.dto';
 import { PhotoBuyFindAllResponseDto } from '../dtos/rest/photo-buy-find-all.response.dto';
+import { NotificationService } from 'src/notification/services/notification.service';
 
 @Injectable()
 export class PhotoExchangeService {
@@ -39,6 +40,7 @@ export class PhotoExchangeService {
     @Inject() private readonly photoProcessService: PhotoProcessService,
     private readonly prisma: PrismaService,
     @Inject() private readonly sepayService: SepayService,
+    @Inject() private readonly notificationService: NotificationService,
   ) {}
 
   async getAllPreviousBuyPhoto(userId: string, findAllDto: PhotoBuyFindAllDto) {
@@ -377,10 +379,17 @@ export class PhotoExchangeService {
             tx,
           );
 
+        await this.notificationService.addNotificationToQueue({
+          title: `Mua ảnh ${photoSell.photo.title} thành công`,
+          content: `Bạn đã thanh toán ảnh ${photoSell.photo.title} - kích thước ${pricetag.width}x${pricetag.height} bằng ví thành công`,
+          userId: userId,
+          type: 'BOTH_INAPP_EMAIL',
+          referenceType: 'PHOTO_BUY',
+          payload: newPhotoBuyByWallet,
+        });
+
         return plainToInstance(PhotoBuyResponseDto, newPhotoBuyByWallet);
       }
-
-      console.log(`reach here`);
 
       const newPhotoBuyBySepay =
         await this.photoBuyRepository.createWithTransaction(
