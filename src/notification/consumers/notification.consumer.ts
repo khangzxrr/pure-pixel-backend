@@ -6,6 +6,7 @@ import { NotificationService } from '../services/notification.service';
 import { NotificationCreateDto } from '../dtos/rest/notification-create.dto';
 import { v4 } from 'uuid';
 import { UserRepository } from 'src/database/repositories/user.repository';
+import { NotificationGateway } from '../gateways/notification.gateway';
 
 @Processor(NotificationConstant.NOTIFICATION_QUEUE)
 export class NotificationConsumer extends WorkerHost {
@@ -13,6 +14,7 @@ export class NotificationConsumer extends WorkerHost {
 
   constructor(
     @Inject() private readonly notificationService: NotificationService,
+    @Inject() private readonly notificationGateway: NotificationGateway,
     @Inject() private readonly userRepository: UserRepository,
   ) {
     super();
@@ -77,7 +79,7 @@ export class NotificationConsumer extends WorkerHost {
       );
     }
 
-    await this.notificationService.saveNotification({
+    const savedNotification = await this.notificationService.saveNotification({
       payload: notificationCreateDto.payload,
       type: notificationCreateDto.type,
       referenceType: notificationCreateDto.referenceType,
@@ -90,6 +92,11 @@ export class NotificationConsumer extends WorkerHost {
       content: notificationCreateDto.content,
       status: 'SHOW',
     });
+
+    await this.notificationGateway.sendRefreshNotificationEvent(
+      user.id,
+      savedNotification,
+    );
 
     this.logger.log(
       `sent ${notificationCreateDto.type} notification to userId: ${user.id}`,

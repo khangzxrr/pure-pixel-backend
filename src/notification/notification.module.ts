@@ -9,10 +9,12 @@ import { QueueModule } from 'src/queue/queue.module';
 import { AuthenModule } from 'src/authen/authen.module';
 import { StorageModule } from 'src/storage/storage.module';
 import { NotificationGateway } from './gateways/notification.gateway';
+import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
   imports: [
     AuthenModule,
+    CacheModule.register(),
     StorageModule,
     QueueModule,
     DatabaseModule,
