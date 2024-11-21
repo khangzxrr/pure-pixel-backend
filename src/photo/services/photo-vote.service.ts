@@ -44,8 +44,8 @@ export class PhotoVoteService {
       userId,
       title: 'Tương tác mới',
       content: `Ảnh ${photo.title} của bạn vừa nhận được một đánh giá!`,
-      referenceId: photoId,
       referenceType: 'PHOTO',
+      payload: {},
       type: 'IN_APP',
     };
     await this.notificationQueue.add(
