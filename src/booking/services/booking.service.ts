@@ -196,7 +196,7 @@ export class BookingService {
     await this.prisma.$transaction(prismaPromises);
 
     this.notificationService.addNotificationToQueue({
-      userId: booking.originalPhotoshootPackage.userId,
+      userId: booking.userId,
       type: 'IN_APP',
       title: `Gói chụp ${booking.photoshootPackageHistory.title} có cập nhật mới`,
       content: `Gói chụp ${booking.photoshootPackageHistory.title} của bạn đã được cập nhật thành đã thanh toán và mở khóa tải về ảnh`,

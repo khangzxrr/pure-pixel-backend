@@ -28,6 +28,7 @@ import { PhotoExchangeController } from './controllers/photo-exchange.controller
 import { CacheModule } from '@nestjs/cache-manager';
 import { ManagePhotoController } from './controllers/manage-photo.controller';
 import { ManagePhotoService } from './services/manage-photo.service';
+import { NotificationModule } from 'src/notification/notification.module';
 
 @Module({
   providers: [
@@ -71,6 +72,7 @@ import { ManagePhotoService } from './services/manage-photo.service';
     StorageModule,
     QueueModule,
     PaymentModule,
+    NotificationModule,
     NestjsFormDataModule,
   ],
 })

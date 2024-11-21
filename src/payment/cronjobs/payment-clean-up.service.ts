@@ -24,6 +24,8 @@ export class PaymentCleanUpCronJob {
       },
     );
 
-    console.log(`clean up ${updatedTransactions.count} transactions`);
+    if (updatedTransactions.count > 0) {
+      console.log(`clean up ${updatedTransactions.count} transactions`);
+    }
   }
 }

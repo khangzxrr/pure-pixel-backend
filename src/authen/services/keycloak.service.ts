@@ -169,10 +169,14 @@ export class KeycloakService {
   async deleteRolesFromUser(userId: string) {
     const roles = await this.getUserRoles(userId);
 
-    roles.forEach(async (role) => {
-      console.log(role);
+    for (const role of roles) {
       await this.deleteRoleFromUser(userId, role.name);
-    });
+    }
+
+    //forEach doesnt await => so we have to use manual for of loop
+    // roles.forEach(async (role) => {
+    //   console.log(role);
+    // });
   }
 
   async deleteRoleFromUser(userId: string, roleName: string) {
@@ -198,7 +202,7 @@ export class KeycloakService {
     const client = await this.getClient();
     const role = await this.getRole(roleName);
 
-    return kc.users.addClientRoleMappings({
+    await kc.users.addClientRoleMappings({
       id: userId,
       clientUniqueId: client.id!,
 

@@ -20,6 +20,7 @@ import { UpgradeTransferFeeRequestDto } from '../dtos/rest/upgrade-transfer-fee.
 import { UserRepository } from 'src/database/repositories/user.repository';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { KeycloakService } from 'src/authen/services/keycloak.service';
+import { NotificationService } from 'src/notification/services/notification.service';
 
 @Injectable()
 export class UpgradeOrderService {
@@ -32,6 +33,7 @@ export class UpgradeOrderService {
     private readonly sepayService: SepayService,
     @Inject() readonly userRepository: UserRepository,
     @Inject() private readonly keycloakService: KeycloakService,
+    @Inject() private readonly notificationService: NotificationService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -292,6 +294,16 @@ export class UpgradeOrderService {
             userId,
             Constants.PHOTOGRAPHER_ROLE,
           );
+
+          await this.notificationService.addNotificationToQueue({
+            payload: newUpgradeOrder,
+            title: 'Nâng cấp thành nhiếp ảnh gia thành công',
+            userId,
+            content:
+              'Bạn đã nâng cấp tài khoản trở thành nhiếp ảnh gia, giờ bạn có thể tải ảnh lên, bán ảnh,....',
+            type: 'BOTH_INAPP_EMAIL',
+            referenceType: 'UPGRADE_PACKAGE',
+          });
 
           return newUpgradeOrder;
         }

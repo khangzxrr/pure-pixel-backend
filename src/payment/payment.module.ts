@@ -10,9 +10,10 @@ import { StorageModule } from 'src/storage/storage.module';
 import { PaymentCleanUpCronJob } from './cronjobs/payment-clean-up.service';
 import { TransactionHandlerService } from './services/transaction-handler.service';
 import { ManageTransactionController } from './controllers/manage-transaction.controller';
+import { NotificationModule } from 'src/notification/notification.module';
 
 @Module({
-  imports: [DatabaseModule, AuthenModule, StorageModule],
+  imports: [DatabaseModule, AuthenModule, StorageModule, NotificationModule],
   providers: [
     PaymentCleanUpCronJob,
     VietQrBasicStrategy,

@@ -61,7 +61,7 @@ export class TransactionHandlerService {
       serviceTransaction.upgradeOrder.upgradePackageHistory.maxPackageCount,
     );
 
-    const [, updateTransactionResult] =
+    const [, updatedTransaction] =
       await this.databaseService.applyTransactionMultipleQueries([
         deactivatePreviousActiveUpgrade,
         updateTransactionAndUpgradeOrderQuery,
@@ -74,12 +74,12 @@ export class TransactionHandlerService {
       Constants.PHOTOGRAPHER_ROLE,
     );
 
-    //TODO: finish this content
     await this.notificationService.addNotificationToQueue({
-      payload: updateTransactionResult,
+      payload: updatedTransaction,
       title: 'Nâng cấp thành nhiếp ảnh gia thành công',
       userId,
-      content: '',
+      content:
+        'Bạn đã nâng cấp tài khoản trở thành nhiếp ảnh gia, giờ bạn có thể tải ảnh lên, bán ảnh,....',
       type: 'BOTH_INAPP_EMAIL',
       referenceType: 'UPGRADE_PACKAGE',
     });
@@ -117,5 +117,30 @@ export class TransactionHandlerService {
       transaction.fee,
       transaction.amount,
     );
+
+    const photoTitle =
+      fromUserTransaction.photoBuy.photoSellHistory.originalPhotoSell.photo
+        .title;
+
+    const width = fromUserTransaction.photoBuy.photoSellHistory.width;
+    const height = fromUserTransaction.photoBuy.photoSellHistory.height;
+
+    await this.notificationService.addNotificationToQueue({
+      title: `Mua ảnh ${photoTitle} thành công`,
+      content: `Bạn đã thanh toán ảnh ${photoTitle} - kích thước ${width}x${height} bằng QRcode thành công`,
+      userId: transaction.userId,
+      type: 'BOTH_INAPP_EMAIL',
+      referenceType: 'PHOTO_BUY',
+      payload: transaction,
+    });
+
+    await this.notificationService.addNotificationToQueue({
+      title: `Bán ảnh ${photoTitle} thành công`,
+      content: ` Người dùng ${fromUserTransaction.fromUserTransaction.user.name} đã thanh toán ảnh ${photoTitle} - kích thước ${width}x${height} thành công`,
+      userId: fromUserTransaction.toUserId,
+      type: 'BOTH_INAPP_EMAIL',
+      referenceType: 'PHOTO_BUY',
+      payload: transaction,
+    });
   }
 }

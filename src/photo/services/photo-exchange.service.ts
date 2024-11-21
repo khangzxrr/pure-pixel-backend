@@ -24,6 +24,7 @@ import { UserToUserRepository } from 'src/database/repositories/user-to-user-tra
 import { PhotoBuyFindAllDto } from '../dtos/rest/photo-buy-find-all.dto';
 import { PhotoBuyFindAllResponseDto } from '../dtos/rest/photo-buy-find-all.response.dto';
 import { NotificationService } from 'src/notification/services/notification.service';
+import { UserRepository } from 'src/database/repositories/user.repository';
 
 @Injectable()
 export class PhotoExchangeService {
@@ -32,6 +33,8 @@ export class PhotoExchangeService {
     @Inject() private readonly photoSellRepository: PhotoSellRepository,
     @Inject()
     private readonly photoBuyRepository: PhotoBuyRepository,
+    @Inject()
+    private readonly userRepository: UserRepository,
     @Inject()
     private readonly userToUserTransactionRepository: UserToUserRepository,
     @Inject()
@@ -243,6 +246,7 @@ export class PhotoExchangeService {
     if (photoSell.photo.photographerId === userId) {
       throw new CannotBuyOwnedPhotoException();
     }
+    const user = await this.userRepository.findUniqueOrThrow(userId);
 
     const pricetag = await this.photoSellPriceTagRepository.findUniqueOrThrow({
       photoSellId,
@@ -382,6 +386,15 @@ export class PhotoExchangeService {
         await this.notificationService.addNotificationToQueue({
           title: `Mua ảnh ${photoSell.photo.title} thành công`,
           content: `Bạn đã thanh toán ảnh ${photoSell.photo.title} - kích thước ${pricetag.width}x${pricetag.height} bằng ví thành công`,
+          userId: userId,
+          type: 'BOTH_INAPP_EMAIL',
+          referenceType: 'PHOTO_BUY',
+          payload: newPhotoBuyByWallet,
+        });
+
+        await this.notificationService.addNotificationToQueue({
+          title: `Bán ảnh ${photoSell.photo.title} thành công`,
+          content: ` Người dùng ${user.name} đã thanh toán ảnh ${photoSell.photo.title} - kích thước ${pricetag.width}x${pricetag.height} bằng ví thành công`,
           userId: userId,
           type: 'BOTH_INAPP_EMAIL',
           referenceType: 'PHOTO_BUY',
