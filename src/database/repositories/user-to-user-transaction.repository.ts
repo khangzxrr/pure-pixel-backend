@@ -11,6 +11,26 @@ export class UserToUserRepository {
       where: {
         id,
       },
+      include: {
+        fromUserTransaction: {
+          include: {
+            user: true,
+          },
+        },
+        photoBuy: {
+          include: {
+            photoSellHistory: {
+              include: {
+                originalPhotoSell: {
+                  include: {
+                    photo: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     });
   }
 
