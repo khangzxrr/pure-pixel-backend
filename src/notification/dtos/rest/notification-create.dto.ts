@@ -33,5 +33,5 @@ export class NotificationCreateDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  referenceId: string;
+  payload: object;
 }
