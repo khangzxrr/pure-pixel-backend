@@ -8,6 +8,7 @@ import { DatabaseService } from 'src/database/database.service';
 import { KeycloakService } from 'src/authen/services/keycloak.service';
 import { TransactionRepository } from 'src/database/repositories/transaction.repository';
 import { UserToUserRepository } from 'src/database/repositories/user-to-user-transaction.repository';
+import { NotificationService } from 'src/notification/services/notification.service';
 
 @Injectable()
 export class TransactionHandlerService {
@@ -22,6 +23,7 @@ export class TransactionHandlerService {
     private readonly transactionRepository: TransactionRepository,
 
     @Inject() private readonly userToUserRepository: UserToUserRepository,
+    @Inject() private readonly notificationService: NotificationService,
   ) {}
 
   async handleUpgradeToPhotographer(
@@ -59,17 +61,28 @@ export class TransactionHandlerService {
       serviceTransaction.upgradeOrder.upgradePackageHistory.maxPackageCount,
     );
 
-    await this.databaseService.applyTransactionMultipleQueries([
-      deactivatePreviousActiveUpgrade,
-      updateTransactionAndUpgradeOrderQuery,
-      updateUserMaxQuotaQuery,
-    ]);
+    const [, updateTransactionResult] =
+      await this.databaseService.applyTransactionMultipleQueries([
+        deactivatePreviousActiveUpgrade,
+        updateTransactionAndUpgradeOrderQuery,
+        updateUserMaxQuotaQuery,
+      ]);
 
     await this.keycloakService.deleteRolesFromUser(userId);
     await this.keycloakService.addRoleToUser(
       userId,
       Constants.PHOTOGRAPHER_ROLE,
     );
+
+    //TODO: finish this content
+    await this.notificationService.addNotificationToQueue({
+      payload: updateTransactionResult,
+      title: 'Nâng cấp thành nhiếp ảnh gia thành công',
+      userId,
+      content: '',
+      type: 'BOTH_INAPP_EMAIL',
+      referenceType: 'UPGRADE_PACKAGE',
+    });
   }
 
   async handleDeposit(transaction: Transaction, sepay: SepayRequestDto) {
