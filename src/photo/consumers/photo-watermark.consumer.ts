@@ -4,7 +4,7 @@ import { Job } from 'bullmq';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoConstant } from '../constants/photo.constant';
 import { GenerateWatermarkRequestDto } from '../dtos/rest/generate-watermark.request.dto';
-import { PhotoGateway } from '../gateways/socket.io.gateway';
+import { PhotoGateway } from '../gateways/photo.gateway';
 import { PhotoProcessService } from '../services/photo-process.service';
 
 @Processor(PhotoConstant.PHOTO_WATERMARK_QUEUE, {

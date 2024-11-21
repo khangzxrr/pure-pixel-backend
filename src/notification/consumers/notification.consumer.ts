@@ -77,7 +77,19 @@ export class NotificationConsumer extends WorkerHost {
       );
     }
 
-    await this.notificationService.saveNotification(notificationCreateDto);
+    await this.notificationService.saveNotification({
+      payload: notificationCreateDto.payload,
+      type: notificationCreateDto.type,
+      referenceType: notificationCreateDto.referenceType,
+      user: {
+        connect: {
+          id: user.id,
+        },
+      },
+      title: notificationCreateDto.title,
+      content: notificationCreateDto.content,
+      status: 'SHOW',
+    });
 
     this.logger.log(
       `sent ${notificationCreateDto.type} notification to userId: ${user.id}`,

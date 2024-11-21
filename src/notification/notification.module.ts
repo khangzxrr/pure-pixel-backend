@@ -8,6 +8,7 @@ import { DatabaseModule } from 'src/database/database.module';
 import { QueueModule } from 'src/queue/queue.module';
 import { AuthenModule } from 'src/authen/authen.module';
 import { StorageModule } from 'src/storage/storage.module';
+import { NotificationGateway } from './gateways/notification.gateway';
 
 @Module({
   imports: [
@@ -29,7 +30,7 @@ import { StorageModule } from 'src/storage/storage.module';
       },
     }),
   ],
-  providers: [NotificationService, NotificationConsumer],
+  providers: [NotificationGateway, NotificationService, NotificationConsumer],
   exports: [NotificationService],
   controllers: [NotificationController],
 })

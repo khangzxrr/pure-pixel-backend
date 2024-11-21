@@ -11,6 +11,7 @@ import { NotificationDto } from '../dtos/notification.dto';
 import { InjectQueue } from '@nestjs/bullmq';
 import { NotificationConstant } from '../constants/notification.constant';
 import { Queue } from 'bullmq';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class NotificationService {
@@ -69,19 +70,17 @@ export class NotificationService {
     );
   }
 
-  async saveNotification(notificationCreateDto: NotificationCreateDto) {
+  async saveNotification(
+    notificationCreateInput: Prisma.NotificationCreateInput,
+  ) {
     return this.notificationRepository.create({
-      content: notificationCreateDto.content,
-      title: notificationCreateDto.title,
-      type: notificationCreateDto.type,
+      content: notificationCreateInput.content,
+      title: notificationCreateInput.title,
+      type: notificationCreateInput.type,
       status: 'SHOW',
-      referenceType: notificationCreateDto.referenceType,
-      referenceId: notificationCreateDto.referenceId,
-      user: {
-        connect: {
-          id: notificationCreateDto.userId,
-        },
-      },
+      referenceType: notificationCreateInput.referenceType,
+      payload: notificationCreateInput.payload,
+      user: notificationCreateInput.user,
     });
   }
 
@@ -138,7 +137,6 @@ export class NotificationService {
   }
 
   async addNotificationToQueue(notificationDto: NotificationCreateDto) {
-    console.log(notificationDto);
     return await this.queue.add(
       NotificationConstant.TEXT_NOTIFICATION_JOB,
       notificationDto,

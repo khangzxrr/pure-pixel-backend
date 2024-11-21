@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { GenerateWatermarkRequestDto } from '../dtos/rest/generate-watermark.request.dto';
-import { PhotoGateway } from '../gateways/socket.io.gateway';
+import { PhotoGateway } from '../gateways/photo.gateway';
 import { PhotoProcessService } from './photo-process.service';
 
 @Injectable()
