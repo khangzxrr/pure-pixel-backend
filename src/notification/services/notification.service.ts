@@ -1,6 +1,6 @@
 import { MailerService } from '@nestjs-modules/mailer';
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { App } from '@onesignal/node-onesignal';
+
 import OneSignal = require('@onesignal/node-onesignal');
 import { NotificationCreateDto } from '../dtos/rest/notification-create.dto';
 import { NotificationRepository } from 'src/database/repositories/notification.repository';
@@ -17,7 +17,7 @@ import { Prisma } from '@prisma/client';
 export class NotificationService {
   private readonly logger = new Logger(NotificationService.name);
 
-  private oneSignalClient: Promise<App> = null;
+  // private oneSignalClient: Promise<App> = null;
 
   constructor(
     private readonly mailerService: MailerService,
@@ -35,15 +35,15 @@ export class NotificationService {
     return new OneSignal.DefaultApi(config);
   }
 
-  private async getApp(): Promise<App> {
-    if (this.oneSignalClient) {
-      return this.oneSignalClient;
-    }
-
-    this.oneSignalClient = this.client().getApp(process.env.ONESIGNAL_APP_ID);
-
-    return this.oneSignalClient;
-  }
+  // private async getApp(): Promise<App> {
+  //   if (this.oneSignalClient) {
+  //     return this.oneSignalClient;
+  //   }
+  //
+  //   this.oneSignalClient = this.client().getApp(process.env.ONESIGNAL_APP_ID);
+  //
+  //   return this.oneSignalClient;
+  // }
 
   async findAll(
     userId: string,

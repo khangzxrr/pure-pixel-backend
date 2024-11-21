@@ -20,11 +20,11 @@ export class UpgradeServiceConsumer extends WorkerHost {
     const notificationCreateDto: NotificationCreateDto = {
       userId: order.userId,
       referenceType: 'UPGRADE_PACKAGE',
-      referenceId: order.id,
       type: 'BOTH_INAPP_EMAIL',
       title: 'Gói nâng cấp của bạn sắp hết hạn',
       content:
         'Vui lòng cân nhắc gia hạn gói nâng cấp để tiếp tục nhận được lợi ích của gói',
+      payload: order,
     };
 
     await this.notificationQueue.add(
@@ -37,9 +37,10 @@ export class UpgradeServiceConsumer extends WorkerHost {
     const notificationCreateDto: NotificationCreateDto = {
       userId: order.userId,
       referenceType: 'UPGRADE_PACKAGE',
-      referenceId: order.id,
+
       type: 'BOTH_INAPP_EMAIL',
       title: 'Gói nâng cấp của bạn sắp hết hạn',
+      payload: order,
       content: 'Vui lòng gia hạn lại để được nhận các ưu đãi từ gói nâng cấp!',
     };
 

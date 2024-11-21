@@ -31,7 +31,6 @@ export class NotificationCreateDto {
   referenceType: NotificationReferenceType;
 
   @ApiProperty()
-  @IsString()
   @IsNotEmpty()
   payload: object;
 }

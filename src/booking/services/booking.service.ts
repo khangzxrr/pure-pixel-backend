@@ -368,11 +368,11 @@ export class BookingService {
 
     await this.notificationService.addNotificationToQueue({
       userId: booking.userId,
-      referenceId: booking.id,
       referenceType: 'BOOKING',
       title: `Nhiếp ảnh gia đã chấp nhận gói chụp ${booking.photoshootPackageHistory.title}`,
       type: 'BOTH_INAPP_EMAIL',
       content: `Yêu cầu thực hiện gói chụp ${booking.photoshootPackageHistory.title} của bạn đã được chấp nhận, nếu có bất kì yêu cầu nào khác - vui lòng liên hệ nhiếp ảnh gia qua tin nhắn để trao đổi thêm`,
+      payload: booking,
     });
 
     return plainToInstance(BookingDto, updatedBooking);
@@ -402,11 +402,11 @@ export class BookingService {
 
     await this.notificationService.addNotificationToQueue({
       userId: booking.userId,
-      referenceId: booking.id,
       referenceType: 'BOOKING',
       title: `Nhiếp ảnh gia đã từ chối gói chụp ${booking.photoshootPackageHistory.title}`,
       type: 'BOTH_INAPP_EMAIL',
       content: `Yêu cầu thực hiện gói chụp ${booking.photoshootPackageHistory.title} của bạn đã hủy bỏ với lí do ${denyDto.reason}`,
+      payload: booking,
     });
 
     return plainToInstance(BookingDto, updatedBooking);
@@ -540,20 +540,20 @@ export class BookingService {
 
     await this.notificationService.addNotificationToQueue({
       userId,
-      referenceId: booking.id,
       referenceType: 'BOOKING',
       title: `Yêu cầu thực hiện gói chụp ${photoshootPackage.title}`,
       type: 'BOTH_INAPP_EMAIL',
       content: `Bạn đã yêu cầu thực hiện gói chụp ${photoshootPackage.title} vui lòng chờ phản hồi từ nhiếp ảnh gia`,
+      payload: booking,
     });
 
     await this.notificationService.addNotificationToQueue({
       userId: photoshootPackage.userId,
-      referenceId: booking.id,
       referenceType: 'BOOKING',
       title: 'Có yêu cầu thực hiện gói chụp mới',
       type: 'BOTH_INAPP_EMAIL',
       content: `Có khách hàng yêu cầu thực hiện gói chụp ${photoshootPackage.title} vui lòng phản hồi sớm nhất có thể`,
+      payload: booking,
     });
 
     return plainToInstance(BookingDto, booking);

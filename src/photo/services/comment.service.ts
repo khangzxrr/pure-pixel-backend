@@ -128,7 +128,7 @@ export class CommentService {
       title: 'Bình luận mới!',
       content: `Ảnh ${photo.title} của bạn vừa nhận được một bình luận mới!`,
       referenceType: 'PHOTO',
-      referenceId: photoId,
+      payload: comment,
       type: 'IN_APP',
     };
 
@@ -137,7 +137,7 @@ export class CommentService {
       title: 'Bình luận của bạn nhận được phản hồi mới!',
       content: `Bình luận của bạn ở ảnh ${photo.title} vừa nhận được một phản hồi mới!`,
       referenceType: 'PHOTO',
-      referenceId: photoId,
+      payload: comment,
       type: 'IN_APP',
     };
 
@@ -173,7 +173,7 @@ export class CommentService {
       title: 'Bình luận mới!',
       content: `Ảnh ${photo.title} của bạn vừa nhận được một bình luận mới!`,
       referenceType: 'PHOTO',
-      referenceId: photoId,
+      payload: comment,
       type: 'IN_APP',
     };
     await this.notificationQueue.add(
