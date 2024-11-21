@@ -61,7 +61,7 @@ export class TransactionHandlerService {
       serviceTransaction.upgradeOrder.upgradePackageHistory.maxPackageCount,
     );
 
-    const [, updateTransactionResult] =
+    const [, updatedTransaction] =
       await this.databaseService.applyTransactionMultipleQueries([
         deactivatePreviousActiveUpgrade,
         updateTransactionAndUpgradeOrderQuery,
@@ -75,7 +75,7 @@ export class TransactionHandlerService {
     );
 
     await this.notificationService.addNotificationToQueue({
-      payload: updateTransactionResult,
+      payload: updatedTransaction,
       title: 'Nâng cấp thành nhiếp ảnh gia thành công',
       userId,
       content:
@@ -110,14 +110,13 @@ export class TransactionHandlerService {
       fromUserTransactionId,
     );
 
-    const updatedTransaction =
-      await this.userToUserRepository.markSucccessAndCreateToUserTransaction(
-        fromUserTransactionId,
-        sepay,
-        fromUserTransaction.toUserId,
-        transaction.fee,
-        transaction.amount,
-      );
+    await this.userToUserRepository.markSucccessAndCreateToUserTransaction(
+      fromUserTransactionId,
+      sepay,
+      fromUserTransaction.toUserId,
+      transaction.fee,
+      transaction.amount,
+    );
 
     const photoTitle =
       fromUserTransaction.photoBuy.photoSellHistory.originalPhotoSell.photo
@@ -132,7 +131,7 @@ export class TransactionHandlerService {
       userId: transaction.userId,
       type: 'BOTH_INAPP_EMAIL',
       referenceType: 'PHOTO_BUY',
-      payload: updatedTransaction,
+      payload: transaction,
     });
 
     await this.notificationService.addNotificationToQueue({
@@ -141,7 +140,7 @@ export class TransactionHandlerService {
       userId: fromUserTransaction.toUserId,
       type: 'BOTH_INAPP_EMAIL',
       referenceType: 'PHOTO_BUY',
-      payload: updatedTransaction,
+      payload: transaction,
     });
   }
 }
