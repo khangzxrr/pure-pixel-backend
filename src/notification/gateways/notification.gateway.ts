@@ -29,9 +29,7 @@ export class NotificationGateway
 
   handleConnection(client: any, ...args: any[]) {}
 
-  handleDisconnect(client: any) {
-    console.log(client.conn.id);
-  }
+  handleDisconnect(client: any) {}
 
   async addSocketIdToSetByUserId(userId: string, socketId: string) {
     // await this.cacheManager.del(`notification_${userId}`);
