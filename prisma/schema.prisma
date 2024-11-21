@@ -830,7 +830,7 @@ model Notification {
   title   String
   content String
 
-  referenceId String
+  payload Json 
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
