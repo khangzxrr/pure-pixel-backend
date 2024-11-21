@@ -144,7 +144,21 @@ export class BookingService {
       },
     );
 
-    return plainToInstance(PhotoshootPackageReviewDto, review);
+    const photoshootPackageReviewDto = plainToInstance(
+      PhotoshootPackageReviewDto,
+      review,
+    );
+
+    this.notificationService.addNotificationToQueue({
+      userId: booking.originalPhotoshootPackage.userId,
+      type: 'IN_APP',
+      title: 'Đánh giá mới',
+      content: `Gói ${booking.photoshootPackageHistory.title} của bạn đã được thêm một đánh giá mới`,
+      payload: photoshootPackageReviewDto,
+      referenceType: 'BOOKING',
+    });
+
+    return photoshootPackageReviewDto;
   }
 
   async updateBookingToPaid(userId: string, bookingId: string) {
@@ -180,6 +194,15 @@ export class BookingService {
     );
 
     await this.prisma.$transaction(prismaPromises);
+
+    this.notificationService.addNotificationToQueue({
+      userId: booking.originalPhotoshootPackage.userId,
+      type: 'IN_APP',
+      title: `Gói chụp ${booking.photoshootPackageHistory.title} có cập nhật mới`,
+      content: `Gói chụp ${booking.photoshootPackageHistory.title} của bạn đã được cập nhật thành đã thanh toán và mở khóa tải về ảnh`,
+      payload: booking,
+      referenceType: 'BOOKING',
+    });
 
     return await this.findById(userId, bookingId);
   }
@@ -405,7 +428,7 @@ export class BookingService {
       referenceType: 'BOOKING',
       title: `Nhiếp ảnh gia đã từ chối gói chụp ${booking.photoshootPackageHistory.title}`,
       type: 'BOTH_INAPP_EMAIL',
-      content: `Yêu cầu thực hiện gói chụp ${booking.photoshootPackageHistory.title} của bạn đã hủy bỏ với lí do ${denyDto.reason}`,
+      content: `Yêu cầu thực hiện gói chụp ${booking.photoshootPackageHistory.title} của bạn đã hủy bỏ ${denyDto.reason !== '' ? denyDto.reason : ''}`,
       payload: booking,
     });
 

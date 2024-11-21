@@ -140,6 +140,10 @@ export class NotificationService {
     return await this.queue.add(
       NotificationConstant.TEXT_NOTIFICATION_JOB,
       notificationDto,
+      {
+        delay: 1000,
+        jobId: `${notificationDto.userId}-${notificationDto.type}-${notificationDto.content}`,
+      },
     );
   }
 }
