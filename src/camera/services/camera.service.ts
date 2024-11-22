@@ -107,10 +107,9 @@ export class CameraService {
     );
   }
 
-  //TODO: think about delete camera
-  // async delete(id: string) {
-  //   return await this.cameraRepository.delete({
-  //     id,
-  //   });
-  // }
+  async delete(id: string) {
+    return await this.cameraRepository.delete({
+      id,
+    });
+  }
 }

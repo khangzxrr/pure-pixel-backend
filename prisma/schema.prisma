@@ -427,6 +427,7 @@ model Camera {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  deletedAt DateTime?
 
   cameraOnUsers           CameraOnUsers[]
   popularCameraDataPoints PopularCameraDataPoint[]

@@ -10,7 +10,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
   extendedClient() {
     const prisma = this.$extends({
       query: {
-        newsfeed: {
+        camera: {
           async $allOperations({ operation, args, query }) {
             if (
               operation === 'findFirst' ||
@@ -19,11 +19,30 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
               operation === 'findFirstOrThrow' ||
               operation === 'findUniqueOrThrow' ||
               operation === 'count' ||
-              operation === 'delete' ||
               operation === 'update' ||
               operation === 'updateMany'
             ) {
               args.where = { ...args.where, deletedAt: null };
+            }
+
+            if (operation === 'delete') {
+              console.log(args);
+
+              return prisma.camera.update({
+                where: args.where,
+                data: {
+                  deletedAt: new Date(),
+                },
+              });
+            }
+
+            if (operation === 'deleteMany') {
+              return prisma.camera.updateMany({
+                where: args.where,
+                data: {
+                  deleteAt: new Date(),
+                },
+              });
             }
 
             return query(args);

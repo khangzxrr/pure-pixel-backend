@@ -7,6 +7,8 @@ import { StorageModule } from 'src/storage/storage.module';
 import { NestjsFormDataModule } from 'nestjs-form-data';
 import { PhotoModule } from 'src/photo/photo.module';
 import { PhotographerPhotoShootPackageController } from './controllers/photographer-photoshoot-package.controller';
+import { ManagePhotoshootPackageService } from './services/manage-photoshoot-package.service';
+import { ManagerPhotoShootPackageController } from './controllers/manager-photoshoot-package.controller';
 
 @Module({
   imports: [
@@ -19,7 +21,8 @@ import { PhotographerPhotoShootPackageController } from './controllers/photograp
   controllers: [
     PhotoShootPackageController,
     PhotographerPhotoShootPackageController,
+    ManagerPhotoShootPackageController,
   ],
-  providers: [PhotoshootPackageService],
+  providers: [PhotoshootPackageService, ManagePhotoshootPackageService],
 })
 export class PhotoshootPackageModule {}
