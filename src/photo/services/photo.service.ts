@@ -484,14 +484,7 @@ export class PhotoService {
       originalPhotoUrl: photo.originalPhotoUrl,
     });
 
-    const deleteQuery = this.photoRepository.deleteById(photo.id);
-
-    const deactivePhotoSellQuery =
-      this.photoSellRepository.deactivatePhotoSellByPhotoIdQuery(photoId);
-
-    await this.prisma
-      .extendedClient()
-      .$transaction([deleteQuery, deactivePhotoSellQuery]);
+    await this.photoRepository.deleteById(photo.id, photo.size);
 
     return true;
   }

@@ -29,9 +29,19 @@ export class PhotoshootRepository {
   }
 
   delete(id: string) {
-    return this.prisma.extendedClient().photoshootPackage.delete({
+    return this.prisma.extendedClient().photoshootPackage.update({
       where: {
         id,
+      },
+      data: {
+        deletedAt: new Date(),
+        user: {
+          update: {
+            packageCount: {
+              decrement: 1,
+            },
+          },
+        },
       },
     });
   }

@@ -323,7 +323,10 @@ export class BookingService {
       throw new BookingNotInValidStateException();
     }
 
-    const photo = await this.photoRepository.deleteById(photoId);
+    const photo = await this.photoRepository.findUniqueOrThrow(photoId);
+
+    await this.photoRepository.deleteById(photoId, photo.size);
+
     return photo;
   }
 

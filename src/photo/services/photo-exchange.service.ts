@@ -26,6 +26,7 @@ import { PhotoBuyFindAllResponseDto } from '../dtos/rest/photo-buy-find-all.resp
 import { NotificationService } from 'src/notification/services/notification.service';
 import { UserRepository } from 'src/database/repositories/user.repository';
 import { BunnyService } from 'src/storage/services/bunny.service';
+import { CannotPerformOnBookingPhoto } from '../exceptions/cannot-perform-on-booking-photo.exception';
 
 @Injectable()
 export class PhotoExchangeService {
@@ -141,6 +142,10 @@ export class PhotoExchangeService {
 
     if (photo.status === 'DUPLICATED') {
       throw new FailToPerformOnDuplicatedPhotoException();
+    }
+
+    if (photo.photoType === 'BOOKING') {
+      throw new CannotPerformOnBookingPhoto();
     }
 
     const previousActivePhotoSell = await this.photoSellRepository.findFirst({
