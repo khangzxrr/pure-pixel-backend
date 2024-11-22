@@ -1,25 +1,24 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, PrismaPromise } from '@prisma/client';
+
 import { PrismaService } from 'src/prisma.service';
+import { PhotoBuyDetail } from '../types/photo-buy';
 
 @Injectable()
 export class PhotoBuyRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAllByBuyerIdAndPhotoId(buyerId: string, photoId: string) {
+  findAll(where: Prisma.PhotoBuyWhereInput): PrismaPromise<PhotoBuyDetail[]> {
     return this.prisma.photoBuy.findMany({
-      where: {
-        buyerId,
-        photoSellHistory: {
-          originalPhotoSell: {
-            photoId,
-          },
-        },
-      },
+      where,
       include: {
         userToUserTransaction: {
           include: {
-            fromUserTransaction: true,
+            fromUserTransaction: {
+              include: {
+                user: true,
+              },
+            },
           },
         },
         photoSellHistory: {

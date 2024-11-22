@@ -210,8 +210,19 @@ export class PhotoExchangeService {
   }
 
   async getPhotoBuyByPhotoId(userId: string, photoId: string) {
-    const previousPhotoBuys =
-      await this.photoBuyRepository.findAllByBuyerIdAndPhotoId(userId, photoId);
+    const previousPhotoBuys = await this.photoBuyRepository.findAll({
+      photoSellHistory: {
+        originalPhotoSell: {
+          photoId,
+        },
+      },
+      userToUserTransaction: {
+        fromUserTransaction: {
+          status: 'SUCCESS',
+          userId,
+        },
+      },
+    });
 
     const mappingToDtoPromises = previousPhotoBuys.map(async (photobuy) => {
       const signedPhotoBuyDto = plainToInstance(SignedPhotoBuyDto, photobuy);
