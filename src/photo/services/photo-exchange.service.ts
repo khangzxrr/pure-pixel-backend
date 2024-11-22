@@ -25,6 +25,8 @@ import { PhotoBuyFindAllDto } from '../dtos/rest/photo-buy-find-all.dto';
 import { PhotoBuyFindAllResponseDto } from '../dtos/rest/photo-buy-find-all.response.dto';
 import { NotificationService } from 'src/notification/services/notification.service';
 import { UserRepository } from 'src/database/repositories/user.repository';
+import { BunnyService } from 'src/storage/services/bunny.service';
+import { CannotPerformOnBookingPhoto } from '../exceptions/cannot-perform-on-booking-photo.exception';
 
 @Injectable()
 export class PhotoExchangeService {
@@ -44,6 +46,7 @@ export class PhotoExchangeService {
     private readonly prisma: PrismaService,
     @Inject() private readonly sepayService: SepayService,
     @Inject() private readonly notificationService: NotificationService,
+    @Inject() private readonly bunnyService: BunnyService,
   ) {}
 
   async getAllPreviousBuyPhoto(userId: string, findAllDto: PhotoBuyFindAllDto) {
@@ -141,6 +144,10 @@ export class PhotoExchangeService {
       throw new FailToPerformOnDuplicatedPhotoException();
     }
 
+    if (photo.photoType === 'BOOKING') {
+      throw new CannotPerformOnBookingPhoto();
+    }
+
     const previousActivePhotoSell = await this.photoSellRepository.findFirst({
       active: true,
       photoId,
@@ -230,6 +237,10 @@ export class PhotoExchangeService {
       if (
         photobuy.userToUserTransaction.fromUserTransaction.status === 'SUCCESS'
       ) {
+        signedPhotoBuyDto.previewUrl = this.bunnyService.getPresignedFile(
+          photobuy.photoSellHistory.originalPhotoSell.photo.originalPhotoUrl,
+          `?width=${photobuy.photoSellHistory.width}`,
+        );
         signedPhotoBuyDto.downloadUrl = `${process.env.BACKEND_ORIGIN}/photo/${photoId}/photo-buy/${photobuy.id}/download`;
       }
 

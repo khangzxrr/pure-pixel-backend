@@ -80,29 +80,11 @@ export class PhotoshootPackageService {
       throw new PhotoshootPackageNotBelongException();
     }
 
-    const deletedPhotoshootPackagePromise =
-      this.photoshootRepository.delete(id);
-
-    const updatePackageQuotaPromise = this.userRepository.update(userId, {
-      packageCount: {
-        decrement: 1,
-      },
-    });
-
-    const [deletedPhotoshootPackage, _] = await this.prisma
-      .extendedClient()
-      .$transaction([
-        deletedPhotoshootPackagePromise,
-        updatePackageQuotaPromise,
-      ]);
+    const deletedPhotoshootPackage = await this.photoshootRepository.delete(id);
 
     const photoshootPackageDto = plainToInstance(
       PhotoshootPackageDto,
       deletedPhotoshootPackage,
-    );
-
-    photoshootPackageDto.thumbnail = this.bunnyService.getPresignedFile(
-      photoshootPackageDto.thumbnail,
     );
 
     return photoshootPackageDto;

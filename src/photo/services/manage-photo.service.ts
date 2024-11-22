@@ -132,6 +132,8 @@ export class ManagePhotoService {
   }
 
   async delete(id: string) {
-    return await this.photoRepository.deleteById(id);
+    const photo = await this.photoRepository.findUniqueOrThrow(id);
+
+    return await this.photoRepository.deleteById(id, photo.size);
   }
 }

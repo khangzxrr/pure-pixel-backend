@@ -13,7 +13,11 @@ export type PhotoBuyDetail = Prisma.PhotoBuyGetPayload<{
     };
     photoSellHistory: {
       include: {
-        originalPhotoSell: true;
+        originalPhotoSell: {
+          include: {
+            photo: true;
+          };
+        };
       };
     };
   };
