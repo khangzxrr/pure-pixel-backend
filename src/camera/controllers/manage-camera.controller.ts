@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   // Delete,
   Get,
   Inject,
@@ -46,8 +47,8 @@ export class ManageCameraController {
     return await this.cameraService.update(id, updateDto);
   }
 
-  // @Delete(':cameraId')
-  // async deleteCamera(@Param('cameraId') id: string) {
-  //   return await this.cameraService.delete(id);
-  // }
+  @Delete(':cameraId')
+  async deleteCamera(@Param('cameraId') id: string) {
+    return await this.cameraService.delete(id);
+  }
 }
