@@ -23,7 +23,11 @@ export class PhotoBuyRepository {
         },
         photoSellHistory: {
           include: {
-            originalPhotoSell: true,
+            originalPhotoSell: {
+              include: {
+                photo: true,
+              },
+            },
           },
         },
       },
