@@ -125,7 +125,7 @@ export class PhotoProcessService {
     });
   }
 
-  async parseExifFromBuffer(buffer: Buffer) {
+  async parseExifFromBuffer(buffer: Buffer): Promise<object> {
     return exifr.parse(buffer, {
       exif: true,
       xmp: false,
