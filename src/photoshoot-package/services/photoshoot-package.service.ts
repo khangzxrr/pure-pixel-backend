@@ -19,6 +19,9 @@ import {
   PhotoshootPackageDetail,
 } from 'src/database/types/photoshoot-package';
 import { PrismaPromise } from '@prisma/client';
+import { PhotoshootPackageShowcaseUpdateDto } from '../dtos/rest/photoshoot-package-showcase.update.dto';
+import { PhotoshootPackageShowcaseRepository } from 'src/database/repositories/photoshoot-package-showcase.repository';
+import { PhotoshootPackageShowcaseDto } from '../dtos/photoshoot-package-showcase.dto';
 
 @Injectable()
 export class PhotoshootPackageService {
@@ -29,7 +32,63 @@ export class PhotoshootPackageService {
     @Inject() private readonly bunnyService: BunnyService,
     @Inject()
     private readonly prisma: PrismaService,
+    @Inject()
+    private readonly photoshootPackageShowcaseRepository: PhotoshootPackageShowcaseRepository,
   ) {}
+
+  async replaceShowcase(
+    userId: string,
+    photoshootPackageId: string,
+    showcaseId: string,
+    updateShowcaseDto: PhotoshootPackageShowcaseUpdateDto,
+  ) {
+    const photoshootPackage =
+      await this.photoshootRepository.findUniqueOrThrow(photoshootPackageId);
+
+    if (photoshootPackage.userId !== userId) {
+      throw new PhotoshootPackageNotBelongException();
+    }
+
+    const showcase =
+      await this.photoshootPackageShowcaseRepository.findByIdOrThrow(
+        showcaseId,
+      );
+
+    await this.bunnyService.delete(showcase.photoUrl);
+    const key = await this.bunnyService.upload(updateShowcaseDto.showcase);
+
+    console.log(key);
+
+    const updatedShowcase =
+      await this.photoshootPackageShowcaseRepository.updateById(showcaseId, {
+        photoUrl: key,
+      });
+
+    return plainToInstance(PhotoshootPackageShowcaseDto, updatedShowcase);
+  }
+
+  async deleteShowcase(
+    userId: string,
+    photoshootPackageId: string,
+    showcaseId: string,
+  ) {
+    const photoshootPackage =
+      await this.photoshootRepository.findUniqueOrThrow(photoshootPackageId);
+
+    if (photoshootPackage.userId !== userId) {
+      throw new PhotoshootPackageNotBelongException();
+    }
+
+    const showcase =
+      await this.photoshootPackageShowcaseRepository.findByIdOrThrow(
+        showcaseId,
+      );
+
+    await this.bunnyService.delete(showcase.photoUrl);
+
+    await this.photoshootPackageShowcaseRepository.deleteById(showcase.id);
+    return true;
+  }
 
   async replace(
     userId: string,
