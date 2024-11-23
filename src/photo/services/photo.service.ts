@@ -554,7 +554,7 @@ export class PhotoService {
         throw new ExifNotFoundException();
       }
 
-      const exif = JSON.parse(Utils.removedNullChar(exifRaw));
+      const exif = JSON.parse(Utils.removedNullChar(JSON.stringify(exifRaw)));
 
       if (!exif['Make']) {
         throw new MissingMakeExifException();
