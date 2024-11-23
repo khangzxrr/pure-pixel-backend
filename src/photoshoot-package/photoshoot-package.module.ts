@@ -9,6 +9,7 @@ import { PhotoModule } from 'src/photo/photo.module';
 import { PhotographerPhotoShootPackageController } from './controllers/photographer-photoshoot-package.controller';
 import { ManagePhotoshootPackageService } from './services/manage-photoshoot-package.service';
 import { ManagerPhotoShootPackageController } from './controllers/manager-photoshoot-package.controller';
+import { PhotographerPhotoshootPackageShowCaseController } from './controllers/photographer-photoshoot-package-showcase.controller';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { ManagerPhotoShootPackageController } from './controllers/manager-photos
     PhotoShootPackageController,
     PhotographerPhotoShootPackageController,
     ManagerPhotoShootPackageController,
+    PhotographerPhotoshootPackageShowCaseController,
   ],
   providers: [PhotoshootPackageService, ManagePhotoshootPackageService],
 })

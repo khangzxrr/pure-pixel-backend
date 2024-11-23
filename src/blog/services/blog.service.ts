@@ -56,13 +56,13 @@ export class BlogService {
   }
 
   async delete(id: string) {
-    await this.blogRepository.findByIdOrThrow(id);
+    const blog = await this.blogRepository.findByIdOrThrow(id);
 
-    const deletedBlog = await this.blogRepository.deleteById(id);
+    await this.bunnyService.delete(blog.thumbnail);
 
-    await this.bunnyService.delete(deletedBlog.thumbnail);
+    await this.blogRepository.deleteById(id);
 
-    return plainToInstance(BlogDto, deletedBlog);
+    return true;
   }
 
   async replace(id: string, blogUpdateRequestDto: BlogPutUpdateRequestDto) {

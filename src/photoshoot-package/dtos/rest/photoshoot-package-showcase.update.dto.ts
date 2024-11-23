@@ -9,7 +9,6 @@ import {
 export class PhotoshootPackageShowcaseUpdateDto {
   @ApiProperty({
     type: 'file',
-    isArray: true,
   })
   @IsFile()
   @MaxFileSize(5e7, {

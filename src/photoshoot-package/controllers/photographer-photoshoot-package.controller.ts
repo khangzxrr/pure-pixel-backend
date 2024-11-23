@@ -103,49 +103,6 @@ export class PhotographerPhotoShootPackageController {
     return await this.photoshootPackageService.update(user.sub, id, updateDto);
   }
 
-  @Put(':id/showcase/:showcaseId')
-  @ApiOperation({
-    summary: 'update photoshoot package by id and showcaseId',
-  })
-  @ApiConsumes('multipart/form-data')
-  @FormDataRequest()
-  @ApiOkResponse({
-    type: PhotoshootPackageShowcaseDto,
-  })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
-  async replaceShowcaseById(
-    @AuthenticatedUser() user: ParsedUserDto,
-    @Param('id') id: string,
-    @Param('showcaseId') showcaseId: string,
-    @Body() updateShowcaseDto: PhotoshootPackageShowcaseUpdateDto,
-  ) {
-    return await this.photoshootPackageService.replaceShowcase(
-      user.sub,
-      id,
-      showcaseId,
-      updateShowcaseDto,
-    );
-  }
-
-  @Delete(':id/showcase/:showcaseId')
-  @ApiOperation({
-    summary: 'delete photoshoot package showcase by id and showcaseId',
-  })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
-  async deleteShowcaseById(
-    @AuthenticatedUser() user: ParsedUserDto,
-    @Param('id') id: string,
-    @Param('showcaseId') showcaseId: string,
-  ) {
-    return await this.photoshootPackageService.deleteShowcase(
-      user.sub,
-      id,
-      showcaseId,
-    );
-  }
-
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   @Put(':id')

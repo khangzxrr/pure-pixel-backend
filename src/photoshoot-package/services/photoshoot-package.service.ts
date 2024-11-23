@@ -22,6 +22,8 @@ import { PrismaPromise } from '@prisma/client';
 import { PhotoshootPackageShowcaseUpdateDto } from '../dtos/rest/photoshoot-package-showcase.update.dto';
 import { PhotoshootPackageShowcaseRepository } from 'src/database/repositories/photoshoot-package-showcase.repository';
 import { PhotoshootPackageShowcaseDto } from '../dtos/photoshoot-package-showcase.dto';
+import { PhotoshootPackageShowcaseFindAllDto } from '../dtos/rest/photoshoot-package-showcase.find-all.request.dto';
+import { PhotoshootPackageShowcaseFindAllResponseDto } from '../dtos/rest/photoshoot-package-showcase.find-all.response.dto';
 
 @Injectable()
 export class PhotoshootPackageService {
@@ -35,6 +37,80 @@ export class PhotoshootPackageService {
     @Inject()
     private readonly photoshootPackageShowcaseRepository: PhotoshootPackageShowcaseRepository,
   ) {}
+
+  async findAllShowcase(
+    userId: string,
+    photoshootPackageId: string,
+    findAllDto: PhotoshootPackageShowcaseFindAllDto,
+  ) {
+    const photoshootPackage =
+      await this.photoshootRepository.findUniqueOrThrow(photoshootPackageId);
+
+    if (photoshootPackage.userId !== userId) {
+      throw new PhotoshootPackageNotBelongException();
+    }
+
+    const showcases = await this.photoshootPackageShowcaseRepository.findMany(
+      {
+        PhotoshootPackage: {
+          userId,
+          id: photoshootPackageId,
+        },
+      },
+      findAllDto.toSkip(),
+      findAllDto.limit,
+    );
+
+    const count = await this.photoshootPackageShowcaseRepository.count({
+      PhotoshootPackage: {
+        userId,
+        id: photoshootPackageId,
+      },
+    });
+
+    const dtos = showcases.map((s) => {
+      const dto = plainToInstance(PhotoshootPackageShowcaseDto, s);
+      dto.photoUrl = this.bunnyService.getPresignedFile(dto.photoUrl);
+
+      return dto;
+    });
+
+    return new PhotoshootPackageShowcaseFindAllResponseDto(
+      findAllDto.limit,
+      count,
+      dtos,
+    );
+  }
+
+  async createShowcase(
+    userId: string,
+    photoshootPackageId: string,
+    createShowcaseDto: PhotoshootPackageShowcaseUpdateDto,
+  ) {
+    const photoshootPackage =
+      await this.photoshootRepository.findUniqueOrThrow(photoshootPackageId);
+
+    if (photoshootPackage.userId !== userId) {
+      throw new PhotoshootPackageNotBelongException();
+    }
+
+    const key = await this.bunnyService.upload(createShowcaseDto.showcase);
+
+    const showcase = await this.photoshootPackageShowcaseRepository.create({
+      PhotoshootPackage: {
+        connect: {
+          id: photoshootPackage.id,
+          userId,
+        },
+      },
+      photoUrl: key,
+    });
+
+    const dto = plainToInstance(PhotoshootPackageShowcaseDto, showcase);
+    dto.photoUrl = this.bunnyService.getPresignedFile(showcase.photoUrl);
+
+    return dto;
+  }
 
   async replaceShowcase(
     userId: string,
@@ -57,14 +133,15 @@ export class PhotoshootPackageService {
     await this.bunnyService.delete(showcase.photoUrl);
     const key = await this.bunnyService.upload(updateShowcaseDto.showcase);
 
-    console.log(key);
-
     const updatedShowcase =
       await this.photoshootPackageShowcaseRepository.updateById(showcaseId, {
         photoUrl: key,
       });
 
-    return plainToInstance(PhotoshootPackageShowcaseDto, updatedShowcase);
+    const dto = plainToInstance(PhotoshootPackageShowcaseDto, updatedShowcase);
+    dto.photoUrl = this.bunnyService.getPresignedFile(dto.photoUrl);
+
+    return dto;
   }
 
   async deleteShowcase(
