@@ -10,8 +10,13 @@ import * as tvkd from 'tieng-viet-khong-dau';
 type GqlContextType = 'graphql' | ContextType;
 
 export class Utils {
+  static removedNullChar(text: string) {
+    return text.replace(/\0/g, '');
+  }
+
   static normalizeText(text: string) {
-    return tvkd.cLowerCase(text);
+    const removedNullChar = text.replace(/\0/g, '');
+    return tvkd.cLowerCase(removedNullChar);
   }
 
   static randomString(length: number) {

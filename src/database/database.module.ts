@@ -35,6 +35,7 @@ import { NewsfeedLikeRepository } from './repositories/newsfeed-like.repository'
 import { FollowRepository } from './repositories/follow.repository';
 import { PhotoshootPackageReviewRepository } from './repositories/photoshoot-package-review.repository';
 import { DashboardReportRepository } from './repositories/dashboard-report.repository';
+import { PhotoshootPackageShowcaseRepository } from './repositories/photoshoot-package-showcase.repository';
 @Module({
   providers: [
     PrismaService,
@@ -73,6 +74,7 @@ import { DashboardReportRepository } from './repositories/dashboard-report.repos
     FollowRepository,
     PhotoshootPackageReviewRepository,
     DashboardReportRepository,
+    PhotoshootPackageShowcaseRepository,
   ],
   exports: [
     PrismaService,
@@ -111,6 +113,7 @@ import { DashboardReportRepository } from './repositories/dashboard-report.repos
     FollowRepository,
     PhotoshootPackageReviewRepository,
     DashboardReportRepository,
+    PhotoshootPackageShowcaseRepository,
   ],
 })
 export class DatabaseModule {}

@@ -542,7 +542,7 @@ export class PhotoService {
     }
 
     try {
-      const exif = await this.photoProcessService.parseExifFromBuffer(
+      let exifRaw = await this.photoProcessService.parseExifFromBuffer(
         photoUploadDto.file.buffer,
       );
 
@@ -550,9 +550,11 @@ export class PhotoService {
         photoUploadDto.file.buffer,
       );
 
-      if (!exif) {
+      if (!exifRaw) {
         throw new ExifNotFoundException();
       }
+
+      const exif = JSON.parse(Utils.removedNullChar(JSON.stringify(exifRaw)));
 
       if (!exif['Make']) {
         throw new MissingMakeExifException();
