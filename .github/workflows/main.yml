@@ -1,16 +1,27 @@
-name: remote ssh command
-on: [push]
-jobs:
+﻿name: Node.js CI
 
+on: [push]
+
+jobs:
   build:
-    name: Build
+
     runs-on: ubuntu-latest
     steps:
     - name: executing remote ssh commands using password
-      uses: appleboy/ssh-action@v1.0.3
+      uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.HOST }}
         username: ${{ secrets.USERNAME }}
-        password: ${{ secrets.PASSWORD }}
+        key: ${{ secrets.SSH_KEY }}
         port: ${{ secrets.PORT }}
-        script: cd deploy && echo "${{ secrets.PASSWORD}}" | sudo -S ./deploy.sh
+        script: |
+          export NVM_DIR=~/.nvm
+          source ~/.nvm/nvm.sh
+          cd /home/deploy/pure-pixel-backend
+          git checkout main
+          git pull
+          npm install
+          npx prisma migrate deploy
+          ./scripts/build-image.sh
+          cd ..
+          ./deploy.sh
