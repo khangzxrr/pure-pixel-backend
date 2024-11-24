@@ -15,8 +15,10 @@ import { plainToInstance } from 'class-transformer';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoVoteRepository } from 'src/database/repositories/photo-vote.repository';
 import { Constants } from 'src/infrastructure/utils/constants';
-import { User } from '@prisma/client';
+
 import { FollowingService } from './following.service';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 
 @Injectable()
 export class PhotographerService {
@@ -27,15 +29,9 @@ export class PhotographerService {
     @Inject() private readonly photoRepository: PhotoRepository,
     @Inject() private readonly photoVoteRepository: PhotoVoteRepository,
     @Inject() private readonly followingService: FollowingService,
-    private readonly prisma: PrismaService,
+    @Inject(CACHE_MANAGER)
+    private readonly cacheManager: Cache,
   ) {}
-  async getInfo(userId: string): Promise<UserEntity> {
-    return this.prisma.user.findUnique({
-      where: {
-        id: userId,
-      },
-    });
-  }
 
   async getAllPhotographer(
     userId: string,
