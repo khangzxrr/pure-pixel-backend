@@ -16,6 +16,7 @@ import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoVoteRepository } from 'src/database/repositories/photo-vote.repository';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { User } from '@prisma/client';
+import { FollowingService } from './following.service';
 
 @Injectable()
 export class PhotographerService {
@@ -25,6 +26,7 @@ export class PhotographerService {
     @Inject() private readonly userRepository: UserRepository,
     @Inject() private readonly photoRepository: PhotoRepository,
     @Inject() private readonly photoVoteRepository: PhotoVoteRepository,
+    @Inject() private readonly followingService: FollowingService,
     private readonly prisma: PrismaService,
   ) {}
   async getInfo(userId: string): Promise<UserEntity> {
@@ -106,16 +108,8 @@ export class PhotographerService {
         },
       },
 
-      followers: {
-        where: {
-          followerId: userId,
-        },
-      },
-      followings: {
-        where: {
-          followingId: userId,
-        },
-      },
+      followers: true,
+      followings: true,
     });
 
     if (!photographer) {
@@ -125,8 +119,17 @@ export class PhotographerService {
     const photos =
       await this.photoService.findAllWithUpvoteAndCommentCountByUserId(id);
 
+    const isFollowed = await this.followingService.get(userId, id);
+
     const profile = new PhotographerProfileDto();
+
     profile.photographer = plainToInstance(PhotographerDTO, photographer);
+
+    if (isFollowed) {
+      profile.photographer.isFollowed = true;
+    } else {
+      profile.photographer.isFollowed = false;
+    }
 
     profile.upvoteCount = 0;
     profile.commentCount = 0;
