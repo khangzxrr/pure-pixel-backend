@@ -5,12 +5,104 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [earthdistance, cube]
+}
+
+enum NewsfeedVisibility {
+  PUBLIC
+  ONLY_FOLLOWING
+  ONLY_CHOOSED
+  ONLY_ME
+}
+
+enum ViewPermission {
+  ALLOW
+  DENY
+}
+
+model DashboardReport {
+  id String @id @default(uuid())
+  data Json
+  
+  createdAt DateTime  @default(now()) @unique
+}
+
+model Newsfeed {
+  id String @id @default(uuid())
+
+  title       String
+  description String
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  visibility NewsfeedVisibility
+
+  photos      Photo[]
+  likes       NewsfeedLike[]
+  comments    NewsfeedComment[]
+  permissions NewsfeedViewPermission[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+model NewsfeedViewPermission {
+  id String @id @default(uuid())
+
+  newsfeed   Newsfeed @relation(fields: [newsfeedId], references: [id])
+  newsfeedId String
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  permission ViewPermission
+
+  createdAt DateTime @default(now())
+
+  @@unique([newsfeedId, userId])
+}
+
+model NewsfeedLike {
+  id String @id @default(uuid())
+
+  newsfeed   Newsfeed @relation(fields: [newsfeedId], references: [id])
+  newsfeedId String
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  createdAt DateTime @default(now())
+
+  @@unique([newsfeedId, userId])
+}
+
+model NewsfeedComment {
+  id String @id @default(uuid())
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  newsfeed   Newsfeed @relation(fields: [newsfeedId], references: [id])
+  newsfeedId String
+
+  parent   NewsfeedComment? @relation("parentComment", fields: [parentId], references: [id])
+  parentId String?
+
+  replies NewsfeedComment[] @relation("parentComment")
+
+  content String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model User {
@@ -18,33 +110,78 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  maxPhotoQuota        BigInt @default(0)
-  maxPackageCount      BigInt @default(0)
-  maxBookingPhotoQuota BigInt @default(0)
-  maxBookingVideoQuota BigInt @default(0)
+  maxPhotoQuota   BigInt @default(0)
+  maxPackageCount BigInt @default(0)
 
-  photoQuotaUsage        BigInt @default(0)
-  packageCount           BigInt @default(0)
-  bookingPhotoQuotaUsage BigInt @default(0)
-  bookingVideoQuotaUsage BigInt @default(0)
+  photoQuotaUsage BigInt @default(0)
+  packageCount    BigInt @default(0)
 
-  avatar   String @default("https://s3-hcm-r1.s3cloud.vn/sftpgo/avatar%2Favatar.png")
-  cover    String @default("https://s3-hcm-r1.s3cloud.vn/sftpgo/avatar%2Fcover.jpg")
-  name     String @default("")
-  location String @default("")
-  quote    String @default("")
+  avatar String @default("https://s3-hcm-r1.s3cloud.vn/sftpgo/avatar%2Favatar.png")
+  cover  String @default("https://s3-hcm-r1.s3cloud.vn/sftpgo/avatar%2Fcover.jpg")
+
+  name String @default("")
+  mail String @default("")
+
+  normalizedName String @default("")
+
+  phonenumber String   @default("")
+  socialLinks String[]
+  expertises  String[]
+  location    String   @default("")
+  quote       String   @default("")
 
   ftpUsername String @default("")
   ftpPassword String @default("")
 
   photos        Photo[]
   upgradeOrders UpgradeOrder[]
-  transactions  Transaction[]
-  Comment       Comment[]
-  Vote          Vote[]
 
-  followers  Follow[] @relation("follower")
-  followings Follow[] @relation("following")
+  comments Comment[]
+  votes    Vote[]
+
+  followers  Follow[] @relation("following")
+  followings Follow[] @relation("follower")
+
+  bankInfos BankInfo[]
+
+  toUserTransactions UserToUserTransaction[] @relation("toUser")
+
+  transactions Transaction[]
+  PhotoBuy     PhotoBuy[]
+
+  photoshootPackages PhotoshootPackage[]
+  reports            Report[]
+  reportResponses    ReportResponse[]
+  blogs              Blog[]
+  notifications      Notification[]
+  bookings           Booking[]
+  reviews            Review[]
+
+  bookmarks     Bookmark[]
+  chatrooms     Chatroom[]
+  chatmessages  ChatMessage[]
+ 
+  cameraOnUsers CameraOnUsers[]
+
+  newsfeeds               Newsfeed[]
+  newsfeedComments        NewsfeedComment[]
+  newsfeedLikes           NewsfeedLike[]
+  newsfeedViewPermissions NewsfeedViewPermission[]
+}
+
+model BankInfo {
+  id String @id @unique @default(uuid())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  bankName     String
+  bankNumber   String  @unique
+  bankUsername String
+  User         User?   @relation(fields: [userId], references: [id])
+  userId       String?
+
+  withdrawalTransactions WithdrawalTransaction[]
 }
 
 model Follow {
@@ -54,6 +191,8 @@ model Follow {
   following   User   @relation(name: "following", fields: [followingId], references: [id])
   followingId String
 
+  createdAt DateTime @default(now())
+
   @@id([followerId, followingId])
 }
 
@@ -61,8 +200,8 @@ enum TransactionType {
   UPGRADE_TO_PHOTOGRAPHER
   IMAGE_SELL
   IMAGE_BUY
-  FIRST_BOOKING_PAYMENT
-  SECOND_BOOKING_PAYMENT
+  DEPOSIT
+  WITHDRAWAL
 }
 
 enum TransactionStatus {
@@ -70,19 +209,85 @@ enum TransactionStatus {
   FAILED
   PENDING
   CANCEL
+  EXPIRED
+}
+
+enum PaymentMethod {
+  WALLET
+  SEPAY
 }
 
 model Transaction {
   id String @id @unique @default(uuid())
 
+  paymentPayload Json
+  paymentMethod  PaymentMethod
+  type           TransactionType
+  status         TransactionStatus @default(PENDING)
+
+  amount Decimal
+  fee    Decimal @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   user   User   @relation(fields: [userId], references: [id])
   userId String
 
-  paymentPayload Json
-  paymentMethod  String
-  type           TransactionType
-  status         TransactionStatus
-  amount         Decimal
+  fromUserTransaction UserToUserTransaction? @relation("fromUserTransaction")
+  toUserTransaction   UserToUserTransaction? @relation("toUserTransaction")
+
+  withdrawalTransaction WithdrawalTransaction?
+  depositTransaction    DepositTransaction?
+  serviceTransaction    ServiceTransaction?
+}
+
+model UserToUserTransaction {
+  id String @id @unique @default(uuid())
+
+  toUser   User   @relation(name: "toUser", fields: [toUserId], references: [id])
+  toUserId String
+
+  fromUserTransaction   Transaction @relation(name: "fromUserTransaction", fields: [fromUserTransactionId], references: [id])
+  fromUserTransactionId String      @unique
+
+  toUserTransaction   Transaction? @relation(name: "toUserTransaction", fields: [toUserTransactionId], references: [id])
+  toUserTransactionId String?      @unique
+
+  photoBuy PhotoBuy?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model WithdrawalTransaction {
+  id String @id @unique @default(uuid())
+
+  bankInfo   BankInfo @relation(fields: [bankInfoId], references: [id])
+  bankInfoId String
+
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+  transactionId String      @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DepositTransaction {
+  id String @id @unique @default(uuid())
+
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+  transactionId String      @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ServiceTransaction {
+  id String @id @unique @default(uuid())
+
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+  transactionId String      @unique
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -104,28 +309,39 @@ model UpgradeOrder {
 
   expiredAt DateTime
 
-  originalUpgradePackage   UpgradePackage @relation(fields: [originalUpgradePackageId], references: [id])
-  originalUpgradePackageId String
-
   user   User   @relation(fields: [userId], references: [id])
   userId String
 
   status UpgradeOrderStatus @default(PENDING)
 
-  transaction   Transaction? @relation(fields: [transactionId], references: [id], onDelete: SetNull)
-  transactionId String?      @unique
+  serviceTransaction   ServiceTransaction @relation(fields: [serviceTransactionId], references: [id])
+  serviceTransactionId String             @unique
 
-  //copy from UpgradePackage
-  name          String
-  price         Decimal @default(0)
-  minOrderMonth Int     @default(0)
+  upgradePackageHistory   UpgradePackageHistory @relation(fields: [upgradePackageHistoryId], references: [id])
+  upgradePackageHistoryId String                @unique
+}
 
-  maxPhotoQuota        BigInt @default(0)
-  maxPackageCount      BigInt @default(0)
-  maxBookingPhotoQuota BigInt @default(0)
-  maxBookingVideoQuota BigInt @default(0)
+model UpgradePackageHistory {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name  String
+  price Decimal @default(0)
+
+  minOrderMonth Int @default(0)
+
+  maxPhotoQuota   BigInt @default(0)
+  maxPackageCount BigInt @default(0)
+
+  summary String @default("")
 
   descriptions String[]
+
+  originalUpgradePackage   UpgradePackage @relation(fields: [originalUpgradePackageId], references: [id])
+  originalUpgradePackageId String
+
+  upgradeOrder UpgradeOrder?
 }
 
 enum UpgradePackageStatus {
@@ -138,21 +354,95 @@ model UpgradePackage {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  name  String  @unique
+  name  String
   price Decimal @default(0)
 
   minOrderMonth Int @default(0)
 
-  maxPhotoQuota        BigInt @default(0)
-  maxPackageCount      BigInt @default(0)
-  maxBookingPhotoQuota BigInt @default(0)
-  maxBookingVideoQuota BigInt @default(0)
+  maxPhotoQuota   BigInt @default(0)
+  maxPackageCount BigInt @default(0)
+
+  summary String @default("")
 
   descriptions String[]
 
   status UpgradePackageStatus
 
-  upgradeOrders UpgradeOrder[]
+  deletedAt DateTime?
+
+  upgradePackageHistories UpgradePackageHistory[]
+}
+
+model PopularCameraTimeline {
+  id String @id @default(uuid())
+
+  timestamp DateTime @unique
+
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  popularCameraDataPoints PopularCameraDataPoint[]
+}
+
+model PopularCameraDataPoint {
+  id String @id @default(uuid())
+
+  camera   Camera @relation(fields: [cameraId], references: [id])
+  cameraId String
+
+  timeline   PopularCameraTimeline @relation(fields: [timelineId], references: [id])
+  timelineId String
+
+  userCount Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([cameraId, timelineId])
+}
+
+model CameraMaker {
+  id String @id @default(uuid())
+
+  name      String @unique
+  thumbnail String
+
+  cameras Camera[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Camera {
+  id String @id @default(uuid())
+
+  name      String @unique
+  thumbnail String
+  description String @default("")
+
+  cameraMaker   CameraMaker @relation(fields: [cameraMakerId], references: [id])
+  cameraMakerId String
+
+  photos Photo[]
+
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  cameraOnUsers           CameraOnUsers[]
+  popularCameraDataPoints PopularCameraDataPoint[]
+}
+
+model CameraOnUsers {
+  camera   Camera @relation(fields: [cameraId], references: [id])
+  cameraId String
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  createdAt DateTime @default(now())
+
+  @@id([cameraId, userId])
 }
 
 model Category {
@@ -167,18 +457,18 @@ model Category {
 
 enum PhotoType {
   RAW
-  EDITED
+  BOOKING
 }
 
 enum PhotoVisibility {
   PUBLIC
   PRIVATE
-  SHARE_LINK
 }
 
 enum PhotoStatus {
-  PARSED
   PENDING
+  PARSED
+  DUPLICATED
 }
 
 model Photo {
@@ -187,27 +477,27 @@ model Photo {
   photographer   User   @relation(fields: [photographerId], references: [id])
   photographerId String
 
-  category   Category @relation(fields: [categoryId], references: [id])
-  categoryId String
+  categories Category[]
+
+  camera   Camera? @relation(fields: [cameraId], references: [id])
+  cameraId String?
 
   title String
+  normalizedTitle String @default("")
+
+  width  Int
+  height Int
+
+  viewCount Int @default(0)
 
   watermark Boolean @default(false)
-  showExif  Boolean @default(false)
 
-  exif         Json
-  colorGrading Json
-
-  location    String
-  captureTime DateTime
+  exif Json
 
   description String
 
   originalPhotoUrl  String
   watermarkPhotoUrl String
-
-  thumbnailPhotoUrl          String
-  watermarkThumbnailPhotoUrl String
 
   photoType PhotoType
 
@@ -215,16 +505,140 @@ model Photo {
 
   status PhotoStatus @default(PENDING)
 
-  photoTags String[]
+  size Int @default(0)
 
-  size Int @default(0) 
+  hash String @default("")
+
+  blurHash String @default("")
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  comments Comment[]
-  votes    Vote[]
+  comments      Comment[]
+  votes         Vote[]
+  photoSellings PhotoSell[]
+  photoTags     PhotoTag[]
+  bookmarks     Bookmark[]
+  newsfeeds     Newsfeed[]
+
+  booking   Booking? @relation(fields: [bookingId], references: [id])
+  bookingId String?
+}
+
+model Chatroom {
+  id String @id @default(uuid())
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  chatmessages ChatMessage[]
+}
+
+model ChatMessage {
+  id String @id @default(uuid())
+
+  chatroom   Chatroom @relation(fields: [chatroomId], references: [id])
+  chatroomId String
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  message String
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+model PhotoTag {
+  id String @id @default(uuid())
+
+  name String
+
+  photo   Photo  @relation(fields: [photoId], references: [id])
+  photoId String
+
+  @@unique([name, photoId])
+}
+
+model Pricetag {
+  id String @id @default(uuid())
+
+  width  Int     @default(0)
+  height Int     @default(0)
+  price  Decimal
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  PhotoSell   PhotoSell @relation(fields: [photoSellId], references: [id])
+  photoSellId String
+}
+
+model PhotoSell {
+  id String @id @default(uuid())
+
+  active Boolean @default(false)
+
+  description String
+
+  photo   Photo  @relation(fields: [photoId], references: [id])
+  photoId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  pricetags          Pricetag[]
+  photoSellHistories PhotoSellHistory[]
+}
+
+model PhotoSellHistory {
+  id String @id @default(uuid())
+
+  originalPhotoSell   PhotoSell @relation(fields: [originalPhotoSellId], references: [id])
+  originalPhotoSellId String
+
+  description String
+
+  width  Int @default(0)
+  height Int @default(0)
+  price  Decimal
+
+  createdAt DateTime   @default(now())
+  photoBuy  PhotoBuy[]
+}
+
+model PhotoBuy {
+  id String @id @default(uuid())
+
+  photoSellHistory   PhotoSellHistory @relation(fields: [photoSellHistoryId], references: [id])
+  photoSellHistoryId String
+
+  userToUserTransaction   UserToUserTransaction @relation(fields: [userToUserTransactionId], references: [id])
+  userToUserTransactionId String                @unique
+
+  buyer   User   @relation(fields: [buyerId], references: [id])
+  buyerId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Bookmark {
+  id String @id @default(uuid())
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  photo   Photo  @relation(fields: [photoId], references: [id])
+  photoId String
+
+  @@unique([userId, photoId])
 }
 
 model Vote {
@@ -240,6 +654,8 @@ model Vote {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([userId, photoId])
 }
 
 model Comment {
@@ -251,8 +667,251 @@ model Comment {
   photo   Photo  @relation(fields: [photoId], references: [id])
   photoId String
 
+  parent   Comment? @relation("parentComment", fields: [parentId], references: [id])
+  parentId String?
+
+  replies Comment[] @relation("parentComment")
+
   content String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+enum ReportStatus {
+  OPEN
+  WAITING_FEEDBACK
+  RESPONSED
+  CLOSED
+}
+
+enum ReportType {
+  USER
+  PHOTO
+  BOOKING
+  COMMENT
+}
+
+model Report {
+  id String @id @default(uuid())
+
+  reportStatus ReportStatus
+
+  reportType ReportType
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  content String
+
+  referenceId String
+
+  archived Boolean
+
+  response ReportResponse[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ReportResponse {
+  id String @id @default(uuid())
+
+  report   Report @relation(fields: [reportId], references: [id])
+  reportId String
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  content String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum BlogStatus {
+  ENABLED
+  DISABLED
+}
+
+model Blog {
+  id String @id @default(uuid())
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  status BlogStatus @default(ENABLED)
+
+  title     String
+  content   String
+  thumbnail String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum PhotoshootPackageStatus {
+  ENABLED
+  DISABLED
+}
+
+model PhotoshootPackageShowcasePhoto {
+  id       String @id @default(uuid())
+  photoUrl String
+
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  PhotoshootPackage   PhotoshootPackage? @relation(fields: [photoshootPackageId], references: [id])
+  photoshootPackageId String?
+}
+
+model PhotoshootPackage {
+  id          String  @id @default(uuid())
+  title       String
+  subtitle    String
+  price       Decimal
+  thumbnail   String
+  description String
+
+  status PhotoshootPackageStatus
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  showcases PhotoshootPackageShowcasePhoto[]
+  reviews   Review[]
+  bookings  Booking[]
+}
+
+model PhotoshootPackageHistory {
+  id        String  @id @default(uuid())
+  title     String
+  subtitle  String
+  price     Decimal
+  thumbnail String
+
+  booking Booking[]
+}
+
+enum NotificationStatus {
+  SHOW
+  HIDE
+}
+
+enum NotificationType {
+  IN_APP
+  EMAIL
+  BOTH_INAPP_EMAIL
+}
+
+enum NotificationReferenceType {
+  BOOKING
+  CHAT
+  UPGRADE_PACKAGE
+  PHOTO_SELL
+  PHOTO_BUY
+  PHOTO
+}
+
+model Notification {
+  id String @id @default(uuid())
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  status NotificationStatus @default(SHOW)
+  type   NotificationType   @default(IN_APP)
+
+  referenceType NotificationReferenceType
+
+  title   String
+  content String
+
+  payload Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum BookingStatus {
+  REQUESTED
+  ACCEPTED
+  DENIED
+  SUCCESSED
+  FAILED
+}
+
+enum BookingBillItemType {
+  INCREASE
+  DECREASE
+}
+
+model BookingBillItem {
+  id String @id @default(uuid())
+
+  title       String
+  description String  @default("")
+  price       Decimal
+
+  type BookingBillItemType
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  booking   Booking @relation(fields: [bookingId], references: [id])
+  bookingId String
+}
+
+model Booking {
+  id String @id @default(uuid())
+
+  photoshootPackageHistory   PhotoshootPackageHistory @relation(fields: [photoshootPackageHistoryId], references: [id])
+  photoshootPackageHistoryId String
+
+  startDate DateTime
+  endDate   DateTime
+
+  status      BookingStatus
+  description String        @default("")
+
+  failedReason String @default("")
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  reviews   Review[]
+  billItems BookingBillItem[]
+  photos    Photo[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  originalPhotoshootPackage   PhotoshootPackage? @relation(fields: [originalPhotoshootPackageId], references: [id])
+  originalPhotoshootPackageId String?
+}
+
+model Review {
+  id String @id @default(uuid())
+
+  star        Int
+  description String
+
+  photoshootPackage   PhotoshootPackage @relation(fields: [photoshootPackageId], references: [id])
+  photoshootPackageId String
+
+  booking   Booking @relation(fields: [bookingId], references: [id])
+  bookingId String
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([bookingId, userId])
 }

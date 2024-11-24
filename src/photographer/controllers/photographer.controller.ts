@@ -2,20 +2,12 @@ import {
   Controller,
   Get,
   Inject,
-  NotImplementedException,
   Param,
   Query,
   UseGuards,
 } from '@nestjs/common';
 import { PhotographerService } from '../services/photographer.service';
-import {
-  ApiOkResponse,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
-import { HttpStatusCode } from 'axios';
-import { SignedPhotoDto } from 'src/photo/dtos/photo.dto';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   AuthenticatedUser,
   AuthGuard,
@@ -25,12 +17,13 @@ import {
 import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { FindAllPhotoFilterDto } from 'src/photo/dtos/find-all.filter.dto';
-import { ParsedUserDto } from 'src/user/dto/parsed-user.dto';
 import { FindAllPhotographerRequestDto } from '../dtos/find-all-photographer-dtos/find-all-photographer.request.dto';
 import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.response.dto';
 import { PhotographerDTO } from '../dtos/photographer.dto';
-import { PagingPaginatedResposneDto } from 'src/infrastructure/restful/paging-paginated.response.dto';
+
 import { PhotographerProfileDto } from '../dtos/photographer-profile.dto';
+import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
+import { SignedPhotoDto } from 'src/photo/dtos/signed-photo.dto';
 
 @Controller('photographer')
 @ApiTags('photographer')
@@ -41,7 +34,7 @@ export class PhotographerController {
 
   @Get('')
   @ApiOperation({
-    summary: 'get all photographers. Ah yes I KNOW! doesnt have filter yet',
+    summary: 'get all photographers',
   })
   @ApiOkResponsePaginated(PhotographerDTO)
   @UseGuards(AuthGuard, KeycloakRoleGuard)
@@ -49,18 +42,9 @@ export class PhotographerController {
   async findAllPhotographers(
     @AuthenticatedUser() user: ParsedUserDto,
     @Query() findAllRequestDto: FindAllPhotographerRequestDto,
-  ): Promise<PagingPaginatedResposneDto<PhotographerDTO>> {
-    console.log(findAllRequestDto);
-
-    if (user) {
-      return this.photographerService.getAllPhotographerExceptUserId(
-        user.sub,
-        findAllRequestDto,
-      );
-    }
-
-    return this.photographerService.getAllPhotographerExceptUserId(
-      '',
+  ) {
+    return this.photographerService.getAllPhotographer(
+      user ? user.sub : '',
       findAllRequestDto,
     );
   }
@@ -74,28 +58,21 @@ export class PhotographerController {
   })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Public(false)
-  async getPhotographerProfile(@Param('id') id: string) {
-    return await this.photographerService.getPhotographerProfileById(id);
-  }
-
-  //TODO: finish get all packages of photographer API
-  @Get('/:id/package')
-  @ApiOperation({
-    summary: 'get all packages of photographer',
-  })
-  async findAllPackages() {
-    throw new NotImplementedException();
+  async getPhotographerProfile(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Param('id') id: string,
+  ) {
+    return await this.photographerService.getPhotographerProfileById(
+      user ? user.sub : '',
+      id,
+    );
   }
 
   @Get('/me/photo')
   @ApiOperation({
     summary: 'get all photos of mine',
   })
-  @ApiResponse({
-    isArray: true,
-    status: HttpStatusCode.Ok,
-    type: SignedPhotoDto,
-  })
+  @ApiOkResponsePaginated(SignedPhotoDto)
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   async getPhotoOfMine(

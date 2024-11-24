@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class SignedUrl {
   @ApiProperty()
@@ -7,7 +7,10 @@ export class SignedUrl {
   @ApiProperty()
   thumbnail: string;
 
-  constructor(url, thumbnail) {
+  @ApiProperty()
+  placeholder: string;
+
+  constructor(url: string, thumbnail: string) {
     this.url = url;
     this.thumbnail = thumbnail;
   }

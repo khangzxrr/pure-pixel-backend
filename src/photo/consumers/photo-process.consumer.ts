@@ -4,24 +4,23 @@ import { Job } from 'bullmq';
 import { Inject, Logger } from '@nestjs/common';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoProcessService } from '../services/photo-process.service';
-import { PhotoGateway } from '../gateways/socket.io.gateway';
-import { PhotoService } from '../services/photo.service';
-import { GenerateWatermarkRequestDto } from '../dtos/generate-watermark.request.dto';
-import { ProcessPhotosRequest } from '../dtos/process-images.request.dto';
-import { DatabaseService } from 'src/database/database.service';
-import { UserRepository } from 'src/database/repositories/user.repository';
+import { TineyeService } from 'src/storage/services/tineye.service';
+import { BunnyService } from 'src/storage/services/bunny.service';
 
-@Processor(PhotoConstant.PHOTO_PROCESS_QUEUE)
+@Processor(PhotoConstant.PHOTO_PROCESS_QUEUE, {
+  concurrency: 2,
+})
 export class PhotoProcessConsumer extends WorkerHost {
   private readonly logger = new Logger(PhotoProcessConsumer.name);
 
   constructor(
-    @Inject() private readonly photoGateway: PhotoGateway,
     @Inject() private readonly photoRepository: PhotoRepository,
-    @Inject() private readonly userRepository: UserRepository,
     @Inject() private readonly photoProcessService: PhotoProcessService,
-    @Inject() private readonly photoService: PhotoService,
-    @Inject() private readonly databaseService: DatabaseService,
+    @Inject() private readonly tineyeService: TineyeService,
+    @Inject() private readonly bunnyService: BunnyService,
+
+    // @InjectQueue(NotificationConstant.NOTIFICATION_QUEUE)
+    // private readonly notificationQueue: Queue,
   ) {
     super();
   }
@@ -30,16 +29,10 @@ export class PhotoProcessConsumer extends WorkerHost {
     try {
       switch (job.name) {
         case PhotoConstant.PROCESS_PHOTO_JOB_NAME:
-          await this.processPhoto(
-            job.data.userId,
-            job.data.processPhotosRequest,
-          );
+          await this.processPhoto(job.data.id);
           break;
-        case PhotoConstant.GENERATE_WATERMARK_JOB:
-          await this.processWatermark(
-            job.data.userId,
-            job.data.generateWatermarkRequest,
-          );
+        case PhotoConstant.DELETE_PHOTO_JOB_NAME:
+          await this.deleteTineyePhoto(job.data.originalPhotoUrl);
           break;
       }
     } catch (e) {
@@ -49,134 +42,127 @@ export class PhotoProcessConsumer extends WorkerHost {
     }
   }
 
-  async processWatermark(
-    userId: string,
-    generateWatermarkRequest: GenerateWatermarkRequestDto,
-  ) {
-    this.logger.log(`generate watermark`);
-    this.logger.log(generateWatermarkRequest);
+  // private async sendNotification(
+  //   photoTitle: string,
+  //   userId: string,
+  //   payload: object,
+  // ) {
+  //   const notificationCreateDto: NotificationCreateDto = {
+  //     userId,
+  //     referenceType: 'PHOTO',
+  //
+  //     type: 'BOTH_INAPP_EMAIL',
+  //     title: `Ảnh ${photoTitle} của bạn trùng với một ảnh khác!`,
+  //     content: `Ảnh ${photoTitle} của bạn có dấu hiệu trùng với một ảnh khác, nếu đây là sự sai sót, vui lòng báo cáo lên quản trị viên để được xem xét. Xin cám ơn!`,
+  //   };
+  //
+  //   await this.notificationQueue.add(
+  //     NotificationConstant.TEXT_NOTIFICATION_JOB,
+  //     notificationCreateDto,
+  //   );
+  // }
 
-    await this.generateWatermark(generateWatermarkRequest);
+  async deleteTineyePhoto(originalPhotoUrl: string) {
+    await this.tineyeService.delete(originalPhotoUrl);
 
-    const photo = await this.photoService.getSignedPhotoById(
-      userId,
-      generateWatermarkRequest.photoId,
-    );
-
-    await this.photoGateway.sendFinishWatermarkEventToUserId(userId, photo);
+    this.logger.log(`delete ${originalPhotoUrl} from tineye database`);
   }
 
-  async generateWatermark(
-    generateWatermarkRequest: GenerateWatermarkRequestDto,
-  ) {
-    const photo = await this.photoRepository.getPhotoById(
-      generateWatermarkRequest.photoId,
-    );
+  async generateThumbnail(photoId: string, buffer: Buffer) {
+    const sharp = await this.photoProcessService.sharpInitFromBuffer(buffer);
 
-    const sharp = await this.photoProcessService.sharpInitFromObjectKey(
-      photo.originalPhotoUrl,
-    );
-
-    const watermark = await this.photoProcessService.makeWatermark(
+    const thumbnailBuffer = await this.photoProcessService.resize(
       sharp,
-      generateWatermarkRequest.text,
+      PhotoConstant.THUMBNAIL_WIDTH,
     );
 
-    const watermarkBuffer = await watermark.toBuffer();
-    photo.watermarkPhotoUrl = `watermark/${photo.originalPhotoUrl}`;
-    await this.photoProcessService.uploadFromBuffer(
-      photo.watermarkPhotoUrl,
-      watermarkBuffer,
+    const placeHolderBuffer = await this.photoProcessService.resize(
+      sharp,
+      PhotoConstant.PLACEHOLDER_WIDTH,
     );
 
-    //make a copy from buffer DO NOT DIRECT USE watermark: sharp
-    //or it will throw composite image not valid size
-    const watermarkFromBuffer =
-      await this.photoProcessService.sharpInitFromBuffer(watermarkBuffer);
-    const watermarkThumbnail =
-      await this.photoProcessService.makeThumbnail(watermarkFromBuffer);
-
-    const watermarkThumbnailBuffer = await watermarkThumbnail.toBuffer();
-    photo.watermarkThumbnailPhotoUrl = `thumbnail/${photo.originalPhotoUrl}`;
-    await this.photoProcessService.uploadFromBuffer(
-      photo.watermarkThumbnailPhotoUrl,
-      watermarkThumbnailBuffer,
-    );
-
-    await this.photoRepository.update(photo);
-  }
-
-  async processPhoto(userId: string, processRequest: ProcessPhotosRequest) {
-    this.logger.log(`process photos`);
-    this.logger.log(processRequest);
-
-    await this.convertAndEmitProcessEvents(userId, processRequest);
-
-    const photo = await this.photoService.getSignedPhotoById(
-      userId,
-      processRequest.signedUpload.photoId,
-    );
-
-    await this.photoGateway.sendFinishProcessPhotoEventToUserId(userId, photo);
-  }
-
-  async convertAndEmitProcessEvents(
-    userId: string,
-    processImagesRequest: ProcessPhotosRequest,
-  ) {
-    const photo = await this.photoRepository.getPhotoByIdAndStatusAndUserId(
-      processImagesRequest.signedUpload.photoId,
-      'PENDING',
-      userId,
-    );
-
-    if (!photo) {
-      this.logger.error(
-        `photo not found to process userId: ${userId}, photoId: ${processImagesRequest.signedUpload.photoId}`,
-      );
-
-      return;
-    }
-
-    const sharp = await this.photoProcessService.sharpInitFromObjectKey(
-      photo.originalPhotoUrl,
-    );
-
-    const sharpJpegBuffer = await this.photoProcessService
-      .convertJpeg(sharp)
-      .then((s) => s.toBuffer());
-    await this.photoProcessService.uploadFromBuffer(
-      photo.originalPhotoUrl,
-      sharpJpegBuffer,
-    );
-
-    const metadata = await sharp.metadata();
-    photo.size = metadata.size;
-    photo.exif = await this.photoProcessService.makeExif(sharp);
-
-    const thumbnailBuffer = await this.photoProcessService
-      .makeThumbnail(sharp)
-      .then((s) => s.toBuffer());
-    photo.thumbnailPhotoUrl = `thumbnail/${photo.originalPhotoUrl}`;
-    await this.photoProcessService.uploadFromBuffer(
-      photo.thumbnailPhotoUrl,
+    await this.bunnyService.uploadFromBuffer(
+      `thumbnail/${photoId}.jpg`,
       thumbnailBuffer,
     );
 
-    photo.watermarkThumbnailPhotoUrl = photo.thumbnailPhotoUrl;
-
-    photo.watermarkPhotoUrl = photo.originalPhotoUrl;
-    photo.status = 'PARSED';
-
-    const updateQueries = this.photoRepository.batchUpdate([photo]);
-    const updateQuotaQuery = this.userRepository.increasePhotoQuotaUsageById(
-      userId,
-      photo.size,
+    await this.bunnyService.uploadFromBuffer(
+      `placeholder/${photoId}.jpg`,
+      placeHolderBuffer,
     );
 
-    await this.databaseService.applyTransactionMultipleQueries([
-      ...updateQueries,
-      updateQuotaQuery,
-    ]);
+    this.logger.log(`generated thumbnail for photo id: ${photoId}`);
+  }
+
+  async processPhoto(photoId: string) {
+    console.log(`process photo id: ${photoId}`);
+
+    const photo = await this.photoRepository.findUniqueOrThrow(photoId);
+
+    const buffer = await this.photoProcessService.getBufferFromKey(
+      photo.originalPhotoUrl,
+    );
+
+    await this.generateThumbnail(photoId, buffer);
+
+    const hash = await this.photoProcessService.getHashFromBuffer(buffer);
+
+    const blurHash = await this.photoProcessService.bufferToBlurhash(buffer);
+
+    // const existPhotoWithHash = await this.photoRepository.findFirst({
+    //   hash,
+    // });
+    // if (existPhotoWithHash) {
+    //   await this.photoRepository.deleteById(photoId);
+    //
+    //   await this.sendNotification(photo.title, photo.photographerId, photo.id);
+    //
+    //   return;
+    // }
+
+    // const signedPhotoUrl = this.bunnyService.getPresignedFile(
+    //   photo.originalPhotoUrl,
+    //   `?width=${PhotoConstant.TINEYE_MIN_PHOTO_WIDTH}`,
+    // );
+    //
+    // try {
+    //   const response = await this.tineyeService.search(signedPhotoUrl);
+    //
+    //   const result = response.data.result;
+    //
+    //   if (result) {
+    //     if (result.length > 0 && result[0].match_percent >= 10) {
+    //       await this.photoRepository.deleteById(photoId);
+    //
+    //       await this.sendNotification(
+    //         photo.title,
+    //         photo.photographerId,
+    //         photo.id,
+    //       );
+    //
+    //       return;
+    //     }
+    //   }
+    // } catch (e) {
+    //   console.log(e);
+    // }
+    //
+    // try {
+    //   const data = await this.tineyeService.add(
+    //     photo.originalPhotoUrl,
+    //     signedPhotoUrl,
+    //   );
+    //
+    //   if (data.status === 200) {
+    //     this.logger.log(`uploaded photo ${photo.originalPhotoUrl} to tineye`);
+    //   }
+    // } catch (e) {
+    //   console.log(e);
+    // }
+
+    await this.photoRepository.updateById(photoId, {
+      hash,
+      blurHash,
+    });
   }
 }

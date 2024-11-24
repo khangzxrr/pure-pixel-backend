@@ -1,51 +1,88 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, TransactionStatus, TransactionType } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
 export class TransactionRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async cancelAllPendingOrderTransaction(
-    userId: string,
-    tx: Prisma.TransactionClient,
-  ) {
-    return tx.transaction.updateMany({
+  async countAll(where: Prisma.TransactionWhereInput) {
+    return this.prisma.transaction.count({
+      where,
+    });
+  }
+
+  cancelAllPendingTransactionByIdAndType(type: TransactionType) {
+    return this.prisma.transaction.updateMany({
       where: {
-        userId,
+        type,
         status: 'PENDING',
       },
-
       data: {
         status: 'CANCEL',
       },
     });
   }
 
-  async getById(id: string) {
-    return this.prisma.transaction.findUnique({
-      where: {
-        id,
-      },
-      include: {
-        upgradeOrder: true,
-      },
-    });
-  }
-
-  updateSuccessTransactionAndActivateUpgradeOrder(id: string, payload: object) {
-    return this.prisma.extendedClient().transaction.update({
+  async updateStatusAndPayload(
+    id: string,
+    status: TransactionStatus,
+    payload: object,
+  ) {
+    return this.prisma.transaction.update({
       where: {
         id,
       },
       data: {
-        status: 'SUCCESS',
+        status,
         paymentPayload: payload,
-        upgradeOrder: {
-          update: {
-            status: 'ACTIVE',
-          },
-        },
+      },
+    });
+  }
+
+  async update(
+    where: Prisma.TransactionWhereInput,
+    update: Prisma.TransactionUpdateInput,
+  ) {
+    return this.prisma.transaction.updateMany({
+      where,
+      data: update,
+    });
+  }
+
+  async findAll(
+    where: Prisma.TransactionWhereInput,
+    skip?: number,
+    take?: number,
+    orderBy?: Prisma.TransactionOrderByWithRelationInput[],
+  ) {
+    return this.prisma.transaction.findMany({
+      where,
+      skip,
+      take,
+      include: {
+        user: true,
+        toUserTransaction: true,
+        fromUserTransaction: true,
+        depositTransaction: true,
+        serviceTransaction: true,
+        withdrawalTransaction: true,
+      },
+      orderBy,
+    });
+  }
+
+  async findUniqueOrThrow(where: Prisma.TransactionWhereUniqueInput) {
+    return this.prisma.transaction.findUniqueOrThrow({
+      where,
+
+      include: {
+        user: true,
+        toUserTransaction: true,
+        fromUserTransaction: true,
+        depositTransaction: true,
+        serviceTransaction: true,
+        withdrawalTransaction: true,
       },
     });
   }

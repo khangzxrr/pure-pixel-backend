@@ -1,10 +1,12 @@
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
+import { CameraConstant } from 'src/camera/constants/camera.constant';
 import { CustomConfigModule } from 'src/customConfig/custom-config.module';
 import { BullMqConfigService } from 'src/customConfig/services/bullmq-config.service';
 import { BullMqQueueRegisterService } from 'src/customConfig/services/bullmq-queue-register.service';
+import { NotificationConstant } from 'src/notification/constants/notification.constant';
 import { PhotoConstant } from 'src/photo/constants/photo.constant';
-import { UpgradeConstant } from 'src/upgrade/constants/upgrade.constant';
+import { UpgradeConstant } from 'src/upgrade-package/constants/upgrade.constant';
 
 @Module({
   exports: [BullModule],
@@ -26,6 +28,30 @@ import { UpgradeConstant } from 'src/upgrade/constants/upgrade.constant';
     BullModule.registerQueueAsync({
       imports: [CustomConfigModule],
       name: PhotoConstant.PHOTO_PROCESS_QUEUE,
+      useExisting: BullMqQueueRegisterService,
+      inject: [CustomConfigModule],
+    }),
+    BullModule.registerQueueAsync({
+      imports: [CustomConfigModule],
+      name: PhotoConstant.PHOTO_WATERMARK_QUEUE,
+      useExisting: BullMqQueueRegisterService,
+      inject: [CustomConfigModule],
+    }),
+    BullModule.registerQueueAsync({
+      imports: [CustomConfigModule],
+      name: PhotoConstant.PHOTO_VIEWCOUNT_QUEUE,
+      useExisting: BullMqQueueRegisterService,
+      inject: [CustomConfigModule],
+    }),
+    BullModule.registerQueueAsync({
+      imports: [CustomConfigModule],
+      name: NotificationConstant.NOTIFICATION_QUEUE,
+      useExisting: BullMqQueueRegisterService,
+      inject: [CustomConfigModule],
+    }),
+    BullModule.registerQueueAsync({
+      imports: [CustomConfigModule],
+      name: CameraConstant.CAMERA_PROCESS_QUEUE,
       useExisting: BullMqQueueRegisterService,
       inject: [CustomConfigModule],
     }),

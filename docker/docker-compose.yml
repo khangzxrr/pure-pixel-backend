@@ -1,18 +1,6 @@
 # Use postgres/example user/password credentials
 
 services:
-  imaginary:
-    image: h2non/imaginary:latest
-    restart: always
-    # optionally mount a volume as local image source
-    volumes:
-      - ./images:/mnt/data
-    environment:
-      PORT: 9000
-    command: -enable-url-source -mount /mnt/data -http-cache-ttl 86400
-    ports:
-      - '9000:9000'
-
   redis:
     image: redis
     ports:
@@ -75,20 +63,21 @@ services:
       KC_DB_PASSWORD: ${KC_DB_PASSWORD}
       KC_DB_SCHEMA: ${KC_DB_SCHEMA}
       KC_DB_URL: ${KC_DB_URL}
-      KC_HTTP_RELATIVE_PATH: ${KC_HTTP_RELATIVE_PATH}
       PROXY_ADDRESS_FORWARDING: true
     command: ['start-dev', '--import-realm']
 
   pgadmin:
+    container_name: pgadmin
     image: dpage/pgadmin4
-    volumes:
-      - pgadmin:/var/lib/pgadmin
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin4@pgadmin.org}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
-      PGADMIN_CONFIG_SERVER_MODE: 'False'
+
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+
     ports:
-      - 5050:80
+      - '${PGADMIN_PORT:-5050}:80'
     restart: unless-stopped
 
 volumes:

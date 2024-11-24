@@ -3,7 +3,6 @@ import {
   Controller,
   Delete,
   Get,
-  HttpStatus,
   Inject,
   Param,
   Patch,
@@ -22,111 +21,80 @@ import {
 import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
 import {
+  ApiConsumes,
   ApiOkResponse,
   ApiOperation,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
 import { HttpStatusCode } from 'axios';
-import { PresignedUploadUrlRequest } from '../dtos/presigned-upload-url.request';
-import { PresignedUploadUrlResponse } from '../dtos/presigned-upload-url.response.dto';
-import { PhotoDto, SignedPhotoDto } from '../dtos/photo.dto';
-import { PhotoUpdateRequest } from '../dtos/photo-update.request.dto';
+import { PhotoUploadRequestDto } from '../dtos/rest/photo-upload.request';
+import { PhotoDto } from '../dtos/photo.dto';
+import { PhotoUpdateRequestDto } from '../dtos/rest/photo-update.request.dto';
 import { FindAllPhotoFilterDto } from '../dtos/find-all.filter.dto';
 
 import { Response } from 'express';
-import { ParsedUserDto } from 'src/user/dto/parsed-user.dto';
-import { CommentService } from '../services/comment.service';
-import { CreateCommentRequestDto } from '../dtos/create-comment.request.dto';
-import { CommentEntity } from '../entities/comment.entity';
-import { ProcessPhotosRequest } from '../dtos/process-images.request.dto';
-import { GenerateWatermarkRequestDto } from '../dtos/generate-watermark.request.dto';
+import { GenerateWatermarkRequestDto } from '../dtos/rest/generate-watermark.request.dto';
+import { SharePhotoRequestDto } from '../dtos/rest/share-photo.request.dto';
+import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.response.dto';
+import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
+import { ResolutionDto } from '../dtos/resolution.dto';
+import { SignedPhotoDto } from '../dtos/signed-photo.dto';
+import { FormDataRequest } from 'nestjs-form-data';
+import { FindNextPhotoFilterDto } from '../dtos/find-next.filter.dto';
 
 @Controller('photo')
 @ApiTags('photo')
 export class PhotoController {
-  constructor(
-    @Inject() private readonly photoService: PhotoService,
-    @Inject() private readonly commentService: CommentService,
-  ) {}
+  constructor(@Inject() private readonly photoService: PhotoService) {}
 
-  // @Get('/test/:key')
-  // async test(@Param('key') key: string, @Res() res: Response) {
-  //   const sharp = await this.photoProcessService.sharpInitFromObjectKey(key); // const thumbnail = await this.photoProcessService
-  //   //   .makeThumbnail(sharp)
-  //   //   .toBuffer();
-  //   //
-  //
-  //   console.log(await this.photoProcessService.makeExif(sharp));
-  //
-  //   const watermark = await this.photoProcessService
-  //     .makeWatermark(sharp, 'test')
-  //     .then((s) => s.toBuffer());
-  //
-  //   res.set({
-  //     'Content-Type': 'image/jpeg',
-  //     'Content-Length': watermark.length,
-  //   });
-  //
-  //   const stream = new Readable();
-  //   stream.push(watermark);
-  //   stream.push(null);
-  //
-  //   stream.pipe(res);
-  // }
-  //
+  @Get('/public/next')
+  @ApiOperation({
+    summary: 'get next public photo',
+  })
+  @ApiOkResponse({
+    type: SignedPhotoDto,
+  })
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Public(false)
+  async getNextPublicPhoto(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Query() findNextPhotoFilterDto: FindNextPhotoFilterDto,
+  ) {
+    return await this.photoService.findNextPublicPhotos(
+      user ? user.sub : '',
+      findNextPhotoFilterDto,
+    );
+  }
+
   @Get('/public')
   @ApiOperation({
     summary: 'get public photos',
   })
-  @ApiResponse({
-    status: HttpStatusCode.Ok,
-    description: 'array of photos',
-    type: PhotoDto,
-    isArray: true,
-  })
+  @ApiOkResponsePaginated(SignedPhotoDto)
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Public(false)
   async getAllPublicPhoto(
+    @AuthenticatedUser() user: ParsedUserDto,
     @Query() findPhotoFilter: FindAllPhotoFilterDto,
-  ): Promise<SignedPhotoDto[]> {
-    return await this.photoService.findPublicPhotos(findPhotoFilter);
+  ) {
+    return await this.photoService.findPublicPhotos(
+      user ? user.sub : '',
+      findPhotoFilter,
+    );
   }
 
-  //TODO: finish get comments API
-  @Get('/:id/comment')
+  @Delete(':id')
   @ApiOperation({
-    summary: 'get comments of photo',
-  })
-  @ApiOkResponse({
-    type: CommentEntity,
-    isArray: true,
+    summary: 'delete a photo by id',
   })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Public(false)
-  async getComments(@Param('id') id: string): Promise<CommentEntity[]> {
-    return await this.commentService.findAllByPhotoId(id);
-  }
-
-  @Post('/:id/comment')
-  @ApiOperation({
-    summary: 'create a comment to photo',
-  })
-  @ApiOkResponse({
-    type: CommentEntity,
-  })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
-  async createComment(
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
+  async deletePhoto(
     @AuthenticatedUser() user: ParsedUserDto,
     @Param('id') id: string,
-    @Body() createCommentRequestDto: CreateCommentRequestDto,
-  ): Promise<CommentEntity> {
-    return await this.commentService.createComment(
-      id,
-      user.sub,
-      createCommentRequestDto,
-    );
+  ) {
+    return await this.photoService.deleteById(user.sub, id);
   }
 
   @Get('/:id')
@@ -140,24 +108,14 @@ export class PhotoController {
   })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Public(false)
-  async getPhoto(
+  async findPhotoById(
     @AuthenticatedUser() user: ParsedUserDto,
     @Param('id') id: string,
   ) {
-    return await this.photoService.getSignedPhotoById(user ? user.sub : '', id);
+    return await this.photoService.findById(user ? user.sub : '', id);
   }
 
-  //TODO: webhook handle sftp
-  // @UseGuards(AuthGuard, KeycloakRoleGuard)
-  // @Public(false)
-  // async parseExifviaWebhook(@Query() query) {
-  //   console.log(query);
-  //   console.log('call from webhook');
-  //
-  //   return 'cool';
-  // }
-
-  @Post('/watermark')
+  @Post(':id/watermark')
   @ApiOperation({
     summary: 'put photo to watermark queue inorder to generate watermark',
   })
@@ -169,54 +127,16 @@ export class PhotoController {
   async generateWatermark(
     @AuthenticatedUser() user: ParsedUserDto,
     @Body() generateWatermarkRequest: GenerateWatermarkRequestDto,
-    @Res() res: Response,
-  ) {
-    await this.photoService.sendWatermarkRequest(
-      user.sub,
-      generateWatermarkRequest,
-    );
-
-    res.status(HttpStatus.ACCEPTED).send();
-  }
-
-  @Post('/process')
-  @ApiOperation({
-    summary:
-      'put process image request to queue inorder to generate thumbnail, exif images after upload',
-  })
-  @ApiResponse({
-    status: HttpStatusCode.Accepted,
-  })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
-  async processPhotos(
-    @AuthenticatedUser() user: ParsedUserDto,
-    @Body() processPhotosRequest: ProcessPhotosRequest,
-    @Res() res: Response,
-  ) {
-    await this.photoService.sendProcessImageToMq(
-      user.sub,
-      processPhotosRequest,
-    );
-
-    res.status(HttpStatus.ACCEPTED).send();
-  }
-
-  @Delete('/:id')
-  @ApiOperation({
-    summary: 'delete photo by id',
-  })
-  @ApiOkResponse({})
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
-  async deletePhotoById(
-    @AuthenticatedUser() user: ParsedUserDto,
     @Param('id') id: string,
   ) {
-    return await this.photoService.deleteById(user.sub, id);
+    return await this.photoService.sendImageWatermarkQueue(
+      user.sub,
+      id,
+      generateWatermarkRequest,
+    );
   }
 
-  @Patch('/update')
+  @Patch(':id')
   @ApiOperation({
     summary: 'update one or more fields of photos',
   })
@@ -227,30 +147,80 @@ export class PhotoController {
   })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
-  async updatePhotos(
+  async updatePhoto(
     @AuthenticatedUser() user: ParsedUserDto,
-    @Body() body: PhotoUpdateRequest,
+    @Param('id') id: string,
+    @Body() photoUpdateDto: PhotoUpdateRequestDto,
   ) {
-    return await this.photoService.updatePhotos(user.sub, body.photos);
+    return await this.photoService.updatePhoto(user.sub, id, photoUpdateDto);
   }
 
   @Post('/upload')
-  @ApiOperation({ summary: 'generate presigned upload urls for files' })
+  @ApiOperation({ summary: 'upload and validate photo' })
   @ApiResponse({
     status: HttpStatusCode.Ok,
-    type: PresignedUploadUrlResponse,
+    type: SignedPhotoDto,
   })
+  @ApiConsumes('multipart/form-data')
+  @FormDataRequest()
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
-  async getPresignedUploadUrl(
+  async uploadPhoto(
     @AuthenticatedUser() user: ParsedUserDto,
-    @Body() body: PresignedUploadUrlRequest,
+    @Body() body: PhotoUploadRequestDto,
   ) {
-    const presignedUrl = await this.photoService.getPresignedUploadUrl(
+    const uploadPhotoResponse = await this.photoService.uploadPhoto(
       user.sub,
+      'RAW',
       body,
     );
 
-    return presignedUrl;
+    return uploadPhotoResponse;
+  }
+
+  @Get('/:id/available-resolution')
+  @ApiOperation({
+    summary: 'get photo available scaling resolution',
+  })
+  @ApiResponse({
+    status: 201,
+    description:
+      'indicate server is generating share urls, using websocket to listen to finish processing event',
+  })
+  @ApiOkResponse({
+    isArray: true,
+    type: ResolutionDto,
+  })
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
+  async getPhotoAvailableResolution(
+    @Param('id') id: string,
+    @Res() res: Response,
+  ) {
+    const result = await this.photoService.getAvailablePhotoResolution(id);
+
+    if (result instanceof Boolean) {
+      res.status(201).send();
+      return;
+    }
+
+    res.status(200).send(result);
+  }
+
+  @Post('/share')
+  @ApiOperation({
+    summary: 'generate share url by photo id',
+  })
+  @ApiOkResponse({
+    status: HttpStatusCode.Ok,
+    type: String,
+  })
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
+  async sharePhoto(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Body() body: SharePhotoRequestDto,
+  ) {
+    return await this.photoService.sharePhoto(user.sub, body);
   }
 }

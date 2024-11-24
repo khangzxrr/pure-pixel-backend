@@ -19,7 +19,7 @@ export class PagingPaginatedRequestDto {
   @Min(0)
   @Max(9999)
   @ApiProperty({
-    example: 10,
+    example: 0,
     description: 'Page number (start from 0)',
   })
   @Transform(({ value }) => {

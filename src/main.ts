@@ -4,6 +4,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { json, urlencoded } from 'express';
+import { LoggingInterceptor } from './infrastructure/interceptors/logging.interceptor';
 
 async function bootstrap() {
   BigInt.prototype['toJSON'] = function () {
@@ -15,8 +16,9 @@ async function bootstrap() {
     abortOnError: true,
   });
 
-  app.use(json({ limit: '50mb' }));
-  app.use(urlencoded({ limit: '50mb' }));
+  app.use(json({ limit: '100mb' }));
+  app.use(urlencoded({ limit: '100mb' }));
+  app.useGlobalInterceptors(new LoggingInterceptor());
 
   const config = app.get(ConfigService);
 
@@ -53,6 +55,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, configSwagger);
   SwaggerModule.setup('api', app, document, {
     swaggerOptions: {
+      persistAuthorization: true,
       initOAuth: {
         clientId: config.get<string>('KEYCLOAK_CLIENT_ID'),
         realm: config.get<string>('KEYCLOAK_REALM'),

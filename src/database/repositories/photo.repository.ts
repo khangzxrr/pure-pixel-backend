@@ -1,21 +1,61 @@
 import { Injectable } from '@nestjs/common';
-import { PhotoVisibility } from '@prisma/client';
-import { FindAllPhotoFilterDto } from 'src/photo/dtos/find-all.filter.dto';
-import { Photo } from 'src/photo/entities/photo.entity';
+import { Photo, Prisma } from '@prisma/client';
+
 import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
 export class PhotoRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async delete(photoId: string) {
+  deleteById(photoId: string, photoSize: number) {
     return this.prisma.extendedClient().photo.update({
       where: {
         id: photoId,
       },
       data: {
         deletedAt: new Date(),
+        photographer: {
+          update: {
+            photoQuotaUsage: {
+              decrement: photoSize,
+            },
+          },
+        },
+        photoSellings: {
+          updateMany: {
+            where: {
+              photoId,
+            },
+            data: {
+              active: false,
+            },
+          },
+        },
       },
+    });
+  }
+
+  updateManyQuery(args: Prisma.PhotoUpdateManyArgs) {
+    return this.prisma.extendedClient().photo.updateMany(args);
+  }
+
+  batchUpdate(photo: Photo[]) {
+    return photo.map((p) =>
+      this.prisma.extendedClient().photo.update({
+        where: {
+          id: p.id,
+        },
+        data: p,
+      }),
+    );
+  }
+
+  updateQueryById(id: string, photo: Prisma.PhotoUpdateInput) {
+    return this.prisma.extendedClient().photo.update({
+      where: {
+        id,
+      },
+      data: photo,
     });
   }
 
@@ -28,17 +68,22 @@ export class PhotoRepository {
     });
   }
 
-  batchUpdate(photos: Photo[]) {
-    const queries = photos.map((p) => {
-      return this.prisma.extendedClient().photo.update({
-        where: {
-          id: p.id,
-        },
-        data: p,
-      });
+  updateByIdQuery(id: string, photo: Prisma.PhotoUpdateInput) {
+    return this.prisma.extendedClient().photo.update({
+      where: {
+        id,
+      },
+      data: photo,
     });
+  }
 
-    return queries;
+  async updateById(id: string, photo: Prisma.PhotoUpdateInput) {
+    return this.prisma.extendedClient().photo.update({
+      where: {
+        id,
+      },
+      data: photo,
+    });
   }
 
   async getPhotoByIdAndStatusAndUserId(
@@ -70,43 +115,23 @@ export class PhotoRepository {
     });
   }
 
-  async createTemporaryPhotos(userId: string, originalPhotoUrl: string) {
-    //find a better way to do this
-    const category = await this.prisma.category.findFirstOrThrow({
-      where: {
-        name: 'khác',
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    const photo = new Photo();
-    photo.photographerId = userId;
-    photo.originalPhotoUrl = originalPhotoUrl;
-    photo.categoryId = category.id;
-    photo.location = '';
-    photo.photoType = 'RAW';
-    photo.watermarkThumbnailPhotoUrl = '';
-    photo.thumbnailPhotoUrl = '';
-    photo.watermarkPhotoUrl = '';
-    photo.description = '';
-    photo.captureTime = new Date();
-    photo.colorGrading = {};
-    photo.exif = {};
-    photo.showExif = false;
-    photo.watermark = false;
-    photo.visibility = 'PRIVATE';
-    photo.status = 'PENDING';
-    photo.title = '';
-    photo.photoTags = [];
-
+  async create(data: Prisma.PhotoCreateInput) {
     return this.prisma.extendedClient().photo.create({
-      data: photo,
+      data,
 
-      select: {
-        id: true,
-        originalPhotoUrl: true,
+      include: {
+        photographer: true,
+        categories: true,
+        _count: {
+          select: {
+            votes: {
+              where: {
+                isUpvote: true,
+              },
+            },
+            comments: true,
+          },
+        },
       },
     });
   }
@@ -118,7 +143,7 @@ export class PhotoRepository {
       },
       include: {
         photographer: true,
-        category: true,
+        categories: true,
         _count: {
           select: {
             votes: {
@@ -133,59 +158,133 @@ export class PhotoRepository {
     });
   }
 
-  async getPhotoDetailById(id: string) {
-    return this.prisma.extendedClient().photo.findUnique({
+  async findUniqueOrThrow(id: string, userId?: string) {
+    return this.prisma.extendedClient().photo.findUniqueOrThrow({
       where: {
         id,
       },
       include: {
-        photographer: true,
-        category: true,
         _count: {
           select: {
-            votes: {
-              where: {
-                isUpvote: true,
-              },
-            },
+            votes: true,
             comments: true,
           },
         },
-      },
-    });
-  }
-
-  async getPhotoById(id: string) {
-    return this.prisma.extendedClient().photo.findUnique({
-      where: {
-        id,
-      },
-    });
-  }
-
-  async findAllIncludedPhotographer(filter: FindAllPhotoFilterDto) {
-    return this.prisma.extendedClient().photo.findMany({
-      where: filter.toWhere(),
-      skip: filter.skip,
-      take: filter.take,
-      include: {
         photographer: true,
-        category: true,
+        categories: true,
+        camera: {
+          include: {
+            cameraMaker: true,
+          },
+        },
+        photoSellings: {
+          where: {
+            active: true,
+          },
+          include: {
+            pricetags: true,
+            photoSellHistories: {
+              include: {
+                photoBuy: {
+                  where: {
+                    buyerId: userId,
+                    userToUserTransaction: {
+                      fromUserTransaction: {
+                        status: 'SUCCESS',
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        photoTags: true,
       },
     });
   }
-  async findAllByVisibility(visibilityStr: string) {
-    let visibility: PhotoVisibility = PhotoVisibility.PUBLIC;
 
-    if (visibilityStr == PhotoVisibility.PRIVATE) {
-      visibility = PhotoVisibility.PRIVATE;
-    } else if (visibilityStr == PhotoVisibility.SHARE_LINK) {
-      visibility = PhotoVisibility.SHARE_LINK;
-    }
+  async count(where: Prisma.PhotoWhereInput) {
+    return this.prisma.extendedClient().photo.count({
+      where,
+    });
+  }
 
+  // async unaccentFindAll() {
+  //   await this.prisma.$queryRaw(`SELECT unaccent(lower(title)) FROM "photo"`);
+  // }
+  //
+  //
+  async countByGPS(longitude: number, latitude: number, distance: number) {
+    return this.prisma.$queryRaw`
+                        SELECT COUNT(id) FROM 
+                          (SELECT id, point(${latitude}, ${longitude}) <@>  (point((exif->>'latitude')::float, (exif->>'longitude')::float)::point) as distance
+                          FROM public."Photo" 
+                          WHERE point(${latitude}, ${longitude}) <@>  (point((exif->>'latitude')::float, (exif->>'longitude')::float)::point) < ${distance})
+`;
+  }
+
+  async findAllIdsByGPS(
+    longitude: number,
+    latitude: number,
+    distance: number,
+  ): Promise<any[]> {
+    return this.prisma.$queryRaw`
+                          SELECT id, point(${latitude}, ${longitude}) <@>  (point((exif->>'latitude')::float, (exif->>'longitude')::float)::point) as distance
+                          FROM public."Photo" 
+                          WHERE  point(${latitude}, ${longitude}) <@>  (point((exif->>'latitude')::float, (exif->>'longitude')::float)::point) < ${distance}
+                          ORDER BY point(${latitude}, ${longitude}) <@>  (point((exif->>'latitude')::float, (exif->>'longitude')::float)::point)
+`;
+  }
+
+  async findFirst(where: Prisma.PhotoWhereInput) {
+    return this.prisma.extendedClient().photo.findFirst({
+      where,
+    });
+  }
+
+  async findAllWithoutPaging(where: Prisma.PhotoWhereInput) {
     return this.prisma.extendedClient().photo.findMany({
-      where: {
-        visibility,
+      where,
+    });
+  }
+
+  async findAll(
+    where: Prisma.PhotoWhereInput,
+    orderBy: Prisma.PhotoOrderByWithRelationInput[],
+    skip: number,
+    take: number,
+    cursor?: Prisma.PhotoWhereUniqueInput,
+  ) {
+    return this.prisma.extendedClient().photo.findMany({
+      where,
+      skip,
+      take,
+      orderBy,
+      cursor,
+      include: {
+        _count: {
+          select: {
+            votes: true,
+            comments: true,
+          },
+        },
+        photographer: true,
+        categories: true,
+        camera: {
+          include: {
+            cameraMaker: true,
+          },
+        },
+        photoSellings: {
+          where: {
+            active: true,
+          },
+          include: {
+            pricetags: true,
+          },
+        },
+        photoTags: true,
       },
     });
   }

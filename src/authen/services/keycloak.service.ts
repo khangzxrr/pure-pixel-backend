@@ -2,10 +2,15 @@ import {
   ClientRepresentation,
   KeycloakAdminClient,
 } from '@s3pweb/keycloak-admin-client-cjs';
+import { CreateKeycloakUserDto } from '../dtos/create-keycloak-user.dto';
+
+import { UpdateKeycloakUserDto } from '../dtos/update-keycloak-user.dto';
 
 export class KeycloakService {
   private kcInstance: KeycloakAdminClient;
   private clientInstance: ClientRepresentation;
+
+  private refreshTokenDate: Date = new Date('2022-10-24');
 
   private async getClient() {
     if (this.clientInstance) {
@@ -15,7 +20,7 @@ export class KeycloakService {
     const kc = await this.getInstance();
 
     const clientByIdResult = await kc.clients.find({
-      clientId: 'purepixel',
+      clientId: process.env.KEYCLOAK_CLIENT_ID,
     });
 
     this.clientInstance = clientByIdResult[0];
@@ -23,24 +28,109 @@ export class KeycloakService {
     return this.clientInstance;
   }
 
+  private async refreshToken() {
+    const now = new Date();
+
+    const diff = now.getTime() - this.refreshTokenDate.getTime();
+    const diffInMiniutes = diff / 1000 / 60;
+
+    if (diffInMiniutes >= 10) {
+      await this.kcInstance.auth({
+        username: process.env.KEYCLOAK_REALM_ADMIN_USERNAME,
+        password: process.env.KEYCLOAK_REALM_ADMIN_PASSWORD,
+        grantType: 'password',
+        clientId: process.env.KEYCLOAK_CLIENT_ID,
+      });
+    }
+  }
+
   private async getInstance() {
     if (this.kcInstance) {
+      await this.refreshToken();
+
       return this.kcInstance;
     }
 
-    this.kcInstance = new KeycloakAdminClient({
-      baseUrl: process.env.KEYCLOAK_AUTH_URL,
-      realmName: process.env.KEYCLOAK_REALM,
+    try {
+      this.kcInstance = new KeycloakAdminClient({
+        baseUrl: process.env.KEYCLOAK_AUTH_URL,
+        realmName: process.env.KEYCLOAK_REALM,
+      });
+
+      await this.kcInstance.auth({
+        username: process.env.KEYCLOAK_REALM_ADMIN_USERNAME,
+        password: process.env.KEYCLOAK_REALM_ADMIN_PASSWORD,
+        grantType: 'password',
+        clientId: process.env.KEYCLOAK_CLIENT_ID,
+      });
+
+      this.refreshTokenDate = new Date('2023-10-24');
+
+      return this.kcInstance;
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
+  async updateById(id: string, updateDto: UpdateKeycloakUserDto) {
+    const instance = await this.getInstance();
+
+    const user = await instance.users.update(
+      {
+        id,
+        realm: process.env.KEYCLOAK_REALM,
+      },
+      {
+        email: updateDto.mail,
+        enabled: updateDto.enabled,
+      },
+    );
+
+    if (updateDto.role) {
+      await this.deleteRolesFromUser(id);
+      await this.addRoleToUser(id, updateDto.role);
+    }
+
+    return user;
+  }
+
+  async create(createDto: CreateKeycloakUserDto) {
+    const instance = await this.getInstance();
+
+    const user = await instance.users.create({
+      username: createDto.username,
+      email: createDto.mail,
+      emailVerified: true,
+      enabled: true,
+      credentials: [],
     });
 
-    await this.kcInstance.auth({
-      username: process.env.KEYCLOAK_REALM_ADMIN_USERNAME,
-      password: process.env.KEYCLOAK_REALM_ADMIN_PASSWORD,
-      grantType: 'password',
-      clientId: process.env.KEYCLOAK_CLIENT_ID,
+    await this.addRoleToUser(user.id, createDto.role);
+
+    return user;
+  }
+
+  async upsert(username: string, email: string, role: string) {
+    const instance = await this.getInstance();
+
+    const existUser = await instance.users.find({
+      username,
     });
 
-    return this.kcInstance;
+    if (existUser.length !== 0) {
+      return existUser[0];
+    }
+
+    const user = await instance.users.create({
+      username,
+      email,
+      emailVerified: true,
+      enabled: true,
+    });
+
+    await this.addRoleToUser(user.id, role);
+
+    return user;
   }
 
   async getRole(roleName: string) {
@@ -69,6 +159,26 @@ export class KeycloakService {
     });
   }
 
+  async findFirst(id: string) {
+    const kc = await this.getInstance();
+    return kc.users.findOne({
+      id,
+    });
+  }
+
+  async deleteRolesFromUser(userId: string) {
+    const roles = await this.getUserRoles(userId);
+
+    for (const role of roles) {
+      await this.deleteRoleFromUser(userId, role.name);
+    }
+
+    //forEach doesnt await => so we have to use manual for of loop
+    // roles.forEach(async (role) => {
+    //   console.log(role);
+    // });
+  }
+
   async deleteRoleFromUser(userId: string, roleName: string) {
     const kc = await this.getInstance();
     const client = await this.getClient();
@@ -92,7 +202,7 @@ export class KeycloakService {
     const client = await this.getClient();
     const role = await this.getRole(roleName);
 
-    return kc.users.addClientRoleMappings({
+    await kc.users.addClientRoleMappings({
       id: userId,
       clientUniqueId: client.id!,
 
@@ -105,27 +215,36 @@ export class KeycloakService {
     });
   }
 
-  async countPhotographer() {
+  async findUsersHasRole(roleName: string, skip: number, take: number) {
     const kc = await this.getInstance();
     const client = await this.getClient();
 
     const users = await kc.clients.findUsersWithRole({
       id: client.id,
-      roleName: 'photographer',
+      roleName,
+      max: take,
+      first: skip,
     });
 
-    return users.length;
+    return users;
   }
 
-  async findAllPhotographers(first: number, max: number) {
+  async countUsers() {
+    const kc = await this.getInstance();
+
+    return await kc.users.count({});
+  }
+
+  async findUsers(skip: number, take: number) {
     const kc = await this.getInstance();
     const client = await this.getClient();
 
-    return kc.clients.findUsersWithRole({
+    const users = await kc.users.find({
       id: client.id,
-      roleName: 'photographer',
-      first,
-      max,
+      first: skip,
+      max: take,
     });
+
+    return users;
   }
 }

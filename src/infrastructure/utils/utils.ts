@@ -5,9 +5,19 @@ import {
   KeycloakConnectConfig,
 } from 'nest-keycloak-connect';
 
+import * as tvkd from 'tieng-viet-khong-dau';
+
 type GqlContextType = 'graphql' | ContextType;
 
 export class Utils {
+  static removedNullChar(text: string): string {
+    return text.replaceAll(/\0/g, '').replaceAll('\\u0000', '');
+  }
+
+  static normalizeText(text: string) {
+    return tvkd.cLowerCase(this.removedNullChar(text));
+  }
+
   static randomString(length: number) {
     let result = '';
     const characters =

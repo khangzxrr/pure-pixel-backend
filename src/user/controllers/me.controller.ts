@@ -1,8 +1,10 @@
 import {
+  Body,
   Controller,
   Get,
   HttpStatus,
   Inject,
+  Patch,
   Res,
   UseGuards,
 } from '@nestjs/common';
@@ -10,21 +12,25 @@ import { AuthenticatedUser, AuthGuard } from 'nest-keycloak-connect';
 import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { UserService } from '../services/user.service';
 import {
+  ApiConsumes,
   ApiOkResponse,
   ApiOperation,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { UserFilterDto } from '../dto/user-filter.dto';
-import { UpgradeOrderService } from 'src/upgrade/services/upgrade-order.service';
-import { ParsedUserDto } from '../dto/parsed-user.dto';
-import { MeDto } from '../dto/me.dto';
+import { ParsedUserDto } from '../dtos/parsed-user.dto';
+import { UserDto } from '../dtos/user.dto';
 
 import { Response } from 'express';
-import { UpgradeOrderDto } from 'src/upgrade/dtos/upgrade-order.dto';
+
+import { UpdateProfileDto } from '../dtos/rest/update-profile.request.dto';
+import { UpgradeOrderDto } from 'src/upgrade-order/dtos/upgrade-order.dto';
+import { UpgradeOrderService } from 'src/upgrade-order/services/upgrade-order.service';
+
+import { FormDataRequest } from 'nestjs-form-data';
 
 @Controller('me')
-@ApiTags('user')
+@ApiTags('me')
 export class MeController {
   constructor(
     @Inject() private readonly userService: UserService,
@@ -35,7 +41,7 @@ export class MeController {
     summary: 'get user info base on role ',
   })
   @ApiOkResponse({
-    type: MeDto,
+    type: UserDto,
   })
   @Get()
   @UseGuards(AuthGuard, KeycloakRoleGuard)
@@ -43,10 +49,24 @@ export class MeController {
     @AuthenticatedUser()
     user: ParsedUserDto,
   ) {
-    const userFilterDto = new UserFilterDto();
-    userFilterDto.id = user.sub;
+    return await this.userService.findMe(user.sub);
+  }
 
-    return await this.userService.findOne(userFilterDto);
+  @Patch()
+  @ApiOperation({
+    summary: 'update one or more field of profile',
+  })
+  @ApiOkResponse({
+    type: UserDto,
+  })
+  @ApiConsumes('multipart/form-data')
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @FormDataRequest()
+  async patchUpdateProfile(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Body() updateProfileRequest: UpdateProfileDto,
+  ) {
+    return await this.userService.updateProfile(user.sub, updateProfileRequest);
   }
 
   @ApiOperation({

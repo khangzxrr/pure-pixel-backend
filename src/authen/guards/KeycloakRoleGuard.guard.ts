@@ -20,6 +20,7 @@ import { AuthenService } from '../services/authen.service';
 import { UserRepository } from 'src/database/repositories/user.repository';
 import { SftpService } from 'src/storage/services/sftp.service';
 import { PrismaService } from 'src/prisma.service';
+import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 
 @Injectable()
 export class KeycloakRoleGuard extends RoleGuard implements CanActivate {
@@ -37,6 +38,8 @@ export class KeycloakRoleGuard extends RoleGuard implements CanActivate {
     private userRepository: UserRepository,
     private sftpService: SftpService,
     private prisma: PrismaService,
+    @Inject(CACHE_MANAGER)
+    private cache: Cache,
 
     //App Module init guard <-- Authen Module init guard
     //cannot use dependency like this when authenService is inside authen module
@@ -61,6 +64,7 @@ export class KeycloakRoleGuard extends RoleGuard implements CanActivate {
       const authenService = new AuthenService(
         this.userRepository,
         this.sftpService,
+        this.cache,
         this.prisma,
       );
 

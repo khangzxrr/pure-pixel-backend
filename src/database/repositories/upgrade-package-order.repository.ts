@@ -14,6 +14,12 @@ export class UpgradePackageOrderRepository {
     });
   }
 
+  async count(where: Prisma.UpgradeOrderWhereInput) {
+    return this.prisma.extendedClient().upgradeOrder.count({
+      where,
+    });
+  }
+
   async findManyActivateOrder() {
     return this.prisma.upgradeOrder.findMany({
       where: {
@@ -55,30 +61,14 @@ export class UpgradePackageOrderRepository {
       },
       data: {
         status: 'CANCEL',
-        transaction: {
+        serviceTransaction: {
           update: {
-            status: 'CANCEL',
+            transaction: {
+              update: {
+                status: 'CANCEL',
+              },
+            },
           },
-        },
-      },
-    });
-  }
-
-  async findCurrentUpgradePackageByUserIdOrThrow(userId: string) {
-    return this.prisma.upgradeOrder.findFirst({
-      where: {
-        userId,
-        status: 'ACTIVE',
-      },
-    });
-  }
-
-  async findManyPendingOrderByUserId(userId: string) {
-    return this.prisma.upgradeOrder.findMany({
-      where: {
-        userId,
-        transaction: {
-          status: 'PENDING',
         },
       },
     });
@@ -90,51 +80,164 @@ export class UpgradePackageOrderRepository {
         userId,
         status: 'ACTIVE',
       },
+      include: {
+        upgradePackageHistory: {
+          include: {
+            originalUpgradePackage: true,
+          },
+        },
+        serviceTransaction: {
+          include: {
+            transaction: true,
+          },
+        },
+      },
     });
   }
 
-  async createUpgradeOrder(
+  async findManyPendingOrderByUserId(userId: string) {
+    return this.prisma.upgradeOrder.findMany({
+      where: {
+        userId,
+        status: 'PENDING',
+      },
+    });
+  }
+
+  async createSuccessUpgradeOrderByWallet(
     userId: string,
     upgradePackage: UpgradePackage,
     expiredAt: Date,
-    calculatedPrice: Prisma.Decimal,
+    amount: Prisma.Decimal,
+    refundAmount: Prisma.Decimal,
+
+    paymentPayload: object,
     tx: Prisma.TransactionClient,
   ) {
     return tx.upgradeOrder.create({
+      select: {
+        id: true,
+        serviceTransaction: {
+          select: {
+            id: true,
+            transaction: true,
+          },
+        },
+        upgradePackageHistory: {
+          select: {
+            id: true,
+          },
+        },
+      },
       data: {
         expiredAt,
+        status: 'ACTIVE',
+        user: {
+          connect: {
+            id: userId,
+          },
+        },
+        upgradePackageHistory: {
+          create: {
+            originalUpgradePackage: {
+              connect: {
+                id: upgradePackage.id,
+              },
+            },
+            price: upgradePackage.price,
+            name: upgradePackage.name,
+            descriptions: upgradePackage.descriptions,
+            maxPhotoQuota: upgradePackage.maxPhotoQuota,
+            minOrderMonth: upgradePackage.minOrderMonth,
+            maxPackageCount: upgradePackage.maxPackageCount,
+          },
+        },
+        serviceTransaction: {
+          create: {
+            transaction: {
+              create: {
+                user: {
+                  connect: {
+                    id: userId,
+                  },
+                },
+                type: 'UPGRADE_TO_PHOTOGRAPHER',
+                amount,
+                fee: refundAmount,
+                paymentMethod: 'WALLET',
+                status: 'SUCCESS',
+                paymentPayload,
+              },
+            },
+          },
+        },
+      },
+    });
+  }
 
-        descriptions: upgradePackage.descriptions,
-        price: upgradePackage.price,
-        name: upgradePackage.name,
-        maxPhotoQuota: upgradePackage.maxPhotoQuota,
-        maxPackageCount: upgradePackage.maxPackageCount,
-        maxBookingPhotoQuota: upgradePackage.maxBookingPhotoQuota,
-        maxBookingVideoQuota: upgradePackage.maxBookingVideoQuota,
-        minOrderMonth: upgradePackage.minOrderMonth,
+  async createUpgradeOrderByBanking(
+    userId: string,
+    upgradePackage: UpgradePackage,
+    expiredAt: Date,
+    amount: Prisma.Decimal,
+    refundAmount: Prisma.Decimal,
+    tx: Prisma.TransactionClient,
+  ) {
+    return tx.upgradeOrder.create({
+      select: {
+        id: true,
+        serviceTransaction: {
+          select: {
+            id: true,
+            transaction: true,
+          },
+        },
+        upgradePackageHistory: {
+          select: {
+            id: true,
+          },
+        },
+      },
+      data: {
+        expiredAt,
         status: 'PENDING',
         user: {
           connect: {
             id: userId,
           },
         },
-        originalUpgradePackage: {
-          connect: {
-            id: upgradePackage.id,
-          },
-        },
-        transaction: {
+        upgradePackageHistory: {
           create: {
-            user: {
+            originalUpgradePackage: {
               connect: {
-                id: userId,
+                id: upgradePackage.id,
               },
             },
-            amount: calculatedPrice,
-            paymentMethod: 'sepay',
-            status: 'PENDING',
-            type: 'UPGRADE_TO_PHOTOGRAPHER',
-            paymentPayload: {},
+            price: upgradePackage.price,
+            name: upgradePackage.name,
+            descriptions: upgradePackage.descriptions,
+            maxPhotoQuota: upgradePackage.maxPhotoQuota,
+            minOrderMonth: upgradePackage.minOrderMonth,
+            maxPackageCount: upgradePackage.maxPackageCount,
+          },
+        },
+        serviceTransaction: {
+          create: {
+            transaction: {
+              create: {
+                user: {
+                  connect: {
+                    id: userId,
+                  },
+                },
+                type: 'UPGRADE_TO_PHOTOGRAPHER',
+                amount,
+                fee: refundAmount,
+                paymentMethod: 'SEPAY',
+                status: 'PENDING',
+                paymentPayload: {},
+              },
+            },
           },
         },
       },
