@@ -109,9 +109,7 @@ export class BlogService {
     const sharp = await this.photoProcessService.sharpInitFromBuffer(
       blogCreateRequestDto.thumbnailFile.buffer,
     );
-    const thumbnailBuffer = await this.photoProcessService
-      .makeThumbnail(sharp)
-      .then((s) => s.toBuffer());
+    const thumbnailBuffer = await this.photoProcessService.makeThumbnail(sharp);
 
     await this.bunnyService.uploadFromBuffer(thumbnailKey, thumbnailBuffer);
 

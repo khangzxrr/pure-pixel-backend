@@ -9,7 +9,7 @@ import { RedisClientOptions } from 'redis';
       store: redisStore as unknown as CacheStore,
       url: process.env.REDIS_URL,
       isGlobal: true,
-      ttl: 1800000,
+      ttl: 300000,
     }),
   ],
 

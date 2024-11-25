@@ -65,7 +65,13 @@ export class PhotoProcessService {
   }
 
   async makeThumbnail(sharp: SharpLib.Sharp) {
-    return sharp.clone().resize(PhotoConstant.THUMBNAIL_WIDTH);
+    return sharp
+      .clone()
+      .resize(PhotoConstant.THUMBNAIL_WIDTH)
+      .webp({
+        quality: 50,
+      })
+      .toBuffer();
   }
 
   async makeTextWatermark(buffer: Buffer, text: string) {

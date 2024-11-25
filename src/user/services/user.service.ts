@@ -19,6 +19,8 @@ import { FailedToUpdateUserException } from '../exceptions/cannot-update-user.ex
 import { UserFindAllResponseDto } from '../dtos/rest/user-find-all.response.dto';
 import { MeDto } from '../dtos/me.dto';
 import { UserInReport } from 'src/database/types/user';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 
 @Injectable()
 export class UserService {
@@ -26,6 +28,8 @@ export class UserService {
     @Inject() private readonly userRepository: UserRepository,
     @Inject() private readonly bunnyService: BunnyService,
     @Inject() private readonly keycloakService: KeycloakService,
+
+    @Inject(CACHE_MANAGER) private cache: Cache,
   ) {}
 
   async update(id: string, updateDto: UpdateUserDto) {
@@ -45,6 +49,8 @@ export class UserService {
         socialLinks: updateDto.socialLinks,
         expertises: updateDto.expertises,
       });
+
+      await this.cache.del(`me_${id}`);
 
       return await this.findOne({ id: updatedUser.id });
     } catch (e) {
@@ -191,6 +197,8 @@ export class UserService {
         : undefined,
     });
 
+    await this.cache.del(`me_${userId}`);
+
     return plainToInstance(UserDto, updatedUser);
   }
 
@@ -231,6 +239,12 @@ export class UserService {
   }
 
   async findMe(userId: string) {
+    // const cachedDto = await this.cache.get<MeDto>(`me_${userId}`);
+    //
+    // if (cachedDto) {
+    //   return cachedDto;
+    // }
+
     const keycloakUser = await this.keycloakService.findFirst(userId);
 
     const roles = await this.keycloakService.getUserRoles(keycloakUser.id);
@@ -260,6 +274,8 @@ export class UserService {
 
     meDto.enabled = keycloakUser.enabled;
     meDto.roles = roles.map((r) => r.name);
+
+    await this.cache.set(`me_${userId}`, meDto);
 
     return meDto;
   }
