@@ -171,7 +171,6 @@ export class PhotoController {
   ) {
     const uploadPhotoResponse = await this.photoService.uploadPhoto(
       user.sub,
-      'RAW',
       body,
     );
 

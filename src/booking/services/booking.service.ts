@@ -351,13 +351,9 @@ export class BookingService {
       throw new BookingNotAcceptedException();
     }
 
-    const signedPhotoDto = await this.photoService.uploadPhoto(
-      userId,
-      'BOOKING',
-      {
-        file: bookingUploadDto.file,
-      },
-    );
+    const signedPhotoDto = await this.photoService.uploadBookingPhoto(userId, {
+      file: bookingUploadDto.file,
+    });
 
     await this.photoService.sendImageWatermarkQueue(userId, signedPhotoDto.id, {
       text: 'PXL',
