@@ -563,10 +563,12 @@ export class PhotoService {
         photoUploadDto.file.buffer,
       );
 
-      await this.photoValidateService.validateHashAndMatching(
-        photoUploadDto.file.buffer,
-        photoUploadDto.file.originalName,
-      );
+      if (photoType === 'BOOKING') {
+        await this.photoValidateService.validateHashAndMatching(
+          photoUploadDto.file.buffer,
+          photoUploadDto.file.originalName,
+        );
+      }
 
       exif['Copyright'] = ` © copyright by ${user.name}`;
 
