@@ -72,10 +72,10 @@ export class NotificationConsumer extends WorkerHost {
       status: 'SHOW',
     });
 
-    await this.notificationGateway.sendRefreshNotificationEvent(
-      user.id,
-      savedNotification,
-    );
+    await this.notificationGateway.sendRefreshNotificationEvent(user.id, {
+      referenceType: notificationCreateDto.referenceType,
+      //only need referenceType
+    });
 
     if (
       notificationCreateDto.type === 'IN_APP' ||
