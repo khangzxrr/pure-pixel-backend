@@ -18,6 +18,7 @@ import { PhotoConstant } from 'src/photo/constants/photo.constant';
 
 import { DashboardRequestDto } from '../dtos/dashboard.request.dto';
 import { DashboardReportRepository } from 'src/database/repositories/dashboard-report.repository';
+import { Utils } from 'src/infrastructure/utils/utils';
 
 @Injectable()
 export class AdminService {
@@ -127,7 +128,7 @@ export class AdminService {
         cover: Constants.DEFAULT_COVER,
         quote: '',
         avatar: Constants.DEFAULT_AVATAR,
-        normalizedName: trimmedUsername,
+        normalizedName: Utils.normalizeText(trimmedUsername),
         location: 'TP.Hồ Chí Minh',
         phonenumber: '',
         expertises: ['phong cảnh'],
