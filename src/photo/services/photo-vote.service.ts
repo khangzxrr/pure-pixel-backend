@@ -41,7 +41,7 @@ export class PhotoVoteService {
     );
 
     const notificationDto: NotificationCreateDto = {
-      userId,
+      userId: photo.photographerId,
       title: 'Tương tác mới',
       content: `Ảnh ${photo.title} của bạn vừa nhận được một đánh giá!`,
       referenceType: 'PHOTO',

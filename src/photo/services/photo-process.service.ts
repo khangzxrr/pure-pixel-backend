@@ -8,7 +8,7 @@ import * as SharpLib from 'sharp';
 import { PhotoConstant } from '../constants/photo.constant';
 import { BunnyService } from 'src/storage/services/bunny.service';
 import * as phash from 'sharp-phash';
-import { encode } from 'blurhash';
+import { decode, encode } from 'blurhash';
 
 @Injectable()
 export class PhotoProcessService {
@@ -120,11 +120,17 @@ export class PhotoProcessService {
   async bufferToBlurhash(buffer: Buffer): Promise<string> {
     const sharp = await this.sharpInitFromBuffer(buffer);
 
-    const resize = sharp.raw().ensureAlpha().resize(32, 32, { fit: 'inside' });
+    const resize = sharp
+      .raw({})
+      .ensureAlpha()
+      .resize(32, 32, { fit: 'inside' });
 
     return new Promise((resolve, reject) => {
       resize.toBuffer((err, buffer, { width, height }) => {
         if (err) return reject(err);
+
+        console.log(buffer);
+        console.log(width, height);
 
         resolve(encode(new Uint8ClampedArray(buffer), width, height, 4, 4));
       });
