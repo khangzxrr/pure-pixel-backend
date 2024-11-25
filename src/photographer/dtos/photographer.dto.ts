@@ -3,6 +3,8 @@ import { User } from '@prisma/client';
 import { Exclude } from 'class-transformer';
 
 export class PhotographerDTO implements User {
+  deletedAt: Date;
+
   @ApiProperty()
   photoCount: number = 0;
 

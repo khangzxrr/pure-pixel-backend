@@ -288,10 +288,6 @@ export class UserService {
   }
 
   async findOne(userFilterDto: UserFilterDto) {
-    const keycloakUser = await this.keycloakService.findFirst(userFilterDto.id);
-
-    const roles = await this.keycloakService.getUserRoles(keycloakUser.id);
-
     const user = await this.userRepository.findUnique(userFilterDto.id, {
       _count: {
         select: {
@@ -312,6 +308,29 @@ export class UserService {
     if (!user) {
       throw new UserNotFoundException();
     }
+
+    const keycloakUser = await this.keycloakService.findFirst(userFilterDto.id);
+
+    if (!keycloakUser) {
+      const insertedUser = await this.keycloakService.upsert(
+        user.normalizedName,
+        user.mail,
+        Constants.CUSTOMER_ROLE,
+      );
+
+      console.log('upsert keycloak');
+
+      const userDto = plainToInstance(UserDto, user, {
+        groups: [Constants.PHOTOGRAPHER_ROLE],
+      });
+
+      userDto.enabled = true;
+      userDto.roles = [Constants.CUSTOMER_ROLE];
+
+      return userDto;
+    }
+
+    const roles = await this.keycloakService.getUserRoles(user.id);
 
     const userDto = plainToInstance(UserDto, user, {
       groups: [Constants.PHOTOGRAPHER_ROLE],
