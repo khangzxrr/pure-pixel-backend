@@ -53,8 +53,6 @@ export class UserController {
   @ApiOkResponse({
     type: UserDto,
   })
-  // @ApiConsumes('multipart/form-data')
-  // @FormDataRequest()
   async createNewUser(@Body() createDto: CreateUserDto) {
     return await this.userService.create(createDto);
   }
