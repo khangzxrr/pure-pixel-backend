@@ -253,6 +253,11 @@ export class PhotoService {
       `thumbnail/${photo.id}.webp`,
     );
 
+    signedPhotoDto.signedUrl = {
+      url: signedUrl,
+      thumbnail: signedThumbnailUrl,
+    };
+
     return signedPhotoDto;
   }
 
