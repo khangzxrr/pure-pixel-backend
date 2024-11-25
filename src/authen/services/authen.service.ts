@@ -31,7 +31,9 @@ export class AuthenService {
         const userFilterDto = new UserFilterDto();
         userFilterDto.id = userId;
 
-        if (await this.cache.get<UserEntity>(`user:${userFilterDto.id}`)) {
+        if (
+          await this.cache.get<UserEntity>(`authen:user:${userFilterDto.id}`)
+        ) {
           this.logger.log(`user is exist in cache, skip creation`);
           return;
         }
@@ -42,7 +44,7 @@ export class AuthenService {
         );
 
         if (existUser != null) {
-          this.cache.set(`user:${userId}`, existUser, 300000);
+          this.cache.set(`authen:user:${userId}`, existUser, 300000);
 
           this.logger.log(`user is exist in DB, skip creation`);
           return;
