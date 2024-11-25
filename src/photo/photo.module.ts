@@ -30,6 +30,7 @@ import { ManagePhotoController } from './controllers/manage-photo.controller';
 import { ManagePhotoService } from './services/manage-photo.service';
 import { NotificationModule } from 'src/notification/notification.module';
 import { CachingModule } from 'src/caching/caching.module';
+import { UserModule } from 'src/user/user.module';
 
 @Module({
   providers: [
@@ -75,6 +76,7 @@ import { CachingModule } from 'src/caching/caching.module';
     PaymentModule,
     NotificationModule,
     NestjsFormDataModule,
+    UserModule,
   ],
 })
 export class PhotoModule {}

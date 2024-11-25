@@ -32,6 +32,7 @@ import { Decimal } from '@prisma/client/runtime/library';
 import { CannotBookOwnedPhotoshootPackageException } from '../exceptions/cannot-book-owned-photoshoot-package.exception';
 import * as AdmZip from 'adm-zip';
 import { PhotoProcessService } from 'src/photo/services/photo-process.service';
+import { UserService } from 'src/user/services/user.service';
 
 @Injectable()
 export class BookingService {
@@ -46,6 +47,7 @@ export class BookingService {
     @Inject() private readonly photoRepository: PhotoRepository,
     @Inject() private readonly bunnyService: BunnyService,
     @Inject() private readonly photoProcessService: PhotoProcessService,
+    @Inject() private readonly userService: UserService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -325,7 +327,9 @@ export class BookingService {
 
     const photo = await this.photoRepository.findUniqueOrThrow(photoId);
 
-    await this.photoRepository.deleteById(photoId, photo.size);
+    await this.photoRepository.deleteById(photoId);
+
+    await this.userService.updatePhotoQuota(userId, photo.size);
 
     return photo;
   }

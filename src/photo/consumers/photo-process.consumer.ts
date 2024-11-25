@@ -86,7 +86,10 @@ export class PhotoProcessConsumer extends WorkerHost {
       hash,
     });
     if (existPhotoWithHash) {
-      await this.photoRepository.deleteById(photoId, photo.size);
+      await this.photoRepository.updateById(photo.id, {
+        status: 'DUPLICATED',
+        visibility: 'PRIVATE',
+      });
 
       await this.notificationService.addNotificationToQueue({
         type: 'IN_APP',
@@ -112,7 +115,10 @@ export class PhotoProcessConsumer extends WorkerHost {
 
       if (result) {
         if (result.length > 0 && result[0].match_percent >= 10) {
-          await this.photoRepository.deleteById(photoId, photo.size);
+          await this.photoRepository.updateById(photo.id, {
+            status: 'DUPLICATED',
+            visibility: 'PRIVATE',
+          });
 
           await this.notificationService.addNotificationToQueue({
             type: 'IN_APP',

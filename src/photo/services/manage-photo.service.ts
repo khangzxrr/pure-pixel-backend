@@ -15,6 +15,7 @@ import { DuplicatedTagFoundException } from '../exceptions/duplicated-tag-found.
 import { PhotoTagRepository } from 'src/database/repositories/photo-tag.repository';
 import { Utils } from 'src/infrastructure/utils/utils';
 import { PrismaService } from 'src/prisma.service';
+import { UserService } from 'src/user/services/user.service';
 
 @Injectable()
 export class ManagePhotoService {
@@ -23,6 +24,7 @@ export class ManagePhotoService {
     @Inject() private readonly categoryRepository: CategoryRepository,
     @Inject() private readonly photoService: PhotoService,
     @Inject() private readonly photoTagRepository: PhotoTagRepository,
+    @Inject() private readonly userService: UserService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -134,6 +136,8 @@ export class ManagePhotoService {
   async delete(id: string) {
     const photo = await this.photoRepository.findUniqueOrThrow(id);
 
-    return await this.photoRepository.deleteById(id, photo.size);
+    await this.userService.updatePhotoQuota(photo.photographerId, photo.size);
+
+    return await this.photoRepository.deleteById(id);
   }
 }

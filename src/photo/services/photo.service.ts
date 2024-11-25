@@ -44,6 +44,7 @@ import { CannotUpdateWatermarkPhotoHasActiveSellingException } from '../exceptio
 import { CannotUpdateVisibilityPhotoHasActiveSellingException } from '../exceptions/cannot-update-visibility-photo-has-active-selling.exception';
 import { Utils } from 'src/infrastructure/utils/utils';
 import { FindNextPhotoFilterDto } from '../dtos/find-next.filter.dto';
+import { UserService } from 'src/user/services/user.service';
 
 @Injectable()
 export class PhotoService {
@@ -67,8 +68,8 @@ export class PhotoService {
     @InjectQueue(PhotoConstant.PHOTO_VIEWCOUNT_QUEUE)
     private readonly photoViewCountQueue: Queue,
     private readonly prisma: PrismaService,
-    // @Inject(CACHE_MANAGER)
-    // private readonly cacheManager: Cache,
+    @Inject()
+    private readonly userService: UserService,
   ) {}
 
   async sendImageWatermarkQueue(
@@ -472,7 +473,9 @@ export class PhotoService {
       originalPhotoUrl: photo.originalPhotoUrl,
     });
 
-    await this.photoRepository.deleteById(photo.id, photo.size);
+    await this.photoRepository.deleteById(photo.id);
+
+    await this.userService.updatePhotoQuota(userId, photo.size);
 
     return true;
   }
@@ -687,6 +690,9 @@ export class PhotoService {
           increment: photo.size,
         },
       });
+
+      console.log(`increase user photo quota`);
+      console.log(photo.size);
 
       await this.photoProcessQueue.add(PhotoConstant.PROCESS_PHOTO_JOB_NAME, {
         id: photo.id,
