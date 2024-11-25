@@ -94,7 +94,15 @@ export class PhotoshootPackageService {
       throw new PhotoshootPackageNotBelongException();
     }
 
-    const key = await this.bunnyService.upload(createShowcaseDto.showcase);
+    const sharp = await this.photoProcessService.sharpInitFromBuffer(
+      createShowcaseDto.showcase.buffer,
+    );
+    const thumbnailBuffer = await this.photoProcessService.makeThumbnail(sharp);
+
+    const key = await this.bunnyService.uploadFromBuffer(
+      `${v4()}.webp`,
+      thumbnailBuffer,
+    );
 
     const showcase = await this.photoshootPackageShowcaseRepository.create({
       PhotoshootPackage: {
@@ -274,17 +282,28 @@ export class PhotoshootPackageService {
       throw new RunOutOfPackageQuotaException();
     }
 
-    const thumbnailKey = `photoshoot_thumbnail/${v4()}.jpg`;
+    const thumbnailKey = `photoshoot_thumbnail/${v4()}.webp`;
+
+    const sharp = await this.photoProcessService.sharpInitFromBuffer(
+      createDto.thumbnail.buffer,
+    );
+    const thumbnailBuffer = await this.photoProcessService.makeThumbnail(sharp);
     await this.photoProcessService.uploadFromBuffer(
       thumbnailKey,
-      createDto.thumbnail.buffer,
+      thumbnailBuffer,
     );
 
     const showcaseKeysPromises = createDto.showcases.map(async (showcase) => {
-      const showcaseKey = `photoshoot_showcase/${v4()}.${showcase.extension}`;
+      const showcaseKey = `photoshoot_showcase/${v4()}.webp`;
+
+      const showcaseSharp = await this.photoProcessService.sharpInitFromBuffer(
+        showcase.buffer,
+      );
+      const showcaseThumbnailBuffer =
+        await this.photoProcessService.makeThumbnail(showcaseSharp);
       await this.photoProcessService.uploadFromBuffer(
         showcaseKey,
-        showcase.buffer,
+        showcaseThumbnailBuffer,
       );
 
       return showcaseKey;
