@@ -331,6 +331,15 @@ export class BookingService {
 
     await this.userService.updatePhotoQuota(userId, photo.size);
 
+    await this.notificationService.addNotificationToQueue({
+      userId: booking.userId,
+      type: 'IN_APP',
+      title: `Gói chụp ${booking.photoshootPackageHistory.title} có cập nhật mới`,
+      content: 'Gói chụp của bạn đã được cập nhật ảnh!',
+      payload: photo,
+      referenceType: 'BOOKING',
+    });
+
     return photo;
   }
 
@@ -370,6 +379,15 @@ export class BookingService {
           id: bookingId,
         },
       },
+    });
+
+    await this.notificationService.addNotificationToQueue({
+      userId: booking.userId,
+      type: 'IN_APP',
+      title: `Gói chụp ${booking.photoshootPackageHistory.title} có cập nhật mới`,
+      content: 'Gói chụp của bạn đã được cập nhật ảnh mới!',
+      payload: signedPhotoDto,
+      referenceType: 'BOOKING',
     });
 
     return this.photoService.findById(userId, signedPhotoDto.id);
@@ -431,7 +449,7 @@ export class BookingService {
       referenceType: 'BOOKING',
       title: `Nhiếp ảnh gia đã từ chối gói chụp ${booking.photoshootPackageHistory.title}`,
       type: 'BOTH_INAPP_EMAIL',
-      content: `Yêu cầu thực hiện gói chụp ${booking.photoshootPackageHistory.title} của bạn đã hủy bỏ ${denyDto.reason !== '' ? denyDto.reason : ''}`,
+      content: `Yêu cầu thực hiện gói chụp ${booking.photoshootPackageHistory.title} của bạn đã hủy bỏ`,
       payload: booking,
     });
 

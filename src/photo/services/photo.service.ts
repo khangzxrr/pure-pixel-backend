@@ -580,10 +580,6 @@ export class PhotoService {
         id: photo.id,
       });
 
-      await this.cameraQueue.add(CameraConstant.ADD_NEW_CAMERA_USAGE_JOB, {
-        photoId: photo.id,
-      });
-
       return this.signPhoto(photo);
     } catch (e) {
       console.log(e);
