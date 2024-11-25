@@ -252,9 +252,9 @@ export class UserService {
     //   return cachedDto;
     // }
 
-    const keycloakUser = await this.keycloakService.findFirst(userId);
-
-    const roles = await this.keycloakService.getUserRoles(keycloakUser.id);
+    // const keycloakUser = await this.keycloakService.findFirst(userId);
+    //
+    // const roles = await this.keycloakService.getUserRoles(keycloakUser.id);
 
     const user = await this.userRepository.findUnique(userId, {
       _count: {
@@ -279,8 +279,8 @@ export class UserService {
 
     const meDto = plainToInstance(MeDto, user, {});
 
-    meDto.enabled = keycloakUser.enabled;
-    meDto.roles = roles.map((r) => r.name);
+    // meDto.enabled = keycloakUser.enabled;
+    // meDto.roles = roles.map((r) => r.name);
 
     await this.cache.set(`me_${userId}`, meDto);
 
