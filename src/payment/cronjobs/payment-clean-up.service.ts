@@ -12,9 +12,14 @@ export class PaymentCleanUpCronJob {
     const now = new Date();
     const fiveMinusPrevious = new Date(now.getTime() - 1000 * 60 * 5);
 
+    const threeDaysPrevious = new Date(now.getTime() - 1000 * 60 * 60 * 24 * 3);
+
     const updatedTransactions = await this.transactionRepository.update(
       {
         status: 'PENDING',
+        type: {
+          notIn: ['WITHDRAWAL'],
+        },
         createdAt: {
           lte: fiveMinusPrevious,
         },
@@ -26,6 +31,26 @@ export class PaymentCleanUpCronJob {
 
     if (updatedTransactions.count > 0) {
       console.log(`clean up ${updatedTransactions.count} transactions`);
+    }
+
+    const updatedWithdrawalTransactions =
+      await this.transactionRepository.update(
+        {
+          status: 'PENDING',
+          type: 'WITHDRAWAL',
+          createdAt: {
+            lte: threeDaysPrevious,
+          },
+        },
+        {
+          status: 'EXPIRED',
+        },
+      );
+
+    if (updatedWithdrawalTransactions.count > 0) {
+      console.log(
+        `clean up ${updatedWithdrawalTransactions.count} withdrawals transactions`,
+      );
     }
   }
 }
