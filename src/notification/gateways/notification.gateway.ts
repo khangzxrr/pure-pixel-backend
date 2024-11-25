@@ -12,6 +12,8 @@ import { Inject, Logger, UseGuards } from '@nestjs/common';
 import WebsocketAuthGuard from 'src/authen/guards/ws.auth.guard';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Server } from 'socket.io';
+import { Roles } from 'nest-keycloak-connect';
+import { Constants } from 'src/infrastructure/utils/constants';
 
 @WebSocketGateway({
   cors: { origin: '*' },
@@ -34,43 +36,51 @@ export class NotificationGateway
   async addSocketIdToSetByUserId(userId: string, socketId: string) {
     // await this.cacheManager.del(`notification_${userId}`);
 
-    let arrayOfSocketIds: Set<string> = await this.cacheManager.get(
-      `notification_${userId}`,
+    let arrayOfSocketIds: Array<string> = await this.cacheManager.get(
+      `notification:${userId}`,
     );
 
     //not found => create new array of socket ids
     if (!arrayOfSocketIds) {
-      arrayOfSocketIds = new Set<string>();
-
-      console.log(arrayOfSocketIds);
+      arrayOfSocketIds = new Array<string>();
     }
 
     try {
-      arrayOfSocketIds.add(socketId);
+      arrayOfSocketIds.push(socketId);
 
       //when add fail, it will create new arrayOfSocketIds
     } catch (e) {
-      await this.cacheManager.del(`notification_${userId}`);
-      arrayOfSocketIds = new Set<string>();
+      await this.cacheManager.del(`notification:${userId}`);
+      arrayOfSocketIds = new Array<string>();
 
-      arrayOfSocketIds.add(socketId);
+      arrayOfSocketIds.push(socketId);
     }
 
     //TTL should longer than keycloak access token expired value
     await this.cacheManager.set(
-      `notification_${userId}`,
+      `notification:${userId}`,
       arrayOfSocketIds,
-      1000 * 60 * 60 * 24,
+      1000 * 60 * 60 * 3,
     );
 
     this.logger.log(`add ${socketId} to sets`);
+
+    console.log(await this.cacheManager.get(`notification:${userId}`));
   }
 
   async getSetOfSocketIdsByUserId(userId: string): Promise<Set<string>> {
-    return await this.cacheManager.get(`notification_${userId}`);
+    return await this.cacheManager.get<Set<string>>(`notification:${userId}`);
   }
 
   @UseGuards(WebsocketAuthGuard)
+  @Roles({
+    roles: [
+      Constants.PHOTOGRAPHER_ROLE,
+      Constants.CUSTOMER_ROLE,
+      Constants.MANAGER_ROLE,
+      Constants.ADMIN_ROLE,
+    ],
+  })
   @SubscribeMessage('join-notification-room')
   async joinEvent(socket: any) {
     this.logger.log(
