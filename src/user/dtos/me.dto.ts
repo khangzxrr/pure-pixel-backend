@@ -5,12 +5,6 @@ import { Constants } from 'src/infrastructure/utils/constants';
 
 export class MeDto extends ResponseBaseDto {
   @ApiProperty()
-  roles: string[] = [];
-
-  @ApiProperty()
-  enabled: boolean;
-
-  @ApiProperty()
   photoQuotaUsage: string;
 
   @ApiProperty()
