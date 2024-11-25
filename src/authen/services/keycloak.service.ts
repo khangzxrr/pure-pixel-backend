@@ -1,6 +1,7 @@
 import {
   ClientRepresentation,
   KeycloakAdminClient,
+  UserRepresentation,
 } from '@s3pweb/keycloak-admin-client-cjs';
 import { CreateKeycloakUserDto } from '../dtos/create-keycloak-user.dto';
 
@@ -110,7 +111,7 @@ export class KeycloakService {
     return user;
   }
 
-  async upsert(username: string, email: string, role: string) {
+  async upsert(username: string, email: string, role: string, id?: string) {
     const instance = await this.getInstance();
 
     const existUser = await instance.users.find({
@@ -122,12 +123,18 @@ export class KeycloakService {
       return existUser[0];
     }
 
-    const user = await instance.users.create({
+    const userPresentation: UserRepresentation = {
       username,
       email,
       emailVerified: true,
       enabled: true,
-    });
+    };
+
+    if (id) {
+      userPresentation.id = id;
+    }
+
+    const user = await instance.users.create(userPresentation);
 
     await this.addRoleToUser(user.id, role);
 
