@@ -563,7 +563,7 @@ export class PhotoService {
         photoUploadDto.file.buffer,
       );
 
-      if (photoType === 'BOOKING') {
+      if (photoType !== 'BOOKING') {
         await this.photoValidateService.validateHashAndMatching(
           photoUploadDto.file.buffer,
           photoUploadDto.file.originalName,
