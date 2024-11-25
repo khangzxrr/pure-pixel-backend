@@ -1,11 +1,14 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { PhotoConstant } from '../constants/photo.constant';
-import { Job } from 'bullmq';
+import { Job, Queue } from 'bullmq';
 import { Inject, Logger } from '@nestjs/common';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoProcessService } from '../services/photo-process.service';
 import { TineyeService } from 'src/storage/services/tineye.service';
 import { BunnyService } from 'src/storage/services/bunny.service';
+import { NotificationConstant } from 'src/notification/constants/notification.constant';
+import { NotificationCreateDto } from 'src/notification/dtos/rest/notification-create.dto';
+import { NotificationService } from 'src/notification/services/notification.service';
 
 @Processor(PhotoConstant.PHOTO_PROCESS_QUEUE, {
   concurrency: 2,
@@ -19,8 +22,7 @@ export class PhotoProcessConsumer extends WorkerHost {
     @Inject() private readonly tineyeService: TineyeService,
     @Inject() private readonly bunnyService: BunnyService,
 
-    // @InjectQueue(NotificationConstant.NOTIFICATION_QUEUE)
-    // private readonly notificationQueue: Queue,
+    @Inject() private readonly notificationService: NotificationService,
   ) {
     super();
   }
@@ -42,26 +44,6 @@ export class PhotoProcessConsumer extends WorkerHost {
     }
   }
 
-  // private async sendNotification(
-  //   photoTitle: string,
-  //   userId: string,
-  //   payload: object,
-  // ) {
-  //   const notificationCreateDto: NotificationCreateDto = {
-  //     userId,
-  //     referenceType: 'PHOTO',
-  //
-  //     type: 'BOTH_INAPP_EMAIL',
-  //     title: `Ảnh ${photoTitle} của bạn trùng với một ảnh khác!`,
-  //     content: `Ảnh ${photoTitle} của bạn có dấu hiệu trùng với một ảnh khác, nếu đây là sự sai sót, vui lòng báo cáo lên quản trị viên để được xem xét. Xin cám ơn!`,
-  //   };
-  //
-  //   await this.notificationQueue.add(
-  //     NotificationConstant.TEXT_NOTIFICATION_JOB,
-  //     notificationCreateDto,
-  //   );
-  // }
-
   async deleteTineyePhoto(originalPhotoUrl: string) {
     await this.tineyeService.delete(originalPhotoUrl);
 
@@ -71,24 +53,11 @@ export class PhotoProcessConsumer extends WorkerHost {
   async generateThumbnail(photoId: string, buffer: Buffer) {
     const sharp = await this.photoProcessService.sharpInitFromBuffer(buffer);
 
-    const thumbnailBuffer = await this.photoProcessService.resize(
-      sharp,
-      PhotoConstant.THUMBNAIL_WIDTH,
-    );
-
-    const placeHolderBuffer = await this.photoProcessService.resize(
-      sharp,
-      PhotoConstant.PLACEHOLDER_WIDTH,
-    );
+    const thumbnailBuffer = await this.photoProcessService.makeThumbnail(sharp);
 
     await this.bunnyService.uploadFromBuffer(
-      `thumbnail/${photoId}.jpg`,
+      `thumbnail/${photoId}.webp`,
       thumbnailBuffer,
-    );
-
-    await this.bunnyService.uploadFromBuffer(
-      `placeholder/${photoId}.jpg`,
-      placeHolderBuffer,
     );
 
     this.logger.log(`generated thumbnail for photo id: ${photoId}`);
@@ -109,56 +78,66 @@ export class PhotoProcessConsumer extends WorkerHost {
 
     const blurHash = await this.photoProcessService.bufferToBlurhash(buffer);
 
-    // const existPhotoWithHash = await this.photoRepository.findFirst({
-    //   hash,
-    // });
-    // if (existPhotoWithHash) {
-    //   await this.photoRepository.deleteById(photoId);
-    //
-    //   await this.sendNotification(photo.title, photo.photographerId, photo.id);
-    //
-    //   return;
-    // }
+    const existPhotoWithHash = await this.photoRepository.findFirst({
+      hash,
+    });
+    if (existPhotoWithHash) {
+      await this.photoRepository.deleteById(photoId, photo.size);
 
-    // const signedPhotoUrl = this.bunnyService.getPresignedFile(
-    //   photo.originalPhotoUrl,
-    //   `?width=${PhotoConstant.TINEYE_MIN_PHOTO_WIDTH}`,
-    // );
-    //
-    // try {
-    //   const response = await this.tineyeService.search(signedPhotoUrl);
-    //
-    //   const result = response.data.result;
-    //
-    //   if (result) {
-    //     if (result.length > 0 && result[0].match_percent >= 10) {
-    //       await this.photoRepository.deleteById(photoId);
-    //
-    //       await this.sendNotification(
-    //         photo.title,
-    //         photo.photographerId,
-    //         photo.id,
-    //       );
-    //
-    //       return;
-    //     }
-    //   }
-    // } catch (e) {
-    //   console.log(e);
-    // }
-    //
-    // try {
-    //   const data = await this.tineyeService.add(
-    //     photo.originalPhotoUrl,
-    //     signedPhotoUrl,
-    //   );
-    //
-    //   if (data.status === 200) {
-    //     this.logger.log(`uploaded photo ${photo.originalPhotoUrl} to tineye`);
-    //   }
-    // } catch (e) {
-    //   console.log(e);
-    // }
+      await this.notificationService.addNotificationToQueue({
+        type: 'IN_APP',
+        userId: photo.photographerId,
+        payload: {},
+        referenceType: 'PHOTO',
+        title: `Ảnh ${photo.title} của bạn trùng với một ảnh khác!`,
+        content: `Ảnh ${photo.title} của bạn có dấu hiệu trùng với một ảnh khác, nếu đây là sự sai sót, vui lòng báo cáo lên quản trị viên để được xem xét. Xin cám ơn!`,
+      });
+
+      return;
+    }
+
+    const signedPhotoUrl = this.bunnyService.getPresignedFile(
+      photo.originalPhotoUrl,
+      `?width=${PhotoConstant.TINEYE_MIN_PHOTO_WIDTH}`,
+    );
+
+    try {
+      const response = await this.tineyeService.search(signedPhotoUrl);
+
+      const result = response.data.result;
+
+      if (result) {
+        if (result.length > 0 && result[0].match_percent >= 10) {
+          await this.photoRepository.deleteById(photoId, photo.size);
+
+          await this.notificationService.addNotificationToQueue({
+            type: 'IN_APP',
+            userId: photo.photographerId,
+            payload: {},
+            referenceType: 'PHOTO',
+            title: `Ảnh ${photo.title} của bạn trùng với một ảnh khác!`,
+            content: `Ảnh ${photo.title} của bạn có dấu hiệu trùng với một ảnh khác, nếu đây là sự sai sót, vui lòng báo cáo lên quản trị viên để được xem xét. Xin cám ơn!`,
+          });
+
+          return;
+        }
+      }
+    } catch (e) {
+      console.log(e);
+    }
+
+    try {
+      const data = await this.tineyeService.add(
+        photo.originalPhotoUrl,
+        signedPhotoUrl,
+      );
+
+      if (data.status === 200) {
+        this.logger.log(`uploaded photo ${photo.originalPhotoUrl} to tineye`);
+      }
+    } catch (e) {
+      console.log(e);
+    }
 
     await this.photoRepository.updateById(photoId, {
       hash,
