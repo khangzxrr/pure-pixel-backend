@@ -1,10 +1,5 @@
 import { HttpException, Inject, Injectable, Logger } from '@nestjs/common';
-import {
-  Photo,
-  PhotoType,
-  PhotoVisibility,
-  PrismaPromise,
-} from '@prisma/client';
+import { Photo, PhotoVisibility, PrismaPromise } from '@prisma/client';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoIsPrivatedException } from '../exceptions/photo-is-private.exception';
 import { PhotoUploadRequestDto } from '../dtos/rest/photo-upload.request';
@@ -24,7 +19,6 @@ import { SharePhotoResponseDto } from '../dtos/rest/share-photo-response.dto';
 import { EmptyOriginalPhotoException } from '../exceptions/empty-original-photo.exception';
 import { PagingPaginatedResposneDto } from 'src/infrastructure/restful/paging-paginated.response.dto';
 import { plainToInstance } from 'class-transformer';
-import { PhotoSellRepository } from 'src/database/repositories/photo-sell.repository';
 
 import { PrismaService } from 'src/prisma.service';
 import { PhotoUpdateRequestDto } from '../dtos/rest/photo-update.request.dto';
@@ -50,7 +44,6 @@ import { CannotUpdateWatermarkPhotoHasActiveSellingException } from '../exceptio
 import { CannotUpdateVisibilityPhotoHasActiveSellingException } from '../exceptions/cannot-update-visibility-photo-has-active-selling.exception';
 import { Utils } from 'src/infrastructure/utils/utils';
 import { FindNextPhotoFilterDto } from '../dtos/find-next.filter.dto';
-import { FailToParsePhotoException } from '../exceptions/fail-to-parse-photo.exception';
 
 @Injectable()
 export class PhotoService {
@@ -60,7 +53,7 @@ export class PhotoService {
     @Inject() private readonly photoRepository: PhotoRepository,
     @Inject() private readonly userRepository: UserRepository,
     @Inject() private readonly photoProcessService: PhotoProcessService,
-    @Inject() private readonly photoSellRepository: PhotoSellRepository,
+
     @Inject() private readonly photoTagRepository: PhotoTagRepository,
     @Inject() private readonly categoryRepository: CategoryRepository,
     @Inject() private readonly bunnyService: BunnyService,
@@ -183,11 +176,11 @@ export class PhotoService {
       ? photoDetail.watermarkPhotoUrl
       : photoDetail.originalPhotoUrl;
 
-    const thumbnail = `${
-      photoDetail.watermark
-        ? photoDetail.watermarkPhotoUrl
-        : photoDetail.originalPhotoUrl
-    }`;
+    // const thumbnail = `${
+    //   photoDetail.watermark
+    //     ? photoDetail.watermarkPhotoUrl
+    //     : photoDetail.originalPhotoUrl
+    // }`;
 
     if (url.length == 0) {
       console.log(
@@ -510,9 +503,98 @@ export class PhotoService {
     return await this.signPhotoDetail(photo);
   }
 
+  async uploadBookingPhoto(
+    userId: string,
+    photoUploadDto: PhotoUploadRequestDto,
+  ): Promise<SignedPhotoDto> {
+    const user = await this.userRepository.findUniqueOrThrow(userId);
+
+    const sizeAsBigint = BigInt(photoUploadDto.file.size);
+    const newUsageQuota = user.photoQuotaUsage + sizeAsBigint;
+
+    if (newUsageQuota >= user.maxPhotoQuota) {
+      throw new RunOutPhotoQuotaException();
+    }
+
+    const extension = photoUploadDto.file.extension;
+
+    if (
+      extension !== 'jpg' &&
+      extension !== 'jpeg' &&
+      extension !== 'png' &&
+      extension !== 'bmp' &&
+      extension !== 'bitmap'
+    ) {
+      throw new FileIsNotValidException();
+    }
+
+    try {
+      const storageObjectKey = await this.bunnyService.upload(
+        photoUploadDto.file,
+      );
+
+      const normalizedTitle = Utils.normalizeText(
+        photoUploadDto.file.originalName,
+      );
+
+      const metadata = await this.photoProcessService.parseMetadataFromBuffer(
+        photoUploadDto.file.buffer,
+      );
+
+      const blurHash: string = await this.photoProcessService.bufferToBlurhash(
+        photoUploadDto.file.buffer,
+      );
+
+      const photo = await this.photoRepository.create({
+        photographer: {
+          connect: {
+            id: userId,
+          },
+        },
+        description: '',
+        title: photoUploadDto.file.originalName,
+        normalizedTitle,
+        size: photoUploadDto.file.size,
+        exif: {},
+        width: metadata.width,
+        height: metadata.height,
+        status: 'PARSED',
+        photoType: 'BOOKING',
+        blurHash,
+        watermark: false,
+        visibility: 'PRIVATE',
+        originalPhotoUrl: storageObjectKey,
+        watermarkPhotoUrl: '',
+      });
+
+      await this.userRepository.update(userId, {
+        photoQuotaUsage: {
+          increment: photo.size,
+        },
+      });
+
+      await this.photoProcessQueue.add(PhotoConstant.PROCESS_PHOTO_JOB_NAME, {
+        id: photo.id,
+      });
+
+      await this.cameraQueue.add(CameraConstant.ADD_NEW_CAMERA_USAGE_JOB, {
+        photoId: photo.id,
+      });
+
+      return this.signPhoto(photo);
+    } catch (e) {
+      console.log(e);
+      if (e instanceof HttpException) {
+        throw e;
+      }
+
+      throw new UploadPhotoFailedException(e);
+    }
+  }
+
   async uploadPhoto(
     userId: string,
-    photoType: PhotoType,
+
     photoUploadDto: PhotoUploadRequestDto,
   ): Promise<SignedPhotoDto> {
     const user = await this.userRepository.findUniqueOrThrow(userId);
@@ -563,12 +645,10 @@ export class PhotoService {
         photoUploadDto.file.buffer,
       );
 
-      if (photoType !== 'BOOKING') {
-        await this.photoValidateService.validateHashAndMatching(
-          photoUploadDto.file.buffer,
-          photoUploadDto.file.originalName,
-        );
-      }
+      await this.photoValidateService.validateHashAndMatching(
+        photoUploadDto.file.buffer,
+        photoUploadDto.file.originalName,
+      );
 
       exif['Copyright'] = ` © copyright by ${user.name}`;
 
@@ -594,7 +674,7 @@ export class PhotoService {
         width: metadata.width,
         height: metadata.height,
         status: 'PARSED',
-        photoType: photoType,
+        photoType: 'RAW',
         blurHash,
         watermark: false,
         visibility: 'PRIVATE',
