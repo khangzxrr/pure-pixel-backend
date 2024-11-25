@@ -25,10 +25,11 @@ import { PhotoVoteService } from './services/photo-vote.service';
 import { PhotoViewCountConsumer } from './consumers/photo-view-count.consumer';
 import { PhotoValidateService } from './services/photo-validate.service';
 import { PhotoExchangeController } from './controllers/photo-exchange.controller';
-import { CacheModule } from '@nestjs/cache-manager';
+
 import { ManagePhotoController } from './controllers/manage-photo.controller';
 import { ManagePhotoService } from './services/manage-photo.service';
 import { NotificationModule } from 'src/notification/notification.module';
+import { CachingModule } from 'src/caching/caching.module';
 
 @Module({
   providers: [
@@ -66,7 +67,7 @@ import { NotificationModule } from 'src/notification/notification.module';
       timeout: 30000,
       maxRedirects: 10,
     }),
-    CacheModule.register(),
+    CachingModule,
     AuthenModule,
     DatabaseModule,
     StorageModule,
