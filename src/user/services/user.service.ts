@@ -312,10 +312,11 @@ export class UserService {
     const keycloakUser = await this.keycloakService.findFirst(userFilterDto.id);
 
     if (!keycloakUser) {
-      const insertedUser = await this.keycloakService.upsert(
+      await this.keycloakService.upsert(
         user.normalizedName,
         user.mail,
         Constants.CUSTOMER_ROLE,
+        user.id,
       );
 
       console.log('upsert keycloak');
