@@ -487,9 +487,9 @@ export class PhotoService {
   ) {
     const photo = await this.photoRepository.findUniqueOrThrow(id, userId);
 
-    await this.photoViewCountQueue.add(PhotoConstant.INCREASE_VIEW_COUNT_JOB, {
-      id: photo.id,
-    });
+    // await this.photoViewCountQueue.add(PhotoConstant.INCREASE_VIEW_COUNT_JOB, {
+    //   id: photo.id,
+    // });
 
     if (!photo) {
       throw new PhotoNotFoundException();
