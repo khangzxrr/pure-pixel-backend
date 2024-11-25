@@ -600,6 +600,12 @@ export class PhotoService {
         watermarkPhotoUrl: '',
       });
 
+      await this.userRepository.update(userId, {
+        photoQuotaUsage: {
+          increment: photo.size,
+        },
+      });
+
       await this.photoProcessQueue.add(PhotoConstant.PROCESS_PHOTO_JOB_NAME, {
         id: photo.id,
       });
