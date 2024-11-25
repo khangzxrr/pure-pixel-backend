@@ -21,6 +21,7 @@ import { MeDto } from '../dtos/me.dto';
 import { UserInReport } from 'src/database/types/user';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class UserService {
@@ -203,39 +204,49 @@ export class UserService {
   }
 
   async findMany(findAllDto: UserFindAllRequestDto) {
-    const keycloakUsers = await this.keycloakService.findUsers(
-      findAllDto.toSkip(),
-      findAllDto.limit,
-    );
+    const where: Prisma.UserWhereInput = {};
 
-    const count = await this.userRepository.count({});
+    const count = await this.userRepository.count(where);
 
     const users: UserInReport[] = await this.userRepository.findMany(
-      {
-        id: {
-          in: keycloakUsers.map((u) => u.id),
-        },
-      },
+      {},
       [],
       {},
+      findAllDto.toSkip(),
+      findAllDto.limit,
     );
 
     const userDtoPromises = users.map(async (u) => {
       const dto = plainToInstance(UserDto, u);
 
-      const kcUser = await this.keycloakService.findFirst(u.id);
+      try {
+        const kcUser = await this.keycloakService.findFirst(u.id);
 
-      const roles = await this.keycloakService.getUserRoles(u.id);
+        if (kcUser === null) {
+          return null;
+        }
 
-      dto.enabled = kcUser.enabled;
-      dto.roles = roles.map((r) => r.name);
+        dto.enabled = kcUser.enabled;
+        dto.username = kcUser.username;
 
-      return dto;
+        const roles = await this.keycloakService.getUserRoles(u.id);
+        dto.roles = roles.map((r) => r.name);
+
+        return dto;
+      } catch (e) {
+        return null;
+      }
     });
 
     const userDtos = await Promise.all(userDtoPromises);
 
-    return new UserFindAllResponseDto(findAllDto.limit, count, userDtos);
+    const filterdNullUserDtos = userDtos.filter((u) => u !== null);
+
+    return new UserFindAllResponseDto(
+      findAllDto.limit,
+      count,
+      filterdNullUserDtos,
+    );
   }
 
   async findMe(userId: string) {
