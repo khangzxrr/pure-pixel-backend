@@ -219,34 +219,30 @@ export class UserService {
     const userDtoPromises = users.map(async (u) => {
       const dto = plainToInstance(UserDto, u);
 
-      try {
-        const kcUser = await this.keycloakService.findFirst(u.id);
+      return dto;
 
-        if (kcUser === null) {
-          return null;
-        }
-
-        dto.enabled = kcUser.enabled;
-        dto.username = kcUser.username;
-
-        const roles = await this.keycloakService.getUserRoles(u.id);
-        dto.roles = roles.map((r) => r.name);
-
-        return dto;
-      } catch (e) {
-        return null;
-      }
+      // try {
+      //   const kcUser = await this.keycloakService.findFirst(u.id);
+      //
+      //   if (kcUser === null) {
+      //     return null;
+      //   }
+      //
+      //   dto.enabled = kcUser.enabled;
+      //   dto.username = kcUser.username;
+      //
+      //   const roles = await this.keycloakService.getUserRoles(u.id);
+      //   dto.roles = roles.map((r) => r.name);
+      //
+      //   return dto;
+      // } catch (e) {
+      //   return null;
+      // }
     });
 
     const userDtos = await Promise.all(userDtoPromises);
 
-    const filterdNullUserDtos = userDtos.filter((u) => u !== null);
-
-    return new UserFindAllResponseDto(
-      findAllDto.limit,
-      count,
-      filterdNullUserDtos,
-    );
+    return new UserFindAllResponseDto(findAllDto.limit, count, userDtos);
   }
 
   async findMe(userId: string) {
