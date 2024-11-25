@@ -14,6 +14,45 @@ export class PhotoGenerateWatermarkService {
     @Inject() private readonly photoProcessService: PhotoProcessService,
   ) {}
 
+  async generateWatermarkFromBuffer(
+    id: string,
+    generateWatermarkRequest: GenerateWatermarkRequestDto,
+    buffer: Buffer,
+  ) {
+    const photo = await this.photoRepository.findUniqueOrThrow(id);
+
+    const flagTime1 = new Date();
+
+    const sharp = await this.photoProcessService.sharpInitFromBuffer(buffer);
+
+    const watermark = await this.photoProcessService.makeWatermark(
+      sharp,
+      generateWatermarkRequest.text,
+    );
+
+    const flagTime2 = new Date();
+
+    console.log(
+      `time diff of watermark: ${flagTime2.valueOf() - flagTime1.valueOf()}`,
+    );
+
+    const watermarkBuffer = await watermark.keepMetadata().toBuffer();
+
+    photo.watermarkPhotoUrl = `watermark/${photo.originalPhotoUrl}`;
+    await this.photoProcessService.uploadFromBuffer(
+      photo.watermarkPhotoUrl,
+      watermarkBuffer,
+    );
+
+    await this.photoRepository.updateById(photo.id, {
+      watermarkPhotoUrl: photo.watermarkPhotoUrl,
+    });
+
+    this.logger.log(`created watermark: ${photo.watermarkPhotoUrl}`);
+
+    return photo;
+  }
+
   async generateWatermark(
     id: string,
     generateWatermarkRequest: GenerateWatermarkRequestDto,

@@ -33,6 +33,7 @@ import { CannotBookOwnedPhotoshootPackageException } from '../exceptions/cannot-
 import * as AdmZip from 'adm-zip';
 import { PhotoProcessService } from 'src/photo/services/photo-process.service';
 import { UserService } from 'src/user/services/user.service';
+import { PhotoGenerateWatermarkService } from 'src/photo/services/photo-generate-watermark.service';
 
 @Injectable()
 export class BookingService {
@@ -48,6 +49,8 @@ export class BookingService {
     @Inject() private readonly bunnyService: BunnyService,
     @Inject() private readonly photoProcessService: PhotoProcessService,
     @Inject() private readonly userService: UserService,
+    @Inject()
+    private readonly photoGenerateWatermarkService: PhotoGenerateWatermarkService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -368,9 +371,13 @@ export class BookingService {
       file: bookingUploadDto.file,
     });
 
-    await this.photoService.sendImageWatermarkQueue(userId, signedPhotoDto.id, {
-      text: 'PXL',
-    });
+    await this.photoGenerateWatermarkService.generateWatermarkFromBuffer(
+      signedPhotoDto.id,
+      {
+        text: 'PXL',
+      },
+      bookingUploadDto.file.buffer,
+    );
 
     await this.photoRepository.updateById(signedPhotoDto.id, {
       watermark: booking.status === 'SUCCESSED' ? false : true,

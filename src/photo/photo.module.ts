@@ -53,6 +53,7 @@ import { UserModule } from 'src/user/user.module';
     PhotoProcessService,
     PhotoCategoryService,
     PhotoProcessConsumer,
+    PhotoGenerateWatermarkService,
   ],
   controllers: [
     PhotoController,
