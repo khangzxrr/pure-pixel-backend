@@ -74,6 +74,8 @@ export class NotificationConsumer extends WorkerHost {
 
     await this.notificationGateway.sendRefreshNotificationEvent(user.id, {
       referenceType: notificationCreateDto.referenceType,
+      title: notificationCreateDto.title,
+      content: notificationCreateDto.content,
       //only need referenceType
     });
 
