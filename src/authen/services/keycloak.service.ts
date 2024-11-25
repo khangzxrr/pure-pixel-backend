@@ -118,6 +118,7 @@ export class KeycloakService {
     });
 
     if (existUser.length !== 0) {
+      console.log(`exist user with name ${username}`);
       return existUser[0];
     }
 

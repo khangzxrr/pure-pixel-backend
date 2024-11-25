@@ -41,9 +41,20 @@ export class NotificationGateway
     //not found => create new array of socket ids
     if (!arrayOfSocketIds) {
       arrayOfSocketIds = new Set<string>();
+
+      console.log(arrayOfSocketIds);
     }
 
-    arrayOfSocketIds.add(socketId);
+    try {
+      arrayOfSocketIds.add(socketId);
+
+      //when add fail, it will create new arrayOfSocketIds
+    } catch (e) {
+      await this.cacheManager.del(`notification_${userId}`);
+      arrayOfSocketIds = new Set<string>();
+
+      arrayOfSocketIds.add(socketId);
+    }
 
     //TTL should longer than keycloak access token expired value
     await this.cacheManager.set(
