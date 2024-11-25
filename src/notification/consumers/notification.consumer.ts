@@ -58,6 +58,25 @@ export class NotificationConsumer extends WorkerHost {
       notificationCreateDto.content,
     );
 
+    const savedNotification = await this.notificationService.saveNotification({
+      payload: notificationCreateDto.payload,
+      type: notificationCreateDto.type,
+      referenceType: notificationCreateDto.referenceType,
+      user: {
+        connect: {
+          id: user.id,
+        },
+      },
+      title: notificationCreateDto.title,
+      content: notificationCreateDto.content,
+      status: 'SHOW',
+    });
+
+    await this.notificationGateway.sendRefreshNotificationEvent(
+      user.id,
+      savedNotification,
+    );
+
     if (
       notificationCreateDto.type === 'IN_APP' ||
       notificationCreateDto.type === 'BOTH_INAPP_EMAIL'
@@ -78,25 +97,6 @@ export class NotificationConsumer extends WorkerHost {
         [user.mail],
       );
     }
-
-    const savedNotification = await this.notificationService.saveNotification({
-      payload: notificationCreateDto.payload,
-      type: notificationCreateDto.type,
-      referenceType: notificationCreateDto.referenceType,
-      user: {
-        connect: {
-          id: user.id,
-        },
-      },
-      title: notificationCreateDto.title,
-      content: notificationCreateDto.content,
-      status: 'SHOW',
-    });
-
-    await this.notificationGateway.sendRefreshNotificationEvent(
-      user.id,
-      savedNotification,
-    );
 
     this.logger.log(
       `sent ${notificationCreateDto.type} notification to userId: ${user.id}`,

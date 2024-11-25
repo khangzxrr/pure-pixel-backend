@@ -11,6 +11,7 @@ import { Decimal } from '@prisma/client/runtime/library';
 import { BookingBillItemCreateDto } from '../dtos/booking-bill-item.create.dto';
 import { BookingNotInValidStateException } from '../exceptions/booking-not-in-valid-state.exception';
 import { BookingBillItemUpdateDto } from '../dtos/booking-bill-item.update.dto';
+import { NotificationService } from 'src/notification/services/notification.service';
 
 @Injectable()
 export class BookingBillItemService {
@@ -19,6 +20,8 @@ export class BookingBillItemService {
     private readonly bookingBillItemRepository: BookingBillItemRepository,
     @Inject()
     private readonly bookinRepository: BookingRepository,
+    @Inject()
+    private readonly notificationService: NotificationService,
   ) {}
 
   async updateBillItem(
@@ -48,6 +51,15 @@ export class BookingBillItemService {
       billItemUpdateDto,
     );
 
+    await this.notificationService.addNotificationToQueue({
+      userId: booking.userId,
+      type: 'IN_APP',
+      title: `Gói chụp ${booking.photoshootPackageHistory.title} có cập nhật mới`,
+      content: 'Gói chụp của bạn đã có cập nhật hoá đơn mới!',
+      payload: billitem,
+      referenceType: 'BOOKING',
+    });
+
     return plainToInstance(BookingBillItemDto, billitem);
   }
 
@@ -72,6 +84,15 @@ export class BookingBillItemService {
       bookingId,
       billItemId,
     );
+
+    await this.notificationService.addNotificationToQueue({
+      userId: booking.userId,
+      type: 'IN_APP',
+      title: `Gói chụp ${booking.photoshootPackageHistory.title} có cập nhật mới`,
+      content: 'Gói chụp của bạn đã có cập nhật hoá đơn mới!',
+      payload: billItem,
+      referenceType: 'BOOKING',
+    });
 
     return plainToInstance(BookingBillItemDto, billItem);
   }
@@ -104,6 +125,15 @@ export class BookingBillItemService {
           id: booking.id,
         },
       },
+    });
+
+    await this.notificationService.addNotificationToQueue({
+      userId: booking.userId,
+      type: 'IN_APP',
+      title: `Gói chụp ${booking.photoshootPackageHistory.title} có cập nhật mới`,
+      content: 'Gói chụp của bạn đã có cập nhật hoá đơn mới!',
+      payload: bookingBillItem,
+      referenceType: 'BOOKING',
     });
 
     return plainToInstance(BookingBillItemDto, bookingBillItem);
