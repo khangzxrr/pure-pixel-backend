@@ -74,6 +74,10 @@ export class PhotoProcessConsumer extends WorkerHost {
 
     await this.generateThumbnail(photoId, buffer);
 
+    if (photo.photoType === 'BOOKING') {
+      return;
+    }
+
     const hash = await this.photoProcessService.getHashFromBuffer(buffer);
 
     const blurHash = await this.photoProcessService.bufferToBlurhash(buffer);
