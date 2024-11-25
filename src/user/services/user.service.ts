@@ -33,6 +33,24 @@ export class UserService {
     @Inject(CACHE_MANAGER) private cache: Cache,
   ) {}
 
+  async updatePhotoQuota(userId: string, quota: number) {
+    const user = await this.userRepository.findUniqueOrThrow(userId);
+
+    const usage = Number(user.photoQuotaUsage);
+
+    if (usage - quota > 0) {
+      await this.userRepository.update(userId, {
+        photoQuotaUsage: {
+          decrement: quota,
+        },
+      });
+    } else {
+      await this.userRepository.update(userId, {
+        photoQuotaUsage: 0,
+      });
+    }
+  }
+
   async update(id: string, updateDto: UpdateUserDto) {
     try {
       await this.keycloakService.updateById(id, {
