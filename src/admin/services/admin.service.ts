@@ -109,7 +109,7 @@ export class AdminService {
 
     const imagePerUserCount = Math.floor(imageList.length / usernames.length);
 
-    usernames.forEach(async (username) => {
+    for (let username of usernames) {
       const trimmedUsername = username.trim();
       if (trimmedUsername.length === 0) {
         return;
@@ -145,6 +145,8 @@ export class AdminService {
 
       console.log(`created photographer ${username}`);
 
+      console.log(imagePerUserCount);
+
       for (let i = 0; i < imagePerUserCount; i++) {
         const photoUploadDto = new PhotoUploadRequestDto();
         photoUploadDto.file = new MemoryStoredFile();
@@ -176,6 +178,6 @@ export class AdminService {
       console.log(
         `finished user ${username} remain: ${usernames.indexOf(username) + 1 - usernames.length} users`,
       );
-    });
+    }
   }
 }
