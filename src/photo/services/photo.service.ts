@@ -210,14 +210,11 @@ export class PhotoService {
     const signedUrl = this.bunnyService.getPresignedFile(url);
 
     const signedThumbnailUrl = this.bunnyService.getPresignedFile(
-      `thumbnail/${photoDetail.id}.jpg`,
-    );
-    const signedPlaceholderUrl = this.bunnyService.getPresignedFile(
-      `placeholder/${photoDetail.id}.jpg`,
+      `thumbnail/${photoDetail.id}.webp`,
     );
 
     const signedUrlDto = new SignedUrl(signedUrl, signedThumbnailUrl);
-    signedUrlDto.placeholder = signedPlaceholderUrl;
+
     signedPhotoDto.signedUrl = signedUrlDto;
 
     signedPhotoDto.photoSellings?.forEach((photoSelling) => {
@@ -253,16 +250,8 @@ export class PhotoService {
 
     const signedUrl = this.bunnyService.getPresignedFile(url);
     const signedThumbnailUrl = this.bunnyService.getPresignedFile(
-      `thumbnail/${photo.id}.jpg`,
+      `thumbnail/${photo.id}.webp`,
     );
-    const signedPlaceholderUrl = this.bunnyService.getPresignedFile(
-      `placeholder/${photo.id}.jpg`,
-    );
-
-    const signedUrlDto = new SignedUrl(signedUrl, signedThumbnailUrl);
-    signedUrlDto.placeholder = signedPlaceholderUrl;
-
-    signedPhotoDto.signedUrl = signedUrlDto;
 
     return signedPhotoDto;
   }
@@ -616,6 +605,7 @@ export class PhotoService {
 
       return this.signPhoto(photo);
     } catch (e) {
+      console.log(e);
       if (e instanceof HttpException) {
         throw e;
       }

@@ -7,9 +7,6 @@ export class SignedUrl {
   @ApiProperty()
   thumbnail: string;
 
-  @ApiProperty()
-  placeholder: string;
-
   constructor(url: string, thumbnail: string) {
     this.url = url;
     this.thumbnail = thumbnail;
