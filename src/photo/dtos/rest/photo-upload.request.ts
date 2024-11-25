@@ -12,7 +12,7 @@ export class PhotoUploadRequestDto {
   })
   @IsFile()
   // @MinFileSize(4e6)
-  @MaxFileSize(5e7)
+  @MaxFileSize(209715200)
   @HasMimeType(['image/*'])
   file: MemoryStoredFile;
 }

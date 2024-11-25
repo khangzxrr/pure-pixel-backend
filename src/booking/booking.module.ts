@@ -11,6 +11,7 @@ import { PhotoModule } from 'src/photo/photo.module';
 import { NestjsFormDataModule } from 'nestjs-form-data';
 import { PhotographerBookingBillItemController } from './controllers/photographer-booking-bill-item.controller';
 import { PaymentModule } from 'src/payment/payment.module';
+import { CachingModule } from 'src/caching/caching.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { PaymentModule } from 'src/payment/payment.module';
     AuthenModule,
     NotificationModule,
     NestjsFormDataModule,
+    CachingModule,
     PaymentModule,
   ],
   providers: [BookingService, BookingBillItemService],

@@ -50,6 +50,7 @@ import { CannotUpdateWatermarkPhotoHasActiveSellingException } from '../exceptio
 import { CannotUpdateVisibilityPhotoHasActiveSellingException } from '../exceptions/cannot-update-visibility-photo-has-active-selling.exception';
 import { Utils } from 'src/infrastructure/utils/utils';
 import { FindNextPhotoFilterDto } from '../dtos/find-next.filter.dto';
+import { FailToParsePhotoException } from '../exceptions/fail-to-parse-photo.exception';
 
 @Injectable()
 export class PhotoService {
@@ -568,10 +569,10 @@ export class PhotoService {
         photoUploadDto.file.buffer,
       );
 
-      // await this.photoValidateService.validateHashAndMatching(
-      //   photoUploadDto.file.buffer,
-      //   photoUploadDto.file.originalName,
-      // );
+      await this.photoValidateService.validateHashAndMatching(
+        photoUploadDto.file.buffer,
+        photoUploadDto.file.originalName,
+      );
 
       exif['Copyright'] = ` © copyright by ${user.name}`;
 
@@ -619,9 +620,7 @@ export class PhotoService {
         throw e;
       }
 
-      console.log(e);
-
-      throw new UploadPhotoFailedException();
+      throw new UploadPhotoFailedException(e);
     }
   }
 }
