@@ -108,17 +108,40 @@ export class PhotoProcessConsumer extends WorkerHost {
     const key = `${photo.photographerId}/${photo.id}.${extension}`;
     await this.bunnyService.uploadFromBuffer(key, buffer);
 
-    await this.photoRepository.updateById(photo.id, {
-      status: 'PARSED',
-      originalPhotoUrl: key,
-      hash,
-    });
-
     rm(temporaryPhoto.file.path, () => {
       this.logger.log(`removed temporary photo ${temporaryPhoto.file.path}`);
     });
 
     this.logger.log(`uploaded ${photo.id} to cloud`);
+
+    const thumbnailBuffer = await this.photoProcessService.makeThumbnail(sharp);
+
+    await this.bunnyService.uploadFromBuffer(
+      `thumbnail/${photo.id}.webp`,
+      thumbnailBuffer,
+    );
+
+    this.logger.log(`uploaded thumbnail for photo id: ${photo.id}`);
+
+    const watermark = await this.photoProcessService.makeWatermark(
+      sharp,
+      'PXL',
+    );
+    const watermarkBuffer = await watermark.toBuffer();
+    const watermarkKey = `watermark/${key}`;
+    await this.bunnyService.uploadFromBuffer(
+      `watermark/${key}`,
+      watermarkBuffer,
+    );
+
+    this.logger.log(`uploaded watermark for photo id: ${photo.id}`);
+
+    await this.photoRepository.updateById(photo.id, {
+      status: 'PARSED',
+      originalPhotoUrl: key,
+      watermarkPhotoUrl: watermarkKey,
+      hash,
+    });
   }
 
   async deleteTineyePhoto(originalPhotoUrl: string) {

@@ -84,7 +84,7 @@ export class PhotoService {
     }
 
     const sharp = await this.photoProcessService.sharpInitFromFilePath(
-      photo.originalPhotoUrl,
+      photo.watermark ? photo.watermarkPhotoUrl : photo.originalPhotoUrl,
     );
 
     return sharp.toBuffer();
@@ -105,11 +105,12 @@ export class PhotoService {
       throw new FailToPerformOnDuplicatedPhotoException();
     }
 
-    const updatedPhoto =
-      await this.photoGenerateWatermarkService.generateWatermark(
-        photo.id,
-        generateWatermarkRequest,
-      );
+    await this.photoGenerateWatermarkService.generateWatermark(
+      photo.id,
+      generateWatermarkRequest,
+    );
+
+    const updatedPhoto = await this.photoRepository.findUniqueOrThrow(photoId);
 
     return this.signPhoto(updatedPhoto);
   }
@@ -263,8 +264,6 @@ export class PhotoService {
         throw new EmptyOriginalPhotoException();
       }
     }
-
-    console.log(photo.status);
 
     if (photo.status === 'PENDING') {
       signedPhotoDto.signedUrl = {
