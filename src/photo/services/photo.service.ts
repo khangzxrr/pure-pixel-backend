@@ -164,10 +164,14 @@ export class PhotoService {
       throw new ChoosedShareQualityIsNotFoundException();
     }
 
-    const shareUrl = this.bunnyService.getPresignedFile(
+    let shareUrl = this.bunnyService.getPresignedFile(
       photo.originalPhotoUrl,
       `?width=${shareRequest.size.width}`,
     );
+
+    if (photo.status === 'PENDING') {
+      shareUrl = `${process.env.BACKEND_ORIGIN}/photo/${photo.id}/temporary-photo?width=${shareRequest.size.width}`;
+    }
 
     return new SharePhotoResponseDto(shareRequest.size, shareUrl);
   }
