@@ -618,6 +618,7 @@ export class PhotoService {
     }
 
     try {
+      let performance = Date.now();
       let exifRaw = await this.photoProcessService.parseExifFromBuffer(
         photoUploadDto.file.buffer,
       );
@@ -625,6 +626,8 @@ export class PhotoService {
       const metadata = await this.photoProcessService.parseMetadataFromBuffer(
         photoUploadDto.file.buffer,
       );
+
+      console.log(`parse exif, metadata: ${Date.now() - performance}`);
 
       if (!exifRaw) {
         throw new ExifNotFoundException();
@@ -640,16 +643,26 @@ export class PhotoService {
         throw new MissingModelExifException();
       }
 
+      performance = Date.now();
+
       await this.photoValidateService.validateHashAndMatching(
         photoUploadDto.file.buffer,
         photoUploadDto.file.originalName,
       );
 
+      this.logger.log(`validate hash: `, Date.now() - performance);
+
       exif['Copyright'] = ` © copyright by ${user.name}`;
+
+      performance = Date.now();
 
       const storageObjectKey = await this.bunnyService.upload(
         photoUploadDto.file,
       );
+
+      this.logger.log(`upload bunny service: `, Date.now() - performance);
+
+      performance = Date.now();
 
       const normalizedTitle = Utils.normalizeText(
         photoUploadDto.file.originalName,
@@ -683,9 +696,6 @@ export class PhotoService {
         },
       });
 
-      console.log(`increase user photo quota`);
-      console.log(photo.size);
-
       await this.photoProcessQueue.add(PhotoConstant.PROCESS_PHOTO_JOB_NAME, {
         id: photo.id,
       });
@@ -693,6 +703,11 @@ export class PhotoService {
       await this.cameraQueue.add(CameraConstant.ADD_NEW_CAMERA_USAGE_JOB, {
         photoId: photo.id,
       });
+
+      this.logger.log(
+        `crete, update, process queue, camera queue: `,
+        Date.now() - performance,
+      );
 
       return this.signPhoto(photo);
     } catch (e) {
