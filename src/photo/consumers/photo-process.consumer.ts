@@ -72,36 +72,6 @@ export class PhotoProcessConsumer extends WorkerHost {
       return;
     }
 
-    const hash = await this.photoProcessService.getHashFromBuffer(buffer);
-
-    const sameHashedPhoto = await this.photoRepository.findFirst({
-      hash,
-    });
-
-    if (sameHashedPhoto !== null) {
-      await this.photoRepository.updateById(photo.id, {
-        status: 'DUPLICATED',
-        visibility: 'PRIVATE',
-      });
-
-      await this.notificationService.addNotificationToQueue({
-        type: 'IN_APP',
-        userId: photo.photographerId,
-        payload: {},
-        referenceType: 'PHOTO',
-        title: `Ảnh ${photo.title} của bạn trùng với một ảnh khác!`,
-        content: `Ảnh ${photo.title} của bạn có dấu hiệu trùng với một ảnh khác, nếu đây là sự sai sót, vui lòng báo cáo lên quản trị viên để được xem xét. Xin cám ơn!`,
-      });
-
-      this.logger.log(`duplicated photo ${photo.id}`);
-
-      rm(temporaryPhoto.file.path, () => {
-        this.logger.log(`removed temporary photo ${temporaryPhoto.file.path}`);
-      });
-
-      return;
-    }
-
     const splitByDot = temporaryPhoto.file.path.split('.');
     const extension = splitByDot.at(-1);
 
@@ -132,7 +102,6 @@ export class PhotoProcessConsumer extends WorkerHost {
       status: 'PARSED',
       originalPhotoUrl: key,
       watermarkPhotoUrl: watermarkKey,
-      hash,
     });
 
     rm(temporaryPhoto.file.path, () => {
