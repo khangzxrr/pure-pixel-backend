@@ -45,6 +45,10 @@ import { CannotUpdateVisibilityPhotoHasActiveSellingException } from '../excepti
 import { Utils } from 'src/infrastructure/utils/utils';
 import { FindNextPhotoFilterDto } from '../dtos/find-next.filter.dto';
 import { UserService } from 'src/user/services/user.service';
+import { FileSystemPhotoUploadRequestDto } from '../dtos/rest/file-system-photo-upload.request';
+import { TemporaryPhotoDto } from '../dtos/temporary-photo.dto';
+import { PhotoNotInPendingStateException } from '../exceptions/photo-not-in-pending-state.exception';
+import fs from 'fs';
 
 @Injectable()
 export class PhotoService {
@@ -71,6 +75,20 @@ export class PhotoService {
     @Inject()
     private readonly userService: UserService,
   ) {}
+
+  async downloadTemporaryPhoto(id: string): Promise<Buffer> {
+    const photo = await this.photoRepository.findUniqueOrThrow(id);
+
+    if (photo.status !== 'PENDING') {
+      throw new PhotoNotInPendingStateException();
+    }
+
+    const sharp = await this.photoProcessService.sharpInitFromFilePath(
+      photo.originalPhotoUrl,
+    );
+
+    return sharp.toBuffer();
+  }
 
   async sendImageWatermarkQueue(
     userId: string,
@@ -201,15 +219,19 @@ export class PhotoService {
       }
     }
 
-    const signedUrl = this.bunnyService.getPresignedFile(url);
-
-    const signedThumbnailUrl = this.bunnyService.getPresignedFile(
-      `thumbnail/${photoDetail.id}.webp`,
-    );
-
-    const signedUrlDto = new SignedUrl(signedUrl, signedThumbnailUrl);
-
-    signedPhotoDto.signedUrl = signedUrlDto;
+    if (photoDetail.status === 'PENDING') {
+      signedPhotoDto.signedUrl = {
+        url: `${process.env.BACKEND_ORIGIN}/photo/${photoDetail.id}/temporary-photo`,
+        thumbnail: `${process.env.BACKEND_ORIGIN}/photo/${photoDetail.id}/temporary-photo`,
+      };
+    } else {
+      signedPhotoDto.signedUrl = {
+        url: this.bunnyService.getPresignedFile(url),
+        thumbnail: this.bunnyService.getPresignedFile(
+          `thumbnail/${photoDetail.id}.webp`,
+        ),
+      };
+    }
 
     signedPhotoDto.photoSellings?.forEach((photoSelling) => {
       photoSelling.pricetags.forEach((pricetag) => {
@@ -240,6 +262,17 @@ export class PhotoService {
       } else {
         throw new EmptyOriginalPhotoException();
       }
+    }
+
+    console.log(photo.status);
+
+    if (photo.status === 'PENDING') {
+      signedPhotoDto.signedUrl = {
+        url: `${process.env.BACKEND_ORIGIN}/photo/${photo.id}/temporary-photo`,
+        thumbnail: `${process.env.BACKEND_ORIGIN}/photo/${photo.id}/temporary-photo`,
+      };
+
+      return signedPhotoDto;
     }
 
     const signedUrl = this.bunnyService.getPresignedFile(url);
@@ -591,9 +624,121 @@ export class PhotoService {
     }
   }
 
+  async fileSystemPhotoUpload(
+    userId: string,
+    photoUploadDto: FileSystemPhotoUploadRequestDto,
+  ) {
+    console.log(userId, photoUploadDto);
+
+    const user = await this.userRepository.findUniqueOrThrow(userId);
+
+    const sizeAsBigint = BigInt(photoUploadDto.file.size);
+    const newUsageQuota = user.photoQuotaUsage + sizeAsBigint;
+
+    if (newUsageQuota >= user.maxPhotoQuota) {
+      throw new RunOutPhotoQuotaException();
+    }
+
+    const extension = photoUploadDto.file.extension;
+
+    if (
+      extension !== 'jpg' &&
+      extension !== 'jpeg' &&
+      extension !== 'png' &&
+      extension !== 'bmp' &&
+      extension !== 'bitmap'
+    ) {
+      throw new FileIsNotValidException();
+    }
+
+    let exifRaw = await this.photoProcessService.parseExifFromFilePath(
+      photoUploadDto.file.path,
+    );
+
+    const metadata = await this.photoProcessService.parseMetadataFromFilePath(
+      photoUploadDto.file.path,
+    );
+
+    if (!exifRaw) {
+      throw new ExifNotFoundException();
+    }
+
+    const exif = JSON.parse(Utils.removedNullChar(JSON.stringify(exifRaw)));
+
+    if (!exif['Make']) {
+      throw new MissingMakeExifException();
+    }
+
+    if (!exif['Model']) {
+      throw new MissingModelExifException();
+    }
+
+    exif['Copyright'] = ` © copyright by ${user.name}`;
+
+    const sharp = await this.photoProcessService.sharpInitFromFilePath(
+      photoUploadDto.file.path,
+    );
+
+    const buffer = await sharp.toBuffer();
+
+    const hash = await this.photoProcessService.getHashFromBuffer(buffer);
+
+    const sameHashPhoto = await this.photoRepository.findFirst({
+      hash,
+    });
+
+    if (sameHashPhoto) {
+      throw new FailToPerformOnDuplicatedPhotoException();
+    }
+
+    const normalizedTitle = Utils.normalizeText(
+      photoUploadDto.file.originalName,
+    );
+
+    const photo = await this.photoRepository.create({
+      photographer: {
+        connect: {
+          id: userId,
+        },
+      },
+      description: '',
+      title: photoUploadDto.file.originalName,
+      normalizedTitle,
+      hash,
+      size: photoUploadDto.file.size,
+      exif,
+      width: metadata.width,
+      height: metadata.height,
+      status: 'PENDING',
+      photoType: 'RAW',
+      blurHash: 'UhCa0+RjM|oJlCWBaeaeESofoeaxIVj[j?j?',
+      watermark: false,
+      visibility: 'PRIVATE',
+      originalPhotoUrl: photoUploadDto.file.path,
+      watermarkPhotoUrl: '',
+    });
+
+    await this.userRepository.update(userId, {
+      photoQuotaUsage: {
+        increment: photo.size,
+      },
+    });
+
+    // const temporaryPhotoDto: TemporaryPhotoDto = {
+    //   file: photoUploadDto.file,
+    //   photoId: photo.id,
+    // };
+    //
+    // await this.photoProcessQueue.add(
+    //   PhotoConstant.UPLOAD_PHOTO_JOB_NAME,
+    //   temporaryPhotoDto,
+    // );
+
+    return this.signPhoto(photo);
+  }
+
   async uploadPhoto(
     userId: string,
-
     photoUploadDto: PhotoUploadRequestDto,
   ): Promise<SignedPhotoDto> {
     const user = await this.userRepository.findUniqueOrThrow(userId);

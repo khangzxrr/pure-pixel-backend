@@ -35,6 +35,10 @@ export class PhotoProcessService {
     return SharpLib(buffer);
   }
 
+  async sharpInitFromFilePath(url: string) {
+    return SharpLib(url);
+  }
+
   async sharpInitFromObjectKey(key: string) {
     const buffer = await this.bunnyService.download(key);
 
@@ -134,6 +138,19 @@ export class PhotoProcessService {
 
         resolve(encode(new Uint8ClampedArray(buffer), width, height, 4, 4));
       });
+    });
+  }
+
+  async parseMetadataFromFilePath(url: string) {
+    const sharp = await this.sharpInitFromFilePath(url);
+
+    return sharp.metadata();
+  }
+
+  async parseExifFromFilePath(url: string): Promise<object> {
+    return exifr.parse(url, {
+      exif: true,
+      xmp: false,
     });
   }
 

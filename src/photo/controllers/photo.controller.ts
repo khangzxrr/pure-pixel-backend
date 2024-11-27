@@ -9,6 +9,7 @@ import {
   Post,
   Query,
   Res,
+  StreamableFile,
   UseGuards,
 } from '@nestjs/common';
 import { PhotoService } from '../services/photo.service';
@@ -40,8 +41,9 @@ import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
 import { ResolutionDto } from '../dtos/resolution.dto';
 import { SignedPhotoDto } from '../dtos/signed-photo.dto';
-import { FormDataRequest } from 'nestjs-form-data';
+import { FileSystemStoredFile, FormDataRequest } from 'nestjs-form-data';
 import { FindNextPhotoFilterDto } from '../dtos/find-next.filter.dto';
+import { FileSystemPhotoUploadRequestDto } from '../dtos/rest/file-system-photo-upload.request';
 
 @Controller('photo')
 @ApiTags('photo')
@@ -175,6 +177,45 @@ export class PhotoController {
     );
 
     return uploadPhotoResponse;
+  }
+
+  @Post('/v2/upload')
+  @ApiOperation({ summary: 'upload and serve temporary photo' })
+  @ApiOkResponse({
+    type: SignedPhotoDto,
+  })
+  @ApiConsumes('multipart/form-data')
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
+  @FormDataRequest({
+    storage: FileSystemStoredFile,
+    fileSystemStoragePath: '/tmp/purepixel-local-storage',
+    cleanupAfterFailedHandle: true,
+    cleanupAfterSuccessHandle: false,
+  })
+  async uploadPhotoV2(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Body() body: FileSystemPhotoUploadRequestDto,
+  ) {
+    const uploadPhotoResponse = await this.photoService.fileSystemPhotoUpload(
+      user.sub,
+      body,
+    );
+
+    return uploadPhotoResponse;
+  }
+
+  @Get(':id/temporary-photo')
+  @ApiOperation({ summary: 'get file system temporary photo' })
+  async downloadTemporaryPhoto(@Param('id') id: string, @Res() res: Response) {
+    const buffer = await this.photoService.downloadTemporaryPhoto(id);
+
+    const stream = new StreamableFile(buffer);
+
+    res.set({
+      'Content-type': 'image/jpeg',
+    });
+    stream.getStream().pipe(res);
   }
 
   @Get('/:id/available-resolution')
