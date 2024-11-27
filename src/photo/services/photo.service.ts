@@ -49,6 +49,7 @@ import { FileSystemPhotoUploadRequestDto } from '../dtos/rest/file-system-photo-
 import { TemporaryPhotoDto } from '../dtos/temporary-photo.dto';
 import { PhotoNotInPendingStateException } from '../exceptions/photo-not-in-pending-state.exception';
 import fs from 'fs';
+import { DownloadTemporaryPhotoDto } from '../dtos/rest/download-temporary-photo.request.dto';
 
 @Injectable()
 export class PhotoService {
@@ -76,7 +77,10 @@ export class PhotoService {
     private readonly userService: UserService,
   ) {}
 
-  async downloadTemporaryPhoto(id: string): Promise<Buffer> {
+  async downloadTemporaryPhoto(
+    id: string,
+    downloadTemporaryPhotoDto: DownloadTemporaryPhotoDto,
+  ): Promise<Buffer> {
     const photo = await this.photoRepository.findUniqueOrThrow(id);
 
     if (photo.status !== 'PENDING') {
@@ -86,6 +90,15 @@ export class PhotoService {
     const sharp = await this.photoProcessService.sharpInitFromFilePath(
       photo.watermark ? photo.watermarkPhotoUrl : photo.originalPhotoUrl,
     );
+
+    if (downloadTemporaryPhotoDto.width) {
+      const resizedBuffer = await this.photoProcessService.resize(
+        sharp,
+        downloadTemporaryPhotoDto.width,
+      );
+
+      return resizedBuffer;
+    }
 
     return sharp.toBuffer();
   }
@@ -163,8 +176,22 @@ export class PhotoService {
     const photo = await this.photoRepository.findUniqueOrThrow(id);
 
     const availableRes: PhotoSizeDto[] = [];
-
     let height = photo.height;
+
+    if (photo.status === 'PENDING') {
+      for (
+        let i = photo.width;
+        i >= PhotoConstant.MIN_PHOTO_WIDTH;
+        i -= Math.floor((i * 20) / 100)
+      ) {
+        const previewUrl = `${process.env.BACKEND_ORIGIN}/photo/${photo.id}/temporary-photo?width=${i}`;
+        availableRes.push(new PhotoSizeDto(i, height, previewUrl));
+
+        height -= Math.floor((height * 20) / 100);
+      }
+
+      return availableRes;
+    }
 
     for (
       let i = photo.width;
@@ -723,15 +750,15 @@ export class PhotoService {
       },
     });
 
-    const temporaryPhotoDto: TemporaryPhotoDto = {
-      file: photoUploadDto.file,
-      photoId: photo.id,
-    };
-
-    await this.photoProcessQueue.add(
-      PhotoConstant.UPLOAD_PHOTO_JOB_NAME,
-      temporaryPhotoDto,
-    );
+    // const temporaryPhotoDto: TemporaryPhotoDto = {
+    //   file: photoUploadDto.file,
+    //   photoId: photo.id,
+    // };
+    //
+    // await this.photoProcessQueue.add(
+    //   PhotoConstant.UPLOAD_PHOTO_JOB_NAME,
+    //   temporaryPhotoDto,
+    // );
 
     return this.signPhoto(photo);
   }

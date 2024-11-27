@@ -44,6 +44,7 @@ import { SignedPhotoDto } from '../dtos/signed-photo.dto';
 import { FileSystemStoredFile, FormDataRequest } from 'nestjs-form-data';
 import { FindNextPhotoFilterDto } from '../dtos/find-next.filter.dto';
 import { FileSystemPhotoUploadRequestDto } from '../dtos/rest/file-system-photo-upload.request';
+import { DownloadTemporaryPhotoDto } from '../dtos/rest/download-temporary-photo.request.dto';
 
 @Controller('photo')
 @ApiTags('photo')
@@ -207,8 +208,15 @@ export class PhotoController {
 
   @Get(':id/temporary-photo')
   @ApiOperation({ summary: 'get file system temporary photo' })
-  async downloadTemporaryPhoto(@Param('id') id: string, @Res() res: Response) {
-    const buffer = await this.photoService.downloadTemporaryPhoto(id);
+  async downloadTemporaryPhoto(
+    @Param('id') id: string,
+    @Query() downloadTemporaryPhotoDto: DownloadTemporaryPhotoDto,
+    @Res() res: Response,
+  ) {
+    const buffer = await this.photoService.downloadTemporaryPhoto(
+      id,
+      downloadTemporaryPhotoDto,
+    );
 
     const stream = new StreamableFile(buffer);
 
