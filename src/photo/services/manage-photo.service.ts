@@ -68,7 +68,6 @@ export class ManagePhotoService {
       }
     }
 
-    //TODO: update exif to photo using queue
     if (photoUpdateDto.gps) {
       exif['latitude'] = photoUpdateDto.gps.latitude;
       exif['longitude'] = photoUpdateDto.gps.longitude;
@@ -134,6 +133,7 @@ export class ManagePhotoService {
   }
 
   async delete(id: string) {
+    //TODO: dellete pending file
     const photo = await this.photoRepository.findUniqueOrThrow(id);
 
     await this.userService.updatePhotoQuota(photo.photographerId, photo.size);
