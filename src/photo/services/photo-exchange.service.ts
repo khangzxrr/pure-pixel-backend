@@ -110,16 +110,23 @@ export class PhotoExchangeService {
       throw new PhotoBuyTransactionIsNotSuccessException();
     }
 
+    const buffer =
+      photo.status === 'PENDING'
+        ? await this.photoProcessService.sharpInitFromFilePath(
+            photo.originalPhotoUrl,
+          )
+        : await this.photoProcessService.getBufferFromKey(
+            photo.originalPhotoUrl,
+          );
+
     if (
       photoBuy.photoSellHistory.width === photo.width &&
       photoBuy.photoSellHistory.height === photo.height
     ) {
-      return this.photoProcessService.getBufferFromKey(photo.originalPhotoUrl);
+      return buffer;
     }
 
-    const sharp = await this.photoProcessService.sharpInitFromObjectKey(
-      photo.originalPhotoUrl,
-    );
+    const sharp = await this.photoProcessService.sharpInitFromBuffer(buffer);
 
     const resizedBuffer = await this.photoProcessService.resizeWithMetadata(
       sharp,
@@ -417,7 +424,7 @@ export class PhotoExchangeService {
         await this.notificationService.addNotificationToQueue({
           title: `Bán ảnh ${photoSell.photo.title} thành công`,
           content: ` Người dùng ${user.name} đã thanh toán ảnh ${photoSell.photo.title} - kích thước ${pricetag.width}x${pricetag.height} bằng ví thành công`,
-          userId: userId,
+          userId: photoSell.photo.photographerId,
           type: 'BOTH_INAPP_EMAIL',
           referenceType: 'PHOTO_BUY',
           payload: newPhotoBuyByWallet,

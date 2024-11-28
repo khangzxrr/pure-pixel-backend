@@ -5,6 +5,7 @@ import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { json, urlencoded } from 'express';
 import { LoggingInterceptor } from './infrastructure/interceptors/logging.interceptor';
+import { RedisIoAdapter } from './redis-io-adapter';
 
 async function bootstrap() {
   BigInt.prototype['toJSON'] = function () {
@@ -15,6 +16,11 @@ async function bootstrap() {
     snapshot: true,
     abortOnError: true,
   });
+
+  const redisIoAdapter = new RedisIoAdapter(app);
+  await redisIoAdapter.connectToRedis();
+
+  app.useWebSocketAdapter(redisIoAdapter);
 
   app.use(json({ limit: '100mb' }));
   app.use(urlencoded({ limit: '100mb' }));

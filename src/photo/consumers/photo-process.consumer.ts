@@ -6,12 +6,12 @@ import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoProcessService } from '../services/photo-process.service';
 import { TineyeService } from 'src/storage/services/tineye.service';
 import { BunnyService } from 'src/storage/services/bunny.service';
-import { NotificationConstant } from 'src/notification/constants/notification.constant';
-import { NotificationCreateDto } from 'src/notification/dtos/rest/notification-create.dto';
 import { NotificationService } from 'src/notification/services/notification.service';
+import { TemporaryPhotoDto } from '../dtos/temporary-photo.dto';
+import { rm } from 'fs';
 
 @Processor(PhotoConstant.PHOTO_PROCESS_QUEUE, {
-  concurrency: 2,
+  concurrency: 6,
 })
 export class PhotoProcessConsumer extends WorkerHost {
   private readonly logger = new Logger(PhotoProcessConsumer.name);
@@ -30,6 +30,9 @@ export class PhotoProcessConsumer extends WorkerHost {
   async process(job: Job): Promise<any> {
     try {
       switch (job.name) {
+        case PhotoConstant.UPLOAD_PHOTO_JOB_NAME:
+          await this.uploadToCloudStorage(job.data);
+          break;
         case PhotoConstant.PROCESS_PHOTO_JOB_NAME:
           await this.processPhoto(job.data.id);
           break;
@@ -42,6 +45,74 @@ export class PhotoProcessConsumer extends WorkerHost {
       this.logger.error(e);
       throw new Error(); //perform retry
     }
+  }
+
+  async uploadToCloudStorage(temporaryPhoto: TemporaryPhotoDto) {
+    console.log(temporaryPhoto);
+
+    console.log(`async upload ${temporaryPhoto.file}`);
+
+    const photo = await this.photoRepository.findUniqueOrThrow(
+      temporaryPhoto.photoId,
+    );
+
+    const sharp = await this.photoProcessService.sharpInitFromFilePath(
+      temporaryPhoto.file.path,
+    );
+
+    const buffer = await sharp.toBuffer();
+
+    if (buffer.length === 0) {
+      this.logger.log(
+        `temporary photo ${temporaryPhoto.photoId} is deleted form file system, skip`,
+      );
+
+      return;
+    }
+
+    const splitByDot = temporaryPhoto.file.path.split('.');
+    const extension = splitByDot.at(-1);
+
+    const key = `${photo.photographerId}/${photo.id}.${extension}`;
+    await this.bunnyService.uploadFromBuffer(key, buffer);
+    this.logger.log(`uploaded ${photo.id} to cloud`);
+
+    const thumbnailBuffer = await this.photoProcessService.makeThumbnail(sharp);
+    await this.bunnyService.uploadFromBuffer(
+      `thumbnail/${photo.id}.webp`,
+      thumbnailBuffer,
+    );
+    this.logger.log(`uploaded thumbnail for photo id: ${photo.id}`);
+
+    const watermark = await this.photoProcessService.makeWatermark(
+      sharp,
+      'PXL',
+    );
+    const watermarkBuffer = await watermark.toBuffer();
+    const watermarkKey = `watermark/${key}`;
+    await this.bunnyService.uploadFromBuffer(
+      `watermark/${key}`,
+      watermarkBuffer,
+    );
+    this.logger.log(`uploaded watermark for photo id: ${photo.id}`);
+
+    await this.photoRepository.updateById(photo.id, {
+      status: 'PARSED',
+      originalPhotoUrl: key,
+      watermarkPhotoUrl: watermarkKey,
+    });
+
+    rm(temporaryPhoto.file.path, () => {
+      this.logger.log(`removed temporary photo ${temporaryPhoto.file.path}`);
+    });
+    rm(
+      `/tmp/purepixel-local-storage/${photo.id}_watermark.${extension}`,
+      () => {
+        this.logger.log(
+          `removed temporary watermark photo ${temporaryPhoto.file.path}`,
+        );
+      },
+    );
   }
 
   async deleteTineyePhoto(originalPhotoUrl: string) {

@@ -58,7 +58,7 @@ export default class WebsocketAuthGuard implements CanActivate {
     // Extract request/response
     const [request] = extractRequest(context);
 
-    const jwt = this.extractJwt(request.handshake.headers);
+    const jwt = this.extractJwt(request.handshake.auth);
     const isJwtEmpty = jwt === null || jwt === undefined;
 
     // Empty jwt, but skipAuth = false, isUnprotected = true allow fallback
@@ -146,12 +146,12 @@ export default class WebsocketAuthGuard implements CanActivate {
   }
 
   private extractJwt(headers: { [key: string]: string }) {
-    if (headers && !headers.authorization) {
+    if (headers && !headers.token) {
       this.logger.verbose(`No authorization header`);
       return null;
     }
 
-    const auth = headers.authorization.split(' ');
+    const auth = headers.token.split(' ');
 
     // We only allow bearer
     if (auth[0].toLowerCase() !== 'bearer') {
