@@ -10,6 +10,10 @@ import * as tvkd from 'tieng-viet-khong-dau';
 type GqlContextType = 'graphql' | ContextType;
 
 export class Utils {
+  static getExtension(path: string) {
+    return path.split('.').at(-1);
+  }
+
   static removedNullChar(text: string): string {
     return text.replaceAll(/\0/g, '').replaceAll('\\u0000', '');
   }

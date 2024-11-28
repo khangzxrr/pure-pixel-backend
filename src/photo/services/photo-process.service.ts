@@ -35,6 +35,10 @@ export class PhotoProcessService {
     return SharpLib(buffer);
   }
 
+  async sharpInitFromFilePath(url: string) {
+    return SharpLib(url);
+  }
+
   async sharpInitFromObjectKey(key: string) {
     const buffer = await this.bunnyService.download(key);
 
@@ -67,6 +71,9 @@ export class PhotoProcessService {
   async makeThumbnail(sharp: SharpLib.Sharp) {
     return sharp
       .clone()
+      .withMetadata({
+        exif: {},
+      })
       .resize(PhotoConstant.THUMBNAIL_WIDTH)
       .webp({
         quality: 50,
@@ -91,11 +98,16 @@ export class PhotoProcessService {
         <text x="50%" y="50%" font-family="Roboto" dominant-baseline="middle" text-anchor="middle" font-size="${fontSizeScaledByWidth}"  fill="#fff" fill-opacity="0.7">${watermarkText}</text>         
 </svg>`;
 
-    return sharp.clone().composite([
-      {
-        input: Buffer.from(svg),
-      },
-    ]);
+    return sharp
+      .clone()
+      .withMetadata({
+        exif: {},
+      })
+      .composite([
+        {
+          input: Buffer.from(svg),
+        },
+      ]);
   }
 
   async convertJpeg(sharp: SharpLib.Sharp) {
@@ -134,6 +146,19 @@ export class PhotoProcessService {
 
         resolve(encode(new Uint8ClampedArray(buffer), width, height, 4, 4));
       });
+    });
+  }
+
+  async parseMetadataFromFilePath(url: string) {
+    const sharp = await this.sharpInitFromFilePath(url);
+
+    return sharp.metadata();
+  }
+
+  async parseExifFromFilePath(url: string): Promise<object> {
+    return exifr.parse(url, {
+      exif: true,
+      xmp: false,
     });
   }
 

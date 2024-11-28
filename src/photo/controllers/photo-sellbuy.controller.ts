@@ -82,9 +82,6 @@ export class PhotoSellBuyController {
   })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
-  @ApiOkResponse({
-    type: PhotoBuyResponseDto,
-  })
   async getPhotoBought(
     @AuthenticatedUser() user: ParsedUserDto,
     @Param('photoId') photoId: string,
