@@ -32,7 +32,7 @@ import { UploadPhotoFailedException } from '../exceptions/upload-photo-failed.ex
 import { ExifNotFoundException } from '../exceptions/exif-not-found.exception';
 import { MissingMakeExifException } from '../exceptions/missing-make-exif.exception';
 import { MissingModelExifException } from '../exceptions/missing-model-exif.exception';
-import { SignedUrl } from '../dtos/photo-signed-url.dto';
+
 import { GenerateWatermarkRequestDto } from '../dtos/rest/generate-watermark.request.dto';
 import { PhotoGenerateWatermarkService } from './photo-generate-watermark.service';
 import { CameraConstant } from 'src/camera/constants/camera.constant';
@@ -46,9 +46,9 @@ import { Utils } from 'src/infrastructure/utils/utils';
 import { FindNextPhotoFilterDto } from '../dtos/find-next.filter.dto';
 import { UserService } from 'src/user/services/user.service';
 import { FileSystemPhotoUploadRequestDto } from '../dtos/rest/file-system-photo-upload.request';
-import { TemporaryPhotoDto } from '../dtos/temporary-photo.dto';
+
 import { PhotoNotInPendingStateException } from '../exceptions/photo-not-in-pending-state.exception';
-import fs from 'fs';
+
 import { DownloadTemporaryPhotoDto } from '../dtos/rest/download-temporary-photo.request.dto';
 
 @Injectable()
