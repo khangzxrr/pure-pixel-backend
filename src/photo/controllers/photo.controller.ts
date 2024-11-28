@@ -45,11 +45,18 @@ import { FileSystemStoredFile, FormDataRequest } from 'nestjs-form-data';
 import { FindNextPhotoFilterDto } from '../dtos/find-next.filter.dto';
 import { FileSystemPhotoUploadRequestDto } from '../dtos/rest/file-system-photo-upload.request';
 import { DownloadTemporaryPhotoDto } from '../dtos/rest/download-temporary-photo.request.dto';
+import { PhotoConstant } from '../constants/photo.constant';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 
 @Controller('photo')
 @ApiTags('photo')
 export class PhotoController {
-  constructor(@Inject() private readonly photoService: PhotoService) {}
+  constructor(
+    @Inject() private readonly photoService: PhotoService,
+    @InjectQueue(PhotoConstant.PHOTO_VIEWCOUNT_QUEUE)
+    private readonly photoViewCountQueue: Queue,
+  ) {}
 
   @Get('/public/next')
   @ApiOperation({
@@ -115,6 +122,10 @@ export class PhotoController {
     @AuthenticatedUser() user: ParsedUserDto,
     @Param('id') id: string,
   ) {
+    await this.photoViewCountQueue.add(PhotoConstant.INCREASE_VIEW_COUNT_JOB, {
+      id,
+    });
+
     return await this.photoService.findById(user ? user.sub : '', id);
   }
 
