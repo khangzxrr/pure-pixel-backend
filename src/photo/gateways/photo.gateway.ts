@@ -8,8 +8,9 @@ import {
 } from '@nestjs/websockets';
 import WebsocketAuthGuard from 'src/authen/guards/ws.auth.guard';
 import { PhotoConstant } from '../constants/photo.constant';
-import { Server } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
+import { logger } from 'handlebars';
 
 @WebSocketGateway({
   cors: { origin: '*' },
@@ -35,7 +36,7 @@ export class PhotoGateway implements OnGatewayConnection, OnGatewayDisconnect {
       `socket: ${socket.id} with user id: ${socket.user.sub} join`,
     );
 
-    this.addSocketIdToSetByUserId(socket.user.sub, socket.id);
+    // this.addSocketIdToSetByUserId(socket.user.sub, socket.id);
   }
 
   async getSetOfSocketIdsByUserId(userId: string): Promise<Set<string>> {
