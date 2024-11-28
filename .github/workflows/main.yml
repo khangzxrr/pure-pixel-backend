@@ -1,27 +1,29 @@
 ﻿name: Node.js CI
 
-on: [push]
+on:
+  push:
+    branches:
+      - main
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     steps:
-    - name: executing remote ssh commands using password
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.HOST }}
-        username: ${{ secrets.USERNAME }}
-        key: ${{ secrets.SSH_KEY }}
-        port: ${{ secrets.PORT }}
-        script: |
-          export NVM_DIR=~/.nvm
-          source ~/.nvm/nvm.sh
-          cd /home/deploy/pure-pixel-backend
-          git checkout main
-          git pull
-          npm install
-          npx prisma migrate deploy
-          ./scripts/build-image.sh
-          cd ..
-          ./deploy.sh
+      - name: executing remote ssh commands using password
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.PORT }}
+          script: |
+            export NVM_DIR=~/.nvm
+            source ~/.nvm/nvm.sh
+            cd /home/deploy/pure-pixel-backend
+            git checkout main
+            git pull
+            npm install
+            npx prisma migrate deploy
+            ./scripts/build-image.sh
+            cd ..
+            ./deploy.sh
