@@ -70,8 +70,6 @@ export class PhotoService {
     private readonly photoProcessQueue: Queue,
     @InjectQueue(CameraConstant.CAMERA_PROCESS_QUEUE)
     private readonly cameraQueue: Queue,
-    @InjectQueue(PhotoConstant.PHOTO_VIEWCOUNT_QUEUE)
-    private readonly photoViewCountQueue: Queue,
     private readonly prisma: PrismaService,
     @Inject()
     private readonly userService: UserService,
@@ -267,10 +265,14 @@ export class PhotoService {
 
     signedPhotoDto.photoSellings?.forEach((photoSelling) => {
       photoSelling.pricetags.forEach((pricetag) => {
-        pricetag.preview = this.bunnyService.getPresignedFile(
-          photoDetail.watermarkPhotoUrl,
-          `?width=${pricetag.width}`,
-        );
+        if (photoDetail.status === 'PENDING') {
+          pricetag.preview = `${process.env.BACKEND_ORIGIN}/photo/${photoDetail.id}/temporary-photo?width=${pricetag.width}`;
+        } else {
+          pricetag.preview = this.bunnyService.getPresignedFile(
+            photoDetail.watermarkPhotoUrl,
+            `?width=${pricetag.width}`,
+          );
+        }
       });
     });
 
@@ -549,10 +551,6 @@ export class PhotoService {
     validateOwnership: boolean = true,
   ) {
     const photo = await this.photoRepository.findUniqueOrThrow(id, userId);
-
-    // await this.photoViewCountQueue.add(PhotoConstant.INCREASE_VIEW_COUNT_JOB, {
-    //   id: photo.id,
-    // });
 
     if (!photo) {
       throw new PhotoNotFoundException();
