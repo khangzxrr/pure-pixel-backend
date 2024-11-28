@@ -417,7 +417,7 @@ export class PhotoExchangeService {
         await this.notificationService.addNotificationToQueue({
           title: `Bán ảnh ${photoSell.photo.title} thành công`,
           content: ` Người dùng ${user.name} đã thanh toán ảnh ${photoSell.photo.title} - kích thước ${pricetag.width}x${pricetag.height} bằng ví thành công`,
-          userId: userId,
+          userId: photoSell.photo.photographerId,
           type: 'BOTH_INAPP_EMAIL',
           referenceType: 'PHOTO_BUY',
           payload: newPhotoBuyByWallet,
