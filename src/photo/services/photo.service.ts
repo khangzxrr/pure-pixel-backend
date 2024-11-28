@@ -50,6 +50,7 @@ import { FileSystemPhotoUploadRequestDto } from '../dtos/rest/file-system-photo-
 import { PhotoNotInPendingStateException } from '../exceptions/photo-not-in-pending-state.exception';
 
 import { DownloadTemporaryPhotoDto } from '../dtos/rest/download-temporary-photo.request.dto';
+import { TemporaryPhotoDto } from '../dtos/temporary-photo.dto';
 
 @Injectable()
 export class PhotoService {
@@ -665,8 +666,6 @@ export class PhotoService {
     userId: string,
     photoUploadDto: FileSystemPhotoUploadRequestDto,
   ) {
-    console.log(userId, photoUploadDto);
-
     const user = await this.userRepository.findUniqueOrThrow(userId);
 
     const sizeAsBigint = BigInt(photoUploadDto.file.size);
@@ -761,15 +760,15 @@ export class PhotoService {
       },
     });
 
-    // const temporaryPhotoDto: TemporaryPhotoDto = {
-    //   file: photoUploadDto.file,
-    //   photoId: photo.id,
-    // };
-    //
-    // await this.photoProcessQueue.add(
-    //   PhotoConstant.UPLOAD_PHOTO_JOB_NAME,
-    //   temporaryPhotoDto,
-    // );
+    const temporaryPhotoDto: TemporaryPhotoDto = {
+      file: photoUploadDto.file,
+      photoId: photo.id,
+    };
+
+    await this.photoProcessQueue.add(
+      PhotoConstant.UPLOAD_PHOTO_JOB_NAME,
+      temporaryPhotoDto,
+    );
 
     return this.signPhoto(photo);
   }
