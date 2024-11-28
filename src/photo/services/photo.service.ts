@@ -355,7 +355,6 @@ export class PhotoService {
       }
     }
 
-    //TODO: update exif to photo using queue
     if (photoUpdateDto.gps) {
       exif['latitude'] = photoUpdateDto.gps.latitude;
       exif['longitude'] = photoUpdateDto.gps.longitude;
@@ -424,12 +423,22 @@ export class PhotoService {
     const count = await this.photoRepository.count({
       visibility: 'PUBLIC',
       photoType: 'RAW',
+      photoSellings: {
+        every: {
+          active: false,
+        },
+      },
     });
 
     const photos = await this.photoRepository.findAll(
       {
         visibility: 'PUBLIC',
         photoType: 'RAW',
+        photoSellings: {
+          every: {
+            active: false,
+          },
+        },
       },
       [],
       1,
