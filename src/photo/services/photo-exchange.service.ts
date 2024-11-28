@@ -110,16 +110,23 @@ export class PhotoExchangeService {
       throw new PhotoBuyTransactionIsNotSuccessException();
     }
 
+    const buffer =
+      photo.status === 'PENDING'
+        ? await this.photoProcessService.sharpInitFromFilePath(
+            photo.originalPhotoUrl,
+          )
+        : await this.photoProcessService.getBufferFromKey(
+            photo.originalPhotoUrl,
+          );
+
     if (
       photoBuy.photoSellHistory.width === photo.width &&
       photoBuy.photoSellHistory.height === photo.height
     ) {
-      return this.photoProcessService.getBufferFromKey(photo.originalPhotoUrl);
+      return buffer;
     }
 
-    const sharp = await this.photoProcessService.sharpInitFromObjectKey(
-      photo.originalPhotoUrl,
-    );
+    const sharp = await this.photoProcessService.sharpInitFromBuffer(buffer);
 
     const resizedBuffer = await this.photoProcessService.resizeWithMetadata(
       sharp,
