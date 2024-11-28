@@ -6,14 +6,12 @@ import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoProcessService } from '../services/photo-process.service';
 import { TineyeService } from 'src/storage/services/tineye.service';
 import { BunnyService } from 'src/storage/services/bunny.service';
-import { NotificationConstant } from 'src/notification/constants/notification.constant';
-import { NotificationCreateDto } from 'src/notification/dtos/rest/notification-create.dto';
 import { NotificationService } from 'src/notification/services/notification.service';
 import { TemporaryPhotoDto } from '../dtos/temporary-photo.dto';
 import { rm } from 'fs';
 
 @Processor(PhotoConstant.PHOTO_PROCESS_QUEUE, {
-  concurrency: 2,
+  concurrency: 6,
 })
 export class PhotoProcessConsumer extends WorkerHost {
   private readonly logger = new Logger(PhotoProcessConsumer.name);
