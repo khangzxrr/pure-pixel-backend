@@ -18,6 +18,7 @@ import { Constants } from 'src/infrastructure/utils/constants';
 @WebSocketGateway({
   cors: { origin: '*' },
   namespace: NotificationConstant.NOTIFICATION_GATEWAY,
+  transports: ['websocket'],
 })
 export class NotificationGateway
   implements OnGatewayConnection, OnGatewayDisconnect
