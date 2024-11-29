@@ -721,6 +721,9 @@ export class PhotoService {
 
     const sameHashPhoto = await this.photoRepository.findFirst({
       hash,
+      deletedAt: {
+        not: null,
+      },
     });
 
     if (sameHashPhoto) {
