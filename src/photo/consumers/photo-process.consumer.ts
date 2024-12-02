@@ -1,6 +1,6 @@
-import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { InjectQueue, Processor, WorkerHost } from '@nestjs/bullmq';
 import { PhotoConstant } from '../constants/photo.constant';
-import { Job } from 'bullmq';
+import { Job, Queue } from 'bullmq';
 import { Inject, Logger } from '@nestjs/common';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoProcessService } from '../services/photo-process.service';
@@ -25,8 +25,9 @@ export class PhotoProcessConsumer extends WorkerHost {
     @Inject() private readonly photoProcessService: PhotoProcessService,
     @Inject() private readonly tineyeService: TineyeService,
     @Inject() private readonly bunnyService: BunnyService,
-
     @Inject() private readonly notificationService: NotificationService,
+    @InjectQueue(PhotoConstant.PHOTO_PROCESS_QUEUE)
+    private readonly photoProcessQueue: Queue,
   ) {
     super();
   }
@@ -46,12 +47,22 @@ export class PhotoProcessConsumer extends WorkerHost {
         case PhotoConstant.DELETE_PHOTO_JOB_NAME:
           await this.deleteTineyePhoto(job.data.originalPhotoUrl);
           break;
+
+        case PhotoConstant.DELETE_TEMPORARY_PHOTO_JOB_NAME:
+          this.deleteTemporaryPhoto(job.data);
+          break;
       }
     } catch (e) {
       console.log(e);
       this.logger.error(e);
       throw new Error(); //perform retry
     }
+  }
+
+  deleteTemporaryPhoto(filepath: string) {
+    rm(filepath, () => {
+      this.logger.log(`removed temporary photo ${filepath}`);
+    });
   }
 
   async uploadBookingPhoto(temporaryPhoto: TemporaryBookingPhotoUpload) {
@@ -148,12 +159,22 @@ export class PhotoProcessConsumer extends WorkerHost {
       `uploaded original photo / watermark photo for photo id : ${photo.id} from booking id: ${booking.id} to the cloud`,
     );
 
-    rm(temporaryPhoto.file.path, () => {
-      this.logger.log(`removed temporary photo ${temporaryPhoto.file.path}`);
-    });
-    rm(watermarkFilePath, () => {
-      this.logger.log(`removed temporary watermark photo ${watermarkFilePath}`);
-    });
+    this.photoProcessQueue.addBulk([
+      {
+        name: PhotoConstant.DELETE_TEMPORARY_PHOTO_JOB_NAME,
+        data: temporaryPhoto.file.path,
+        opts: {
+          delay: 3000, //delay prevent race condition
+        },
+      },
+      {
+        name: PhotoConstant.DELETE_TEMPORARY_PHOTO_JOB_NAME,
+        data: watermarkFilePath,
+        opts: {
+          delay: 3000, //delay prevent race condition
+        },
+      },
+    ]);
   }
 
   async uploadToCloudStorage(temporaryPhoto: TemporaryPhotoDto) {
@@ -209,17 +230,22 @@ export class PhotoProcessConsumer extends WorkerHost {
       watermarkPhotoUrl: watermarkKey,
     });
 
-    rm(temporaryPhoto.file.path, () => {
-      this.logger.log(`removed temporary photo ${temporaryPhoto.file.path}`);
-    });
-    rm(
-      `/tmp/purepixel-local-storage/${photo.id}_watermark.${extension}`,
-      () => {
-        this.logger.log(
-          `removed temporary watermark photo ${temporaryPhoto.file.path}`,
-        );
+    this.photoProcessQueue.addBulk([
+      {
+        name: PhotoConstant.DELETE_TEMPORARY_PHOTO_JOB_NAME,
+        data: temporaryPhoto.file.path,
+        opts: {
+          delay: 3000, //delay prevent race condition
+        },
       },
-    );
+      {
+        name: PhotoConstant.DELETE_TEMPORARY_PHOTO_JOB_NAME,
+        data: `/tmp/purepixel-local-storage/${photo.id}_watermark.${extension}`,
+        opts: {
+          delay: 3000, //delay prevent race condition
+        },
+      },
+    ]);
   }
 
   async deleteTineyePhoto(originalPhotoUrl: string) {
