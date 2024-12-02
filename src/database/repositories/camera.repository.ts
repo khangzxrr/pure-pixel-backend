@@ -65,7 +65,11 @@ export class CameraRepository {
         thumbnail: true,
         _count: {
           select: {
-            photos: true,
+            photos: {
+              where: {
+                visibility: 'PUBLIC',
+              },
+            },
             cameraOnUsers: true,
           },
         },
