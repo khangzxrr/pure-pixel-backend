@@ -222,26 +222,20 @@ export class PhotoService {
   async signPhotoDetail(photoDetail: PhotoDetail) {
     const signedPhotoDto = plainToInstance(SignedPhotoDto, photoDetail);
 
-    const url = photoDetail.watermark
+    let url = photoDetail.watermark
       ? photoDetail.watermarkPhotoUrl
       : photoDetail.originalPhotoUrl;
 
-    // const thumbnail = `${
-    //   photoDetail.watermark
-    //     ? photoDetail.watermarkPhotoUrl
-    //     : photoDetail.originalPhotoUrl
-    // }`;
-
     if (photoDetail.watermark && url.length === 0) {
-      await this.sendImageWatermarkQueue(
+      const updatedPhoto = await this.sendImageWatermarkQueue(
         photoDetail.photographerId,
         photoDetail.id,
         {
           text: 'PXL',
         },
       );
-    } else {
-      throw new EmptyOriginalPhotoException();
+
+      url = updatedPhoto.watermarkPhotoUrl;
     }
 
     if (url.length == 0) {
