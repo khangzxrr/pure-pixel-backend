@@ -94,19 +94,26 @@ export class PhotoGenerateWatermarkService {
       return;
     }
 
-    // const watermarkBuffer = await watermark.toBuffer();
-    //
-    // photo.watermarkPhotoUrl = `watermark/${photo.originalPhotoUrl}`;
-    // await this.photoProcessService.uploadFromBuffer(
-    //   photo.watermarkPhotoUrl,
-    //   watermarkBuffer,
-    // );
-    //
-    // await this.photoRepository.updateById(photo.id, {
-    //   watermarkPhotoUrl: photo.watermarkPhotoUrl,
-    // });
-    //
-    // this.logger.log(`created watermark: ${photo.watermarkPhotoUrl}`);
-    //
+    const sharp = await this.photoProcessService.sharpInitFromObjectKey(
+      photo.originalPhotoUrl,
+    );
+    const watermark = await this.photoProcessService.makeWatermark(
+      sharp,
+      'PXL',
+    );
+
+    const watermarkBuffer = await watermark.toBuffer();
+
+    photo.watermarkPhotoUrl = `watermark/${photo.originalPhotoUrl}`;
+    await this.photoProcessService.uploadFromBuffer(
+      photo.watermarkPhotoUrl,
+      watermarkBuffer,
+    );
+
+    await this.photoRepository.updateById(photo.id, {
+      watermarkPhotoUrl: photo.watermarkPhotoUrl,
+    });
+
+    this.logger.log(`created watermark: ${photo.watermarkPhotoUrl}`);
   }
 }
