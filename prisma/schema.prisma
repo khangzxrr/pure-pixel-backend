@@ -756,6 +756,11 @@ enum PhotoshootPackageStatus {
   DISABLED
 }
 
+enum SourceStatus {
+    FILESYSTEM
+    CLOUD
+}
+
 model PhotoshootPackageShowcasePhoto {
   id       String @id @default(uuid())
   photoUrl String
@@ -775,6 +780,7 @@ model PhotoshootPackage {
   description String
 
   status PhotoshootPackageStatus
+  sourceStatus SourceStatus @default(CLOUD)
 
   user   User   @relation(fields: [userId], references: [id])
   userId String
