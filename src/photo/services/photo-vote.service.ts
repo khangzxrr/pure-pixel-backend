@@ -40,18 +40,18 @@ export class PhotoVoteService {
       photoId,
     );
 
-    const notificationDto: NotificationCreateDto = {
-      userId: photo.photographerId,
-      title: 'Tương tác mới',
-      content: `Ảnh ${photo.title} của bạn vừa nhận được một đánh giá!`,
-      referenceType: 'PHOTO',
-      payload: {},
-      type: 'IN_APP',
-    };
-    await this.notificationQueue.add(
-      NotificationConstant.TEXT_NOTIFICATION_JOB,
-      notificationDto,
-    );
+    // const notificationDto: NotificationCreateDto = {
+    //   userId: photo.photographerId,
+    //   title: 'Tương tác mới',
+    //   content: `Ảnh ${photo.title} của bạn vừa nhận được một đánh giá!`,
+    //   referenceType: 'PHOTO',
+    //   payload: {},
+    //   type: 'IN_APP',
+    // };
+    // await this.notificationQueue.add(
+    //   NotificationConstant.TEXT_NOTIFICATION_JOB,
+    //   notificationDto,
+    // );
 
     return plainToInstance(PhotoVoteDto, vote);
   }
