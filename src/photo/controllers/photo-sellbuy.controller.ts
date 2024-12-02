@@ -5,6 +5,7 @@ import {
   Inject,
   Param,
   Post,
+  Put,
   Res,
   StreamableFile,
   UseGuards,
@@ -44,6 +45,27 @@ export class PhotoSellBuyController {
     @Body() createPhotoSellingDto: CreatePhotoSellingDto,
   ) {
     return await this.photoExchangeService.sellPhoto(
+      user.sub,
+      id,
+      createPhotoSellingDto,
+    );
+  }
+
+  @Put(':photoId/sell')
+  @ApiOperation({
+    summary: 'update sell photo using photoId',
+  })
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
+  @ApiOkResponse({
+    type: PhotoSellDto,
+  })
+  async updateSellPhoto(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Param('photoId') id: string,
+    @Body() createPhotoSellingDto: CreatePhotoSellingDto,
+  ) {
+    return await this.photoExchangeService.replaceSellPhoto(
       user.sub,
       id,
       createPhotoSellingDto,
