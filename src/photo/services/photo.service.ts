@@ -232,22 +232,22 @@ export class PhotoService {
     //     : photoDetail.originalPhotoUrl
     // }`;
 
+    if (photoDetail.watermark && url.length === 0) {
+      await this.sendImageWatermarkQueue(
+        photoDetail.photographerId,
+        photoDetail.id,
+        {
+          text: 'PXL',
+        },
+      );
+    } else {
+      throw new EmptyOriginalPhotoException();
+    }
+
     if (url.length == 0) {
       console.log(
         `error photo without thumbnail or original: ${photoDetail.id}`,
       );
-
-      if (photoDetail.watermark) {
-        await this.sendImageWatermarkQueue(
-          photoDetail.photographerId,
-          photoDetail.id,
-          {
-            text: 'PXL',
-          },
-        );
-      } else {
-        throw new EmptyOriginalPhotoException();
-      }
     }
 
     if (photoDetail.status === 'PENDING') {
