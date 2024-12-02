@@ -33,11 +33,11 @@ export class PhotoSellRepository {
     });
   }
 
-  updateQuery(
-    where: Prisma.PhotoSellWhereUniqueInput,
+  updateMany(
+    where: Prisma.PhotoSellWhereInput,
     data: Prisma.PhotoSellUpdateInput,
   ) {
-    return this.prisma.extendedClient().photoSell.update({
+    return this.prisma.extendedClient().photoSell.updateMany({
       where,
       data,
     });
