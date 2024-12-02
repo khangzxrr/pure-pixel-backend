@@ -4,9 +4,10 @@ import { DatabaseModule } from 'src/database/database.module';
 import { StorageModule } from 'src/storage/storage.module';
 import { ChatService } from './services/chat.service';
 import { ChatController } from './controllers/chat.controller';
+import { NotificationModule } from 'src/notification/notification.module';
 
 @Module({
-  imports: [DatabaseModule, AuthenModule, StorageModule],
+  imports: [NotificationModule, DatabaseModule, AuthenModule, StorageModule],
   providers: [ChatService],
   exports: [ChatService],
   controllers: [ChatController],

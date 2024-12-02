@@ -1,4 +1,4 @@
-import { Controller, Inject, Post, UseGuards } from '@nestjs/common';
+import { Controller, Get, Inject, Post, Req, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   AuthenticatedUser,
@@ -10,6 +10,7 @@ import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { ChatService } from '../services/chat.service';
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
+import { Request } from 'express';
 
 @Controller('chat')
 @ApiTags('chat')
@@ -39,5 +40,13 @@ export class ChatController {
   @Public(false)
   async authChatToken(@AuthenticatedUser() user: ParsedUserDto) {
     return await this.chatService.signChatToken(user.sub);
+  }
+
+  @Post('webhook')
+  @ApiOperation({
+    summary: 'webhook from getstream message',
+  })
+  async webhookMessage(@Req() req: Request) {
+    await this.chatService.processWebhook(req.body);
   }
 }
