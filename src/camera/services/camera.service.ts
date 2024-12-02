@@ -57,11 +57,16 @@ export class CameraService {
 
     const makerWithUserCountPromises = result.map(
       async (m): Promise<MakerWithUserCountDto> => {
+        const makerDto = plainToInstance(MakerDto, m);
+
+        const topCameraDtos = await this.findTopCameraOfBrand(m.id, 5);
+        makerDto.cameras = topCameraDtos;
+
         const userCount =
           await this.cameraOnUsersRepository.countUserByCameraMakerId(m.id);
 
         return {
-          maker: plainToInstance(MakerDto, m),
+          maker: makerDto,
           userCount,
         };
       },
