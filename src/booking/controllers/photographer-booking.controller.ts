@@ -10,11 +10,13 @@ import {
   Put,
   Query,
   UseGuards,
+  Res,
 } from '@nestjs/common';
 import {
   ApiConsumes,
   ApiOkResponse,
   ApiOperation,
+  ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
 import { BookingService } from '../services/booking.service';
@@ -27,8 +29,11 @@ import { DenyBookingRequestDto } from '../dtos/rest/deny-booking.request.dto';
 import { BookingDto } from '../dtos/booking.dto';
 import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.response.dto';
 import { BookingUpdateRequestDto } from '../dtos/rest/booking-update.request.dto';
-import { FormDataRequest } from 'nestjs-form-data';
+import { FileSystemStoredFile, FormDataRequest } from 'nestjs-form-data';
 import { BookingUploadRequestDto } from '../dtos/rest/booking-upload.request.dto';
+import { Response } from 'express';
+import { SignedPhotoDto } from 'src/photo/dtos/signed-photo.dto';
+import { FileSystemBookngUploadDto } from '../dtos/rest/file-system-booking-upload.request.dto';
 
 @Controller('photographer/booking')
 @ApiTags('photographer-booking')
@@ -66,12 +71,45 @@ export class PhotographerBookingController {
     return await this.bookingService.findById(user.sub, bookingId);
   }
 
+  @Put(':bookingId/upload/v2')
+  @ApiOperation({
+    summary: 'upload photo to booking by bookingId',
+  })
+  @ApiResponse({
+    status: 202,
+    description:
+      'accepted file and start to process photo, when done it will notify via websocket (notification)',
+  })
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
+  @ApiConsumes('multipart/form-data')
+  @FormDataRequest({
+    storage: FileSystemStoredFile,
+    fileSystemStoragePath: '/tmp/purepixel-local-storage',
+    cleanupAfterFailedHandle: true,
+    cleanupAfterSuccessHandle: false,
+  })
+  async filesystemUpload(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Param('bookingId') bookingId: string,
+    @Body() bookingUploadDto: FileSystemBookngUploadDto,
+    @Res() res: Response,
+  ) {
+    await this.bookingService.filesystemUploadPhoto(
+      user.sub,
+      bookingId,
+      bookingUploadDto,
+    );
+
+    res.status(202).send();
+  }
+
   @Put(':bookingId/upload')
   @ApiOperation({
     summary: 'upload photo to booking by bookingId',
   })
   @ApiOkResponse({
-    type: BookingDto,
+    type: SignedPhotoDto,
   })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
