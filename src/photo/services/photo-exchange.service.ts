@@ -157,6 +157,11 @@ export class PhotoExchangeService {
       },
       {
         active: false,
+        photo: {
+          update: {
+            visibility: 'PRIVATE',
+          },
+        },
       },
     );
 
