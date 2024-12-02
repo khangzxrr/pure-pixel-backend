@@ -67,11 +67,11 @@ export class ChatService {
     return users.length;
   }
 
-  async upsertUser(userId: string, name: string) {
-    console.log('upsert stream user');
+  async upsertUser(userId: string, name: string, avatar: string) {
     return await this.getStream().upsertUser({
       id: userId,
       name: name,
+      avatar,
     });
   }
 

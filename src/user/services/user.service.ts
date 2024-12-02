@@ -22,6 +22,7 @@ import { UserInReport } from 'src/database/types/user';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { Prisma } from '@prisma/client';
+import { ChatService } from 'src/chat/services/chat.service';
 
 @Injectable()
 export class UserService {
@@ -29,7 +30,7 @@ export class UserService {
     @Inject() private readonly userRepository: UserRepository,
     @Inject() private readonly bunnyService: BunnyService,
     @Inject() private readonly keycloakService: KeycloakService,
-
+    @Inject() private readonly chatService: ChatService,
     @Inject(CACHE_MANAGER) private cache: Cache,
   ) {}
 
@@ -62,6 +63,7 @@ export class UserService {
       const updatedUser = await this.userRepository.update(id, {
         mail: updateDto.mail,
         name: updateDto.name,
+        normalizedName: Utils.normalizeText(updateDto.name),
         quote: updateDto.quote,
         location: updateDto.location,
         phonenumber: updateDto.phonenumber,
@@ -216,6 +218,11 @@ export class UserService {
         : undefined,
     });
 
+    await this.chatService.upsertUser(
+      userId,
+      updatedUser.name,
+      updatedUser.avatar,
+    );
     await this.cache.del(`me_${userId}`);
 
     return plainToInstance(UserDto, updatedUser);

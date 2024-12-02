@@ -18,8 +18,12 @@ export class Utils {
     return text.replaceAll(/\0/g, '').replaceAll('\\u0000', '');
   }
 
-  static normalizeText(text: string) {
-    return tvkd.cLowerCase(this.removedNullChar(text));
+  static normalizeText(text?: string) {
+    if (!text) {
+      return null;
+    }
+
+    return tvkd.cLowerCase(this.removedNullChar(text).toLowerCase());
   }
 
   static randomString(length: number) {

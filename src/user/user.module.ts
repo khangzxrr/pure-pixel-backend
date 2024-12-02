@@ -10,6 +10,8 @@ import { CachingModule } from 'src/caching/caching.module';
 import { UpgradeOrderModule } from 'src/upgrade-order/upgrade-order.module';
 import { UserController } from './controllers/user.controller';
 import { NestjsFormDataModule } from 'nestjs-form-data';
+import { ChatService } from 'src/chat/services/chat.service';
+import { ChatModule } from 'src/chat/chat.module';
 
 @Module({
   controllers: [MeController, WalletController, UserController],
@@ -21,6 +23,7 @@ import { NestjsFormDataModule } from 'nestjs-form-data';
     PaymentModule,
     CachingModule,
     NestjsFormDataModule,
+    ChatModule,
   ],
   exports: [UserService],
   providers: [UserService],
