@@ -14,6 +14,7 @@ import { PaymentModule } from 'src/payment/payment.module';
 import { CachingModule } from 'src/caching/caching.module';
 
 import { UserModule } from 'src/user/user.module';
+import { QueueModule } from 'src/queue/queue.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { UserModule } from 'src/user/user.module';
     CachingModule,
     PaymentModule,
     UserModule,
+    QueueModule,
   ],
   providers: [BookingService, BookingBillItemService],
   controllers: [

@@ -1,6 +1,6 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { PhotoConstant } from '../constants/photo.constant';
-import { Job, Queue } from 'bullmq';
+import { Job } from 'bullmq';
 import { Inject, Logger } from '@nestjs/common';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoProcessService } from '../services/photo-process.service';
@@ -8,7 +8,10 @@ import { TineyeService } from 'src/storage/services/tineye.service';
 import { BunnyService } from 'src/storage/services/bunny.service';
 import { NotificationService } from 'src/notification/services/notification.service';
 import { TemporaryPhotoDto } from '../dtos/temporary-photo.dto';
-import { rm } from 'fs';
+import { rm, writeFileSync } from 'fs';
+import { TemporaryBookingPhotoUpload } from '../dtos/temporary-booking-photo-upload.dto';
+import { BookingRepository } from 'src/database/repositories/booking.repository';
+import { Utils } from 'src/infrastructure/utils/utils';
 
 @Processor(PhotoConstant.PHOTO_PROCESS_QUEUE, {
   concurrency: 6,
@@ -18,6 +21,7 @@ export class PhotoProcessConsumer extends WorkerHost {
 
   constructor(
     @Inject() private readonly photoRepository: PhotoRepository,
+    @Inject() private readonly bookingRepository: BookingRepository,
     @Inject() private readonly photoProcessService: PhotoProcessService,
     @Inject() private readonly tineyeService: TineyeService,
     @Inject() private readonly bunnyService: BunnyService,
@@ -30,6 +34,9 @@ export class PhotoProcessConsumer extends WorkerHost {
   async process(job: Job): Promise<any> {
     try {
       switch (job.name) {
+        case PhotoConstant.UPLOAD_BOOKING_PHOTO_JOB_NAME:
+          this.uploadBookingPhoto(job.data);
+          break;
         case PhotoConstant.UPLOAD_PHOTO_JOB_NAME:
           await this.uploadToCloudStorage(job.data);
           break;
@@ -47,9 +54,109 @@ export class PhotoProcessConsumer extends WorkerHost {
     }
   }
 
-  async uploadToCloudStorage(temporaryPhoto: TemporaryPhotoDto) {
-    console.log(temporaryPhoto);
+  async uploadBookingPhoto(temporaryPhoto: TemporaryBookingPhotoUpload) {
+    console.log(`async upload booking ${temporaryPhoto.file}`);
+    const booking = await this.bookingRepository.findUniqueOrThrow({
+      id: temporaryPhoto.bookingId,
+    });
 
+    const sharp = await this.photoProcessService.sharpInitFromFilePath(
+      temporaryPhoto.file.path,
+    );
+
+    const buffer = await sharp.toBuffer();
+    if (buffer.length === 0) {
+      this.logger.log(
+        `temporary photo ${temporaryPhoto.file.path} of booking id: ${temporaryPhoto.bookingId}  is deleted form file system, skip`,
+      );
+
+      return;
+    }
+
+    const metadata = await sharp.metadata();
+
+    const watermark = await this.photoProcessService.makeWatermark(
+      sharp,
+      'PXL',
+    );
+    const watermarkBuffer = await watermark.toBuffer();
+
+    const extension = Utils.getExtension(temporaryPhoto.file.path);
+    const watermarkFilePath = `/tmp/purepixel-local-storage/${temporaryPhoto.file.originalName}_watermark.${extension}`;
+
+    writeFileSync(watermarkFilePath, watermarkBuffer);
+
+    const photo = await this.photoRepository.create({
+      photographer: {
+        connect: {
+          id: temporaryPhoto.photographerId,
+        },
+      },
+      description: '',
+      title: temporaryPhoto.file.originalName,
+      normalizedTitle: Utils.normalizeText(temporaryPhoto.file.originalName),
+      size: temporaryPhoto.file.size,
+      exif: {},
+      width: metadata.width,
+      height: metadata.height,
+      status: 'PENDING',
+      photoType: 'BOOKING',
+      blurHash: '',
+      watermark: true,
+      visibility: 'PRIVATE',
+      originalPhotoUrl: temporaryPhoto.file.path,
+      watermarkPhotoUrl: watermarkFilePath,
+      booking: {
+        connect: {
+          id: booking.id,
+        },
+      },
+    });
+
+    this.logger.log(
+      `create temporary watermark for photo id: ${photo.id} of booking id: ${booking.id}`,
+    );
+
+    await this.notificationService.addNotificationToQueue({
+      userId: booking.userId,
+      type: 'IN_APP',
+      title: `Gói chụp ${booking.photoshootPackageHistory.title} có cập nhật mới`,
+      content: 'Gói chụp của bạn đã được cập nhật ảnh mới!',
+      payload: photo,
+      referenceType: 'BOOKING',
+    });
+
+    const key = `${photo.photographerId}/${photo.id}.${extension}`;
+    await this.bunnyService.uploadFromBuffer(key, buffer);
+
+    const watermarkKey = `watermark/${key}`;
+    await this.bunnyService.uploadFromBuffer(watermarkKey, watermarkBuffer);
+
+    const thumbnailBuffer = await this.photoProcessService.makeThumbnail(sharp);
+    await this.bunnyService.uploadFromBuffer(
+      `thumbnail/${photo.id}.webp`,
+      thumbnailBuffer,
+    );
+
+    await this.photoRepository.updateById(photo.id, {
+      status: 'PARSED',
+      originalPhotoUrl: key,
+      watermarkPhotoUrl: watermarkKey,
+    });
+
+    this.logger.log(
+      `uploaded original photo / watermark photo for photo id : ${photo.id} from booking id: ${booking.id} to the cloud`,
+    );
+
+    rm(temporaryPhoto.file.path, () => {
+      this.logger.log(`removed temporary photo ${temporaryPhoto.file.path}`);
+    });
+    rm(watermarkFilePath, () => {
+      this.logger.log(`removed temporary watermark photo ${watermarkFilePath}`);
+    });
+  }
+
+  async uploadToCloudStorage(temporaryPhoto: TemporaryPhotoDto) {
     console.log(`async upload ${temporaryPhoto.file}`);
 
     const photo = await this.photoRepository.findUniqueOrThrow(

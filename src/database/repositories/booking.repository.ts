@@ -59,13 +59,11 @@ export class BookingRepository {
           },
         },
         photos: {
-          include: {
-            camera: true,
-            categories: true,
-            photographer: true,
-          },
           where: {
             deletedAt: null,
+          },
+          orderBy: {
+            createdAt: 'desc',
           },
         },
       },
