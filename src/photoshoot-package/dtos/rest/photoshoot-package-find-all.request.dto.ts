@@ -11,14 +11,14 @@ export class PhotoshootPackageFindAllDto extends PagingPaginatedRequestDto {
   status?: PhotoshootPackageStatus;
 
   @ApiPropertyOptional({
-    enum: Prisma.SortOrder
+    enum: Prisma.SortOrder,
   })
-  orderByCreateAt?: Prisma.SortOrder
+  orderByCreateAt?: Prisma.SortOrder;
 
   @ApiPropertyOptional({
-    enum: Prisma.SortOrder
+    enum: Prisma.SortOrder,
   })
-  orderByBookingCount?: Prisma.SortOrder
+  orderByBookingCount?: Prisma.SortOrder;
 
   toWhere(): Prisma.PhotoshootPackageWhereInput {
     const where: Prisma.PhotoshootPackageWhereInput = {};
@@ -35,23 +35,24 @@ export class PhotoshootPackageFindAllDto extends PagingPaginatedRequestDto {
   }
 
   toOrderBy(): Prisma.PhotoshootPackageOrderByWithRelationInput[] {
-
-    const orderBy: Prisma.PhotoshootPackageOrderByWithRelationInput[] = []
+    const orderBy: Prisma.PhotoshootPackageOrderByWithRelationInput[] = [];
 
     if (this.orderByCreateAt) {
+    } else {
+      //always order by desc as default
       orderBy.push({
-        createdAt: this.orderByCreateAt
-      })
+        createdAt: 'desc',
+      });
     }
 
     if (this.status) {
-      orderBy.push(({
+      orderBy.push({
         bookings: {
-          _count: this.orderByBookingCount
-        }
-      }))
+          _count: this.orderByBookingCount,
+        },
+      });
     }
 
-    return orderBy
+    return orderBy;
   }
 }
