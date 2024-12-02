@@ -136,6 +136,38 @@ export class PhotoExchangeService {
     return resizedBuffer;
   }
 
+  async stopSellingPhoto(userId: string, photoId: string) {
+    const photo =
+      await this.photoService.findAndValidatePhotoIsNotFoundAndBelongToPhotographer(
+        userId,
+        photoId,
+      );
+
+    if (photo.status === 'DUPLICATED') {
+      throw new FailToPerformOnDuplicatedPhotoException();
+    }
+
+    if (photo.photoType === 'BOOKING') {
+      throw new CannotPerformOnBookingPhoto();
+    }
+
+    await this.photoSellRepository.updateMany(
+      {
+        photoId,
+      },
+      {
+        active: false,
+        photo: {
+          update: {
+            visibility: 'PRIVATE',
+          },
+        },
+      },
+    );
+
+    return true;
+  }
+
   async sellPhoto(
     userId: string,
     photoId: string,

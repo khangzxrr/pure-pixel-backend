@@ -50,6 +50,22 @@ export class PhotoSellBuyController {
     );
   }
 
+  @Post(':photoId/stop-selling')
+  @ApiOperation({
+    summary: 'stop sell photo using photoId',
+  })
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
+  @ApiOkResponse({
+    description: 'stop selling photo successfully',
+  })
+  async stopSellingPhoto(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Param('photoId') id: string,
+  ) {
+    return await this.photoExchangeService.stopSellingPhoto(user.sub, id);
+  }
+
   @Post('/:photoId/photo-sell/:photoSellId/price-tag/:pricetagId/buy')
   @ApiOperation({
     summary:
