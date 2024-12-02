@@ -117,11 +117,26 @@ export class PhotoProcessConsumer extends WorkerHost {
       `create temporary watermark for photo id: ${photo.id} of booking id: ${booking.id}`,
     );
 
+    await this.notificationService.addNotificationToQueue({
+      userId: booking.userId,
+      type: 'IN_APP',
+      title: `Gói chụp ${booking.photoshootPackageHistory.title} có cập nhật mới`,
+      content: 'Gói chụp của bạn đã được cập nhật ảnh mới!',
+      payload: photo,
+      referenceType: 'BOOKING',
+    });
+
     const key = `${photo.photographerId}/${photo.id}.${extension}`;
     await this.bunnyService.uploadFromBuffer(key, buffer);
 
     const watermarkKey = `watermark/${key}`;
     await this.bunnyService.uploadFromBuffer(watermarkKey, watermarkBuffer);
+
+    const thumbnailBuffer = await this.photoProcessService.makeThumbnail(sharp);
+    await this.bunnyService.uploadFromBuffer(
+      `thumbnail/${photo.id}.webp`,
+      thumbnailBuffer,
+    );
 
     await this.photoRepository.updateById(photo.id, {
       status: 'PARSED',
