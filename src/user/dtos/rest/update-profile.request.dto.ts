@@ -1,12 +1,10 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
-  IsArray,
   IsEmail,
   IsNotEmpty,
   IsOptional,
   IsString,
-  IsUrl,
   Matches,
 } from 'class-validator';
 import {
