@@ -43,6 +43,14 @@ export class CameraRepository {
     });
   }
 
+  findFindOrThrow(id: string) {
+    return this.prismaService.extendedClient().camera.findFirstOrThrow({
+      where: {
+        id,
+      },
+    });
+  }
+
   async findByMakerId(makerId: string, take: number) {
     return this.prismaService.camera.findMany({
       take,
@@ -54,6 +62,7 @@ export class CameraRepository {
       select: {
         id: true,
         name: true,
+        thumbnail: true,
         _count: {
           select: {
             photos: true,
