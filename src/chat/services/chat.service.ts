@@ -31,15 +31,13 @@ export class ChatService {
   async notifyToOtherUser(data) {
     const senderId = data?.message?.user?.id;
     const members: any[] = data.channel.members;
-
+    const userOfSender = await this.userRepository.findUnique(senderId);
     for (let member of members) {
       if (member?.user_id !== senderId) {
-        const user = await this.userRepository.findUnique(member.user_id);
-
         this.notificationService.addNotificationToQueue({
           type: 'BOTH_INAPP_EMAIL',
           title: 'Có tin nhắn mới',
-          content: `Bạn vừa nhận được tin nhắn mới ${user ? `đến từ ${user.name}` : ``}`,
+          content: `Bạn vừa nhận được tin nhắn mới ${userOfSender ? `đến từ ${userOfSender.name}` : ``}`,
           userId: member.user_id,
           payload: {},
           referenceType: 'CHAT',
