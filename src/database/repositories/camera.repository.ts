@@ -67,6 +67,7 @@ export class CameraRepository {
           select: {
             photos: {
               where: {
+                deletedAt: null,
                 visibility: 'PUBLIC',
               },
             },
