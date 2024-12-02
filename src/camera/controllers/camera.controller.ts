@@ -42,4 +42,12 @@ export class CameraController {
   async getPopularCameraGraphs() {
     return await this.cameraService.getPopularGraph();
   }
+
+  @Get(':id')
+  @ApiOperation({
+    summary: 'get camera detail by id',
+  })
+  async getCameraDetailById(@Param('id') id: string) {
+    return await this.cameraService.findById(id);
+  }
 }

@@ -25,6 +25,12 @@ export class CameraService {
     @Inject() private readonly bunnyService: BunnyService,
   ) {}
 
+  async findById(id: string) {
+    const camera = this.cameraRepository.findFindOrThrow(id);
+
+    return plainToInstance(CameraDto, camera);
+  }
+
   async getPopularGraph() {
     const startDate = new Date(new Date().getTime() - 1000 * 60 * 60 * 24 * 7);
 
@@ -38,7 +44,12 @@ export class CameraService {
   }
 
   async findTopCameraOfBrand(brandId: string, take: number) {
-    return await this.cameraRepository.findByMakerId(brandId, take);
+    const topCameras: any[] = await this.cameraRepository.findByMakerId(
+      brandId,
+      take,
+    );
+
+    return plainToInstance(CameraDto, topCameras);
   }
 
   async findTopBrand(n: number) {
