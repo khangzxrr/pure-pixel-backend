@@ -59,6 +59,11 @@ export class PhotoshootPackageService {
       },
       findAllDto.toSkip(),
       findAllDto.limit,
+      [
+        {
+          createdAt: 'desc',
+        },
+      ],
     );
 
     const count = await this.photoshootPackageShowcaseRepository.count({
