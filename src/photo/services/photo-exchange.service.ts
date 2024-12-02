@@ -168,6 +168,14 @@ export class PhotoExchangeService {
     return true;
   }
 
+  async replaceSellPhoto(
+    userId: string,
+    photoId: string,
+    sellPhotoDto: CreatePhotoSellingDto,
+  ) {
+    return this.sellPhoto(userId, photoId, sellPhotoDto);
+  }
+
   async sellPhoto(
     userId: string,
     photoId: string,
