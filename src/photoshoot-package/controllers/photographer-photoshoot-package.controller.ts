@@ -28,8 +28,6 @@ import { Constants } from 'src/infrastructure/utils/constants';
 import { FormDataRequest } from 'nestjs-form-data';
 import { PhotoshootPackageUpdateRequestDto } from '../dtos/rest/photoshoot-package-update.request.dto';
 import { PhotoshootPackageReplaceRequestDto } from '../dtos/rest/photoshoot-package-replace.request.dto';
-import { PhotoshootPackageShowcaseDto } from '../dtos/photoshoot-package-showcase.dto';
-import { PhotoshootPackageShowcaseUpdateDto } from '../dtos/rest/photoshoot-package-showcase.update.dto';
 
 @Controller('photographer/photoshoot-package')
 @ApiTags('photographer-photoshoot-package')
