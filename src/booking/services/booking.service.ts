@@ -34,6 +34,11 @@ import * as AdmZip from 'adm-zip';
 import { PhotoProcessService } from 'src/photo/services/photo-process.service';
 import { UserService } from 'src/user/services/user.service';
 import { PhotoGenerateWatermarkService } from 'src/photo/services/photo-generate-watermark.service';
+import { FileSystemBookngUploadDto } from '../dtos/rest/file-system-booking-upload.request.dto';
+import { Queue } from 'bullmq';
+import { PhotoConstant } from 'src/photo/constants/photo.constant';
+import { InjectQueue } from '@nestjs/bullmq';
+import { TemporaryBookingPhotoUpload } from 'src/photo/dtos/temporary-booking-photo-upload.dto';
 
 @Injectable()
 export class BookingService {
@@ -51,6 +56,8 @@ export class BookingService {
     @Inject() private readonly userService: UserService,
     @Inject()
     private readonly photoGenerateWatermarkService: PhotoGenerateWatermarkService,
+    @InjectQueue(PhotoConstant.PHOTO_PROCESS_QUEUE)
+    private readonly photoProcessQueue: Queue,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -344,6 +351,39 @@ export class BookingService {
     });
 
     return photo;
+  }
+
+  async filesystemUploadPhoto(
+    userId: string,
+    bookingId: string,
+    bookingUploadDto: FileSystemBookngUploadDto,
+  ) {
+    const booking = await this.bookingRepository.findUniqueOrThrow({
+      id: bookingId,
+    });
+
+    if (booking.originalPhotoshootPackage.userId !== userId) {
+      throw new BookingNotBelongException();
+    }
+
+    if (
+      booking.status === 'FAILED' ||
+      booking.status === 'REQUESTED' ||
+      booking.status === 'DENIED'
+    ) {
+      throw new BookingNotAcceptedException();
+    }
+
+    const temporaryBookingPhotoDto: TemporaryBookingPhotoUpload = {
+      photographerId: userId,
+      bookingId: bookingId,
+      file: bookingUploadDto.file,
+    };
+
+    await this.photoProcessQueue.add(
+      PhotoConstant.UPLOAD_BOOKING_PHOTO_JOB_NAME,
+      temporaryBookingPhotoDto,
+    );
   }
 
   async uploadPhoto(
