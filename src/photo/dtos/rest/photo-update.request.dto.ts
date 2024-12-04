@@ -47,7 +47,6 @@ export class PhotoUpdateRequestDto {
   })
   @IsOptional()
   @IsString()
-  @IsNotEmpty()
   description?: string;
 
   @ApiProperty({

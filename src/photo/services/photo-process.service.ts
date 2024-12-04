@@ -10,6 +10,7 @@ import { BunnyService } from 'src/storage/services/bunny.service';
 import * as phash from 'sharp-phash';
 import * as dist from 'sharp-phash/distance';
 import { decode, encode } from 'blurhash';
+import { SignedUrl } from '../dtos/photo-signed-url.dto';
 
 @Injectable()
 export class PhotoProcessService {
@@ -17,6 +18,36 @@ export class PhotoProcessService {
     private readonly httpService: HttpService,
     @Inject() private readonly bunnyService: BunnyService,
   ) {}
+
+  signPendingPhoto(id: string): SignedUrl {
+    return {
+      url: `${process.env.BACKEND_ORIGIN}/photo/${id}/temporary-photo`,
+      thumbnail: `${process.env.BACKEND_ORIGIN}/photo/${id}/temporary-photo`,
+    };
+  }
+
+  signPendingWatermarkPhoto(id: string): SignedUrl {
+    return {
+      url: `${process.env.BACKEND_ORIGIN}/photo/${id}/temporary-photo?watermark=true`,
+      thumbnail: `${process.env.BACKEND_ORIGIN}/photo/${id}/temporary-photo?watermark=true`,
+    };
+  }
+
+  signPhoto(url: string, id: string): SignedUrl {
+    return {
+      url: this.bunnyService.getPresignedFile(url),
+      thumbnail: this.bunnyService.getPresignedFile(`thumbnail/${id}.webp`),
+    };
+  }
+
+  signWatermarkPhoto(url: string, id: string): SignedUrl {
+    return {
+      url: this.bunnyService.getPresignedFile(url),
+      thumbnail: this.bunnyService.getPresignedFile(
+        `thumbnail/watermark/${id}.webp`,
+      ),
+    };
+  }
 
   isExistHash(target: string, compares: string[], threshold = 5) {
     for (let compare of compares) {
