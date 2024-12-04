@@ -26,6 +26,9 @@ import { PhotoshootPackageShowcaseFindAllDto } from '../dtos/rest/photoshoot-pac
 import { PhotoshootPackageShowcaseFindAllResponseDto } from '../dtos/rest/photoshoot-package-showcase.find-all.response.dto';
 import { FileSystemPhotoshootPackageCreateRequestDto } from '../dtos/rest/file-system-photoshoot-package-create.request.dto';
 import { TemporaryfileService } from 'src/temporary-file/services/temporary-file.service';
+import { InjectQueue } from '@nestjs/bullmq';
+import { PhotoshootPackageConstant } from '../constants/photoshoot-package.constant';
+import { Queue } from 'bullmq';
 
 @Injectable()
 export class PhotoshootPackageService {
@@ -40,6 +43,8 @@ export class PhotoshootPackageService {
     private readonly photoshootPackageShowcaseRepository: PhotoshootPackageShowcaseRepository,
     @Inject()
     private readonly temporaryfileService: TemporaryfileService,
+    @InjectQueue(PhotoshootPackageConstant.PHOTOSHOOT_PACKAGE_QUEUE)
+    private readonly photoshootPackagequeue: Queue,
   ) {}
 
   async filesystemCreate(
@@ -84,6 +89,13 @@ export class PhotoshootPackageService {
     const [photoshootPackage] = await this.prisma
       .extendedClient()
       .$transaction([photoshootPackageCreateQuery, updatePackageQuotaQuery]);
+
+    await this.photoshootPackagequeue.add(
+      PhotoshootPackageConstant.UPLOAD_TO_CLOUD,
+      {
+        photoshootPackageId: photoshootPackage.id,
+      },
+    );
 
     return await this.signPhotoshootPackageDetail(photoshootPackage);
   }

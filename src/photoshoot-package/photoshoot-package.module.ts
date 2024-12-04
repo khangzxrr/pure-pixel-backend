@@ -11,6 +11,8 @@ import { ManagePhotoshootPackageService } from './services/manage-photoshoot-pac
 import { ManagerPhotoShootPackageController } from './controllers/manager-photoshoot-package.controller';
 import { PhotographerPhotoshootPackageShowCaseController } from './controllers/photographer-photoshoot-package-showcase.controller';
 import { TemporaryFileModule } from 'src/temporary-file/temporary-file.module';
+import { QueueModule } from 'src/queue/queue.module';
+import { PhotoshootPackageConsumerService } from './consumers/photoshoot-package.consumer.service';
 
 @Module({
   imports: [
@@ -20,6 +22,7 @@ import { TemporaryFileModule } from 'src/temporary-file/temporary-file.module';
     StorageModule,
     PhotoModule,
     TemporaryFileModule,
+    QueueModule,
   ],
   controllers: [
     PhotoShootPackageController,
@@ -27,6 +30,10 @@ import { TemporaryFileModule } from 'src/temporary-file/temporary-file.module';
     ManagerPhotoShootPackageController,
     PhotographerPhotoshootPackageShowCaseController,
   ],
-  providers: [PhotoshootPackageService, ManagePhotoshootPackageService],
+  providers: [
+    PhotoshootPackageService,
+    ManagePhotoshootPackageService,
+    PhotoshootPackageConsumerService,
+  ],
 })
 export class PhotoshootPackageModule {}
