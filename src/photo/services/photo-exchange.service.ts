@@ -157,13 +157,12 @@ export class PhotoExchangeService {
       },
       {
         active: false,
-        photo: {
-          update: {
-            visibility: 'PRIVATE',
-          },
-        },
       },
     );
+
+    await this.photoRepository.updateById(photoId, {
+      visibility: 'PRIVATE',
+    });
 
     return true;
   }
