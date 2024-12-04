@@ -5,6 +5,7 @@ import {
   Inject,
   Post,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -21,6 +22,7 @@ import { CreateWithdrawalResponseDto } from '../dtos/rest/create-withdrawal.resp
 import { CreateWithdrawalRequestDto } from '../dtos/rest/create-withdrawal.request.dto';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { SepayService } from 'src/payment/services/sepay.service';
+import { Request } from 'express';
 
 @Controller('wallet')
 @ApiTags('wallet')
@@ -84,10 +86,12 @@ export class WalletController {
   async getTransactions(
     @AuthenticatedUser() user: ParsedUserDto,
     @Query() findAllTransactionDto: FindAllTransactionDto,
+    @Req() req: Request,
   ) {
     return await this.sepayService.findAllTransactionByUserId(
       user.sub,
       findAllTransactionDto,
+      req.url,
     );
   }
 }

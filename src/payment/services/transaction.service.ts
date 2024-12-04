@@ -6,7 +6,7 @@ import { plainToInstance } from 'class-transformer';
 import { TransactionDto } from '../dtos/transaction.dto';
 import { FindAllTransactionDto } from '../dtos/rest/find-all-transaction.dto';
 import { PagingPaginatedResposneDto } from 'src/infrastructure/restful/paging-paginated.response.dto';
-import { Prisma } from '@prisma/client';
+import { PaymentMethod, Prisma } from '@prisma/client';
 import { TransactionUpdateDto } from '../dtos/transaction-update.dto';
 import { TransactionNotInPendingException } from '../exceptions/transaction-not-in-pending.exception';
 
@@ -36,34 +36,21 @@ export class TransactionService {
     );
   }
 
-  async findAll(findAllDto: FindAllTransactionDto) {
+  async findAll(findAllDto: FindAllTransactionDto, query: string) {
+    console.log(query);
+
     const where: Prisma.TransactionWhereInput = {
       type: findAllDto.type,
       status: findAllDto.status,
       paymentMethod: findAllDto.paymentMethod,
     };
 
-    const orderBy = [
-      {
-        type: findAllDto.orderByType,
-      },
-      {
-        amount: findAllDto.orderByAmount,
-      },
-      {
-        createdAt: findAllDto.orderByCreatedAt,
-      },
-      {
-        paymentMethod: findAllDto.orderByPaymentMethod,
-      },
-    ];
-
     const count = await this.transactionRepository.countAll(where);
     const transactions = await this.transactionRepository.findAll(
       where,
       findAllDto.toSkip(),
       findAllDto.limit,
-      orderBy,
+      findAllDto.toOrderBy(query),
     );
 
     const transactionDtos = plainToInstance(TransactionDto, transactions);

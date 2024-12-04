@@ -5,7 +5,7 @@ import { TransactionNotFoundException } from '../exceptions/transaction-not-foun
 import { AmountIsNotEqualException } from '../exceptions/amount-is-not-equal.exception';
 
 import * as QRCode from 'qrcode';
-import { Transaction } from '@prisma/client';
+import { PaymentMethod, Transaction } from '@prisma/client';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { PagingPaginatedResposneDto } from 'src/infrastructure/restful/paging-paginated.response.dto';
 import { CreateDepositRequestDto } from 'src/user/dtos/rest/create-deposit.request.dto';
@@ -98,10 +98,12 @@ export class SepayService {
   async findAllTransactionByUserId(
     userId: string,
     findAllTransactionDto: FindAllTransactionDto,
+    query: string,
   ): Promise<PagingPaginatedResposneDto<TransactionDto>> {
     const where = {
       type: findAllTransactionDto.type,
       status: findAllTransactionDto.status,
+      paymentMethod: findAllTransactionDto.paymentMethod,
       userId,
     };
 
@@ -110,20 +112,7 @@ export class SepayService {
       where,
       findAllTransactionDto.toSkip(),
       findAllTransactionDto.limit,
-      [
-        {
-          type: findAllTransactionDto.orderByType,
-        },
-        {
-          amount: findAllTransactionDto.orderByAmount,
-        },
-        {
-          createdAt: findAllTransactionDto.orderByCreatedAt,
-        },
-        {
-          paymentMethod: findAllTransactionDto.orderByPaymentMethod,
-        },
-      ],
+      findAllTransactionDto.toOrderBy(query),
     );
 
     const transactionDtos = plainToInstance(TransactionDto, transactions);
