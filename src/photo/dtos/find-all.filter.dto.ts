@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   PhotoStatus,
   PhotoType,
@@ -9,6 +9,7 @@ import { Exclude, Transform, Type } from 'class-transformer';
 import {
   IsArray,
   IsBoolean,
+  IsBooleanString,
   IsEnum,
   IsNotEmpty,
   IsNumber,
@@ -145,6 +146,11 @@ export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
   @IsEnum(PhotoStatus)
   status?: PhotoStatus;
 
+  @ApiPropertyOptional({})
+  @IsOptional()
+  @ToBoolean()
+  isFollowed?: boolean;
+
   @ApiProperty({
     required: false,
     isArray: true,
@@ -256,6 +262,26 @@ export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
 
     if (this.status) {
       where.status = this.status;
+    }
+
+    if (this.isFollowed !== undefined) {
+      if (this.isFollowed === true) {
+        where.photographer = {
+          followers: {
+            some: {
+              followerId: userId,
+            },
+          },
+        };
+      } else {
+        where.photographer = {
+          followers: {
+            none: {
+              followerId: userId,
+            },
+          },
+        };
+      }
     }
 
     if (this.selling !== undefined) {
