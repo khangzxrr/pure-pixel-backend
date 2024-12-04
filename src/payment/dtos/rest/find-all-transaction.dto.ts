@@ -1,5 +1,10 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { Prisma, TransactionStatus, TransactionType } from '@prisma/client';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  PaymentMethod,
+  Prisma,
+  TransactionStatus,
+  TransactionType,
+} from '@prisma/client';
 import { IsEnum, IsIn, IsOptional } from 'class-validator';
 import { PagingPaginatedRequestDto } from 'src/infrastructure/restful/paging-paginated.request.dto';
 import { Constants } from 'src/infrastructure/utils/constants';
@@ -22,6 +27,14 @@ export class FindAllTransactionDto extends PagingPaginatedRequestDto {
   @IsOptional()
   @IsEnum(TransactionStatus)
   status?: TransactionStatus;
+
+  @ApiPropertyOptional({
+    description: 'filter by payment method',
+    enum: PaymentMethod,
+  })
+  @IsOptional()
+  @IsEnum(PaymentMethod)
+  paymentMethod?: PaymentMethod;
 
   @ApiProperty({
     required: false,

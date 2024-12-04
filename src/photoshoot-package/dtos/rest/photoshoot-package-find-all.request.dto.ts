@@ -38,6 +38,9 @@ export class PhotoshootPackageFindAllDto extends PagingPaginatedRequestDto {
     const orderBy: Prisma.PhotoshootPackageOrderByWithRelationInput[] = [];
 
     if (this.orderByCreateAt) {
+      orderBy.push({
+        createdAt: this.orderByCreateAt,
+      });
     } else {
       //always order by desc as default
       orderBy.push({
@@ -45,7 +48,7 @@ export class PhotoshootPackageFindAllDto extends PagingPaginatedRequestDto {
       });
     }
 
-    if (this.status) {
+    if (this.orderByBookingCount) {
       orderBy.push({
         bookings: {
           _count: this.orderByBookingCount,
