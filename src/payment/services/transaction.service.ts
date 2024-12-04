@@ -40,6 +40,7 @@ export class TransactionService {
     const where: Prisma.TransactionWhereInput = {
       type: findAllDto.type,
       status: findAllDto.status,
+      paymentMethod: findAllDto.paymentMethod,
     };
 
     const orderBy = [
