@@ -26,6 +26,7 @@ export class PhotoshootPackageShowcaseRepository {
     where: Prisma.PhotoshootPackageShowcasePhotoWhereInput,
     skip?: number,
     take?: number,
+    orderBy?: Prisma.PhotoshootPackageShowcasePhotoOrderByWithRelationInput[],
   ): PrismaPromise<any[]> {
     return this.prismaService
       .extendedClient()
@@ -33,6 +34,7 @@ export class PhotoshootPackageShowcaseRepository {
         where,
         skip,
         take,
+        orderBy,
       });
   }
 

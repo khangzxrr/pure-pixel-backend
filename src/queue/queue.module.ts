@@ -6,6 +6,7 @@ import { BullMqConfigService } from 'src/customConfig/services/bullmq-config.ser
 import { BullMqQueueRegisterService } from 'src/customConfig/services/bullmq-queue-register.service';
 import { NotificationConstant } from 'src/notification/constants/notification.constant';
 import { PhotoConstant } from 'src/photo/constants/photo.constant';
+import { PhotoshootPackageConstant } from 'src/photoshoot-package/constants/photoshoot-package.constant';
 import { UpgradeConstant } from 'src/upgrade-package/constants/upgrade.constant';
 
 @Module({
@@ -52,6 +53,12 @@ import { UpgradeConstant } from 'src/upgrade-package/constants/upgrade.constant'
     BullModule.registerQueueAsync({
       imports: [CustomConfigModule],
       name: CameraConstant.CAMERA_PROCESS_QUEUE,
+      useExisting: BullMqQueueRegisterService,
+      inject: [CustomConfigModule],
+    }),
+    BullModule.registerQueueAsync({
+      imports: [CustomConfigModule],
+      name: PhotoshootPackageConstant.PHOTOSHOOT_PACKAGE_QUEUE,
       useExisting: BullMqQueueRegisterService,
       inject: [CustomConfigModule],
     }),

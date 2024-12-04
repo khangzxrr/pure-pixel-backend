@@ -24,6 +24,11 @@ import { PhotoshootPackageShowcaseRepository } from 'src/database/repositories/p
 import { PhotoshootPackageShowcaseDto } from '../dtos/photoshoot-package-showcase.dto';
 import { PhotoshootPackageShowcaseFindAllDto } from '../dtos/rest/photoshoot-package-showcase.find-all.request.dto';
 import { PhotoshootPackageShowcaseFindAllResponseDto } from '../dtos/rest/photoshoot-package-showcase.find-all.response.dto';
+import { FileSystemPhotoshootPackageCreateRequestDto } from '../dtos/rest/file-system-photoshoot-package-create.request.dto';
+import { TemporaryfileService } from 'src/temporary-file/services/temporary-file.service';
+import { InjectQueue } from '@nestjs/bullmq';
+import { PhotoshootPackageConstant } from '../constants/photoshoot-package.constant';
+import { Queue } from 'bullmq';
 
 @Injectable()
 export class PhotoshootPackageService {
@@ -36,7 +41,64 @@ export class PhotoshootPackageService {
     private readonly prisma: PrismaService,
     @Inject()
     private readonly photoshootPackageShowcaseRepository: PhotoshootPackageShowcaseRepository,
+    @Inject()
+    private readonly temporaryfileService: TemporaryfileService,
+    @InjectQueue(PhotoshootPackageConstant.PHOTOSHOOT_PACKAGE_QUEUE)
+    private readonly photoshootPackagequeue: Queue,
   ) {}
+
+  async filesystemCreate(
+    userId: string,
+    createDto: FileSystemPhotoshootPackageCreateRequestDto,
+  ) {
+    const user = await this.userRepository.findUniqueOrThrow(userId);
+
+    if (user.packageCount >= user.maxPackageCount) {
+      throw new RunOutOfPackageQuotaException();
+    }
+
+    const photoshootPackageCreateQuery: PrismaPromise<any> =
+      this.photoshootRepository.create({
+        user: {
+          connect: {
+            id: userId,
+          },
+        },
+        status: 'ENABLED',
+        price: createDto.price,
+        title: createDto.title,
+        subtitle: createDto.subtitle,
+        sourceStatus: 'FILESYSTEM',
+        thumbnail: createDto.thumbnail.path,
+        description: createDto.description,
+        showcases: {
+          create: createDto.showcases.map((showcase) => {
+            return {
+              photoUrl: showcase.path,
+            };
+          }),
+        },
+      });
+
+    const updatePackageQuotaQuery = this.userRepository.update(user.id, {
+      packageCount: {
+        increment: 1,
+      },
+    });
+
+    const [photoshootPackage] = await this.prisma
+      .extendedClient()
+      .$transaction([photoshootPackageCreateQuery, updatePackageQuotaQuery]);
+
+    await this.photoshootPackagequeue.add(
+      PhotoshootPackageConstant.UPLOAD_TO_CLOUD,
+      {
+        photoshootPackageId: photoshootPackage.id,
+      },
+    );
+
+    return await this.signPhotoshootPackageDetail(photoshootPackage);
+  }
 
   async findAllShowcase(
     userId: string,
@@ -59,6 +121,11 @@ export class PhotoshootPackageService {
       },
       findAllDto.toSkip(),
       findAllDto.limit,
+      [
+        {
+          createdAt: 'desc',
+        },
+      ],
     );
 
     const count = await this.photoshootPackageShowcaseRepository.count({
@@ -354,12 +421,27 @@ export class PhotoshootPackageService {
       photoshootPackageDetail,
     );
 
-    photoshootPackageDto.thumbnail = this.bunnyService.getPresignedFile(
-      photoshootPackageDto.thumbnail,
-    );
+    if (photoshootPackageDetail.sourceStatus === 'CLOUD') {
+      photoshootPackageDto.thumbnail = this.bunnyService.getPresignedFile(
+        photoshootPackageDto.thumbnail,
+      );
+    } else {
+      photoshootPackageDto.thumbnail =
+        this.temporaryfileService.signFilesystemPath(
+          photoshootPackageDto.thumbnail,
+        );
+    }
 
     photoshootPackageDto.showcases.map((showcase) => {
-      showcase.photoUrl = this.bunnyService.getPresignedFile(showcase.photoUrl);
+      if (photoshootPackageDetail.sourceStatus === 'CLOUD') {
+        showcase.photoUrl = this.bunnyService.getPresignedFile(
+          showcase.photoUrl,
+        );
+      } else {
+        showcase.photoUrl = this.temporaryfileService.signFilesystemPath(
+          showcase.photoUrl,
+        );
+      }
 
       return showcase;
     });
@@ -373,9 +455,16 @@ export class PhotoshootPackageService {
       photoshootPackage,
     );
 
-    photoshootPackageDto.thumbnail = this.bunnyService.getPresignedFile(
-      photoshootPackageDto.thumbnail,
-    );
+    if (photoshootPackage.sourceStatus === 'CLOUD') {
+      photoshootPackageDto.thumbnail = this.bunnyService.getPresignedFile(
+        photoshootPackageDto.thumbnail,
+      );
+    } else {
+      photoshootPackageDto.thumbnail =
+        this.temporaryfileService.signFilesystemPath(
+          photoshootPackageDto.thumbnail,
+        );
+    }
 
     return photoshootPackageDto;
   }

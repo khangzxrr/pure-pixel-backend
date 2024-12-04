@@ -10,6 +10,9 @@ import { PhotographerPhotoShootPackageController } from './controllers/photograp
 import { ManagePhotoshootPackageService } from './services/manage-photoshoot-package.service';
 import { ManagerPhotoShootPackageController } from './controllers/manager-photoshoot-package.controller';
 import { PhotographerPhotoshootPackageShowCaseController } from './controllers/photographer-photoshoot-package-showcase.controller';
+import { TemporaryFileModule } from 'src/temporary-file/temporary-file.module';
+import { QueueModule } from 'src/queue/queue.module';
+import { PhotoshootPackageConsumerService } from './consumers/photoshoot-package.consumer.service';
 
 @Module({
   imports: [
@@ -18,6 +21,8 @@ import { PhotographerPhotoshootPackageShowCaseController } from './controllers/p
     AuthenModule,
     StorageModule,
     PhotoModule,
+    TemporaryFileModule,
+    QueueModule,
   ],
   controllers: [
     PhotoShootPackageController,
@@ -25,6 +30,10 @@ import { PhotographerPhotoshootPackageShowCaseController } from './controllers/p
     ManagerPhotoShootPackageController,
     PhotographerPhotoshootPackageShowCaseController,
   ],
-  providers: [PhotoshootPackageService, ManagePhotoshootPackageService],
+  providers: [
+    PhotoshootPackageService,
+    ManagePhotoshootPackageService,
+    PhotoshootPackageConsumerService,
+  ],
 })
 export class PhotoshootPackageModule {}

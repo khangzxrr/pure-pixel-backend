@@ -16,11 +16,15 @@ export class PhotoValidateService {
   async validateHashAndMatching(buffer: Buffer, filename: string) {
     const hash = await this.photoProcessService.getHashFromBuffer(buffer);
 
-    const existPhotoWithHash = await this.photoRepository.findFirst({
-      hash,
-    });
+    const allPreviousHashs = await this.photoRepository.findAllHash();
 
-    if (existPhotoWithHash) {
+    const compareHashs = allPreviousHashs.map((h) => h.hash);
+    const sameHashPhoto = this.photoProcessService.isExistHash(
+      hash,
+      compareHashs,
+    );
+
+    if (sameHashPhoto) {
       throw new FailToPerformOnDuplicatedPhotoException();
     }
 

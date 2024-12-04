@@ -26,6 +26,7 @@ import { CameraModule } from './camera/camera.module';
 import { AdminModule } from './admin/admin.module';
 import { BookmarkModule } from './bookmark/bookmark.module';
 import { NewsfeedModule } from './newsfeed/newsfeed.module';
+import { TemporaryFileModule } from './temporary-file/temporary-file.module';
 
 @Module({
   providers: [
@@ -62,6 +63,7 @@ import { NewsfeedModule } from './newsfeed/newsfeed.module';
     AdminModule,
     BookmarkModule,
     NewsfeedModule,
+    TemporaryFileModule,
   ],
   controllers: [AppController],
 })
