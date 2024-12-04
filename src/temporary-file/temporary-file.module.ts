@@ -7,5 +7,6 @@ import { TemporaryfileController } from './controllers/temporary-file.controller
   controllers: [TemporaryfileController],
   imports: [PhotoModule],
   providers: [TemporaryfileService],
+  exports: [TemporaryfileService],
 })
 export class TemporaryFileModule {}

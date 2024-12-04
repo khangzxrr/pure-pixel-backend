@@ -2,7 +2,7 @@ import {
   Controller,
   Get,
   Inject,
-  Param,
+  Query,
   Res,
   StreamableFile,
 } from '@nestjs/common';
@@ -17,15 +17,15 @@ export class TemporaryfileController {
     @Inject() private readonly temporaryfileService: TemporaryfileService,
   ) {}
 
-  @Get(':filename')
+  @Get()
   @ApiOperation({
     summary: 'get buffer from filename',
   })
   async getBufferFromfilename(
-    @Param('filename') filename: string,
+    @Query('path') path: string,
     @Res() res: Response,
   ) {
-    const buffer = await this.temporaryfileService.pathToBuffer(filename);
+    const buffer = await this.temporaryfileService.pathToBuffer(path);
 
     const stream = new StreamableFile(buffer);
 
