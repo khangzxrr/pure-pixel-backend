@@ -25,9 +25,10 @@ import { PhotoshootPackageCreateRequestDto } from '../dtos/rest/photoshoot-packa
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
 import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
-import { FormDataRequest } from 'nestjs-form-data';
+import { FileSystemStoredFile, FormDataRequest } from 'nestjs-form-data';
 import { PhotoshootPackageUpdateRequestDto } from '../dtos/rest/photoshoot-package-update.request.dto';
 import { PhotoshootPackageReplaceRequestDto } from '../dtos/rest/photoshoot-package-replace.request.dto';
+import { FileSystemPhotoshootPackageCreateRequestDto } from '../dtos/rest/file-system-photoshoot-package-create.request.dto';
 
 @Controller('photographer/photoshoot-package')
 @ApiTags('photographer-photoshoot-package')
@@ -80,6 +81,32 @@ export class PhotographerPhotoShootPackageController {
     @Body() createDto: PhotoshootPackageCreateRequestDto,
   ) {
     return await this.photoshootPackageService.create(user.sub, createDto);
+  }
+
+  @Post('v2')
+  @ApiOperation({
+    summary: 'create new photoshoot package v2 (filesystem upload)',
+  })
+  @FormDataRequest({
+    storage: FileSystemStoredFile,
+    fileSystemStoragePath: '/tmp/purepixel-local-storage',
+    cleanupAfterFailedHandle: true,
+    cleanupAfterSuccessHandle: false,
+  })
+  @ApiOkResponse({
+    type: PhotoshootPackageDto,
+  })
+  @ApiConsumes('multipart/form-data')
+  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
+  async createWithFileSystemUpload(
+    @AuthenticatedUser() user: ParsedUserDto,
+    @Body() createDto: FileSystemPhotoshootPackageCreateRequestDto,
+  ) {
+    return await this.photoshootPackageService.filesystemCreate(
+      user.sub,
+      createDto,
+    );
   }
 
   @Patch(':id')

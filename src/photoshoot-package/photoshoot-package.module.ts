@@ -10,6 +10,7 @@ import { PhotographerPhotoShootPackageController } from './controllers/photograp
 import { ManagePhotoshootPackageService } from './services/manage-photoshoot-package.service';
 import { ManagerPhotoShootPackageController } from './controllers/manager-photoshoot-package.controller';
 import { PhotographerPhotoshootPackageShowCaseController } from './controllers/photographer-photoshoot-package-showcase.controller';
+import { TemporaryFileModule } from 'src/temporary-file/temporary-file.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { PhotographerPhotoshootPackageShowCaseController } from './controllers/p
     AuthenModule,
     StorageModule,
     PhotoModule,
+    TemporaryFileModule,
   ],
   controllers: [
     PhotoShootPackageController,
