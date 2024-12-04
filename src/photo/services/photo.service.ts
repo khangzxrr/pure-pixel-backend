@@ -713,12 +713,13 @@ export class PhotoService {
 
     const hash = await this.photoProcessService.getHashFromBuffer(buffer);
 
-    const sameHashPhoto = await this.photoRepository.findFirst({
+    const allPreviousHashs = await this.photoRepository.findAllHash();
+
+    const compareHashs = allPreviousHashs.map((h) => h.hash);
+    const sameHashPhoto = this.photoProcessService.isExistHash(
       hash,
-      deletedAt: {
-        not: null,
-      },
-    });
+      compareHashs,
+    );
 
     if (sameHashPhoto) {
       throw new FailToPerformOnDuplicatedPhotoException();

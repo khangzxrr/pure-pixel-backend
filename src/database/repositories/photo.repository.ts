@@ -230,6 +230,18 @@ export class PhotoRepository {
 `;
   }
 
+  async findAllHash() {
+    return this.prisma.extendedClient().photo.findMany({
+      select: {
+        hash: true,
+        id: true,
+      },
+      where: {
+        deletedAt: null,
+      },
+    });
+  }
+
   async findFirst(where: Prisma.PhotoWhereInput) {
     return this.prisma.extendedClient().photo.findFirst({
       where,

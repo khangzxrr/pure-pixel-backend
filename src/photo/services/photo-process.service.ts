@@ -8,6 +8,7 @@ import * as SharpLib from 'sharp';
 import { PhotoConstant } from '../constants/photo.constant';
 import { BunnyService } from 'src/storage/services/bunny.service';
 import * as phash from 'sharp-phash';
+import * as dist from 'sharp-phash/distance';
 import { decode, encode } from 'blurhash';
 
 @Injectable()
@@ -16,6 +17,17 @@ export class PhotoProcessService {
     private readonly httpService: HttpService,
     @Inject() private readonly bunnyService: BunnyService,
   ) {}
+
+  isExistHash(target: string, compares: string[], threshold = 5) {
+    for (let compare of compares) {
+      const d = dist(target, compare);
+      if (d < threshold) {
+        return true;
+      }
+    }
+
+    return false;
+  }
 
   async getHashFromBuffer(buffer: Buffer) {
     return await phash(buffer);
