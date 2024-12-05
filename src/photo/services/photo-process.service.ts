@@ -111,6 +111,11 @@ export class PhotoProcessService {
       .toBuffer();
   }
 
+  async thumbnailFromBuffer(buffer: Buffer) {
+    const sharp = await this.sharpInitFromBuffer(buffer);
+
+    return this.makeThumbnail(sharp);
+  }
   async makeThumbnail(sharp: SharpLib.Sharp) {
     return sharp
       .clone()

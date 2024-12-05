@@ -225,7 +225,7 @@ export class PhotoProcessConsumer extends WorkerHost {
     this.logger.log(`uploaded watermark for photo id: ${photo.id}`);
 
     const watermarkThumbnailBuffer =
-      await this.photoProcessService.makeThumbnail(watermark);
+      await this.photoProcessService.thumbnailFromBuffer(watermarkBuffer);
 
     const watermarkThumbnailKey = `thumbnail/watermark/${photo.id}.webp`;
     await this.bunnyService.uploadFromBuffer(
