@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Photo, Prisma } from '@prisma/client';
 
 import { PrismaService } from 'src/prisma.service';
+import { PhotoWithSellingCountDto } from '../dtos/photo-with-selling-count.dto';
 
 @Injectable()
 export class PhotoRepository {
@@ -227,6 +228,21 @@ export class PhotoRepository {
                           FROM public."Photo" 
                           WHERE  point(${latitude}, ${longitude}) <@>  (point((exif->>'latitude')::float, (exif->>'longitude')::float)::point) < ${distance}
                           ORDER BY point(${latitude}, ${longitude}) <@>  (point((exif->>'latitude')::float, (exif->>'longitude')::float)::point)
+`;
+  }
+
+  async findPhotoIdsByPhotographerIdOrderByPhotoSellingCount(
+    photographerId: string,
+    fromDate: Date,
+    toDate: Date,
+  ): Promise<PhotoWithSellingCountDto[]> {
+    return this.prisma.$queryRaw`
+SELECT public."Photo".id, COUNT(public."Photo".id) FROM public."Photo" INNER JOIN public."PhotoSell" ON public."PhotoSell"."photoId" = public."Photo".id 
+INNER JOIN public."PhotoSellHistory" ON public."PhotoSell"."id" = public."PhotoSellHistory"."originalPhotoSellId"
+WHERE public."Photo"."photographerId" = ${photographerId} AND
+public."PhotoSellHistory"."createdAt" <= ${toDate} AND public."PhotoSellHistory"."createdAt" >= ${fromDate}
+GROUP BY public."Photo".id
+ORDER BY COUNT(public."Photo".id) DESC
 `;
   }
 

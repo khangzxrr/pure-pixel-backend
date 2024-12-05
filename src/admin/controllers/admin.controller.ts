@@ -30,16 +30,20 @@ export class AdminController {
     @Inject() private readonly updateTimelineService: UpdateTimelineService,
   ) {}
 
-  @Post('/dashboard-trigger/generate-report')
-  @ApiOperation({
-    summary: 'get dashboard summary',
-  })
-  @ApiOkResponse({
-    type: DashboardDto,
-  })
-  async generateDashboardReport() {
-    return await this.generateDashboardReportService.generateDashboardData();
-  }
+  // @Post('/dashboard-trigger/generate-report')
+  // @ApiOperation({
+  //   summary: 'get dashboard summary',
+  // })
+  // @ApiOkResponse({
+  //   type: DashboardDto,
+  // })
+  // async generateDashboardReport(
+  //   @Query() dashboardRequestDto: DashboardRequestDto,
+  // ) {
+  //   return await this.generateDashboardReportService.generateDashboardData(
+  //     dashboardRequestDto,
+  //   );
+  // }
 
   @Get('/dashboard')
   @ApiOperation({
@@ -51,7 +55,33 @@ export class AdminController {
   async getDashboardReportData(
     @Query() dashboardRequestDto: DashboardRequestDto,
   ) {
-    return await this.adminService.getDashboardReport(dashboardRequestDto);
+    return await this.generateDashboardReportService.generateDashboardData(
+      dashboardRequestDto,
+    );
+  }
+
+  @Get('/dashboard/top-seller')
+  @ApiOperation({
+    summary: 'get top photographers who have largest selling quantitive',
+  })
+  async getTopSellers(@Query() dashboardRequestDto: DashboardRequestDto) {
+    return await this.generateDashboardReportService.getTopSellers(
+      dashboardRequestDto,
+    );
+  }
+
+  @Get('/dashboard/top-seller/:id')
+  @ApiOperation({
+    summary: 'get detail report of a top seller (photographer) by id',
+  })
+  async getDetailOfATopSeller(
+    @Param('id') id: string,
+    @Query() dashboardRequestDto: DashboardRequestDto,
+  ) {
+    return await this.generateDashboardReportService.getTopSellerDetail(
+      id,
+      dashboardRequestDto,
+    );
   }
 
   @Post('/photo-trigger/process')

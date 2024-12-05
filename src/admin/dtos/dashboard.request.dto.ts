@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsDate } from 'class-validator';
+import { IsDate, Min } from 'class-validator';
 
 export class DashboardRequestDto {
   @ApiProperty({
