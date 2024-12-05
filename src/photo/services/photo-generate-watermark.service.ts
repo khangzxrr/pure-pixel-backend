@@ -97,6 +97,7 @@ export class PhotoGenerateWatermarkService {
     const sharp = await this.photoProcessService.sharpInitFromObjectKey(
       photo.originalPhotoUrl,
     );
+
     const watermark = await this.photoProcessService.makeWatermark(
       sharp,
       'PXL',
@@ -112,7 +113,7 @@ export class PhotoGenerateWatermarkService {
 
     const watermarkThumbnailKey = `thumbnail/watermark/${photo.id}.webp`;
     const watermarkThumbnailBuffer =
-      await this.photoProcessService.makeThumbnail(watermark);
+      await this.photoProcessService.thumbnailFromBuffer(watermarkBuffer);
     await this.photoProcessService.uploadFromBuffer(
       watermarkThumbnailKey,
       watermarkThumbnailBuffer,

@@ -354,6 +354,12 @@ export class PhotoService {
       }
     }
 
+    if (photoUpdateDto.watermark === true) {
+      this.photoGenerateWatermarkService.generateWatermark(id, {
+        text: 'PXL',
+      });
+    }
+
     if (photoUpdateDto.gps) {
       exif['latitude'] = photoUpdateDto.gps.latitude;
       exif['longitude'] = photoUpdateDto.gps.longitude;
