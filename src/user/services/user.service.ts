@@ -23,6 +23,8 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { Prisma } from '@prisma/client';
 import { ChatService } from 'src/chat/services/chat.service';
+import { PhotoRepository } from 'src/database/repositories/photo.repository';
+import { BookingRepository } from 'src/database/repositories/booking.repository';
 
 @Injectable()
 export class UserService {
@@ -31,6 +33,8 @@ export class UserService {
     @Inject() private readonly bunnyService: BunnyService,
     @Inject() private readonly keycloakService: KeycloakService,
     @Inject() private readonly chatService: ChatService,
+    @Inject() private readonly photoRepository: PhotoRepository,
+    @Inject() private readonly bookingRepository: BookingRepository,
     @Inject(CACHE_MANAGER) private cache: Cache,
   ) {}
 
@@ -295,6 +299,11 @@ export class UserService {
           comments: true,
           followers: true,
           followings: true,
+          photoshootPackages: {
+            where: {
+              deletedAt: null,
+            },
+          },
         },
       },
     });
@@ -304,6 +313,26 @@ export class UserService {
     }
 
     const meDto = plainToInstance(MeDto, user, {});
+
+    meDto.sellingPhotoCount = await this.photoRepository.count({
+      photographerId: userId,
+      photoSellings: {
+        some: {
+          active: true,
+        },
+      },
+      deletedAt: null,
+    });
+
+    meDto.normalPhotoCount = Number(user._count.photos);
+    meDto.totalPhotoCount = meDto.normalPhotoCount + meDto.sellingPhotoCount;
+
+    meDto.myBookingCount = user._count.bookings;
+    meDto.otherBookingCount = await this.bookingRepository.count({
+      originalPhotoshootPackage: {
+        userId,
+      },
+    });
 
     // meDto.enabled = keycloakUser.enabled;
     // meDto.roles = roles.map((r) => r.name);
