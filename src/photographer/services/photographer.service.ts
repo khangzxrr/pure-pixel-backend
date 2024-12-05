@@ -47,8 +47,6 @@ export class PhotographerService {
 
     const nameSearch = Utils.normalizeText(findAllRequestDto.search);
 
-    console.log(nameSearch);
-
     const rawCountQuery = await this.userRepository.rawCount(
       userId,
       keycloakUserIds,

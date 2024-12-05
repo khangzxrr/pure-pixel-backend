@@ -71,6 +71,10 @@ export class PhotoProcessConsumer extends WorkerHost {
       id: temporaryPhoto.bookingId,
     });
 
+    const photo = await this.photoRepository.findUniqueOrThrow(
+      temporaryPhoto.photoId,
+    );
+
     const sharp = await this.photoProcessService.sharpInitFromFilePath(
       temporaryPhoto.file.path,
     );
@@ -84,58 +88,12 @@ export class PhotoProcessConsumer extends WorkerHost {
       return;
     }
 
-    const metadata = await sharp.metadata();
-
-    const watermark = await this.photoProcessService.makeWatermark(
-      sharp,
-      'PXL',
+    const watermarkSharp = await this.photoProcessService.sharpInitFromFilePath(
+      photo.watermarkPhotoUrl,
     );
-    const watermarkBuffer = await watermark.toBuffer();
+    const watermarkBuffer = await watermarkSharp.toBuffer();
 
     const extension = Utils.getExtension(temporaryPhoto.file.path);
-    const watermarkFilePath = `/tmp/purepixel-local-storage/${temporaryPhoto.file.originalName}_watermark.${extension}`;
-
-    writeFileSync(watermarkFilePath, watermarkBuffer);
-
-    const photo = await this.photoRepository.create({
-      photographer: {
-        connect: {
-          id: temporaryPhoto.photographerId,
-        },
-      },
-      description: '',
-      title: temporaryPhoto.file.originalName,
-      normalizedTitle: Utils.normalizeText(temporaryPhoto.file.originalName),
-      size: temporaryPhoto.file.size,
-      exif: {},
-      width: metadata.width,
-      height: metadata.height,
-      status: 'PENDING',
-      photoType: 'BOOKING',
-      blurHash: '',
-      watermark: true,
-      visibility: 'PRIVATE',
-      originalPhotoUrl: temporaryPhoto.file.path,
-      watermarkPhotoUrl: watermarkFilePath,
-      booking: {
-        connect: {
-          id: booking.id,
-        },
-      },
-    });
-
-    this.logger.log(
-      `create temporary watermark for photo id: ${photo.id} of booking id: ${booking.id}`,
-    );
-
-    await this.notificationService.addNotificationToQueue({
-      userId: booking.userId,
-      type: 'IN_APP',
-      title: `Gói chụp ${booking.photoshootPackageHistory.title} có cập nhật mới`,
-      content: 'Gói chụp của bạn đã được cập nhật ảnh mới!',
-      payload: photo,
-      referenceType: 'BOOKING',
-    });
 
     const key = `${photo.photographerId}/${photo.id}.${extension}`;
     await this.bunnyService.uploadFromBuffer(key, buffer);
@@ -143,7 +101,8 @@ export class PhotoProcessConsumer extends WorkerHost {
     const watermarkKey = `watermark/${key}`;
     await this.bunnyService.uploadFromBuffer(watermarkKey, watermarkBuffer);
 
-    const thumbnailBuffer = await this.photoProcessService.makeThumbnail(sharp);
+    const thumbnailBuffer =
+      await this.photoProcessService.thumbnailFromBuffer(watermarkBuffer);
     await this.bunnyService.uploadFromBuffer(
       `thumbnail/${photo.id}.webp`,
       thumbnailBuffer,
@@ -169,7 +128,7 @@ export class PhotoProcessConsumer extends WorkerHost {
       },
       {
         name: PhotoConstant.DELETE_TEMPORARY_PHOTO_JOB_NAME,
-        data: watermarkFilePath,
+        data: photo.watermarkPhotoUrl,
         opts: {
           delay: 3000, //delay prevent race condition
         },

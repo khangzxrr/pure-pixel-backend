@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { RequestPhotoshootBookingRequestDto } from '../dtos/rest/request-photoshoot-booking.request.dto';
 import { BookingFindAllRequestDto } from '../dtos/rest/booking-find-all.request.dto';
 import { BookingRepository } from 'src/database/repositories/booking.repository';
@@ -39,9 +39,13 @@ import { Queue } from 'bullmq';
 import { PhotoConstant } from 'src/photo/constants/photo.constant';
 import { InjectQueue } from '@nestjs/bullmq';
 import { TemporaryBookingPhotoUpload } from 'src/photo/dtos/temporary-booking-photo-upload.dto';
+import { Utils } from 'src/infrastructure/utils/utils';
+import { writeFileSync } from 'fs';
 
 @Injectable()
 export class BookingService {
+  private readonly logger = new Logger(BookingService.name);
+
   constructor(
     @Inject() private readonly bookingRepository: BookingRepository,
     @Inject()
@@ -374,16 +378,85 @@ export class BookingService {
       throw new BookingNotAcceptedException();
     }
 
+    const sharp = await this.photoProcessService.sharpInitFromFilePath(
+      bookingUploadDto.file.path,
+    );
+
+    const buffer = await sharp.toBuffer();
+    if (buffer.length === 0) {
+      this.logger.log(
+        `temporary photo ${bookingUploadDto.file.path} of booking id: ${booking.id}  is deleted form file system, skip`,
+      );
+
+      return;
+    }
+
+    const metadata = await sharp.metadata();
+
+    const watermark = await this.photoProcessService.makeWatermark(
+      sharp,
+      'PXL',
+    );
+    const watermarkBuffer = await watermark.toBuffer();
+
+    const extension = Utils.getExtension(bookingUploadDto.file.path);
+    const watermarkFilePath = `/tmp/purepixel-local-storage/${bookingUploadDto.file.originalName}_watermark.${extension}`;
+
+    writeFileSync(watermarkFilePath, watermarkBuffer);
+
+    const photo = await this.photoRepository.create({
+      photographer: {
+        connect: {
+          id: userId,
+        },
+      },
+      description: '',
+      title: bookingUploadDto.file.originalName,
+      normalizedTitle: Utils.normalizeText(bookingUploadDto.file.originalName),
+      size: bookingUploadDto.file.size,
+      exif: {},
+      width: metadata.width,
+      height: metadata.height,
+      status: 'PENDING',
+      photoType: 'BOOKING',
+      blurHash: '',
+      watermark: true,
+      visibility: 'PRIVATE',
+      originalPhotoUrl: bookingUploadDto.file.path,
+      watermarkPhotoUrl: watermarkFilePath,
+      booking: {
+        connect: {
+          id: booking.id,
+        },
+      },
+    });
+
+    this.logger.log(
+      `create temporary watermark for photo id: ${photo.id} of booking id: ${booking.id}`,
+    );
+
+    await this.notificationService.addNotificationToQueue({
+      userId: booking.userId,
+      type: 'IN_APP',
+      title: `Gói chụp ${booking.photoshootPackageHistory.title} có cập nhật mới`,
+      content: 'Gói chụp của bạn đã được cập nhật ảnh mới!',
+      payload: photo,
+      referenceType: 'BOOKING',
+    });
+
     const temporaryBookingPhotoDto: TemporaryBookingPhotoUpload = {
       photographerId: userId,
       bookingId: bookingId,
       file: bookingUploadDto.file,
+      photoId: photo.id,
     };
 
     await this.photoProcessQueue.add(
       PhotoConstant.UPLOAD_BOOKING_PHOTO_JOB_NAME,
       temporaryBookingPhotoDto,
     );
+
+    return await this.photoService.signPhoto(photo);
   }
 
   async uploadPhoto(

@@ -79,6 +79,7 @@ export class PhotographerBookingController {
     status: 202,
     description:
       'accepted file and start to process photo, when done it will notify via websocket (notification)',
+    type: SignedPhotoDto,
   })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
@@ -93,15 +94,12 @@ export class PhotographerBookingController {
     @AuthenticatedUser() user: ParsedUserDto,
     @Param('bookingId') bookingId: string,
     @Body() bookingUploadDto: FileSystemBookngUploadDto,
-    @Res() res: Response,
   ) {
-    await this.bookingService.filesystemUploadPhoto(
+    return await this.bookingService.filesystemUploadPhoto(
       user.sub,
       bookingId,
       bookingUploadDto,
     );
-
-    res.status(202).send();
   }
 
   @Put(':bookingId/upload')

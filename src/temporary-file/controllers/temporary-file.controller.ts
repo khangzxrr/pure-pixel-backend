@@ -19,7 +19,7 @@ export class TemporaryfileController {
 
   @Get()
   @ApiOperation({
-    summary: 'get buffer from filename',
+    summary: 'get buffer from filepath',
   })
   async getBufferFromfilename(
     @Query('path') path: string,
