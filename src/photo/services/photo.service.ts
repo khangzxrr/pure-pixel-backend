@@ -222,11 +222,7 @@ export class PhotoService {
   async signPhotoDetail(photoDetail: PhotoDetail) {
     const signedPhotoDto = plainToInstance(SignedPhotoDto, photoDetail);
 
-    let url = photoDetail.watermark
-      ? photoDetail.watermarkPhotoUrl
-      : photoDetail.originalPhotoUrl;
-
-    if (photoDetail.watermark && url.length === 0) {
+    if (photoDetail.watermark && photoDetail.watermarkPhotoUrl.length === 0) {
       const updatedPhoto = await this.sendImageWatermarkQueue(
         photoDetail.photographerId,
         photoDetail.id,
@@ -234,28 +230,30 @@ export class PhotoService {
           text: 'PXL',
         },
       );
-
-      url = updatedPhoto.watermarkPhotoUrl;
-    }
-
-    if (url.length == 0) {
-      console.log(
-        `error photo without thumbnail or original: ${photoDetail.id}`,
-      );
+      signedPhotoDto.watermarkPhotoUrl = updatedPhoto.watermarkPhotoUrl;
     }
 
     if (photoDetail.status === 'PENDING') {
-      signedPhotoDto.signedUrl = {
-        url: `${process.env.BACKEND_ORIGIN}/photo/${photoDetail.id}/temporary-photo`,
-        thumbnail: `${process.env.BACKEND_ORIGIN}/photo/${photoDetail.id}/temporary-photo`,
-      };
+      if (photoDetail.watermark) {
+        signedPhotoDto.signedUrl =
+          this.photoProcessService.signPendingWatermarkPhoto(photoDetail.id);
+      } else {
+        signedPhotoDto.signedUrl = this.photoProcessService.signPendingPhoto(
+          photoDetail.id,
+        );
+      }
     } else {
-      signedPhotoDto.signedUrl = {
-        url: this.bunnyService.getPresignedFile(url),
-        thumbnail: this.bunnyService.getPresignedFile(
-          `thumbnail/${photoDetail.id}.webp`,
-        ),
-      };
+      if (photoDetail.watermark) {
+        signedPhotoDto.signedUrl = this.photoProcessService.signWatermarkPhoto(
+          photoDetail.watermarkPhotoUrl,
+          photoDetail.id,
+        );
+      } else {
+        signedPhotoDto.signedUrl = this.photoProcessService.signPhoto(
+          photoDetail.originalPhotoUrl,
+          photoDetail.id,
+        );
+      }
     }
 
     signedPhotoDto.photoSellings?.forEach((photoSelling) => {
@@ -294,23 +292,29 @@ export class PhotoService {
     }
 
     if (photo.status === 'PENDING') {
-      signedPhotoDto.signedUrl = {
-        url: `${process.env.BACKEND_ORIGIN}/photo/${photo.id}/temporary-photo`,
-        thumbnail: `${process.env.BACKEND_ORIGIN}/photo/${photo.id}/temporary-photo`,
-      };
+      if (photo.watermark) {
+        signedPhotoDto.signedUrl =
+          this.photoProcessService.signPendingWatermarkPhoto(photo.id);
+      } else {
+        signedPhotoDto.signedUrl = this.photoProcessService.signPendingPhoto(
+          photo.id,
+        );
+      }
 
       return signedPhotoDto;
     }
 
-    const signedUrl = this.bunnyService.getPresignedFile(url);
-    const signedThumbnailUrl = this.bunnyService.getPresignedFile(
-      `thumbnail/${photo.id}.webp`,
-    );
-
-    signedPhotoDto.signedUrl = {
-      url: signedUrl,
-      thumbnail: signedThumbnailUrl,
-    };
+    if (photo.watermark) {
+      signedPhotoDto.signedUrl = this.photoProcessService.signWatermarkPhoto(
+        photo.watermarkPhotoUrl,
+        photo.id,
+      );
+    } else {
+      signedPhotoDto.signedUrl = this.photoProcessService.signPhoto(
+        photo.originalPhotoUrl,
+        photo.id,
+      );
+    }
 
     return signedPhotoDto;
   }

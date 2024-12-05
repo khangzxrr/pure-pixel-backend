@@ -110,6 +110,14 @@ export class PhotoGenerateWatermarkService {
       watermarkBuffer,
     );
 
+    const watermarkThumbnailKey = `thumbnail/watermark/${photo.id}.webp`;
+    const watermarkThumbnailBuffer =
+      await this.photoProcessService.makeThumbnail(watermark);
+    await this.photoProcessService.uploadFromBuffer(
+      watermarkThumbnailKey,
+      watermarkThumbnailBuffer,
+    );
+
     await this.photoRepository.updateById(photo.id, {
       watermarkPhotoUrl: photo.watermarkPhotoUrl,
     });

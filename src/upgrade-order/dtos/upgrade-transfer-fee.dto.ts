@@ -20,9 +20,6 @@ export class UpgradeTransferFeeDto {
   maxiumDiscoutPrice: number;
 
   @ApiProperty()
-  maxiumDiscoutTimeSpan: number;
-
-  @ApiProperty()
   @Type(() => UpgradeOrderDto)
   currentActivePackage: UpgradeOrderDto;
 
