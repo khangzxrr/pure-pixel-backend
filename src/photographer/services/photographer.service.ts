@@ -142,6 +142,7 @@ export class PhotographerService {
 
   async getPhotosOfMe(userId: string, filter: FindAllPhotoFilterDto) {
     filter.photographerId = userId;
+    filter.photoType = 'RAW';
 
     return await this.photoService.findAll(userId, filter);
   }
