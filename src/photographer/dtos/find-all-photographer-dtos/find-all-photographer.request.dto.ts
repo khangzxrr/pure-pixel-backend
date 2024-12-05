@@ -55,6 +55,8 @@ export class FindAllPhotographerRequestDto extends PagingPaginatedRequestDto {
   toWhere(userId: string) {
     const where: Prisma.UserWhereInput = {};
 
+    console.log(Utils.normalizeText(this.search));
+
     if (this.search) {
       where.normalizedName = {
         contains: Utils.normalizeText(this.search),
