@@ -19,6 +19,7 @@ import { PhotoConstant } from 'src/photo/constants/photo.constant';
 import { DashboardRequestDto } from '../dtos/dashboard.request.dto';
 import { DashboardReportRepository } from 'src/database/repositories/dashboard-report.repository';
 import { Utils } from 'src/infrastructure/utils/utils';
+import { PhotoGenerateWatermarkService } from 'src/photo/services/photo-generate-watermark.service';
 
 @Injectable()
 export class AdminService {
@@ -29,6 +30,8 @@ export class AdminService {
     @Inject() private readonly photoProcessConsumer: PhotoProcessConsumer,
     @Inject() private readonly userService: UserService,
     @Inject() private readonly photoRepository: PhotoRepository,
+    @Inject()
+    private readonly photoGenerateWatermark: PhotoGenerateWatermarkService,
     @InjectQueue(PhotoConstant.PHOTO_PROCESS_QUEUE)
     private readonly photoProcessQueue: Queue,
     @Inject()
@@ -70,6 +73,12 @@ export class AdminService {
         break;
       }
     }
+  }
+
+  async generateWatermarkPhoto(photoId: string) {
+    return await this.photoGenerateWatermark.generateWatermark(photoId, {
+      text: 'PXL',
+    });
   }
 
   async triggerProcess(photoId: string) {
