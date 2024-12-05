@@ -16,6 +16,21 @@ export class MeDto extends ResponseBaseDto {
   @ApiProperty()
   maxPackageCount: string;
 
+  @ApiProperty()
+  sellingPhotoCount: number = 0;
+
+  @ApiProperty()
+  normalPhotoCount: number = 0;
+
+  @ApiProperty()
+  totalPhotoCount: number = 0;
+
+  @ApiProperty()
+  myBookingCount: number = 0;
+
+  @ApiProperty()
+  otherBookingCount: number = 0;
+
   @Expose({ groups: [Constants.PHOTOGRAPHER_ROLE] })
   @ApiProperty()
   ftpUsername: string;

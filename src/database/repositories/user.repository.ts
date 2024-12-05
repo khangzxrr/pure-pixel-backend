@@ -137,6 +137,7 @@ export class UserRepository {
       include,
     });
   }
+
   async findUnique(userId: string, include?: Prisma.UserInclude) {
     return this.prisma.user.findUnique({
       where: {
@@ -144,6 +145,10 @@ export class UserRepository {
       },
       include,
     });
+  }
+
+  aggregate(aggregate: Prisma.UserAggregateArgs) {
+    return this.prisma.user.aggregate(aggregate);
   }
 
   update(userId: string, user: Prisma.UserUpdateInput) {
