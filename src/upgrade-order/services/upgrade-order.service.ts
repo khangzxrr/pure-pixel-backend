@@ -21,6 +21,7 @@ import { UserRepository } from 'src/database/repositories/user.repository';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { KeycloakService } from 'src/authen/services/keycloak.service';
 import { NotificationService } from 'src/notification/services/notification.service';
+import { CannotDowngradeOrderException } from '../exceptions/cannot-downgrade-order.exception';
 
 @Injectable()
 export class UpgradeOrderService {
@@ -86,6 +87,15 @@ export class UpgradeOrderService {
       throw new UpgradePackageNotFoundException();
     }
 
+    if (activatedUpgradeOrder && upgradePackage) {
+      if (
+        activatedUpgradeOrder.upgradePackageHistory.maxPhotoQuota >
+        upgradePackage.maxPhotoQuota
+      ) {
+        throw new CannotDowngradeOrderException();
+      }
+    }
+
     if (
       upgradeTransferFeeRequestDto.totalMonths < upgradePackage.minOrderMonth
     ) {
@@ -107,8 +117,6 @@ export class UpgradeOrderService {
       : new Decimal(0);
     //prevent activatedUpgradeOrder null
 
-    const maxiumDiscoutTimeSpan = 7 * 24 * 60 * 60 * 1000; //one week - cover to millis
-
     let remainPrice = upgradePackage.price.mul(upgradePackage.minOrderMonth);
 
     if (!activatedUpgradeOrder) {
@@ -117,7 +125,6 @@ export class UpgradeOrderService {
         timeSpanPassed: 0,
         discountPrice: 0,
         refundPrice: 0,
-        maxiumDiscoutTimeSpan: maxiumDiscoutTimeSpan,
         maxiumDiscoutPrice: maxiumDiscoutPrice.toNumber(),
         upgradePackage: plainToInstance(UpgradePackageDto, upgradePackage),
         currentActivePackage: null,
@@ -128,6 +135,8 @@ export class UpgradeOrderService {
 
     const timeSpanRemainOfCurrentUpgradeOrder =
       now.getTime() - activatedUpgradeOrder.createdAt.getTime();
+
+    const maxiumDiscoutTimeSpan = activatedUpgradeOrder.expiredAt.getTime();
 
     remainPrice = upgradePackage.price
       .mul(upgradePackage.minOrderMonth)
@@ -142,7 +151,6 @@ export class UpgradeOrderService {
         discountPrice: maxiumDiscoutPrice.toNumber(),
         maxiumDiscoutPrice: maxiumDiscoutPrice.toNumber(),
         upgradePackage: plainToInstance(UpgradePackageDto, upgradePackage),
-        maxiumDiscoutTimeSpan: maxiumDiscoutTimeSpan,
         currentActivePackage: plainToInstance(
           UpgradeOrderDto,
           activatedUpgradeOrder,
@@ -160,7 +168,6 @@ export class UpgradeOrderService {
         discountPrice: 0,
         maxiumDiscoutPrice: maxiumDiscoutPrice.toNumber(),
         upgradePackage: plainToInstance(UpgradePackageDto, upgradePackage),
-        maxiumDiscoutTimeSpan: maxiumDiscoutTimeSpan,
         currentActivePackage: plainToInstance(
           UpgradeOrderDto,
           activatedUpgradeOrder,
@@ -186,7 +193,6 @@ export class UpgradeOrderService {
       timeSpanPassed: timeSpanRemainOfCurrentUpgradeOrder,
       discountPrice: discoutRemain.floor().toNumber(),
       maxiumDiscoutPrice: maxiumDiscoutPrice.toNumber(),
-      maxiumDiscoutTimeSpan: maxiumDiscoutTimeSpan,
       upgradePackage: plainToInstance(UpgradePackageDto, upgradePackage),
       currentActivePackage: plainToInstance(
         UpgradeOrderDto,
