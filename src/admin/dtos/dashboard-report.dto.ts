@@ -14,10 +14,6 @@ export class DashboardReportDto {
 
   @ApiProperty()
   @Type(() => Number)
-  totalEmployee: number;
-
-  @ApiProperty()
-  @Type(() => Number)
   totalRevenue: number;
 
   @ApiProperty()
@@ -37,10 +33,6 @@ export class DashboardReportDto {
   totalPhoto: number;
 
   @ApiProperty()
-  @Type(() => Number)
-  userTotal: number;
-
-  @ApiProperty()
   @Type(() => TopUsedUpgradePackageDto)
   topUsedUpgradePackages: TopUsedUpgradePackageDto[];
 
@@ -51,25 +43,23 @@ export class DashboardReportDto {
   constructor(
     totalCustomer: number,
     totalPhotographer: number,
-    totalEmployee: number,
     totalRevenue: number,
     totalPhotoshootPackage: number,
     revenueFromUpgradePackage: number,
     revenueFromSellingPhoto: number,
     totalPhoto: number,
-    userTotal: number,
     topUsedUpgradePackages: TopUsedUpgradePackageDto[],
     topSelledPhotos: TopSellingPhotoDto[],
   ) {
     this.totalCustomer = totalCustomer;
     this.totalPhotographer = totalPhotographer;
-    this.totalEmployee = totalEmployee;
+
     this.totalRevenue = totalRevenue;
     this.totalPhotoshootPackage = totalPhotoshootPackage;
     this.revenueFromUpgradePackage = revenueFromUpgradePackage;
     this.revenueFromSellingPhoto = revenueFromSellingPhoto;
     this.totalPhoto = totalPhoto;
-    this.userTotal = userTotal;
+
     this.topUsedUpgradePackages = topUsedUpgradePackages;
     this.topSelledPhotos = topSelledPhotos;
   }

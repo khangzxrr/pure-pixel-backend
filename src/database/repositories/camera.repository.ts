@@ -35,11 +35,19 @@ export class CameraRepository {
     });
   }
 
-  findMany(where?: Prisma.CameraWhereInput, skip?: number, take?: number) {
+  findMany(
+    where?: Prisma.CameraWhereInput,
+    include?: Prisma.CameraInclude,
+    skip?: number,
+    take?: number,
+    orderBy?: Prisma.CameraOrderByWithRelationInput[],
+  ) {
     return this.prismaService.extendedClient().camera.findMany({
       where,
+      include,
       skip,
       take,
+      orderBy,
     });
   }
 

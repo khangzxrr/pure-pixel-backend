@@ -8,6 +8,12 @@ import { PhotoBuyDetail } from '../types/photo-buy';
 export class PhotoBuyRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  count(where: Prisma.PhotoBuyWhereInput) {
+    return this.prisma.photoBuy.count({
+      where,
+    });
+  }
+
   findAll(where: Prisma.PhotoBuyWhereInput): PrismaPromise<PhotoBuyDetail[]> {
     return this.prisma.photoBuy.findMany({
       where,

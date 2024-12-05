@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, PrismaPromise } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 import { PhotoshootPackage } from '../types/photoshoot-package';
 
 @Injectable()
 export class PhotoshootRepository {
   constructor(private readonly prisma: PrismaService) {}
+
   async findUniqueOrThrow(id: string) {
     return this.prisma.extendedClient().photoshootPackage.findUniqueOrThrow({
       where: {

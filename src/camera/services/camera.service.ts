@@ -85,6 +85,7 @@ export class CameraService {
     const count = await this.cameraRepository.count({});
     const cameras: any[] = await this.cameraRepository.findMany(
       {},
+      {},
       findAllDto.toSkip(),
       findAllDto.limit,
     );

@@ -36,6 +36,7 @@ import { FollowRepository } from './repositories/follow.repository';
 import { PhotoshootPackageReviewRepository } from './repositories/photoshoot-package-review.repository';
 import { DashboardReportRepository } from './repositories/dashboard-report.repository';
 import { PhotoshootPackageShowcaseRepository } from './repositories/photoshoot-package-showcase.repository';
+import { PhotoSellHistoryRepository } from './repositories/photo-sell-history.repository';
 @Module({
   providers: [
     PrismaService,
@@ -75,6 +76,7 @@ import { PhotoshootPackageShowcaseRepository } from './repositories/photoshoot-p
     PhotoshootPackageReviewRepository,
     DashboardReportRepository,
     PhotoshootPackageShowcaseRepository,
+    PhotoSellHistoryRepository,
   ],
   exports: [
     PrismaService,
@@ -114,6 +116,7 @@ import { PhotoshootPackageShowcaseRepository } from './repositories/photoshoot-p
     PhotoshootPackageReviewRepository,
     DashboardReportRepository,
     PhotoshootPackageShowcaseRepository,
+    PhotoSellHistoryRepository,
   ],
 })
 export class DatabaseModule {}
