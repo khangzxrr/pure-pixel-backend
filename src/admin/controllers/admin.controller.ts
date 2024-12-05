@@ -74,8 +74,14 @@ export class AdminController {
   @ApiOperation({
     summary: 'get detail report of a top seller (photographer) by id',
   })
-  async getDetailOfATopSeller(@Param('id') id: string) {
-    return await this.generateDashboardReportService.getTopSellerDetail(id);
+  async getDetailOfATopSeller(
+    @Param('id') id: string,
+    @Query() dashboardRequestDto: DashboardRequestDto,
+  ) {
+    return await this.generateDashboardReportService.getTopSellerDetail(
+      id,
+      dashboardRequestDto,
+    );
   }
 
   @Post('/photo-trigger/process')

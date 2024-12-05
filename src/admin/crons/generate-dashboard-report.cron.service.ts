@@ -61,12 +61,17 @@ export class GenerateDashboardReportService {
     private readonly photoService: PhotoService,
   ) {}
 
-  async getTopSellerDetail(id: string) {
+  async getTopSellerDetail(
+    id: string,
+    dashboardRequestDto: DashboardRequestDto,
+  ) {
     const user = await this.userRepository.findUniqueOrThrow(id);
 
     const topSoldPhotoIds =
       await this.photoRepository.findPhotoIdsByPhotographerIdOrderByPhotoSellingCount(
         user.id,
+        dashboardRequestDto.fromDate,
+        dashboardRequestDto.toDate,
       );
 
     const topSoldPhotoPromises = topSoldPhotoIds.map(async (ts) => {
@@ -89,6 +94,10 @@ export class GenerateDashboardReportService {
         0,
         {
           userId: user.id,
+          createdAt: {
+            lte: dashboardRequestDto.toDate,
+            gte: dashboardRequestDto.fromDate,
+          },
         },
         [
           {
@@ -103,6 +112,24 @@ export class GenerateDashboardReportService {
       PhotoshootPackageDto,
       topPhotoshootPackages,
     );
+
+    const photoSellTransactions = await this.transactionRepository.findAll({
+      userId: user.id,
+      type: 'IMAGE_SELL',
+      status: 'SUCCESS',
+
+      createdAt: {
+        lte: dashboardRequestDto.toDate,
+        gte: dashboardRequestDto.fromDate,
+      },
+    });
+
+    const summedPhotoSellRevenues = photoSellTransactions.reduce(
+      (acc, s) => acc.add(s.amount.add(s.fee)),
+      new Decimal(0),
+    );
+
+    topSellerDetail.photoSellRevenue = summedPhotoSellRevenues.toNumber();
 
     return topSellerDetail;
   }

@@ -20,4 +20,7 @@ export class TopSellerDetailDto {
   })
   @Type(() => PhotoshootPackageDto)
   topPhotoshootPackages: PhotoshootPackageDto[];
+
+  @ApiProperty()
+  photoSellRevenue: number = 0;
 }
