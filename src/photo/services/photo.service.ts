@@ -354,7 +354,7 @@ export class PhotoService {
       }
     }
 
-    if (photoUpdateDto.watermark) {
+    if (photoUpdateDto.watermark === true) {
       this.photoGenerateWatermarkService.generateWatermark(id, {
         text: 'PXL',
       });
