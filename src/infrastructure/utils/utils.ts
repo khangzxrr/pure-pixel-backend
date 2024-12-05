@@ -23,7 +23,7 @@ export class Utils {
       return null;
     }
 
-    return tvkd.cLowerCase(this.removedNullChar(text).toLowerCase());
+    return tvkd.cLowerCase(this.removedNullChar(text).trim().toLowerCase());
   }
 
   static randomString(length: number) {

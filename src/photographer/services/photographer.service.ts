@@ -19,6 +19,7 @@ import { Constants } from 'src/infrastructure/utils/constants';
 import { FollowingService } from './following.service';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
+import { Utils } from 'src/infrastructure/utils/utils';
 
 @Injectable()
 export class PhotographerService {
@@ -42,13 +43,14 @@ export class PhotographerService {
       0,
       -1,
     );
-
     const keycloakUserIds = keycloakUsers.map((u) => u.id);
+
+    const nameSearch = Utils.normalizeText(findAllRequestDto.search);
 
     const rawCountQuery = await this.userRepository.rawCount(
       userId,
       keycloakUserIds,
-      findAllRequestDto.search ? findAllRequestDto.search : '',
+      findAllRequestDto.search ? nameSearch : '',
       findAllRequestDto.isFollowed,
     );
 
@@ -57,32 +59,13 @@ export class PhotographerService {
       keycloakUserIds,
       findAllRequestDto.toSkip(),
       findAllRequestDto.limit,
-      findAllRequestDto.search ? findAllRequestDto.search : '',
+      findAllRequestDto.search ? nameSearch : '',
       findAllRequestDto.isFollowed,
     );
 
     const count: number = Number(rawCountQuery[0].count);
 
-    const dtoPromises = rawPhotographers.map(async (p) => {
-      const dto = plainToInstance(PhotographerDTO, p);
-
-      dto.photoCount = await this.photoRepository.count({
-        photographerId: p.id,
-      });
-
-      const voteAggregate = await this.photoVoteRepository.aggregate({
-        isUpvote: true,
-        photo: {
-          photographerId: p.id,
-        },
-      });
-
-      dto.voteCount = voteAggregate._count.id;
-
-      return dto;
-    });
-
-    const dtos = await Promise.all(dtoPromises);
+    const dtos = plainToInstance(PhotographerDTO, rawPhotographers);
 
     return new FindAllPhotographerResponseDto(
       findAllRequestDto.limit,
