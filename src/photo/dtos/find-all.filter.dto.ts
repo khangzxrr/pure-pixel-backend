@@ -9,7 +9,6 @@ import { Exclude, Transform, Type } from 'class-transformer';
 import {
   IsArray,
   IsBoolean,
-  IsBooleanString,
   IsEnum,
   IsNotEmpty,
   IsNumber,
@@ -135,9 +134,6 @@ export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
   @IsBoolean()
   selling?: boolean;
 
-  @Exclude()
-  visibility?: PhotoVisibility;
-
   @ApiProperty({
     required: false,
     enum: PhotoStatus,
@@ -150,6 +146,13 @@ export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
   @IsOptional()
   @ToBoolean()
   isFollowed?: boolean;
+
+  @ApiPropertyOptional({
+    enum: PhotoVisibility,
+  })
+  @IsOptional()
+  @IsEnum(PhotoVisibility)
+  visibility?: PhotoVisibility;
 
   @ApiProperty({
     required: false,
