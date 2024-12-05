@@ -286,6 +286,7 @@ export class UserService {
         select: {
           photos: {
             where: {
+              photoType: 'RAW',
               deletedAt: null,
             },
           },
