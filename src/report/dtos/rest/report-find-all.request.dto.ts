@@ -3,6 +3,7 @@ import { Prisma, ReportStatus, ReportType } from '@prisma/client';
 import { Transform } from 'class-transformer';
 import { IsArray, IsEnum, IsOptional, IsString } from 'class-validator';
 import { PagingPaginatedRequestDto } from 'src/infrastructure/restful/paging-paginated.request.dto';
+import { ToArray } from 'src/infrastructure/transforms/to-array';
 
 export class ReportFindAllRequestDto extends PagingPaginatedRequestDto {
   @ApiProperty({
@@ -15,10 +16,13 @@ export class ReportFindAllRequestDto extends PagingPaginatedRequestDto {
   @ApiProperty({
     required: false,
     enum: ReportStatus,
+    isArray: true,
   })
   @IsOptional()
-  @IsEnum(ReportStatus)
-  reportStatus?: ReportStatus;
+  @ToArray()
+  @IsArray()
+  @IsEnum(ReportStatus, { each: true })
+  reportStatuses?: ReportStatus[];
 
   @ApiProperty({
     required: false,
@@ -26,7 +30,7 @@ export class ReportFindAllRequestDto extends PagingPaginatedRequestDto {
     enum: ReportType,
   })
   @IsOptional()
-  @Transform(({ value }) => (Array.isArray(value) ? value : value.split(',')))
+  @ToArray()
   @IsArray()
   @IsEnum(ReportType, { each: true })
   reportTypes?: ReportType[];
@@ -70,8 +74,10 @@ export class ReportFindAllRequestDto extends PagingPaginatedRequestDto {
       };
     }
 
-    if (this.reportStatus) {
-      where.reportStatus = this.reportStatus;
+    if (this.reportStatuses) {
+      where.reportStatus = {
+        in: this.reportStatuses,
+      };
     }
 
     if (this.reportTypes) {
