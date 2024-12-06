@@ -29,6 +29,7 @@ import { TopSellerDetailDto } from '../dtos/top-seller-detail.dto';
 import { TopSoldPhotoDto } from '../dtos/top-sold-photo.dto';
 import { PhotoService } from 'src/photo/services/photo.service';
 import { PhotoshootPackageDto } from 'src/photoshoot-package/dtos/photoshoot-package.dto';
+import { DashboardReportDto } from '../dtos/dashboard-report.dto';
 
 @Injectable()
 export class GenerateDashboardReportService {
@@ -190,7 +191,9 @@ export class GenerateDashboardReportService {
     return dtos;
   }
 
-  async generateDashboardData(dashboardRequestDto: DashboardRequestDto) {
+  async generateDashboardData(
+    dashboardRequestDto: DashboardRequestDto,
+  ): Promise<DashboardReportDto> {
     const startDateTimestamp = dashboardRequestDto.fromDate.getTime();
     const endDateTimestamp = dashboardRequestDto.toDate.getTime();
 
@@ -313,11 +316,11 @@ export class GenerateDashboardReportService {
           upgradePackageDto,
         };
       });
-    const topUsedUpgradePackageDtos = await Promise.all(
+    const topUsedUpgradePackage = await Promise.all(
       topUsedUpgradePackageDtoPromises,
     );
 
-    const topSellingPhoto = await this.photoSellRepository.findMany(
+    const topSellingPhotoEntities = await this.photoSellRepository.findMany(
       {
         createdAt: {
           lte: dashboardRequestDto.toDate,
@@ -352,7 +355,7 @@ export class GenerateDashboardReportService {
         },
       },
     );
-    const topSellingPhotoDtos: TopSellingPhotoDto[] = topSellingPhoto.map(
+    const topSellingPhoto: TopSellingPhotoDto[] = topSellingPhotoEntities.map(
       (p) => {
         return {
           totalSelled: p._count.photoSellHistories,
@@ -368,26 +371,14 @@ export class GenerateDashboardReportService {
       },
     });
 
-    const topUsageCameras = await this.cameraRepository.findMany(
-      {},
-      {
-        _count: {
-          select: {
-            cameraOnUsers: true,
-          },
+    const totalSellingPhoto = await this.photoRepository.count({
+      photoSellings: {
+        some: {
+          active: true,
         },
       },
-      0,
-      5,
-      [
-        {
-          cameraOnUsers: {
-            _count: 'desc',
-          },
-        },
-      ],
-    );
-    const topUsageCameraDtos = plainToInstance(CameraDto, topUsageCameras);
+      deletedAt: null,
+    });
 
     return {
       totalCustomer,
@@ -398,10 +389,9 @@ export class GenerateDashboardReportService {
       revenueFromSellingPhoto: revenueFromSellingPhoto.toNumber(),
       totalRevenue: totalRevenue.toNumber(),
       totalPhoto,
+      totalSellingPhoto,
+      topUsedUpgradePackage,
       topSellingPhoto,
-      topUsedUpgradePackageDtos,
-      topSellingPhotoDtos,
-      topUsageCameraDtos,
     };
   }
 }

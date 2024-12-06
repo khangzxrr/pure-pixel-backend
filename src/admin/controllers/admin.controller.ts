@@ -17,6 +17,7 @@ import { Constants } from 'src/infrastructure/utils/constants';
 import { DashboardDto } from '../dtos/dashboard.dto';
 import { DashboardRequestDto } from '../dtos/dashboard.request.dto';
 import { GenerateDashboardReportService } from '../crons/generate-dashboard-report.cron.service';
+import { DashboardReportDto } from '../dtos/dashboard-report.dto';
 
 @Controller('admin')
 @ApiTags('admin')
@@ -50,7 +51,7 @@ export class AdminController {
     summary: 'get dashboard report data',
   })
   @ApiOkResponse({
-    type: DashboardDto,
+    type: DashboardReportDto,
   })
   async getDashboardReportData(
     @Query() dashboardRequestDto: DashboardRequestDto,
