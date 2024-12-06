@@ -9,6 +9,7 @@ import { CameraModule } from 'src/camera/camera.module';
 import { UserModule } from 'src/user/user.module';
 import { QueueModule } from 'src/queue/queue.module';
 import { GenerateDashboardReportService } from './crons/generate-dashboard-report.cron.service';
+import { NotificationModule } from 'src/notification/notification.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { GenerateDashboardReportService } from './crons/generate-dashboard-repor
     UserModule,
     CameraModule,
     QueueModule,
+    NotificationModule,
   ],
   providers: [AdminService, GenerateDashboardReportService],
   controllers: [AdminController],

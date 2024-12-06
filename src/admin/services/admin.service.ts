@@ -20,6 +20,7 @@ import { DashboardRequestDto } from '../dtos/dashboard.request.dto';
 import { DashboardReportRepository } from 'src/database/repositories/dashboard-report.repository';
 import { Utils } from 'src/infrastructure/utils/utils';
 import { PhotoGenerateWatermarkService } from 'src/photo/services/photo-generate-watermark.service';
+import { NotificationService } from 'src/notification/services/notification.service';
 
 @Injectable()
 export class AdminService {
@@ -36,7 +37,11 @@ export class AdminService {
     private readonly photoProcessQueue: Queue,
     @Inject()
     private readonly dashboardReportRepository: DashboardReportRepository,
+    @Inject()
+    private readonly notificationService: NotificationService,
   ) {}
+
+  async banUser(userId: string) {}
 
   async getDashboardReport(dashboardRequestDto: DashboardRequestDto) {
     return await this.dashboardReportRepository.findMany({
