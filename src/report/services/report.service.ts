@@ -189,7 +189,15 @@ export class ReportService {
             break;
         }
       } catch (e) {
-        console.log(e);
+        console.log(
+          `error getting reference entity, close this report ${r.id}`,
+        );
+
+        await this.reportRepository.updateById(r.id, {
+          reportStatus: 'CLOSED',
+        });
+        r.reportStatus = 'CLOSED';
+
         return r;
       }
 
