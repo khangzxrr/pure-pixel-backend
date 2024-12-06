@@ -154,6 +154,7 @@ export class ReportService {
       try {
         switch (r.reportType) {
           case 'USER':
+            r.referencedUser = null;
             const user = await this.userRepository.findUnique(
               r.referenceId,
               {},
@@ -161,6 +162,7 @@ export class ReportService {
             r.referencedUser = plainToInstance(UserDto, user);
             break;
           case 'PHOTO':
+            r.referencedPhoto = null;
             const photo = await this.photoService.findById(
               '',
               r.referenceId,
@@ -170,12 +172,14 @@ export class ReportService {
             r.referencedPhoto = photo;
             break;
           case 'COMMENT':
+            r.referencedComment = null;
             const comment = await this.commentRepository.findUniqueOrThrow({
               id: r.referenceId,
             });
             r.referencedComment = plainToInstance(CommentDto, comment);
             break;
           case 'BOOKING':
+            r.referencedBooking = null;
             const booking = await this.bookingRepository.findUniqueOrThrow({
               id: r.referenceId,
             });
@@ -185,7 +189,8 @@ export class ReportService {
             break;
         }
       } catch (e) {
-        return null;
+        console.log(e);
+        return r;
       }
 
       return r;
