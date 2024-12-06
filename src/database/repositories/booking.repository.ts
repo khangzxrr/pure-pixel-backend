@@ -23,6 +23,10 @@ export class BookingRepository {
     });
   }
 
+  async aggregate(args: Prisma.BookingAggregateArgs) {
+    return this.prisma.extendedClient().booking.aggregate(args);
+  }
+
   updateByIdQuery(id: string, data: Prisma.BookingUpdateInput) {
     return this.prisma.extendedClient().booking.update({
       where: {
