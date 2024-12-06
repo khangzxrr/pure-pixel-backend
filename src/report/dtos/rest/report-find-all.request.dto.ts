@@ -30,7 +30,7 @@ export class ReportFindAllRequestDto extends PagingPaginatedRequestDto {
     enum: ReportType,
   })
   @IsOptional()
-  @Transform(({ value }) => (Array.isArray(value) ? value : value.split(',')))
+  @ToArray()
   @IsArray()
   @IsEnum(ReportType, { each: true })
   reportTypes?: ReportType[];
