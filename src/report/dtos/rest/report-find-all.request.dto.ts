@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Prisma, ReportStatus, ReportType } from '@prisma/client';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsEnum, IsOptional, IsString } from 'class-validator';
 import { PagingPaginatedRequestDto } from 'src/infrastructure/restful/paging-paginated.request.dto';
 
 export class ReportFindAllRequestDto extends PagingPaginatedRequestDto {
@@ -21,11 +21,13 @@ export class ReportFindAllRequestDto extends PagingPaginatedRequestDto {
 
   @ApiProperty({
     required: false,
+    isArray: true,
     enum: ReportType,
   })
   @IsOptional()
-  @IsEnum(ReportType)
-  reportType?: ReportType;
+  @IsArray()
+  @IsEnum(ReportType, { each: true })
+  reportTypes?: ReportType[];
 
   @ApiProperty({
     required: false,
@@ -70,8 +72,10 @@ export class ReportFindAllRequestDto extends PagingPaginatedRequestDto {
       where.reportStatus = this.reportStatus;
     }
 
-    if (this.reportType) {
-      where.reportType = this.reportType;
+    if (this.reportTypes) {
+      where.reportType = {
+        in: this.reportTypes,
+      };
     }
 
     if (this.userId) {
