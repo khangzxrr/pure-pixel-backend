@@ -1,6 +1,7 @@
 import {
   ClientRepresentation,
   KeycloakAdminClient,
+  RoleRepresentation,
   UserRepresentation,
 } from '@s3pweb/keycloak-admin-client-cjs';
 import { CreateKeycloakUserDto } from '../dtos/create-keycloak-user.dto';
@@ -8,6 +9,7 @@ import { CreateKeycloakUserDto } from '../dtos/create-keycloak-user.dto';
 import { UpdateKeycloakUserDto } from '../dtos/update-keycloak-user.dto';
 import { Inject, Injectable } from '@nestjs/common';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
+import { CachingService } from 'src/caching/services/caching.service';
 
 @Injectable()
 export class KeycloakService {
@@ -16,7 +18,13 @@ export class KeycloakService {
 
   private refreshTokenDate: Date = new Date('2022-10-24');
 
-  constructor(@Inject(CACHE_MANAGER) private readonly cache: Cache) {}
+  constructor(@Inject() private readonly cachingService: CachingService) {}
+
+  private async clearCache() {
+    await this.cachingService.deleteWithPattern(`findUsersHasRole:*`);
+    await this.cachingService.deleteWithPattern(`findUsers:*`);
+    await this.cachingService.deleteWithPattern(`getRole:*`);
+  }
 
   private async getClient() {
     if (this.clientInstance) {
@@ -95,6 +103,8 @@ export class KeycloakService {
       id,
       realm: process.env.KEYCLOAK_REALM,
     });
+
+    await this.clearCache();
   }
 
   async enableUser(id: string) {
@@ -109,6 +119,8 @@ export class KeycloakService {
         enabled: true,
       },
     );
+
+    await this.clearCache();
   }
 
   async updateById(id: string, updateDto: UpdateKeycloakUserDto) {
@@ -130,6 +142,8 @@ export class KeycloakService {
       await this.addRoleToUser(id, updateDto.role);
     }
 
+    await this.clearCache();
+
     return user;
   }
 
@@ -145,6 +159,8 @@ export class KeycloakService {
     });
 
     await this.addRoleToUser(user.id, createDto.role);
+
+    await this.clearCache();
 
     return user;
   }
@@ -176,17 +192,31 @@ export class KeycloakService {
 
     await this.addRoleToUser(user.id, role);
 
+    await this.clearCache();
+
     return user;
   }
 
   async getRole(roleName: string) {
+    const cachedRole = await this.cachingService.get<RoleRepresentation>(
+      `getRole:${roleName}`,
+    );
+
+    if (cachedRole) {
+      return cachedRole;
+    }
+
     const instance = await this.getInstance();
     const client = await this.getClient();
 
-    return await instance.clients.findRole({
+    const role = await instance.clients.findRole({
       id: client.id,
       roleName,
     });
+
+    await this.cachingService.set(`getRole:${roleName}`, role);
+
+    return role;
   }
 
   async isUserHasRole(userId: string, roleName: string) {
@@ -196,13 +226,23 @@ export class KeycloakService {
   }
 
   async getUserRoles(userId: string) {
+    const cachedUserRoles = await this.cachingService.get<RoleRepresentation[]>(
+      `getUserRoles:${userId}`,
+    );
+    if (cachedUserRoles) {
+      return cachedUserRoles;
+    }
+
     const instance = await this.getInstance();
     const client = await this.getClient();
 
-    return instance.users.listClientRoleMappings({
+    const roles = await instance.users.listClientRoleMappings({
       id: userId,
       clientUniqueId: client.id!,
     });
+
+    await this.cachingService.set(`getUserRoles:${userId}`, roles);
+    return roles;
   }
 
   async findFirst(id: string) {
@@ -219,6 +259,8 @@ export class KeycloakService {
       await this.deleteRoleFromUser(userId, role.name);
     }
 
+    await this.clearCache();
+
     //forEach doesnt await => so we have to use manual for of loop
     // roles.forEach(async (role) => {
     //   console.log(role);
@@ -230,7 +272,7 @@ export class KeycloakService {
     const client = await this.getClient();
     const role = await this.getRole(roleName);
 
-    return kc.users.delClientRoleMappings({
+    await kc.users.delClientRoleMappings({
       id: userId,
       clientUniqueId: client.id!,
 
@@ -241,6 +283,8 @@ export class KeycloakService {
         },
       ],
     });
+
+    await this.clearCache();
   }
 
   async addRoleToUser(userId: string, roleName: string) {
@@ -259,10 +303,12 @@ export class KeycloakService {
         },
       ],
     });
+
+    await this.clearCache();
   }
 
   async findUsersHasRole(roleName: string, skip: number, take: number) {
-    const cachedUsers = await this.cache.get<UserRepresentation[]>(
+    const cachedUsers = await this.cachingService.get<UserRepresentation[]>(
       `findUsersHasRole:${roleName}:${skip}:${take}`,
     );
 
@@ -280,7 +326,10 @@ export class KeycloakService {
       first: skip,
     });
 
-    await this.cache.set(`findUsersHasRole:${roleName}:${skip}:${take}`, users);
+    await this.cachingService.set(
+      `findUsersHasRole:${roleName}:${skip}:${take}`,
+      users,
+    );
 
     return users;
   }
@@ -292,7 +341,7 @@ export class KeycloakService {
   }
 
   async findUsers(skip: number, take: number) {
-    const cachedUsers = await this.cache.get<UserRepresentation[]>(
+    const cachedUsers = await this.cachingService.get<UserRepresentation[]>(
       `findUsers:${skip}:${take}`,
     );
 
@@ -309,7 +358,7 @@ export class KeycloakService {
       max: take,
     });
 
-    await this.cache.set(`findUsers:${skip}:${take}`, users);
+    await this.cachingService.set(`findUsers:${skip}:${take}`, users);
 
     return users;
   }
