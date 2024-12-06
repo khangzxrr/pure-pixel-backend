@@ -102,10 +102,18 @@ export class PhotoProcessConsumer extends WorkerHost {
     await this.bunnyService.uploadFromBuffer(watermarkKey, watermarkBuffer);
 
     const thumbnailBuffer =
-      await this.photoProcessService.thumbnailFromBuffer(watermarkBuffer);
+      await this.photoProcessService.thumbnailFromBuffer(buffer);
     await this.bunnyService.uploadFromBuffer(
       `thumbnail/${photo.id}.webp`,
       thumbnailBuffer,
+    );
+
+    const watermarkThumbnailBuffer =
+      await this.photoProcessService.thumbnailFromBuffer(watermarkBuffer);
+    const watermarkThumbnailKey = `thumbnail/watermark/${photo.id}.webp`;
+    await this.bunnyService.uploadFromBuffer(
+      watermarkThumbnailKey,
+      watermarkThumbnailBuffer,
     );
 
     await this.photoRepository.updateById(photo.id, {
