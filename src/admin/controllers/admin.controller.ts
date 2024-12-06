@@ -14,7 +14,7 @@ import { AuthGuard, Roles } from 'nest-keycloak-connect';
 import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { UpdateTimelineService } from 'src/camera/crons/update-timeline.service.cron';
 import { Constants } from 'src/infrastructure/utils/constants';
-import { DashboardDto } from '../dtos/dashboard.dto';
+
 import { DashboardRequestDto } from '../dtos/dashboard.request.dto';
 import { GenerateDashboardReportService } from '../crons/generate-dashboard-report.cron.service';
 import { DashboardReportDto } from '../dtos/dashboard-report.dto';
@@ -30,21 +30,6 @@ export class AdminController {
     private readonly generateDashboardReportService: GenerateDashboardReportService,
     @Inject() private readonly updateTimelineService: UpdateTimelineService,
   ) {}
-
-  // @Post('/dashboard-trigger/generate-report')
-  // @ApiOperation({
-  //   summary: 'get dashboard summary',
-  // })
-  // @ApiOkResponse({
-  //   type: DashboardDto,
-  // })
-  // async generateDashboardReport(
-  //   @Query() dashboardRequestDto: DashboardRequestDto,
-  // ) {
-  //   return await this.generateDashboardReportService.generateDashboardData(
-  //     dashboardRequestDto,
-  //   );
-  // }
 
   @Get('/dashboard')
   @ApiOperation({

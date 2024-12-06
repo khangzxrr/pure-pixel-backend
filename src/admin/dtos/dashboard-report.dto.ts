@@ -1,8 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { UpgradePackageDto } from 'src/upgrade-package/dtos/upgrade-package.dto';
-import { TopSellerDto } from './top-seller.dto';
+
 import { Type } from 'class-transformer';
-import { CameraDto } from 'src/camera/dtos/camera.dto';
+
 import { TopUsedUpgradePackageDto } from './top-used-upgrade-package.dto';
 import { TopSellingPhotoDto } from './top-selled-photo.dto';
 
