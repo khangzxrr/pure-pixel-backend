@@ -10,6 +10,7 @@ import { UserModule } from 'src/user/user.module';
 import { QueueModule } from 'src/queue/queue.module';
 import { GenerateDashboardReportService } from './crons/generate-dashboard-report.cron.service';
 import { NotificationModule } from 'src/notification/notification.module';
+import { CachingModule } from 'src/caching/caching.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { NotificationModule } from 'src/notification/notification.module';
     CameraModule,
     QueueModule,
     NotificationModule,
+    CachingModule,
   ],
   providers: [AdminService, GenerateDashboardReportService],
   controllers: [AdminController],

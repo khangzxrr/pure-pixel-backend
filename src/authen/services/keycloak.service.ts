@@ -6,12 +6,17 @@ import {
 import { CreateKeycloakUserDto } from '../dtos/create-keycloak-user.dto';
 
 import { UpdateKeycloakUserDto } from '../dtos/update-keycloak-user.dto';
+import { Inject, Injectable } from '@nestjs/common';
+import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 
+@Injectable()
 export class KeycloakService {
   private kcInstance: KeycloakAdminClient;
   private clientInstance: ClientRepresentation;
 
   private refreshTokenDate: Date = new Date('2022-10-24');
+
+  constructor(@Inject(CACHE_MANAGER) private readonly cache: Cache) {}
 
   private async getClient() {
     if (this.clientInstance) {
@@ -257,6 +262,14 @@ export class KeycloakService {
   }
 
   async findUsersHasRole(roleName: string, skip: number, take: number) {
+    const cachedUsers = await this.cache.get<UserRepresentation[]>(
+      `findUsersHasRole:${roleName}:${skip}:${take}`,
+    );
+
+    if (cachedUsers) {
+      return cachedUsers;
+    }
+
     const kc = await this.getInstance();
     const client = await this.getClient();
 
@@ -266,6 +279,8 @@ export class KeycloakService {
       max: take,
       first: skip,
     });
+
+    await this.cache.set(`findUsersHasRole:${roleName}:${skip}:${take}`, users);
 
     return users;
   }
@@ -277,6 +292,14 @@ export class KeycloakService {
   }
 
   async findUsers(skip: number, take: number) {
+    const cachedUsers = await this.cache.get<UserRepresentation[]>(
+      `findUsers:${skip}:${take}`,
+    );
+
+    if (cachedUsers) {
+      return cachedUsers;
+    }
+
     const kc = await this.getInstance();
     const client = await this.getClient();
 
@@ -285,6 +308,8 @@ export class KeycloakService {
       first: skip,
       max: take,
     });
+
+    await this.cache.set(`findUsers:${skip}:${take}`, users);
 
     return users;
   }

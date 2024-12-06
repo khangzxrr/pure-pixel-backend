@@ -23,6 +23,7 @@ import { UserReportPutUpdateRequestDto } from '../dtos/rest/user-report-put-upda
 import { UserDto } from 'src/user/dtos/user.dto';
 import { BookingRepository } from 'src/database/repositories/booking.repository';
 import { BookingDto } from 'src/booking/dtos/booking.dto';
+import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 
 @Injectable()
 export class ReportService {
