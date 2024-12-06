@@ -29,6 +29,9 @@ import { TopSellerDetailDto } from '../dtos/top-seller-detail.dto';
 import { TopSoldPhotoDto } from '../dtos/top-sold-photo.dto';
 import { PhotoService } from 'src/photo/services/photo.service';
 import { PhotoshootPackageDto } from 'src/photoshoot-package/dtos/photoshoot-package.dto';
+import { DashboardReportDto } from '../dtos/dashboard-report.dto';
+import { BookingRepository } from 'src/database/repositories/booking.repository';
+import { BookingBillItemRepository } from 'src/database/repositories/booking-bill-item.repository';
 
 @Injectable()
 export class GenerateDashboardReportService {
@@ -59,12 +62,14 @@ export class GenerateDashboardReportService {
     private readonly userRepository: UserRepository,
     @Inject()
     private readonly photoService: PhotoService,
+    @Inject()
+    private readonly bookingBillItemRepository: BookingBillItemRepository,
   ) {}
 
   async getTopSellerDetail(
     id: string,
     dashboardRequestDto: DashboardRequestDto,
-  ) {
+  ): Promise<TopSellerDetailDto> {
     const user = await this.userRepository.findUniqueOrThrow(id);
 
     const topSoldPhotoIds =
@@ -84,11 +89,9 @@ export class GenerateDashboardReportService {
       return topSoldPhotoDto;
     });
 
-    const topSellerDetail = new TopSellerDetailDto();
-    topSellerDetail.user = plainToInstance(UserDto, user);
-    topSellerDetail.topSoldPhotoDtos = await Promise.all(topSoldPhotoPromises);
+    const topSoldPhotos = await Promise.all(topSoldPhotoPromises);
 
-    const topPhotoshootPackages =
+    const topPhotoshootPackageEntities =
       await this.photoshootPackageRepository.findAll(
         5,
         0,
@@ -108,9 +111,9 @@ export class GenerateDashboardReportService {
         ],
       );
 
-    topSellerDetail.topPhotoshootPackages = plainToInstance(
+    const topPhotoshootPackages = plainToInstance(
       PhotoshootPackageDto,
-      topPhotoshootPackages,
+      topPhotoshootPackageEntities,
     );
 
     const photoSellTransactions = await this.transactionRepository.findAll({
@@ -128,10 +131,53 @@ export class GenerateDashboardReportService {
       (acc, s) => acc.add(s.amount.add(s.fee)),
       new Decimal(0),
     );
+    const photoSellRevenue = summedPhotoSellRevenues.toNumber();
 
-    topSellerDetail.photoSellRevenue = summedPhotoSellRevenues.toNumber();
+    const increaseBillItem = await this.bookingBillItemRepository.aggregate({
+      where: {
+        type: 'INCREASE',
+        booking: {
+          originalPhotoshootPackage: {
+            userId: user.id,
+          },
+        },
+      },
+      _sum: {
+        price: true,
+      },
+    });
 
-    return topSellerDetail;
+    const decreaseBillItem = await this.bookingBillItemRepository.aggregate({
+      where: {
+        type: 'DECREASE',
+        booking: {
+          originalPhotoshootPackage: {
+            userId: user.id,
+          },
+        },
+      },
+      _sum: {
+        price: true,
+      },
+    });
+
+    let photoshootPackageRevenue = new Decimal(0);
+
+    if (increaseBillItem._sum.price) {
+      photoshootPackageRevenue.add(increaseBillItem._sum.price);
+    }
+
+    if (decreaseBillItem._sum.price) {
+      photoshootPackageRevenue.sub(decreaseBillItem._sum.price);
+    }
+
+    return {
+      topPhotoshootPackages,
+      photoshootPackageRevenue: photoshootPackageRevenue.toNumber(),
+      photoSellRevenue,
+      user: plainToInstance(UserDto, user),
+      topSoldPhotos,
+    };
   }
 
   async getTopSellers(dashboardRequestDto: DashboardRequestDto) {
@@ -190,7 +236,9 @@ export class GenerateDashboardReportService {
     return dtos;
   }
 
-  async generateDashboardData(dashboardRequestDto: DashboardRequestDto) {
+  async generateDashboardData(
+    dashboardRequestDto: DashboardRequestDto,
+  ): Promise<DashboardReportDto> {
     const startDateTimestamp = dashboardRequestDto.fromDate.getTime();
     const endDateTimestamp = dashboardRequestDto.toDate.getTime();
 
@@ -313,11 +361,11 @@ export class GenerateDashboardReportService {
           upgradePackageDto,
         };
       });
-    const topUsedUpgradePackageDtos = await Promise.all(
+    const topUsedUpgradePackage = await Promise.all(
       topUsedUpgradePackageDtoPromises,
     );
 
-    const topSellingPhoto = await this.photoSellRepository.findMany(
+    const topSellingPhotoEntities = await this.photoSellRepository.findMany(
       {
         createdAt: {
           lte: dashboardRequestDto.toDate,
@@ -352,10 +400,10 @@ export class GenerateDashboardReportService {
         },
       },
     );
-    const topSellingPhotoDtos: TopSellingPhotoDto[] = topSellingPhoto.map(
+    const topSellingPhoto: TopSellingPhotoDto[] = topSellingPhotoEntities.map(
       (p) => {
         return {
-          totalSelled: p._count.photoSellHistories,
+          totalPhotoSold: p._count.photoSellHistories,
           photo: plainToInstance(SignedPhotoDto, p),
         };
       },
@@ -368,26 +416,14 @@ export class GenerateDashboardReportService {
       },
     });
 
-    const topUsageCameras = await this.cameraRepository.findMany(
-      {},
-      {
-        _count: {
-          select: {
-            cameraOnUsers: true,
-          },
+    const totalSellingPhoto = await this.photoRepository.count({
+      photoSellings: {
+        some: {
+          active: true,
         },
       },
-      0,
-      5,
-      [
-        {
-          cameraOnUsers: {
-            _count: 'desc',
-          },
-        },
-      ],
-    );
-    const topUsageCameraDtos = plainToInstance(CameraDto, topUsageCameras);
+      deletedAt: null,
+    });
 
     return {
       totalCustomer,
@@ -398,10 +434,9 @@ export class GenerateDashboardReportService {
       revenueFromSellingPhoto: revenueFromSellingPhoto.toNumber(),
       totalRevenue: totalRevenue.toNumber(),
       totalPhoto,
+      totalSellingPhoto,
+      topUsedUpgradePackage,
       topSellingPhoto,
-      topUsedUpgradePackageDtos,
-      topSellingPhotoDtos,
-      topUsageCameraDtos,
     };
   }
 }

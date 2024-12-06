@@ -13,7 +13,7 @@ export class TopSellerDetailDto {
     isArray: true,
   })
   @Type(() => TopSoldPhotoDto)
-  topSoldPhotoDtos: TopSoldPhotoDto[];
+  topSoldPhotos: TopSoldPhotoDto[];
 
   @ApiProperty({
     isArray: true,
@@ -23,4 +23,7 @@ export class TopSellerDetailDto {
 
   @ApiProperty()
   photoSellRevenue: number = 0;
+
+  @ApiProperty()
+  photoshootPackageRevenue: number = 0;
 }
