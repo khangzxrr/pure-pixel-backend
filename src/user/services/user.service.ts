@@ -25,6 +25,8 @@ import { Prisma } from '@prisma/client';
 import { ChatService } from 'src/chat/services/chat.service';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { BookingRepository } from 'src/database/repositories/booking.repository';
+import { NotificationService } from 'src/notification/services/notification.service';
+import { CannotBanAdminException } from '../exceptions/cannot-ban-admin.exception';
 
 @Injectable()
 export class UserService {
@@ -36,7 +38,31 @@ export class UserService {
     @Inject() private readonly photoRepository: PhotoRepository,
     @Inject() private readonly bookingRepository: BookingRepository,
     @Inject(CACHE_MANAGER) private cache: Cache,
+    @Inject()
+    private readonly notificationService: NotificationService,
   ) {}
+
+  async ban(userId: string, targetId: string) {
+    if (targetId === userId) {
+      throw new CannotBanAdminException();
+    }
+
+    await this.keycloakService.disableUserAndClearSession(targetId);
+
+    await this.notificationService.addNotificationToQueue({
+      userId: targetId,
+      referenceType: 'BAN',
+      payload: {},
+      content:
+        'Tài khoản của bạn đã bị cấm khỏi hệ thống, nếu đây là sự nhầm lẫn vui lòng liên hệ qua email để được hỗ trợ',
+      title: 'Tài khoản của bạn bị cấm',
+      type: 'BOTH_INAPP_EMAIL',
+    });
+  }
+
+  async unban(targetId: string) {
+    await this.keycloakService.enableUser(targetId);
+  }
 
   async updatePhotoQuota(userId: string, quota: number) {
     const user = await this.userRepository.findUniqueOrThrow(userId);

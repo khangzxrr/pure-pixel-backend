@@ -12,6 +12,8 @@ import { UserController } from './controllers/user.controller';
 import { NestjsFormDataModule } from 'nestjs-form-data';
 import { ChatService } from 'src/chat/services/chat.service';
 import { ChatModule } from 'src/chat/chat.module';
+import { NotificationService } from 'src/notification/services/notification.service';
+import { NotificationModule } from 'src/notification/notification.module';
 
 @Module({
   controllers: [MeController, WalletController, UserController],
@@ -24,6 +26,7 @@ import { ChatModule } from 'src/chat/chat.module';
     CachingModule,
     NestjsFormDataModule,
     ChatModule,
+    NotificationModule,
   ],
   exports: [UserService],
   providers: [UserService],
