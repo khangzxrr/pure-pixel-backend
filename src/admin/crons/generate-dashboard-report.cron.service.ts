@@ -16,11 +16,9 @@ import { UpgradePackageDto } from 'src/upgrade-package/dtos/upgrade-package.dto'
 
 import { TopSellingPhotoDto } from '../dtos/top-selled-photo.dto';
 import { TopUsedUpgradePackageDto } from '../dtos/top-used-upgrade-package.dto';
-import { DashboardReportRepository } from 'src/database/repositories/dashboard-report.repository';
+
 import { DashboardRequestDto } from '../dtos/dashboard.request.dto';
 import { CameraRepository } from 'src/database/repositories/camera.repository';
-import { CameraDto } from 'src/camera/dtos/camera.dto';
-import { PhotoSellHistoryRepository } from 'src/database/repositories/photo-sell-history.repository';
 import { TopSellerDto } from '../dtos/top-seller.dto';
 import { PhotoBuyRepository } from 'src/database/repositories/photo-buy.repository';
 import { UserRepository } from 'src/database/repositories/user.repository';
@@ -30,8 +28,9 @@ import { TopSoldPhotoDto } from '../dtos/top-sold-photo.dto';
 import { PhotoService } from 'src/photo/services/photo.service';
 import { PhotoshootPackageDto } from 'src/photoshoot-package/dtos/photoshoot-package.dto';
 import { DashboardReportDto } from '../dtos/dashboard-report.dto';
-import { BookingRepository } from 'src/database/repositories/booking.repository';
+
 import { BookingBillItemRepository } from 'src/database/repositories/booking-bill-item.repository';
+import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 
 @Injectable()
 export class GenerateDashboardReportService {
@@ -51,11 +50,7 @@ export class GenerateDashboardReportService {
     @Inject()
     private readonly photoSellRepository: PhotoSellRepository,
     @Inject()
-    private readonly dashboardReportRepository: DashboardReportRepository,
-    @Inject()
     private readonly cameraRepository: CameraRepository,
-    @Inject()
-    private readonly photoSellHistoryRepository: PhotoSellHistoryRepository,
     @Inject()
     private readonly photoBuyRepository: PhotoBuyRepository,
     @Inject()
@@ -64,6 +59,9 @@ export class GenerateDashboardReportService {
     private readonly photoService: PhotoService,
     @Inject()
     private readonly bookingBillItemRepository: BookingBillItemRepository,
+
+    @Inject(CACHE_MANAGER)
+    private readonly cache: Cache,
   ) {}
 
   async getTopSellerDetail(
@@ -425,7 +423,7 @@ export class GenerateDashboardReportService {
       deletedAt: null,
     });
 
-    return {
+    const newDashboardReportDto: DashboardReportDto = {
       totalCustomer,
       totalPhotographer,
       totalPhotoshootPackage,
@@ -438,5 +436,7 @@ export class GenerateDashboardReportService {
       topUsedUpgradePackage,
       topSellingPhoto,
     };
+
+    return newDashboardReportDto;
   }
 }
