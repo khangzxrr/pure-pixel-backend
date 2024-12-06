@@ -72,7 +72,7 @@ export class BlogController {
     summary: 'delete a specific blog by blogId',
   })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: [Constants.MANAGER_ROLE] })
+  @Roles({ roles: [Constants.MANAGER_ROLE, Constants.ADMIN_ROLE] })
   async deleteById(@Param('id') id: string) {
     return await this.blogService.delete(id);
   }
@@ -86,7 +86,7 @@ export class BlogController {
     type: BlogDto,
   })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: [Constants.MANAGER_ROLE] })
+  @Roles({ roles: [Constants.MANAGER_ROLE, Constants.ADMIN_ROLE] })
   @FormDataRequest()
   async createBlog(
     @AuthenticatedUser() user: ParsedUserDto,
@@ -104,7 +104,7 @@ export class BlogController {
     summary: 'update blog info by blogId',
   })
   @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: [Constants.MANAGER_ROLE] })
+  @Roles({ roles: [Constants.MANAGER_ROLE, Constants.ADMIN_ROLE] })
   @FormDataRequest()
   async updateById(
     @Param('id') id: string,
@@ -122,7 +122,7 @@ export class BlogController {
   })
   @ApiConsumes('multipart/form-data')
   @UseGuards(AuthGuard, KeycloakRoleGuard)
-  @Roles({ roles: [Constants.MANAGER_ROLE] })
+  @Roles({ roles: [Constants.MANAGER_ROLE, Constants.ADMIN_ROLE] })
   @FormDataRequest()
   async putUpdateById(
     @Param('id') id: string,
