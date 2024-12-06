@@ -822,6 +822,7 @@ enum NotificationReferenceType {
   PHOTO_SELL
   PHOTO_BUY
   PHOTO
+  BAN
 }
 
 model Notification {

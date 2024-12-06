@@ -73,6 +73,39 @@ export class KeycloakService {
     }
   }
 
+  async disableUserAndClearSession(id: string) {
+    const instance = await this.getInstance();
+
+    await instance.users.update(
+      {
+        id,
+        realm: process.env.KEYCLOAK_REALM,
+      },
+      {
+        enabled: false,
+      },
+    );
+
+    await instance.users.logout({
+      id,
+      realm: process.env.KEYCLOAK_REALM,
+    });
+  }
+
+  async enableUser(id: string) {
+    const instance = await this.getInstance();
+
+    await instance.users.update(
+      {
+        id,
+        realm: process.env.KEYCLOAK_REALM,
+      },
+      {
+        enabled: true,
+      },
+    );
+  }
+
   async updateById(id: string, updateDto: UpdateKeycloakUserDto) {
     const instance = await this.getInstance();
 
