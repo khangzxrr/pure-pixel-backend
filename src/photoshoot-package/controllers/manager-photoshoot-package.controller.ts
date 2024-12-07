@@ -28,6 +28,7 @@ import { ManagePhotoshootPackageService } from '../services/manage-photoshoot-pa
 
 import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
+import { PhotoshootPackageFindAllResponseDto } from '../dtos/rest/photoshoot-package-find-all.response.dto';
 
 @Controller('manager/photoshoot-package')
 @ApiTags('manager-photoshoot-package')
@@ -38,6 +39,19 @@ export class ManagerPhotoShootPackageController {
     @Inject()
     private readonly managePhotoshootPackageService: ManagePhotoshootPackageService,
   ) {}
+
+  @Get()
+  @ApiOperation({
+    summary: 'find all photoshoot-package',
+  })
+  @ApiOkResponse({
+    type: PhotoshootPackageFindAllResponseDto,
+  })
+  async findAllPhotoshootPackage(
+    @Query() findAllDto: PhotoshootPackageFindAllDto,
+  ) {
+    return this.managePhotoshootPackageService.findAll(findAllDto);
+  }
 
   @Get(':id')
   @ApiOperation({
