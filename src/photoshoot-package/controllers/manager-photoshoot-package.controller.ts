@@ -6,6 +6,7 @@ import {
   Inject,
   Param,
   Patch,
+  Post,
   Put,
   Query,
   UseGuards,
@@ -28,16 +29,46 @@ import { ManagePhotoshootPackageService } from '../services/manage-photoshoot-pa
 
 import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
+import { PhotoshootPackageFindAllResponseDto } from '../dtos/rest/photoshoot-package-find-all.response.dto';
 
 @Controller('manager/photoshoot-package')
 @ApiTags('manager-photoshoot-package')
 @UseGuards(AuthGuard, KeycloakRoleGuard)
-@Roles({ roles: [Constants.MANAGER_ROLE] })
+@Roles({ roles: [Constants.MANAGER_ROLE, Constants.ADMIN_ROLE] })
 export class ManagerPhotoShootPackageController {
   constructor(
     @Inject()
     private readonly managePhotoshootPackageService: ManagePhotoshootPackageService,
   ) {}
+
+  @Post(':id/enable')
+  @ApiOperation({
+    summary: 'enable photoshoot-package by id',
+  })
+  async enablePhotoshootPackage(@Param('id') id: string) {
+    return this.managePhotoshootPackageService.enable(id);
+  }
+
+  @Post(':id/disable')
+  @ApiOperation({
+    summary: 'disable photoshoot-package by id',
+  })
+  async disablePhotoshootPackage(@Param('id') id: string) {
+    return this.managePhotoshootPackageService.disable(id);
+  }
+
+  @Get()
+  @ApiOperation({
+    summary: 'find all photoshoot-package',
+  })
+  @ApiOkResponse({
+    type: PhotoshootPackageFindAllResponseDto,
+  })
+  async findAllPhotoshootPackage(
+    @Query() findAllDto: PhotoshootPackageFindAllDto,
+  ) {
+    return this.managePhotoshootPackageService.findAll(findAllDto);
+  }
 
   @Get(':id')
   @ApiOperation({

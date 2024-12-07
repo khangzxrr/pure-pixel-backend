@@ -1,14 +1,24 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { PhotoshootPackageStatus, Prisma } from '@prisma/client';
-import { Exclude } from 'class-transformer';
+import { IsArray, IsEnum, IsNotEmpty, IsOptional } from 'class-validator';
 import { PagingPaginatedRequestDto } from 'src/infrastructure/restful/paging-paginated.request.dto';
+import { ToArray } from 'src/infrastructure/transforms/to-array';
 
 export class PhotoshootPackageFindAllDto extends PagingPaginatedRequestDto {
-  @Exclude()
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNotEmpty()
   userId?: string;
 
-  @Exclude()
-  status?: PhotoshootPackageStatus;
+  @ApiPropertyOptional({
+    isArray: true,
+    enum: PhotoshootPackageStatus,
+  })
+  @IsOptional()
+  @ToArray()
+  @IsArray()
+  @IsEnum(PhotoshootPackageStatus, { each: true })
+  statuses?: PhotoshootPackageStatus[];
 
   @ApiPropertyOptional({
     enum: Prisma.SortOrder,
@@ -27,8 +37,10 @@ export class PhotoshootPackageFindAllDto extends PagingPaginatedRequestDto {
       where.userId = this.userId;
     }
 
-    if (this.status) {
-      where.status = this.status;
+    if (this.statuses) {
+      where.status = {
+        in: this.statuses,
+      };
     }
 
     return where;

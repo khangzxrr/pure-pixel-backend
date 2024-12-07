@@ -41,6 +41,7 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { TemporaryBookingPhotoUpload } from 'src/photo/dtos/temporary-booking-photo-upload.dto';
 import { Utils } from 'src/infrastructure/utils/utils';
 import { writeFileSync } from 'fs';
+import { PhotoshootPackageDisabledException } from '../exceptions/photoshoot-package-disabled.exception';
 
 @Injectable()
 export class BookingService {
@@ -657,6 +658,10 @@ export class BookingService {
 
     if (photoshootPackage.userId === userId) {
       throw new CannotBookOwnedPhotoshootPackageException();
+    }
+
+    if (photoshootPackage.status === 'DISABLED') {
+      throw new PhotoshootPackageDisabledException();
     }
 
     this.validateStartEndDateOfUser(

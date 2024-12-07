@@ -18,6 +18,7 @@ export class PhotoShootPackageController {
   })
   @ApiOkResponsePaginated(PhotoshootPackageDto)
   async findAll(@Query() findAllDto: PhotoshootPackageFindAllDto) {
+    findAllDto.statuses = ['ENABLED'];
     return await this.photoshootPackageService.findAll(findAllDto);
   }
 
