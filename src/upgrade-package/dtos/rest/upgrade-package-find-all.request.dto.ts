@@ -1,44 +1,13 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Prisma, UpgradePackageStatus } from '@prisma/client';
-import { Type } from 'class-transformer';
-import {
-  IsEnum,
-  IsNumber,
-  IsNumberString,
-  IsOptional,
-  IsString,
-} from 'class-validator';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { PagingPaginatedRequestDto } from 'src/infrastructure/restful/paging-paginated.request.dto';
 
 export class UpgradePackageFindAllDto extends PagingPaginatedRequestDto {
-  @ApiProperty({
-    required: false,
-  })
+  @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  searchById?: string;
-
-  @ApiProperty({
-    required: false,
-  })
-  @IsOptional()
-  @IsString()
-  searchByName?: string;
-
-  @ApiProperty({
-    required: false,
-  })
-  @IsOptional()
-  @IsNumberString()
-  searchByPrice?: number;
-
-  @ApiProperty({
-    required: false,
-  })
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  searchByMinOrderMonth?: number;
+  search?: string;
 
   @ApiProperty({
     required: false,
@@ -97,18 +66,28 @@ export class UpgradePackageFindAllDto extends PagingPaginatedRequestDto {
   orderByMaxPackageCount?: Prisma.SortOrder;
 
   toWhere(): Prisma.UpgradePackageWhereInput {
-    return {
-      id: {
-        contains: this.searchById,
-      },
-      name: {
-        contains: this.searchByName,
-        mode: 'insensitive',
-      },
-      status: this.status,
-      price: this.searchByPrice,
-      minOrderMonth: this.searchByMinOrderMonth,
-    };
+    const where: Prisma.UpgradePackageWhereInput = {};
+
+    if (this.search) {
+      where.OR = [
+        {
+          id: {
+            contains: this.search,
+          },
+        },
+        {
+          name: {
+            contains: this.search,
+          },
+        },
+      ];
+    }
+
+    if (this.status) {
+      where.status = this.status;
+    }
+
+    return where;
   }
 
   toOrderBy(): Prisma.UpgradePackageOrderByWithRelationInput {
