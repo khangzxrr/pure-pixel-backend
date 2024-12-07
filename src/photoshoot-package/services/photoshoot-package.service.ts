@@ -505,14 +505,15 @@ export class PhotoshootPackageService {
     userId: string,
     findAllDto: PhotoshootPackageFindAllDto,
   ) {
-    findAllDto.userId = userId;
+    const where = findAllDto.toWhere();
+    where.userId = userId;
 
-    const count = await this.photoshootRepository.count(findAllDto.toWhere());
+    const count = await this.photoshootRepository.count(where);
 
     const packages = await this.photoshootRepository.findAll(
       findAllDto.limit,
       findAllDto.toSkip(),
-      findAllDto.toWhere(),
+      where,
       findAllDto.toOrderBy(),
     );
 
