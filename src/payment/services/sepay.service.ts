@@ -167,7 +167,7 @@ export class SepayService {
           case 'WITHDRAWAL':
             return acc.sub(t.amount);
 
-          case 'REFUND':
+          case 'REFUND_FROM_BUY_IMAGE':
             return acc.add(t.amount);
 
           case 'UPGRADE_TO_PHOTOGRAPHER':

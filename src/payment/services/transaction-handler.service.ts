@@ -141,7 +141,7 @@ export class TransactionHandlerService {
             id: userToUserTransaction.fromUserTransaction.userId,
           },
         },
-        type: 'REFUND',
+        type: 'REFUND_FROM_BUY_IMAGE',
         amount: userToUserTransaction.fromUserTransaction.amount,
         paymentMethod: 'WALLET',
         paymentPayload: {},
