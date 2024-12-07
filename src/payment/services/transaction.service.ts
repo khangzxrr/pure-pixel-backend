@@ -37,11 +37,7 @@ export class TransactionService {
   }
 
   async findAll(findAllDto: FindAllTransactionDto, query: string) {
-    const where: Prisma.TransactionWhereInput = {
-      type: findAllDto.type,
-      status: findAllDto.status,
-      paymentMethod: findAllDto.paymentMethod,
-    };
+    const where = findAllDto.toWhere();
 
     const count = await this.transactionRepository.countAll(where);
     const transactions = await this.transactionRepository.findAll(
