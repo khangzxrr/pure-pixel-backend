@@ -100,12 +100,8 @@ export class SepayService {
     findAllTransactionDto: FindAllTransactionDto,
     query: string,
   ): Promise<PagingPaginatedResposneDto<TransactionDto>> {
-    const where = {
-      type: findAllTransactionDto.type,
-      status: findAllTransactionDto.status,
-      paymentMethod: findAllTransactionDto.paymentMethod,
-      userId,
-    };
+    const where = findAllTransactionDto.toWhere();
+    where.userId = userId;
 
     const count = await this.transactionRepository.countAll(where);
     const transactions = await this.transactionRepository.findAll(

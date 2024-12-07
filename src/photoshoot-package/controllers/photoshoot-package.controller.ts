@@ -42,8 +42,9 @@ export class PhotoShootPackageController {
     @Param('photographerId') photographerId: string,
     @Query() findAllDto: PhotoshootPackageFindAllDto,
   ) {
-    findAllDto.userId = photographerId;
-
-    return await this.photoshootPackageService.findAll(findAllDto);
+    return await this.photoshootPackageService.findAllByUserId(
+      photographerId,
+      findAllDto,
+    );
   }
 }

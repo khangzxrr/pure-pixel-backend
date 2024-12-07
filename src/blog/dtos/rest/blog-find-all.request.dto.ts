@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { BlogStatus, Prisma } from '@prisma/client';
-import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { PagingPaginatedRequestDto } from 'src/infrastructure/restful/paging-paginated.request.dto';
 
 export class BlogFindAllRequestDto extends PagingPaginatedRequestDto {
@@ -9,8 +9,7 @@ export class BlogFindAllRequestDto extends PagingPaginatedRequestDto {
   })
   @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  content?: string;
+  search?: string;
 
   @ApiProperty({
     required: false,
@@ -40,11 +39,29 @@ export class BlogFindAllRequestDto extends PagingPaginatedRequestDto {
 
   toWhere(): Prisma.BlogWhereInput {
     const where: Prisma.BlogWhereInput = {};
-    if (this.content) {
-      where.content = {
-        contains: this.content,
-        mode: 'insensitive',
-      };
+    if (this.search) {
+      where.OR = [
+        {
+          id: {
+            contains: this.search,
+          },
+        },
+        {
+          title: {
+            contains: this.search,
+          },
+        },
+        {
+          userId: {
+            contains: this.search,
+          },
+        },
+        {
+          content: {
+            contains: this.search,
+          },
+        },
+      ];
     }
 
     if (this.status) {
