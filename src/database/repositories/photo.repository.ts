@@ -275,6 +275,46 @@ ORDER BY COUNT(public."PhotoBuy".id) DESC
     });
   }
 
+  async findAllIgnoreSoftDelete(
+    where: Prisma.PhotoWhereInput,
+    orderBy: Prisma.PhotoOrderByWithRelationInput[],
+    skip: number,
+    take: number,
+    cursor?: Prisma.PhotoWhereUniqueInput,
+  ) {
+    return this.prisma.extendedClient().photo.findMany({
+      where,
+      skip,
+      take,
+      orderBy,
+      cursor,
+      include: {
+        _count: {
+          select: {
+            votes: true,
+            comments: true,
+          },
+        },
+        photographer: true,
+        categories: true,
+        camera: {
+          include: {
+            cameraMaker: true,
+          },
+        },
+        photoSellings: {
+          where: {
+            active: true,
+          },
+          include: {
+            pricetags: true,
+          },
+        },
+        photoTags: true,
+      },
+    });
+  }
+
   async findAll(
     where: Prisma.PhotoWhereInput,
     orderBy: Prisma.PhotoOrderByWithRelationInput[],

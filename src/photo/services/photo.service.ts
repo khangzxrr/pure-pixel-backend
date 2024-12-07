@@ -273,6 +273,50 @@ export class PhotoService {
     return signedPhotoDto;
   }
 
+  async signWatermarkPhotos(photo: Photo): Promise<SignedPhotoDto> {
+    const signedPhotoDto = plainToInstance(SignedPhotoDto, photo);
+    photo.watermark = true; //force watermark
+
+    if (photo.watermarkPhotoUrl.length === 0) {
+      console.log(`error photo without thumbnail or original: ${photo.id}`);
+
+      if (photo.watermark) {
+        await this.sendImageWatermarkQueue(photo.photographerId, photo.id, {
+          text: 'PXL',
+        });
+      } else {
+        throw new EmptyOriginalPhotoException();
+      }
+    }
+
+    if (photo.status === 'PENDING') {
+      if (photo.watermark) {
+        signedPhotoDto.signedUrl =
+          this.photoProcessService.signPendingWatermarkPhoto(photo.id);
+      } else {
+        signedPhotoDto.signedUrl = this.photoProcessService.signPendingPhoto(
+          photo.id,
+        );
+      }
+
+      return signedPhotoDto;
+    }
+
+    if (photo.watermark) {
+      signedPhotoDto.signedUrl = this.photoProcessService.signWatermarkPhoto(
+        photo.watermarkPhotoUrl,
+        photo.id,
+      );
+    } else {
+      signedPhotoDto.signedUrl = this.photoProcessService.signPhoto(
+        photo.originalPhotoUrl,
+        photo.id,
+      );
+    }
+
+    return signedPhotoDto;
+  }
+
   async signPhoto(photo: Photo): Promise<SignedPhotoDto> {
     const signedPhotoDto = plainToInstance(SignedPhotoDto, photo);
 

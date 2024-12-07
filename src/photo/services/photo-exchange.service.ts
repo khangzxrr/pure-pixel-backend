@@ -73,7 +73,7 @@ export class PhotoExchangeService {
     };
 
     const count = await this.photoRepository.count(where);
-    const photos = await this.photoRepository.findAll(
+    const photos = await this.photoRepository.findAllIgnoreSoftDelete(
       where,
       [],
       findAllDto.toSkip(),
@@ -81,7 +81,7 @@ export class PhotoExchangeService {
     );
 
     const signedPhotoPromises = photos.map((p) =>
-      this.photoService.signPhoto(p),
+      this.photoService.signWatermarkPhotos(p),
     );
     const signedPhotos = await Promise.all(signedPhotoPromises);
 
@@ -345,7 +345,9 @@ export class PhotoExchangeService {
         width: pricetag.width,
         height: pricetag.height,
         originalPhotoSell: {
-          id: photoSellId,
+          photo: {
+            id: photoId,
+          },
         },
       },
     });
