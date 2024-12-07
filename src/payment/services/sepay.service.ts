@@ -24,6 +24,7 @@ import { plainToInstance } from 'class-transformer';
 import { PaymentUrlDto } from '../dtos/payment-url.dto';
 import { TransactionNotInPendingException } from '../exceptions/transaction-not-in-pending.exception';
 import { TransactionHandlerService } from './transaction-handler.service';
+import { Decimal } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class SepayService {
@@ -144,38 +145,44 @@ export class SepayService {
       userId,
     });
 
-    const walletBalance = transactions.reduce((acc: number, t: Transaction) => {
-      //only process success transaction
-      if (t.status !== 'SUCCESS') {
-        return acc;
-      }
-
-      switch (t.type) {
-        case 'DEPOSIT':
-          return acc + t.amount.toNumber();
-
-        case 'IMAGE_BUY':
-          if (t.paymentMethod === 'WALLET') {
-            return acc - t.amount.toNumber();
-          }
-
-        case 'IMAGE_SELL':
-          return acc + t.amount.toNumber() - t.fee.toNumber();
-
-        case 'WITHDRAWAL':
-          return acc - t.amount.toNumber();
-
-        case 'UPGRADE_TO_PHOTOGRAPHER':
-          if (t.paymentMethod === 'WALLET') {
-            return acc - t.amount.toNumber();
-          }
-
-        default:
+    const walletBalance = transactions.reduce(
+      (acc: Decimal, t: Transaction) => {
+        //only process success transaction
+        if (t.status !== 'SUCCESS') {
           return acc;
-      }
-    }, 0);
+        }
 
-    const walletDto = new WalletDto(walletBalance);
+        switch (t.type) {
+          case 'DEPOSIT':
+            return acc.add(t.amount);
+
+          case 'IMAGE_BUY':
+            if (t.paymentMethod === 'WALLET') {
+              return acc.sub(t.amount);
+            }
+
+          case 'IMAGE_SELL':
+            return acc.add(t.amount).sub(t.fee);
+
+          case 'WITHDRAWAL':
+            return acc.sub(t.amount);
+
+          case 'REFUND':
+            return acc.add(t.amount);
+
+          case 'UPGRADE_TO_PHOTOGRAPHER':
+            if (t.paymentMethod === 'WALLET') {
+              return acc.sub(t.amount);
+            }
+
+          default:
+            return acc;
+        }
+      },
+      new Decimal(0),
+    );
+
+    const walletDto = new WalletDto(walletBalance.toNumber());
 
     await this.cacheManager.set(`walletdto:${userId}`, walletDto);
 
