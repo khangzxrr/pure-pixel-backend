@@ -53,27 +53,11 @@ export class FindAllTransactionDto extends PagingPaginatedRequestDto {
 
   @ApiProperty({
     required: false,
-    description: 'order by paymentMethod asc|desc',
-  })
-  @IsOptional()
-  @IsIn(Constants.SORT)
-  orderByPaymentMethod?: Prisma.SortOrder;
-
-  @ApiProperty({
-    required: false,
     description: 'order by amount asc|desc',
   })
   @IsOptional()
   @IsIn(Constants.SORT)
   orderByAmount?: Prisma.SortOrder;
-
-  @ApiProperty({
-    required: false,
-    description: 'order by type asc|desc',
-  })
-  @IsOptional()
-  @IsIn(Constants.SORT)
-  orderByType?: Prisma.SortOrder;
 
   @ApiProperty({
     required: false,
@@ -130,20 +114,12 @@ export class FindAllTransactionDto extends PagingPaginatedRequestDto {
   toOrderBy(query: string) {
     const orderBy = [
       {
-        type: this.orderByType,
-        index: query.indexOf(`orderByType`),
-      },
-      {
-        amount: this.orderByAmount,
-        index: query.indexOf(`orderByAmount`),
-      },
-      {
         createdAt: this.orderByCreatedAt,
         index: query.indexOf(`orderByCreatedAt`),
       },
       {
-        paymentMethod: this.orderByPaymentMethod,
-        index: query.indexOf(`orderByPaymentMethod`),
+        amount: this.orderByAmount,
+        index: query.indexOf(`orderByAmount`),
       },
     ];
 
@@ -151,10 +127,8 @@ export class FindAllTransactionDto extends PagingPaginatedRequestDto {
       .sort((ob) => ob.index)
       .map((ob) => {
         return {
-          type: ob.type,
-          amount: ob.amount,
           createdAt: ob.createdAt,
-          paymentMethod: ob.paymentMethod,
+          amount: ob.amount,
         };
       });
 
