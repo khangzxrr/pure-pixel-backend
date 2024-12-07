@@ -82,12 +82,13 @@ export class CameraService {
   }
 
   async findAll(findAllDto: FindAllCameraDto) {
-    const count = await this.cameraRepository.count({});
+    const count = await this.cameraRepository.count(findAllDto.toWhere());
     const cameras: any[] = await this.cameraRepository.findMany(
-      {},
+      findAllDto.toWhere(),
       {},
       findAllDto.toSkip(),
       findAllDto.limit,
+      findAllDto.toOrderBy(),
     );
 
     const cameraDtos = plainToInstance(CameraDto, cameras);

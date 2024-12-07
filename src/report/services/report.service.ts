@@ -222,9 +222,84 @@ export class ReportService {
     userId: string,
     reportFindAllDto: ReportFindAllRequestDto,
   ) {
-    reportFindAllDto.userId = userId;
+    const where = reportFindAllDto.toWhere();
+    where.userId = userId;
 
-    return await this.findAll(reportFindAllDto);
+    const count = await this.reportRepository.count(where);
+    const reports = await this.reportRepository.findAll(
+      reportFindAllDto.limit,
+      reportFindAllDto.toSkip(),
+      where,
+      reportFindAllDto.toOrderBy(),
+    );
+
+    const reportDtos = plainToInstance(ReportDto, reports);
+
+    const reportWithReferenceEntityPromises = reportDtos.map(async (r) => {
+      try {
+        switch (r.reportType) {
+          case 'USER':
+            r.referencedUser = null;
+            const user = await this.userRepository.findUnique(
+              r.referenceId,
+              {},
+            );
+            r.referencedUser = plainToInstance(UserDto, user);
+            break;
+          case 'PHOTO':
+            r.referencedPhoto = null;
+            const photo = await this.photoService.findById(
+              '',
+              r.referenceId,
+              false,
+            );
+
+            r.referencedPhoto = photo;
+            break;
+          case 'COMMENT':
+            r.referencedComment = null;
+            const comment = await this.commentRepository.findUniqueOrThrow({
+              id: r.referenceId,
+            });
+            r.referencedComment = plainToInstance(CommentDto, comment);
+            break;
+          case 'BOOKING':
+            r.referencedBooking = null;
+            const booking = await this.bookingRepository.findUniqueOrThrow({
+              id: r.referenceId,
+            });
+            r.referencedBooking = plainToInstance(BookingDto, booking);
+
+          default:
+            break;
+        }
+      } catch (e) {
+        console.log(
+          `error getting reference entity, close this report ${r.id}`,
+        );
+
+        await this.reportRepository.updateById(r.id, {
+          reportStatus: 'CLOSED',
+        });
+        r.reportStatus = 'CLOSED';
+
+        return r;
+      }
+
+      return r;
+    });
+
+    const reportWithEntities = await Promise.all(
+      reportWithReferenceEntityPromises,
+    );
+
+    const notNullReports = reportWithEntities.filter((v) => v !== null);
+
+    return new ReportFindAllResponseDto(
+      reportFindAllDto.limit,
+      count,
+      notNullReports,
+    );
   }
 
   async patchUpdateOfUser(
