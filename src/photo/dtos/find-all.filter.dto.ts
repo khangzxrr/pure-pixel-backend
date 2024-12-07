@@ -7,6 +7,7 @@ import {
 } from '@prisma/client';
 import { Exclude, Transform, Type } from 'class-transformer';
 import {
+  IsAlpha,
   IsArray,
   IsBoolean,
   IsEnum,
@@ -16,6 +17,7 @@ import {
   IsString,
 } from 'class-validator';
 import { PagingPaginatedRequestDto } from 'src/infrastructure/restful/paging-paginated.request.dto';
+import { ToArray } from 'src/infrastructure/transforms/to-array';
 import { ToBoolean } from 'src/infrastructure/transforms/to-boolean';
 import { Utils } from 'src/infrastructure/utils/utils';
 
@@ -137,10 +139,13 @@ export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
   @ApiProperty({
     required: false,
     enum: PhotoStatus,
+    isArray: true,
   })
   @IsOptional()
-  @IsEnum(PhotoStatus)
-  status?: PhotoStatus;
+  @ToArray()
+  @IsArray()
+  @IsEnum(PhotoStatus, { each: true })
+  statuses?: PhotoStatus[];
 
   @ApiPropertyOptional({})
   @IsOptional()
@@ -263,8 +268,10 @@ export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
       where.visibility = this.visibility;
     }
 
-    if (this.status) {
-      where.status = this.status;
+    if (this.statuses) {
+      where.status = {
+        in: this.statuses,
+      };
     }
 
     if (this.isFollowed !== undefined) {

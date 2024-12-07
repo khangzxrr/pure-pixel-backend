@@ -6,10 +6,16 @@ import {
   Inject,
   Param,
   Patch,
+  Post,
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiOkResponse,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { AuthGuard, Roles } from 'nest-keycloak-connect';
 import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
@@ -39,6 +45,17 @@ export class ManagePhotoController {
     return await this.managePhotoService.findAll(findAllDto);
   }
 
+  @Get(':id')
+  @ApiOperation({
+    summary: 'find photo by id',
+  })
+  @ApiOkResponse({
+    type: SignedPhotoDto,
+  })
+  async findPhotoById(@Param('id') id: string) {
+    return await this.managePhotoService.findById(id);
+  }
+
   @Patch(':id')
   @ApiOperation({
     summary: 'update one or more fields of photos',
@@ -61,5 +78,21 @@ export class ManagePhotoController {
   })
   async deletePhoto(@Param('id') id: string) {
     return await this.managePhotoService.delete(id);
+  }
+
+  @Post(':id/ban')
+  @ApiOperation({
+    summary: 'ban photo by id',
+  })
+  async banPhoto(@Param('id') id: string) {
+    return await this.managePhotoService.ban(id);
+  }
+
+  @Post(':id/unban')
+  @ApiOperation({
+    summary: 'unban photo by id',
+  })
+  async unbanPhoto(@Param('id') id: string) {
+    return await this.managePhotoService.unban(id);
   }
 }

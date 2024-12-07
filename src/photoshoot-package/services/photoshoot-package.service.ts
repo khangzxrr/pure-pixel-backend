@@ -29,6 +29,7 @@ import { TemporaryfileService } from 'src/temporary-file/services/temporary-file
 import { InjectQueue } from '@nestjs/bullmq';
 import { PhotoshootPackageConstant } from '../constants/photoshoot-package.constant';
 import { Queue } from 'bullmq';
+import { PhotoshootPackageDisabledException } from 'src/booking/exceptions/photoshoot-package-disabled.exception';
 
 @Injectable()
 export class PhotoshootPackageService {
@@ -157,6 +158,10 @@ export class PhotoshootPackageService {
     const photoshootPackage =
       await this.photoshootRepository.findUniqueOrThrow(photoshootPackageId);
 
+    if (photoshootPackage.status === 'DISABLED') {
+      throw new PhotoshootPackageDisabledException();
+    }
+
     if (photoshootPackage.userId !== userId) {
       throw new PhotoshootPackageNotBelongException();
     }
@@ -196,6 +201,10 @@ export class PhotoshootPackageService {
     const photoshootPackage =
       await this.photoshootRepository.findUniqueOrThrow(photoshootPackageId);
 
+    if (photoshootPackage.status === 'DISABLED') {
+      throw new PhotoshootPackageDisabledException();
+    }
+
     if (photoshootPackage.userId !== userId) {
       throw new PhotoshootPackageNotBelongException();
     }
@@ -226,6 +235,10 @@ export class PhotoshootPackageService {
   ) {
     const photoshootPackage =
       await this.photoshootRepository.findUniqueOrThrow(photoshootPackageId);
+
+    if (photoshootPackage.status === 'DISABLED') {
+      throw new PhotoshootPackageDisabledException();
+    }
 
     if (photoshootPackage.userId !== userId) {
       throw new PhotoshootPackageNotBelongException();
@@ -308,6 +321,10 @@ export class PhotoshootPackageService {
   ) {
     const photoshootPackage =
       await this.photoshootRepository.findUniqueOrThrow(id);
+
+    if (photoshootPackage.status === 'DISABLED') {
+      throw new PhotoshootPackageDisabledException();
+    }
 
     if (photoshootPackage.userId !== userId) {
       throw new PhotoshootPackageNotBelongException();

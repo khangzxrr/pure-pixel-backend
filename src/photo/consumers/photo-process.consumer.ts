@@ -47,7 +47,12 @@ export class PhotoProcessConsumer extends WorkerHost {
         case PhotoConstant.DELETE_PHOTO_JOB_NAME:
           await this.deleteTineyePhoto(job.data.originalPhotoUrl);
           break;
-
+        case PhotoConstant.BAN_PHOTO_JOB:
+          await this.banPhoto(job.data.id);
+          break;
+        case PhotoConstant.UNBAN_PHOTO_JOB:
+          await this.unban(job.data.id);
+          break;
         case PhotoConstant.DELETE_TEMPORARY_PHOTO_JOB_NAME:
           this.deleteTemporaryPhoto(job.data);
           break;
@@ -63,6 +68,48 @@ export class PhotoProcessConsumer extends WorkerHost {
     rm(filepath, () => {
       this.logger.log(`removed temporary photo ${filepath}`);
     });
+  }
+
+  async banPhoto(id: string) {
+    const photo = await this.photoRepository.findUniqueOrThrow(id);
+
+    await this.photoRepository.updateById(id, {
+      status: 'BAN',
+    });
+
+    await this.notificationService.addNotificationToQueue({
+      userId: photo.photographerId,
+      type: 'IN_APP',
+      title: `Ảnh ${photo.title} của bạn đã bị cấm trên hệ thống`,
+      content:
+        'Ảnh của bạn đã bị cấm trên hệ thống, nếu đây là sự nhầm lẫn vui lòng liên hệ với chúng tôi thông qua email',
+      payload: {
+        id,
+      },
+      referenceType: 'PHOTO_BAN',
+    });
+    this.logger.log(`banned photo: ${id}`);
+  }
+
+  async unban(id: string) {
+    const photo = await this.photoRepository.findUniqueOrThrow(id);
+
+    await this.photoRepository.updateById(id, {
+      status: 'PARSED',
+    });
+
+    await this.notificationService.addNotificationToQueue({
+      userId: photo.photographerId,
+      type: 'IN_APP',
+      title: `Ảnh ${photo.title} của bạn đã được mở khoá trên hệ thống`,
+      content:
+        'Ảnh của bạn đã được mở khoá  trên hệ thống, nếu đây là sự nhầm lẫn vui lòng liên hệ với chúng tôi thông qua email',
+      payload: {
+        id,
+      },
+      referenceType: 'PHOTO_UNBAN',
+    });
+    this.logger.log(`unbanned photo: ${id}`);
   }
 
   async uploadBookingPhoto(temporaryPhoto: TemporaryBookingPhotoUpload) {
