@@ -47,7 +47,12 @@ export class PhotoProcessConsumer extends WorkerHost {
         case PhotoConstant.DELETE_PHOTO_JOB_NAME:
           await this.deleteTineyePhoto(job.data.originalPhotoUrl);
           break;
-
+        case PhotoConstant.BAN_PHOTO_JOB:
+          await this.banPhoto(job.data.id);
+          break;
+        case PhotoConstant.UNBAN_PHOTO_JOB:
+          await this.unban(job.data.id);
+          break;
         case PhotoConstant.DELETE_TEMPORARY_PHOTO_JOB_NAME:
           this.deleteTemporaryPhoto(job.data);
           break;
@@ -63,6 +68,26 @@ export class PhotoProcessConsumer extends WorkerHost {
     rm(filepath, () => {
       this.logger.log(`removed temporary photo ${filepath}`);
     });
+  }
+
+  async banPhoto(id: string) {
+    await this.photoRepository.findUniqueOrThrow(id);
+
+    await this.photoRepository.updateById(id, {
+      status: 'BAN',
+    });
+
+    this.logger.log(`banned photo: ${id}`);
+  }
+
+  async unban(id: string) {
+    await this.photoRepository.findUniqueOrThrow(id);
+
+    await this.photoRepository.updateById(id, {
+      status: 'PARSED',
+    });
+
+    this.logger.log(`unbanned photo: ${id}`);
   }
 
   async uploadBookingPhoto(temporaryPhoto: TemporaryBookingPhotoUpload) {

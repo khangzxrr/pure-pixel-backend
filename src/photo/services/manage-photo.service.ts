@@ -16,6 +16,10 @@ import { PhotoTagRepository } from 'src/database/repositories/photo-tag.reposito
 import { Utils } from 'src/infrastructure/utils/utils';
 import { PrismaService } from 'src/prisma.service';
 import { UserService } from 'src/user/services/user.service';
+import { InjectQueue } from '@nestjs/bullmq';
+
+import { PhotoConstant } from '../constants/photo.constant';
+import { Queue } from 'bullmq';
 
 @Injectable()
 export class ManagePhotoService {
@@ -25,6 +29,8 @@ export class ManagePhotoService {
     @Inject() private readonly photoService: PhotoService,
     @Inject() private readonly photoTagRepository: PhotoTagRepository,
     @Inject() private readonly userService: UserService,
+    @InjectQueue(PhotoConstant.PHOTO_PROCESS_QUEUE)
+    private readonly queue: Queue,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -47,6 +53,26 @@ export class ManagePhotoService {
       count,
       signedPhotos,
     );
+  }
+
+  async ban(id: string) {
+    await this.photoRepository.findUniqueOrThrow(id);
+
+    this.queue.add(PhotoConstant.BAN_PHOTO_JOB, {
+      id,
+    });
+
+    return true;
+  }
+
+  async unban(id: string) {
+    await this.photoRepository.findUniqueOrThrow(id);
+
+    this.queue.add(PhotoConstant.UNBAN_PHOTO_JOB, {
+      id,
+    });
+
+    return true;
   }
 
   async update(id: string, photoUpdateDto: PhotoUpdateRequestDto) {

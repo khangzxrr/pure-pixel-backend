@@ -17,6 +17,9 @@ export class PhotoConstant {
 
   static INCREASE_VIEW_COUNT_JOB = 'INCREASE_VIEW_COUNT_JOB';
 
+  static BAN_PHOTO_JOB = 'BAN_PHOTO_JOB';
+  static UNBAN_PHOTO_JOB = 'UNBAN_PHOTO_JOB';
+
   static WEBSOCKET_GATEWAY = 'PHOTO_GATEWAY';
 
   static THUMBNAIL_WIDTH = 720;
