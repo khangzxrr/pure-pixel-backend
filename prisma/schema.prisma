@@ -588,8 +588,6 @@ model PhotoSell {
 
   active Boolean @default(false)
 
-  description String
-
   photo   Photo  @relation(fields: [photoId], references: [id])
   photoId String
 
@@ -605,8 +603,6 @@ model PhotoSellHistory {
 
   originalPhotoSell   PhotoSell @relation(fields: [originalPhotoSellId], references: [id])
   originalPhotoSellId String
-
-  description String
 
   width  Int @default(0)
   height Int @default(0)
