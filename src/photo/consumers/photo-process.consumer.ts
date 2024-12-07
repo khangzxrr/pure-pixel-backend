@@ -71,22 +71,44 @@ export class PhotoProcessConsumer extends WorkerHost {
   }
 
   async banPhoto(id: string) {
-    await this.photoRepository.findUniqueOrThrow(id);
+    const photo = await this.photoRepository.findUniqueOrThrow(id);
 
     await this.photoRepository.updateById(id, {
       status: 'BAN',
     });
 
+    await this.notificationService.addNotificationToQueue({
+      userId: photo.photographerId,
+      type: 'IN_APP',
+      title: `Ảnh ${photo.title} của bạn đã bị cấm trên hệ thống`,
+      content:
+        'Ảnh của bạn đã bị cấm trên hệ thống, nếu đây là sự nhầm lẫn vui lòng liên hệ với chúng tôi thông qua email',
+      payload: {
+        id,
+      },
+      referenceType: 'PHOTO_BAN',
+    });
     this.logger.log(`banned photo: ${id}`);
   }
 
   async unban(id: string) {
-    await this.photoRepository.findUniqueOrThrow(id);
+    const photo = await this.photoRepository.findUniqueOrThrow(id);
 
     await this.photoRepository.updateById(id, {
       status: 'PARSED',
     });
 
+    await this.notificationService.addNotificationToQueue({
+      userId: photo.photographerId,
+      type: 'IN_APP',
+      title: `Ảnh ${photo.title} của bạn đã được mở khoá trên hệ thống`,
+      content:
+        'Ảnh của bạn đã được mở khoá  trên hệ thống, nếu đây là sự nhầm lẫn vui lòng liên hệ với chúng tôi thông qua email',
+      payload: {
+        id,
+      },
+      referenceType: 'PHOTO_UNBAN',
+    });
     this.logger.log(`unbanned photo: ${id}`);
   }
 

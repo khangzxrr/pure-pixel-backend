@@ -10,7 +10,12 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiOkResponse,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { AuthGuard, Roles } from 'nest-keycloak-connect';
 import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
@@ -38,6 +43,17 @@ export class ManagePhotoController {
   @ApiOkResponsePaginated(SignedPhotoDto)
   async findAllPhotos(@Query() findAllDto: FindAllPhotoFilterDto) {
     return await this.managePhotoService.findAll(findAllDto);
+  }
+
+  @Get(':id')
+  @ApiOperation({
+    summary: 'find photo by id',
+  })
+  @ApiOkResponse({
+    type: SignedPhotoDto,
+  })
+  async findPhotoById(@Param('id') id: string) {
+    return await this.managePhotoService.findById(id);
   }
 
   @Patch(':id')

@@ -823,6 +823,8 @@ enum NotificationReferenceType {
   PHOTO_SELL
   PHOTO_BUY
   PHOTO
+  PHOTO_BAN
+  PHOTO_UNBAN
   BAN
 }
 

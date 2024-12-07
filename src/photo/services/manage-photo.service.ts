@@ -34,6 +34,12 @@ export class ManagePhotoService {
     private readonly prisma: PrismaService,
   ) {}
 
+  async findById(id: string) {
+    const photo = await this.photoRepository.findUniqueOrThrow(id);
+
+    return await this.photoService.signPhotoDetail(photo);
+  }
+
   async findAll(findAllDto: FindAllPhotoFilterDto) {
     const where = findAllDto.toWhere('');
 
