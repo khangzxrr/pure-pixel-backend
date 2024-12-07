@@ -470,6 +470,7 @@ enum PhotoStatus {
   PENDING
   PARSED
   DUPLICATED
+  BAN
 }
 
 model Photo {
