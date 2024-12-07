@@ -99,7 +99,8 @@ export class PhotoExchangeService {
     userId: string,
     photoBuyId: string,
   ): Promise<Buffer> {
-    const photo = await this.photoRepository.findUniqueOrThrow(photoId);
+    const photo =
+      await this.photoRepository.findUniqueOrThrowIgnoreSoftDelete(photoId);
     const photoBuy = await this.photoBuyRepository.findUniqueOrThrow({
       id: photoBuyId,
       buyerId: userId,

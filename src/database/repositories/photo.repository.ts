@@ -152,6 +152,52 @@ export class PhotoRepository {
     });
   }
 
+  async findUniqueOrThrowIgnoreSoftDelete(id: string, userId?: string) {
+    return this.prisma.extendedClient().photo.findUniqueOrThrow({
+      where: {
+        id,
+      },
+      include: {
+        _count: {
+          select: {
+            votes: true,
+            comments: true,
+          },
+        },
+        photographer: true,
+        categories: true,
+        camera: {
+          include: {
+            cameraMaker: true,
+          },
+        },
+        photoSellings: {
+          where: {
+            active: true,
+          },
+          include: {
+            pricetags: true,
+            photoSellHistories: {
+              include: {
+                photoBuy: {
+                  where: {
+                    buyerId: userId,
+                    userToUserTransaction: {
+                      fromUserTransaction: {
+                        status: 'SUCCESS',
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        photoTags: true,
+      },
+    });
+  }
+
   async findUniqueOrThrow(id: string, userId?: string) {
     return this.prisma.extendedClient().photo.findUniqueOrThrow({
       where: {
