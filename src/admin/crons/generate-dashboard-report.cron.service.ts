@@ -298,15 +298,6 @@ export class GenerateDashboardReportService {
 
     const totalRevenue = revenueFromUpgradePackage.add(revenueFromSellingPhoto);
 
-    const totalPhoto = await this.photoRepository.count({
-      photoType: 'RAW',
-      deletedAt: null,
-      createdAt: {
-        gte: dashboardRequestDto.fromDate,
-        lte: dashboardRequestDto.toDate,
-      },
-    });
-
     const totalPhotoshootPackage = await this.photoshootPackageRepository.count(
       {
         createdAt: {
@@ -417,7 +408,21 @@ export class GenerateDashboardReportService {
           active: true,
         },
       },
+
       deletedAt: null,
+      createdAt: {
+        gte: dashboardRequestDto.fromDate,
+        lte: dashboardRequestDto.toDate,
+      },
+    });
+
+    const totalPhoto = await this.photoRepository.count({
+      photoType: 'RAW',
+      deletedAt: null,
+      createdAt: {
+        gte: dashboardRequestDto.fromDate,
+        lte: dashboardRequestDto.toDate,
+      },
     });
 
     const newDashboardReportDto: DashboardReportDto = {

@@ -235,15 +235,12 @@ export class PhotoExchangeService {
       this.photoRepository.updateQueryById(photoId, {
         watermark: true,
         visibility: 'PUBLIC',
-        title: sellPhotoDto.title,
-        description: sellPhotoDto.description,
       });
     prismaQuery.push(updatePhotoToPublicAndWatermarkQuery);
 
     const createPhotoSellQuery =
       this.photoSellRepository.createAndActiveByPhotoIdQuery({
         active: true,
-        description: sellPhotoDto.description,
         photo: {
           connect: {
             id: photoId,
@@ -413,7 +410,6 @@ export class PhotoExchangeService {
                   width: pricetag.width,
                   height: pricetag.height,
                   price: pricetag.price,
-                  description: photoSell.description,
                   originalPhotoSell: {
                     connect: {
                       id: photoSell.id,
@@ -498,7 +494,6 @@ export class PhotoExchangeService {
                 width: pricetag.width,
                 height: pricetag.height,
                 price: pricetag.price,
-                description: photoSell.description,
                 originalPhotoSell: {
                   connect: {
                     id: photoSell.id,
