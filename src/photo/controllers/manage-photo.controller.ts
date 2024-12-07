@@ -6,6 +6,7 @@ import {
   Inject,
   Param,
   Patch,
+  Post,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -61,5 +62,21 @@ export class ManagePhotoController {
   })
   async deletePhoto(@Param('id') id: string) {
     return await this.managePhotoService.delete(id);
+  }
+
+  @Post(':id/ban')
+  @ApiOperation({
+    summary: 'ban photo by id',
+  })
+  async banPhoto(@Param('id') id: string) {
+    return await this.managePhotoService.ban(id);
+  }
+
+  @Post(':id/unban')
+  @ApiOperation({
+    summary: 'unban photo by id',
+  })
+  async unbanPhoto(@Param('id') id: string) {
+    return await this.managePhotoService.unban(id);
   }
 }

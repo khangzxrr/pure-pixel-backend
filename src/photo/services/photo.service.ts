@@ -51,6 +51,7 @@ import { PhotoNotInPendingStateException } from '../exceptions/photo-not-in-pend
 
 import { DownloadTemporaryPhotoDto } from '../dtos/rest/download-temporary-photo.request.dto';
 import { TemporaryPhotoDto } from '../dtos/temporary-photo.dto';
+import { PhotoBannedException } from '../exceptions/photo-banned.exception';
 
 @Injectable()
 export class PhotoService {
@@ -463,6 +464,7 @@ export class PhotoService {
   async findPublicPhotos(userId: string, filter: FindAllPhotoFilterDto) {
     filter.photoType = 'RAW'; //ensure only get RAW photo
     filter.visibility = 'PUBLIC';
+    filter.statuses = ['PENDING', 'PARSED'];
 
     return await this.findAll(userId, filter);
   }
@@ -576,6 +578,14 @@ export class PhotoService {
       photo.photographerId !== userId
     ) {
       throw new PhotoIsPrivatedException();
+    }
+
+    if (
+      validateOwnership &&
+      photo.photographerId !== userId &&
+      photo.status === 'BAN'
+    ) {
+      throw new PhotoBannedException();
     }
 
     return await this.signPhotoDetail(photo);

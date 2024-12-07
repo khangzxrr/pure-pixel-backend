@@ -27,6 +27,7 @@ import { NotificationService } from 'src/notification/services/notification.serv
 import { UserRepository } from 'src/database/repositories/user.repository';
 import { BunnyService } from 'src/storage/services/bunny.service';
 import { CannotPerformOnBookingPhoto } from '../exceptions/cannot-perform-on-booking-photo.exception';
+import { PhotoBannedException } from '../exceptions/photo-banned.exception';
 
 @Injectable()
 export class PhotoExchangeService {
@@ -193,6 +194,9 @@ export class PhotoExchangeService {
     if (photo.photoType === 'BOOKING') {
       throw new CannotPerformOnBookingPhoto();
     }
+    if (photo.status === 'BAN') {
+      throw new PhotoBannedException();
+    }
 
     const previousActivePhotoSell = await this.photoSellRepository.findFirst({
       active: true,
@@ -305,6 +309,11 @@ export class PhotoExchangeService {
     pricetagId: string,
     buyPhotoDto: BuyPhotoRequestDto,
   ) {
+    const photo = await this.photoRepository.findUniqueOrThrow(photoId);
+    if (photo.status === 'BAN') {
+      throw new PhotoBannedException();
+    }
+
     const photoSell = await this.photoSellRepository.findUniqueOrThrow({
       id: photoSellId,
       photoId,
