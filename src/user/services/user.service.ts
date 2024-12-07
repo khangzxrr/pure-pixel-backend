@@ -259,13 +259,11 @@ export class UserService {
   }
 
   async findMany(findAllDto: UserFindAllRequestDto) {
-    const where: Prisma.UserWhereInput = {};
-
-    const count = await this.userRepository.count(where);
+    const count = await this.userRepository.count(findAllDto.toWhere());
 
     const users: UserInReport[] = await this.userRepository.findMany(
-      {},
-      [],
+      findAllDto.toWhere(),
+      findAllDto.toOrderBy(),
       {},
       findAllDto.toSkip(),
       findAllDto.limit,
