@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Prisma, ReportStatus, ReportType } from '@prisma/client';
 import { Transform } from 'class-transformer';
 import { IsArray, IsEnum, IsOptional, IsString } from 'class-validator';
@@ -6,12 +6,10 @@ import { PagingPaginatedRequestDto } from 'src/infrastructure/restful/paging-pag
 import { ToArray } from 'src/infrastructure/transforms/to-array';
 
 export class ReportFindAllRequestDto extends PagingPaginatedRequestDto {
-  @ApiProperty({
-    required: false,
-  })
+  @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  content?: string;
+  search?: string;
 
   @ApiProperty({
     required: false,
@@ -37,20 +35,6 @@ export class ReportFindAllRequestDto extends PagingPaginatedRequestDto {
 
   @ApiProperty({
     required: false,
-  })
-  @IsOptional()
-  @IsString()
-  userId?: string;
-
-  @ApiProperty({
-    required: false,
-  })
-  @IsOptional()
-  @IsString()
-  referenceId?: string;
-
-  @ApiProperty({
-    required: false,
     enum: Prisma.SortOrder,
   })
   @IsOptional()
@@ -68,10 +52,29 @@ export class ReportFindAllRequestDto extends PagingPaginatedRequestDto {
   toWhere(): Prisma.ReportWhereInput {
     const where: Prisma.ReportWhereInput = {};
 
-    if (this.content) {
-      where.content = {
-        contains: this.content,
-      };
+    if (this.search) {
+      where.OR = [
+        {
+          id: {
+            contains: this.search,
+          },
+        },
+        {
+          userId: {
+            contains: this.search,
+          },
+        },
+        {
+          content: {
+            contains: this.search,
+          },
+        },
+        {
+          referenceId: {
+            contains: this.search,
+          },
+        },
+      ];
     }
 
     if (this.reportStatuses) {
@@ -84,14 +87,6 @@ export class ReportFindAllRequestDto extends PagingPaginatedRequestDto {
       where.reportType = {
         in: this.reportTypes,
       };
-    }
-
-    if (this.userId) {
-      where.userId = this.userId;
-    }
-
-    if (this.referenceId) {
-      where.referenceId = this.referenceId;
     }
 
     return where;
