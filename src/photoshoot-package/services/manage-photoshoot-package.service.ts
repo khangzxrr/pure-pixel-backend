@@ -22,6 +22,22 @@ export class ManagePhotoshootPackageService {
     @Inject() private readonly bunnyService: BunnyService,
   ) {}
 
+  async disable(id: string) {
+    await this.photoshootRepository.updateById(id, {
+      status: 'DISABLED',
+    });
+
+    return true;
+  }
+
+  async enable(id: string) {
+    await this.photoshootRepository.updateById(id, {
+      status: 'ENABLED',
+    });
+
+    return true;
+  }
+
   async replace(id: string, replaceDto: PhotoshootPackageReplaceRequestDto) {
     const photoshootPackage =
       await this.photoshootRepository.findUniqueOrThrow(id);

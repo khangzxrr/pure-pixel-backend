@@ -6,6 +6,7 @@ import {
   Inject,
   Param,
   Patch,
+  Post,
   Put,
   Query,
   UseGuards,
@@ -33,12 +34,28 @@ import { PhotoshootPackageFindAllResponseDto } from '../dtos/rest/photoshoot-pac
 @Controller('manager/photoshoot-package')
 @ApiTags('manager-photoshoot-package')
 @UseGuards(AuthGuard, KeycloakRoleGuard)
-@Roles({ roles: [Constants.MANAGER_ROLE] })
+@Roles({ roles: [Constants.MANAGER_ROLE, Constants.ADMIN_ROLE] })
 export class ManagerPhotoShootPackageController {
   constructor(
     @Inject()
     private readonly managePhotoshootPackageService: ManagePhotoshootPackageService,
   ) {}
+
+  @Post(':id/enable')
+  @ApiOperation({
+    summary: 'enable photoshoot-package by id',
+  })
+  async enablePhotoshootPackage(@Param('id') id: string) {
+    return this.managePhotoshootPackageService.enable(id);
+  }
+
+  @Post(':id/disable')
+  @ApiOperation({
+    summary: 'disable photoshoot-package by id',
+  })
+  async disablePhotoshootPackage(@Param('id') id: string) {
+    return this.managePhotoshootPackageService.disable(id);
+  }
 
   @Get()
   @ApiOperation({
