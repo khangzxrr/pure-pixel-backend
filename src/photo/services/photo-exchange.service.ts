@@ -163,6 +163,7 @@ export class PhotoExchangeService {
 
     await this.photoRepository.updateById(photoId, {
       visibility: 'PRIVATE',
+      watermark: false,
     });
 
     return true;
