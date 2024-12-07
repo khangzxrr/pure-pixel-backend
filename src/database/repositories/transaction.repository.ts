@@ -6,6 +6,12 @@ import { PrismaService } from 'src/prisma.service';
 export class TransactionRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  async create(data: Prisma.TransactionCreateInput) {
+    return this.prisma.extendedClient().transaction.create({
+      data,
+    });
+  }
+
   async countAll(where: Prisma.TransactionWhereInput) {
     return this.prisma.transaction.count({
       where,

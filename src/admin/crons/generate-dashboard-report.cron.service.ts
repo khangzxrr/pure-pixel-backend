@@ -228,9 +228,6 @@ export class GenerateDashboardReportService {
 
     const dtos = await Promise.all(mapPromises);
 
-    //photo selling revenue
-    //booking revenue
-
     return dtos;
   }
 

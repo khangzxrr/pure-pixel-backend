@@ -9,6 +9,7 @@ import { KeycloakService } from 'src/authen/services/keycloak.service';
 import { TransactionRepository } from 'src/database/repositories/transaction.repository';
 import { UserToUserRepository } from 'src/database/repositories/user-to-user-transaction.repository';
 import { NotificationService } from 'src/notification/services/notification.service';
+import { PhotoSellRepository } from 'src/database/repositories/photo-sell.repository';
 
 @Injectable()
 export class TransactionHandlerService {
@@ -24,6 +25,7 @@ export class TransactionHandlerService {
 
     @Inject() private readonly userToUserRepository: UserToUserRepository,
     @Inject() private readonly notificationService: NotificationService,
+    @Inject() private readonly photoSellRepository: PhotoSellRepository,
   ) {}
 
   async handleUpgradeToPhotographer(
@@ -106,24 +108,70 @@ export class TransactionHandlerService {
     fromUserTransactionId: string,
     sepay: SepayRequestDto,
   ) {
-    const fromUserTransaction = await this.userToUserRepository.getById(
+    const userToUserTransaction = await this.userToUserRepository.getById(
       fromUserTransactionId,
     );
+
+    const photoId =
+      userToUserTransaction.photoBuy.photoSellHistory.originalPhotoSell.photoId;
+
+    const previousPhotoSellId =
+      userToUserTransaction.photoBuy.photoSellHistory.originalPhotoSell.id;
+
+    const activePhotoSell = await this.photoSellRepository.findFirst({
+      active: true,
+      photoId,
+    });
+
+    if (activePhotoSell.id !== previousPhotoSellId) {
+      await this.transactionRepository.update(
+        {
+          id: userToUserTransaction.fromUserTransaction.id,
+        },
+        {
+          status: 'FAILED',
+        },
+      );
+
+      await this.transactionRepository.create({
+        fee: 0,
+        status: 'SUCCESS',
+        user: {
+          connect: {
+            id: userToUserTransaction.fromUserTransaction.userId,
+          },
+        },
+        type: 'REFUND',
+        amount: userToUserTransaction.fromUserTransaction.amount,
+        paymentMethod: 'WALLET',
+        paymentPayload: {},
+      });
+
+      await this.notificationService.addNotificationToQueue({
+        title: `Mua ảnh thất bại`,
+        content: `Giá ảnh có cập nhật mới, khoản tiền bạn vừa thanh toán sẽ được hoàn về ví`,
+        userId: userToUserTransaction.fromUserTransaction.userId,
+        type: 'BOTH_INAPP_EMAIL',
+        referenceType: 'PHOTO_BUY',
+        payload: transaction,
+      });
+      return;
+    }
 
     await this.userToUserRepository.markSucccessAndCreateToUserTransaction(
       fromUserTransactionId,
       sepay,
-      fromUserTransaction.toUserId,
+      userToUserTransaction.toUserId,
       transaction.fee,
       transaction.amount,
     );
 
     const photoTitle =
-      fromUserTransaction.photoBuy.photoSellHistory.originalPhotoSell.photo
+      userToUserTransaction.photoBuy.photoSellHistory.originalPhotoSell.photo
         .title;
 
-    const width = fromUserTransaction.photoBuy.photoSellHistory.width;
-    const height = fromUserTransaction.photoBuy.photoSellHistory.height;
+    const width = userToUserTransaction.photoBuy.photoSellHistory.width;
+    const height = userToUserTransaction.photoBuy.photoSellHistory.height;
 
     await this.notificationService.addNotificationToQueue({
       title: `Mua ảnh ${photoTitle} thành công`,
@@ -136,8 +184,8 @@ export class TransactionHandlerService {
 
     await this.notificationService.addNotificationToQueue({
       title: `Bán ảnh ${photoTitle} thành công`,
-      content: ` Người dùng ${fromUserTransaction.fromUserTransaction.user.name} đã thanh toán ảnh ${photoTitle} - kích thước ${width}x${height} thành công`,
-      userId: fromUserTransaction.toUserId,
+      content: ` Người dùng ${userToUserTransaction.fromUserTransaction.user.name} đã thanh toán ảnh ${photoTitle} - kích thước ${width}x${height} thành công`,
+      userId: userToUserTransaction.toUserId,
       type: 'BOTH_INAPP_EMAIL',
       referenceType: 'PHOTO_BUY',
       payload: transaction,
