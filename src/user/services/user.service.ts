@@ -211,6 +211,8 @@ export class UserService {
       );
 
       user.avatar += `?updatedAt=${new Date().getTime()}`;
+
+      await this.bunnyService.pruneCache(user.avatar);
     }
 
     if (updateProfileDto.cover) {
@@ -221,6 +223,8 @@ export class UserService {
       );
 
       user.cover += `?updatedAt=${new Date().getTime()}`;
+
+      await this.bunnyService.pruneCache(user.avatar);
     }
 
     const normalizedName = updateProfileDto.name
