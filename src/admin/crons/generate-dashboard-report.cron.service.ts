@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
+
 import { Decimal } from '@prisma/client/runtime/library';
-import { instanceToPlain, plainToInstance } from 'class-transformer';
+import { plainToInstance } from 'class-transformer';
 import { KeycloakService } from 'src/authen/services/keycloak.service';
 import { PhotoSellRepository } from 'src/database/repositories/photo-sell.repository';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
@@ -30,7 +30,6 @@ import { PhotoshootPackageDto } from 'src/photoshoot-package/dtos/photoshoot-pac
 import { DashboardReportDto } from '../dtos/dashboard-report.dto';
 
 import { BookingBillItemRepository } from 'src/database/repositories/booking-bill-item.repository';
-import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 
 @Injectable()
 export class GenerateDashboardReportService {
@@ -59,9 +58,6 @@ export class GenerateDashboardReportService {
     private readonly photoService: PhotoService,
     @Inject()
     private readonly bookingBillItemRepository: BookingBillItemRepository,
-
-    @Inject(CACHE_MANAGER)
-    private readonly cache: Cache,
   ) {}
 
   async getTopSellerDetail(
