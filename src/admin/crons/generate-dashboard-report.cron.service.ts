@@ -162,11 +162,15 @@ export class GenerateDashboardReportService {
     let photoshootPackageRevenue = new Decimal(0);
 
     if (increaseBillItem._sum.price) {
-      photoshootPackageRevenue.add(increaseBillItem._sum.price);
+      photoshootPackageRevenue = photoshootPackageRevenue.add(
+        increaseBillItem._sum.price,
+      );
     }
 
     if (decreaseBillItem._sum.price) {
-      photoshootPackageRevenue.sub(decreaseBillItem._sum.price);
+      photoshootPackageRevenue = photoshootPackageRevenue.sub(
+        decreaseBillItem._sum.price,
+      );
     }
 
     return {
