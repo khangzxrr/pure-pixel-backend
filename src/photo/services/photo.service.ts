@@ -832,6 +832,10 @@ export class PhotoService {
       temporaryPhotoDto,
     );
 
+    await this.cameraQueue.add(CameraConstant.ADD_NEW_CAMERA_USAGE_JOB, {
+      photoId: photo.id,
+    });
+
     return this.signPhoto(photo);
   }
 
