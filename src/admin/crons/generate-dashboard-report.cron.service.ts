@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
+
 import { Decimal } from '@prisma/client/runtime/library';
-import { instanceToPlain, plainToInstance } from 'class-transformer';
+import { plainToInstance } from 'class-transformer';
 import { KeycloakService } from 'src/authen/services/keycloak.service';
 import { PhotoSellRepository } from 'src/database/repositories/photo-sell.repository';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
@@ -30,7 +30,6 @@ import { PhotoshootPackageDto } from 'src/photoshoot-package/dtos/photoshoot-pac
 import { DashboardReportDto } from '../dtos/dashboard-report.dto';
 
 import { BookingBillItemRepository } from 'src/database/repositories/booking-bill-item.repository';
-import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 
 @Injectable()
 export class GenerateDashboardReportService {
@@ -59,9 +58,6 @@ export class GenerateDashboardReportService {
     private readonly photoService: PhotoService,
     @Inject()
     private readonly bookingBillItemRepository: BookingBillItemRepository,
-
-    @Inject(CACHE_MANAGER)
-    private readonly cache: Cache,
   ) {}
 
   async getTopSellerDetail(
@@ -162,11 +158,15 @@ export class GenerateDashboardReportService {
     let photoshootPackageRevenue = new Decimal(0);
 
     if (increaseBillItem._sum.price) {
-      photoshootPackageRevenue.add(increaseBillItem._sum.price);
+      photoshootPackageRevenue = photoshootPackageRevenue.add(
+        increaseBillItem._sum.price,
+      );
     }
 
     if (decreaseBillItem._sum.price) {
-      photoshootPackageRevenue.sub(decreaseBillItem._sum.price);
+      photoshootPackageRevenue = photoshootPackageRevenue.sub(
+        decreaseBillItem._sum.price,
+      );
     }
 
     return {
@@ -309,11 +309,15 @@ export class GenerateDashboardReportService {
 
     const topUpgradePackages = await this.upgradePackageRepository.findAll(
       0,
-      5,
+      9999,
       {
-        createdAt: {
-          lte: dashboardRequestDto.toDate,
-          gte: dashboardRequestDto.fromDate,
+        upgradePackageHistories: {
+          some: {
+            createdAt: {
+              lte: dashboardRequestDto.toDate,
+              gte: dashboardRequestDto.fromDate,
+            },
+          },
         },
       },
       {
@@ -347,6 +351,7 @@ export class GenerateDashboardReportService {
           upgradePackageDto,
         };
       });
+
     const topUsedUpgradePackage = await Promise.all(
       topUsedUpgradePackageDtoPromises,
     );
