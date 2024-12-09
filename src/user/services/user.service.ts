@@ -210,6 +210,8 @@ export class UserService {
         `avatar/${userId}.${updateProfileDto.avatar.extension}`,
       );
 
+      user.avatar += `?updatedAt=${new Date().getTime()}`;
+
       await this.bunnyService.pruneCache(user.avatar);
     }
 
@@ -219,6 +221,8 @@ export class UserService {
         updateProfileDto.cover,
         `cover/${userId}.${updateProfileDto.cover.extension}`,
       );
+
+      user.cover += `?updatedAt=${new Date().getTime()}`;
 
       await this.bunnyService.pruneCache(user.avatar);
     }

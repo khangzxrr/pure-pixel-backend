@@ -81,12 +81,16 @@ export class BunnyService {
 
   async pruneCache(url: string) {
     const response = await firstValueFrom(
-      this.httpService.post(`https://api.bunny.net/purge?url=${url}`, null, {
-        headers: {
-          accept: 'application/json',
-          accessKey: process.env.BUNNY_USER_ACCESS_KEY,
+      this.httpService.post(
+        `https://api.bunny.net/purge?url=${encodeURIComponent(url)}`,
+        null,
+        {
+          headers: {
+            accept: 'application/json',
+            accessKey: process.env.BUNNY_USER_ACCESS_KEY,
+          },
         },
-      }),
+      ),
     );
 
     console.log(response);

@@ -335,6 +335,10 @@ export class PhotoshootPackageService {
         photoshootPackage.thumbnail,
         updateDto.thumbnail.buffer,
       );
+
+      await this.bunnyService.pruneCache(
+        `${process.env.BUNNY_STORAGE_CDN}/${process.env.BUNNY_STORAGE_BUCKET}/${photoshootPackage.thumbnail}`,
+      );
     }
 
     const updatedPhotoshootPackage = await this.photoshootRepository.updateById(
@@ -354,6 +358,7 @@ export class PhotoshootPackageService {
 
     photoshootPackageDto.thumbnail = this.bunnyService.getPresignedFile(
       photoshootPackageDto.thumbnail,
+      `?updatedAt=${updatedPhotoshootPackage.updatedAt.getTime()}`,
     );
 
     return photoshootPackageDto;
@@ -441,6 +446,7 @@ export class PhotoshootPackageService {
     if (photoshootPackageDetail.sourceStatus === 'CLOUD') {
       photoshootPackageDto.thumbnail = this.bunnyService.getPresignedFile(
         photoshootPackageDto.thumbnail,
+        `?updatedAt=${photoshootPackageDetail.updatedAt.getTime()}`,
       );
     } else {
       photoshootPackageDto.thumbnail =
@@ -475,6 +481,7 @@ export class PhotoshootPackageService {
     if (photoshootPackage.sourceStatus === 'CLOUD') {
       photoshootPackageDto.thumbnail = this.bunnyService.getPresignedFile(
         photoshootPackageDto.thumbnail,
+        `?updatedAt=${photoshootPackage.updatedAt.getTime()}`,
       );
     } else {
       photoshootPackageDto.thumbnail =
