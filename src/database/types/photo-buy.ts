@@ -4,20 +4,12 @@ export type PhotoBuyDetail = Prisma.PhotoBuyGetPayload<{
   include: {
     userToUserTransaction: {
       include: {
-        fromUserTransaction: {
-          include: {
-            user: true;
-          };
-        };
+        fromUserTransaction: true;
       };
     };
     photoSellHistory: {
       include: {
-        originalPhotoSell: {
-          include: {
-            photo: true;
-          };
-        };
+        originalPhotoSell: true;
       };
     };
   };

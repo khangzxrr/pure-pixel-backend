@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Exclude, Type } from 'class-transformer';
+import { Type } from 'class-transformer';
 import { SignedPhotoBuyDto } from './rest/signed-photo-buy.response.dto';
+import { PhotoSellDto } from './photo-sell.dto';
 
 export class PhotoSellHistoryDto {
   @ApiProperty()
