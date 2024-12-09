@@ -31,7 +31,12 @@ export class PhotoBuyRepository {
           include: {
             originalPhotoSell: {
               include: {
-                photo: true,
+                photo: {
+                  include: {
+                    categories: true,
+                    photographer: true,
+                  },
+                },
               },
             },
           },
