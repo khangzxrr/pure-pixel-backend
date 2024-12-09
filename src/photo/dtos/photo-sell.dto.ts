@@ -14,7 +14,7 @@ export class PhotoSellDto {
   description: string;
 
   @ApiProperty()
-  active: string;
+  active: boolean;
 
   @ApiProperty()
   createdAt: Date;

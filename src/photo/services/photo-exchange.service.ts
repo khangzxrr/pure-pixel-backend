@@ -28,6 +28,7 @@ import { UserRepository } from 'src/database/repositories/user.repository';
 import { BunnyService } from 'src/storage/services/bunny.service';
 import { CannotPerformOnBookingPhoto } from '../exceptions/cannot-perform-on-booking-photo.exception';
 import { PhotoBannedException } from '../exceptions/photo-banned.exception';
+import { PhotoWithSignedPhotoBuys } from '../dtos/photo-with-signed-photo-buy.dto';
 
 @Injectable()
 export class PhotoExchangeService {
@@ -266,6 +267,9 @@ export class PhotoExchangeService {
   }
 
   async getPhotoBuyByPhotoId(userId: string, photoId: string) {
+    const photo =
+      await this.photoRepository.findUniqueOrThrowIgnoreSoftDelete(photoId);
+
     const previousPhotoBuys = await this.photoBuyRepository.findAll({
       photoSellHistory: {
         originalPhotoSell: {
@@ -287,7 +291,7 @@ export class PhotoExchangeService {
         photobuy.userToUserTransaction.fromUserTransaction.status === 'SUCCESS'
       ) {
         signedPhotoBuyDto.previewUrl = this.bunnyService.getPresignedFile(
-          photobuy.photoSellHistory.originalPhotoSell.photo.originalPhotoUrl,
+          photo.originalPhotoUrl,
           `?width=${photobuy.photoSellHistory.width}`,
         );
         signedPhotoBuyDto.downloadUrl = `${process.env.BACKEND_ORIGIN}/photo/${photoId}/photo-buy/${photobuy.id}/download`;
@@ -298,7 +302,10 @@ export class PhotoExchangeService {
 
     const signedPhotoBuyDtos = await Promise.all(mappingToDtoPromises);
 
-    return signedPhotoBuyDtos;
+    return plainToInstance(PhotoWithSignedPhotoBuys, {
+      photo,
+      photoBuys: signedPhotoBuyDtos,
+    });
   }
 
   async buyPhotoRequest(

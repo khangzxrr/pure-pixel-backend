@@ -20,25 +20,12 @@ export class PhotoBuyRepository {
       include: {
         userToUserTransaction: {
           include: {
-            fromUserTransaction: {
-              include: {
-                user: true,
-              },
-            },
+            fromUserTransaction: true,
           },
         },
         photoSellHistory: {
           include: {
-            originalPhotoSell: {
-              include: {
-                photo: {
-                  include: {
-                    categories: true,
-                    photographer: true,
-                  },
-                },
-              },
-            },
+            originalPhotoSell: true,
           },
         },
       },

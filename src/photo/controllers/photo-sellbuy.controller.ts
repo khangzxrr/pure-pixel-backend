@@ -22,6 +22,7 @@ import { SignedPhotoBuyDto } from '../dtos/rest/signed-photo-buy.response.dto';
 import { PhotoExchangeService } from '../services/photo-exchange.service';
 import { Response } from 'express';
 import { BuyPhotoRequestDto } from '../dtos/rest/buy-photo.request.dto';
+import { PhotoWithSignedPhotoBuys } from '../dtos/photo-with-signed-photo-buy.dto';
 
 @Controller('photo')
 @ApiTags('photo-exchange')
@@ -147,8 +148,7 @@ export class PhotoSellBuyController {
   @UseGuards(AuthGuard, KeycloakRoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
   @ApiOkResponse({
-    isArray: true,
-    type: SignedPhotoBuyDto,
+    type: PhotoWithSignedPhotoBuys,
   })
   async getBoughtPhoto(
     @AuthenticatedUser() user: ParsedUserDto,
