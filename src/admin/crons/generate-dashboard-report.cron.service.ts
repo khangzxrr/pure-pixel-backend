@@ -309,11 +309,15 @@ export class GenerateDashboardReportService {
 
     const topUpgradePackages = await this.upgradePackageRepository.findAll(
       0,
-      5,
+      9999,
       {
-        createdAt: {
-          lte: dashboardRequestDto.toDate,
-          gte: dashboardRequestDto.fromDate,
+        upgradePackageHistories: {
+          some: {
+            createdAt: {
+              lte: dashboardRequestDto.toDate,
+              gte: dashboardRequestDto.fromDate,
+            },
+          },
         },
       },
       {
@@ -347,6 +351,7 @@ export class GenerateDashboardReportService {
           upgradePackageDto,
         };
       });
+
     const topUsedUpgradePackage = await Promise.all(
       topUsedUpgradePackageDtoPromises,
     );
