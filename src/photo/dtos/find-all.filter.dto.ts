@@ -331,10 +331,13 @@ export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
           {
             name: {
               contains: this.photographerName,
+              mode: 'insensitive',
             },
           },
           {
-            normalizedName: Utils.normalizeText(this.photographerName),
+            normalizedName: {
+              contains: Utils.normalizeText(this.photographerName),
+            },
           },
         ],
       };
@@ -345,6 +348,7 @@ export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
         {
           title: {
             contains: this.title,
+            mode: 'insensitive',
           },
         },
         {
