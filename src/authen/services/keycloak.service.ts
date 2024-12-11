@@ -8,7 +8,6 @@ import { CreateKeycloakUserDto } from '../dtos/create-keycloak-user.dto';
 
 import { UpdateKeycloakUserDto } from '../dtos/update-keycloak-user.dto';
 import { Inject, Injectable } from '@nestjs/common';
-import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { CachingService } from 'src/caching/services/caching.service';
 
 @Injectable()
@@ -24,6 +23,7 @@ export class KeycloakService {
     await this.cachingService.deleteWithPattern(`findUsersHasRole:*`);
     await this.cachingService.deleteWithPattern(`findUsers:*`);
     await this.cachingService.deleteWithPattern(`getRole:*`);
+    await this.cachingService.deleteWithPattern(`getUserRoles:*`);
   }
 
   private async getClient() {

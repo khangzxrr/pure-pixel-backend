@@ -27,6 +27,7 @@ import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { BookingRepository } from 'src/database/repositories/booking.repository';
 import { NotificationService } from 'src/notification/services/notification.service';
 import { CannotBanAdminException } from '../exceptions/cannot-ban-admin.exception';
+import { Console } from 'console';
 
 @Injectable()
 export class UserService {
@@ -276,25 +277,34 @@ export class UserService {
     const userDtoPromises = users.map(async (u) => {
       const dto = plainToInstance(UserDto, u);
 
-      return dto;
+      try {
+        const kcUser = await this.keycloakService.findFirst(u.id);
 
-      // try {
-      //   const kcUser = await this.keycloakService.findFirst(u.id);
-      //
-      //   if (kcUser === null) {
-      //     return null;
-      //   }
-      //
-      //   dto.enabled = kcUser.enabled;
-      //   dto.username = kcUser.username;
-      //
-      //   const roles = await this.keycloakService.getUserRoles(u.id);
-      //   dto.roles = roles.map((r) => r.name);
-      //
-      //   return dto;
-      // } catch (e) {
-      //   return null;
-      // }
+        if (kcUser === null) {
+          return null;
+        }
+
+        dto.enabled = kcUser.enabled;
+        dto.username = kcUser.username;
+
+        let roles = await this.keycloakService.getUserRoles(u.id);
+
+        if (roles.length === 0) {
+          console.log(`add default client role`);
+          await this.keycloakService.addRoleToUser(
+            u.id,
+            Constants.CUSTOMER_ROLE,
+          );
+        }
+        roles = await this.keycloakService.getUserRoles(u.id);
+
+        dto.roles = roles.map((r) => r.name);
+
+        return dto;
+      } catch (e) {
+        console.log(e);
+        return null;
+      }
     });
 
     const userDtos = await Promise.all(userDtoPromises);
@@ -402,8 +412,6 @@ export class UserService {
         user.id,
       );
 
-      console.log('upsert keycloak');
-
       const userDto = plainToInstance(UserDto, user, {
         groups: [Constants.PHOTOGRAPHER_ROLE],
       });
@@ -415,6 +423,13 @@ export class UserService {
     }
 
     const roles = await this.keycloakService.getUserRoles(user.id);
+
+    if (roles.length === 0) {
+      await this.keycloakService.addRoleToUser(
+        user.id,
+        Constants.CUSTOMER_ROLE,
+      );
+    }
 
     const userDto = plainToInstance(UserDto, user, {
       groups: [Constants.PHOTOGRAPHER_ROLE],
