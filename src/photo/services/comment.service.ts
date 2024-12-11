@@ -68,6 +68,10 @@ export class CommentService {
       id: commentId,
     });
 
+    await this.commentRepository.deleteMany({
+      parentId: commentId,
+    });
+
     const deletedComment = await this.commentRepository.delete({
       photoId,
       userId,

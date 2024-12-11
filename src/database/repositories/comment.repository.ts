@@ -12,6 +12,12 @@ export class CommentRepository {
     });
   }
 
+  async deleteMany(where: Prisma.CommentWhereInput) {
+    return this.prisma.extendedClient().comment.deleteMany({
+      where,
+    });
+  }
+
   async delete(where: Prisma.CommentWhereUniqueInput) {
     return this.prisma.comment.delete({
       where,
