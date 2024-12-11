@@ -5,6 +5,7 @@ import { Type } from 'class-transformer';
 import { UserToUserTransactionDto } from './user-to-user-transaction.dto';
 import { ServiceTransactionDto } from './service-transaction.dto';
 import { UserDto } from 'src/user/dtos/user.dto';
+import { WalletDto } from 'src/user/dtos/wallet.dto';
 
 export class TransactionDto {
   @ApiProperty()
@@ -33,6 +34,10 @@ export class TransactionDto {
   @ApiProperty()
   @Type(() => Number)
   fee: Decimal;
+
+  @ApiProperty()
+  @Type(() => WalletDto)
+  wallet: WalletDto;
 
   @ApiProperty()
   createdAt: Date;
