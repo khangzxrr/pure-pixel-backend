@@ -194,7 +194,13 @@ export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
   @IsEnum(Prisma.SortOrder)
   orderByUpvote?: Prisma.SortOrder;
 
-  @Exclude()
+  @ApiProperty({
+    required: false,
+  })
+  @IsOptional()
+  @ToArray()
+  @IsArray()
+  @IsNotEmpty({ each: true })
   ids?: string[];
 
   toOrderBy(): Prisma.PhotoOrderByWithRelationInput[] {
