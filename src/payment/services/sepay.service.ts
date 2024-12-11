@@ -53,6 +53,7 @@ export class SepayService {
 
     const cancelAllPreviousPendingWithdrawalTransactions =
       this.transactionRepository.cancelAllPendingTransactionByIdAndType(
+        userId,
         'WITHDRAWAL',
       );
 
