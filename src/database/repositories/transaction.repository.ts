@@ -92,7 +92,11 @@ export class TransactionRepository {
         fromUserTransaction: true,
         depositTransaction: true,
         serviceTransaction: true,
-        withdrawalTransaction: true,
+        withdrawalTransaction: {
+          include: {
+            bankInfo: true,
+          },
+        },
       },
     });
   }

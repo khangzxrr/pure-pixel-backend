@@ -67,7 +67,7 @@ export class BookingRepository {
             deletedAt: null,
           },
           orderBy: {
-            createdAt: 'desc',
+            createdAt: 'asc',
           },
         },
       },

@@ -31,7 +31,7 @@ import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.
 import { BookingUpdateRequestDto } from '../dtos/rest/booking-update.request.dto';
 import { FileSystemStoredFile, FormDataRequest } from 'nestjs-form-data';
 import { BookingUploadRequestDto } from '../dtos/rest/booking-upload.request.dto';
-import { Response } from 'express';
+
 import { SignedPhotoDto } from 'src/photo/dtos/signed-photo.dto';
 import { FileSystemBookngUploadDto } from '../dtos/rest/file-system-booking-upload.request.dto';
 
