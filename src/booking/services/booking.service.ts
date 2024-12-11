@@ -171,8 +171,10 @@ export class BookingService {
       type: 'IN_APP',
       title: 'Đánh giá mới',
       content: `Gói ${booking.photoshootPackageHistory.title} của bạn đã được thêm một đánh giá mới`,
-      payload: photoshootPackageReviewDto,
-      referenceType: 'BOOKING',
+      payload: {
+        id: booking.id,
+      },
+      referenceType: 'PHOTOGRAPHER_NEW_BOOKING_REVIEW',
     });
 
     return photoshootPackageReviewDto;
@@ -217,8 +219,10 @@ export class BookingService {
       type: 'IN_APP',
       title: `Gói chụp ${booking.photoshootPackageHistory.title} có cập nhật mới`,
       content: `Gói chụp ${booking.photoshootPackageHistory.title} của bạn đã được cập nhật thành đã thanh toán và mở khóa tải về ảnh`,
-      payload: booking,
-      referenceType: 'BOOKING',
+      payload: {
+        id: booking.id,
+      },
+      referenceType: 'CUSTOMER_BOOKING_PAID',
     });
 
     return await this.findById(userId, bookingId);
@@ -351,8 +355,10 @@ export class BookingService {
       type: 'IN_APP',
       title: `Gói chụp ${booking.photoshootPackageHistory.title} có cập nhật mới`,
       content: 'Gói chụp của bạn đã được cập nhật ảnh!',
-      payload: photo,
-      referenceType: 'BOOKING',
+      payload: {
+        id: booking.id,
+      },
+      referenceType: 'CUSTOMER_BOOKING_PHOTO_REMOVE',
     });
 
     return photo;
@@ -441,8 +447,10 @@ export class BookingService {
       type: 'IN_APP',
       title: `Gói chụp ${booking.photoshootPackageHistory.title} có cập nhật mới`,
       content: 'Gói chụp của bạn đã được cập nhật ảnh mới!',
-      payload: photo,
-      referenceType: 'BOOKING',
+      payload: {
+        id: booking.id,
+      },
+      referenceType: 'CUSTOMER_BOOKING_PHOTO_ADD',
     });
 
     const temporaryBookingPhotoDto: TemporaryBookingPhotoUpload = {
@@ -507,8 +515,10 @@ export class BookingService {
       type: 'IN_APP',
       title: `Gói chụp ${booking.photoshootPackageHistory.title} có cập nhật mới`,
       content: 'Gói chụp của bạn đã được cập nhật ảnh mới!',
-      payload: signedPhotoDto,
-      referenceType: 'BOOKING',
+      payload: {
+        id: booking.id,
+      },
+      referenceType: 'CUSTOMER_BOOKING_PHOTO_ADD',
     });
 
     return this.photoService.findById(userId, signedPhotoDto.id);
@@ -533,11 +543,13 @@ export class BookingService {
 
     await this.notificationService.addNotificationToQueue({
       userId: booking.userId,
-      referenceType: 'BOOKING',
+      referenceType: 'CUSTOMER_BOOKING_ACCEPT',
       title: `Nhiếp ảnh gia đã chấp nhận gói chụp ${booking.photoshootPackageHistory.title}`,
       type: 'BOTH_INAPP_EMAIL',
       content: `Yêu cầu thực hiện gói chụp ${booking.photoshootPackageHistory.title} của bạn đã được chấp nhận, nếu có bất kì yêu cầu nào khác - vui lòng liên hệ nhiếp ảnh gia qua tin nhắn để trao đổi thêm`,
-      payload: updatedBooking,
+      payload: {
+        id: booking.id,
+      },
     });
 
     return plainToInstance(BookingDto, updatedBooking);
@@ -567,11 +579,13 @@ export class BookingService {
 
     await this.notificationService.addNotificationToQueue({
       userId: booking.userId,
-      referenceType: 'BOOKING',
+      referenceType: 'CUSTOMER_BOOKING_CANCEL',
       title: `Nhiếp ảnh gia đã từ chối gói chụp ${booking.photoshootPackageHistory.title}`,
       type: 'BOTH_INAPP_EMAIL',
       content: `Yêu cầu thực hiện gói chụp ${booking.photoshootPackageHistory.title} của bạn đã hủy bỏ`,
-      payload: booking,
+      payload: {
+        id: booking.id,
+      },
     });
 
     return plainToInstance(BookingDto, updatedBooking);
@@ -709,20 +723,24 @@ export class BookingService {
 
     await this.notificationService.addNotificationToQueue({
       userId,
-      referenceType: 'BOOKING',
+      referenceType: 'CUSTOMER_BOOKING_REQUEST',
       title: `Yêu cầu thực hiện gói chụp ${photoshootPackage.title}`,
       type: 'BOTH_INAPP_EMAIL',
       content: `Bạn đã yêu cầu thực hiện gói chụp ${photoshootPackage.title} vui lòng chờ phản hồi từ nhiếp ảnh gia`,
-      payload: booking,
+      payload: {
+        id: booking.id,
+      },
     });
 
     await this.notificationService.addNotificationToQueue({
       userId: photoshootPackage.userId,
-      referenceType: 'BOOKING',
+      referenceType: 'PHOTOGRAPHER_BOOKING_NEW_REQUEST',
       title: 'Có yêu cầu thực hiện gói chụp mới',
       type: 'BOTH_INAPP_EMAIL',
       content: `Có khách hàng yêu cầu thực hiện gói chụp ${photoshootPackage.title} vui lòng phản hồi sớm nhất có thể`,
-      payload: booking,
+      payload: {
+        id: booking.id,
+      },
     });
 
     return plainToInstance(BookingDto, booking);

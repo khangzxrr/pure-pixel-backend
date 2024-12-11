@@ -152,8 +152,10 @@ export class TransactionHandlerService {
         content: `Giá ảnh có cập nhật mới, khoản tiền bạn vừa thanh toán sẽ được hoàn về ví`,
         userId: userToUserTransaction.fromUserTransaction.userId,
         type: 'BOTH_INAPP_EMAIL',
-        referenceType: 'PHOTO_BUY',
-        payload: transaction,
+        referenceType: 'PHOTO_NEW_PRICE_UPDATED',
+        payload: {
+          id: photoId,
+        },
       });
       return;
     }
@@ -178,8 +180,10 @@ export class TransactionHandlerService {
       content: `Bạn đã thanh toán ảnh ${photoTitle} - kích thước ${width}x${height} bằng QRcode thành công`,
       userId: transaction.userId,
       type: 'BOTH_INAPP_EMAIL',
-      referenceType: 'PHOTO_BUY',
-      payload: transaction,
+      referenceType: 'CUSTOMER_PHOTO_BUY',
+      payload: {
+        id: photoId,
+      },
     });
 
     await this.notificationService.addNotificationToQueue({
@@ -187,8 +191,10 @@ export class TransactionHandlerService {
       content: ` Người dùng ${userToUserTransaction.fromUserTransaction.user.name} đã thanh toán ảnh ${photoTitle} - kích thước ${width}x${height} thành công`,
       userId: userToUserTransaction.toUserId,
       type: 'BOTH_INAPP_EMAIL',
-      referenceType: 'PHOTO_BUY',
-      payload: transaction,
+      referenceType: 'PHOTOGRAPHER_PHOTO_SELL',
+      payload: {
+        id: photoId,
+      },
     });
   }
 }

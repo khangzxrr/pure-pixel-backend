@@ -56,8 +56,10 @@ export class BookingBillItemService {
       type: 'IN_APP',
       title: `Gói chụp ${booking.photoshootPackageHistory.title} có cập nhật mới`,
       content: 'Gói chụp của bạn đã có cập nhật hoá đơn mới!',
-      payload: billitem,
-      referenceType: 'BOOKING',
+      payload: {
+        id: booking.id,
+      },
+      referenceType: 'CUSTOMER_BOOKING_BILL_UPDATE',
     });
 
     return plainToInstance(BookingBillItemDto, billitem);
@@ -90,8 +92,10 @@ export class BookingBillItemService {
       type: 'IN_APP',
       title: `Gói chụp ${booking.photoshootPackageHistory.title} có cập nhật mới`,
       content: 'Gói chụp của bạn đã có cập nhật hoá đơn mới!',
-      payload: billItem,
-      referenceType: 'BOOKING',
+      payload: {
+        id: booking.id,
+      },
+      referenceType: 'CUSTOMER_BOOKING_BILL_UPDATE',
     });
 
     return plainToInstance(BookingBillItemDto, billItem);
@@ -132,8 +136,10 @@ export class BookingBillItemService {
       type: 'IN_APP',
       title: `Gói chụp ${booking.photoshootPackageHistory.title} có cập nhật mới`,
       content: 'Gói chụp của bạn đã có cập nhật hoá đơn mới!',
-      payload: bookingBillItem,
-      referenceType: 'BOOKING',
+      payload: {
+        id: booking.id,
+      },
+      referenceType: 'CUSTOMER_BOOKING_BILL_UPDATE',
     });
 
     return plainToInstance(BookingBillItemDto, bookingBillItem);

@@ -302,7 +302,9 @@ export class UpgradeOrderService {
           );
 
           await this.notificationService.addNotificationToQueue({
-            payload: newUpgradeOrder,
+            payload: {
+              id: upgradePackage.id,
+            },
             title: 'Nâng cấp thành nhiếp ảnh gia thành công',
             userId,
             content:

@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "NotificationReferenceType" ADD VALUE 'PHOTOGRAPHER_NEW_BOOKING_REVIEW';
