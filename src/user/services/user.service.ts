@@ -295,8 +295,8 @@ export class UserService {
             u.id,
             Constants.CUSTOMER_ROLE,
           );
+          roles = await this.keycloakService.getUserRoles(u.id);
         }
-        roles = await this.keycloakService.getUserRoles(u.id);
 
         dto.roles = roles.map((r) => r.name);
 
