@@ -125,20 +125,7 @@ export class SepayService {
     }
   }
 
-  async getWalletByUserId(userId: string): Promise<WalletDto> {
-    //temporary disable caching
-    const cachedWalletDto = await this.cacheManager.get<WalletDto>(
-      `walletdto2:${userId}`,
-    );
-
-    if (cachedWalletDto) {
-      return cachedWalletDto;
-    }
-
-    const transactions = await this.transactionRepository.findAll({
-      userId,
-    });
-
+  async calculateWalletFromTransactions(transactions: Transaction[]) {
     const walletBalance = transactions.reduce(
       (acc: Decimal, t: Transaction) => {
         //only process success transaction
@@ -176,6 +163,25 @@ export class SepayService {
       new Decimal(0),
     );
 
+    return walletBalance;
+  }
+
+  async getWalletByUserId(userId: string): Promise<WalletDto> {
+    //temporary disable caching
+    const cachedWalletDto = await this.cacheManager.get<WalletDto>(
+      `walletdto2:${userId}`,
+    );
+
+    if (cachedWalletDto) {
+      return cachedWalletDto;
+    }
+
+    const transactions = await this.transactionRepository.findAll({
+      userId,
+    });
+
+    const walletBalance =
+      await this.calculateWalletFromTransactions(transactions);
     const walletDto = new WalletDto(walletBalance.toNumber());
 
     await this.cacheManager.set(`walletdto:${userId}`, walletDto);

@@ -17,6 +17,7 @@ import { Constants } from 'src/infrastructure/utils/constants';
 import { DashboardRequestDto } from '../dtos/dashboard.request.dto';
 import { GenerateDashboardReportService } from '../crons/generate-dashboard-report.cron.service';
 import { DashboardReportDto } from '../dtos/dashboard-report.dto';
+import { BalanceDto } from '../dtos/balance.dto';
 
 @Controller('admin')
 @ApiTags('admin')
@@ -43,6 +44,17 @@ export class AdminController {
     return await this.generateDashboardReportService.generateDashboardData(
       dashboardRequestDto,
     );
+  }
+
+  @Get('/dashboard/balance')
+  @ApiOperation({
+    summary: 'get total balance of server',
+  })
+  @ApiOkResponse({
+    type: BalanceDto,
+  })
+  async getTotalBalance() {
+    return await this.generateDashboardReportService.calculateTotalBalance();
   }
 
   @Get('/dashboard/top-seller')
