@@ -17,6 +17,11 @@ export class FindAllTransactionDto extends PagingPaginatedRequestDto {
   @IsString()
   search?: string;
 
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  id?: string;
+
   @ApiProperty({
     required: false,
     description: 'filter by type',
@@ -70,6 +75,13 @@ export class FindAllTransactionDto extends PagingPaginatedRequestDto {
 
   toWhere() {
     const where: Prisma.TransactionWhereInput = {};
+
+    if (this.id) {
+      where.id = {
+        contains: this.id,
+      };
+    }
+
     if (this.search) {
       where.OR = [
         {

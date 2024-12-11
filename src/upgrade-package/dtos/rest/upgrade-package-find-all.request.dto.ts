@@ -9,6 +9,11 @@ export class UpgradePackageFindAllDto extends PagingPaginatedRequestDto {
   @IsString()
   search?: string;
 
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  id?: string;
+
   @ApiProperty({
     required: false,
     enum: UpgradePackageStatus,
@@ -67,6 +72,12 @@ export class UpgradePackageFindAllDto extends PagingPaginatedRequestDto {
 
   toWhere(): Prisma.UpgradePackageWhereInput {
     const where: Prisma.UpgradePackageWhereInput = {};
+
+    if (this.id) {
+      where.id = {
+        contains: this.id,
+      };
+    }
 
     if (this.search) {
       where.OR = [

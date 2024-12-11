@@ -10,6 +10,11 @@ export class UserFindAllRequestDto extends PagingPaginatedRequestDto {
   @IsString()
   search?: string;
 
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  id?: string;
+
   @ApiPropertyOptional({
     enum: Prisma.SortOrder,
   })
@@ -19,6 +24,12 @@ export class UserFindAllRequestDto extends PagingPaginatedRequestDto {
 
   toWhere() {
     const where: Prisma.UserWhereInput = {};
+
+    if (this.id) {
+      where.id = {
+        contains: this.id,
+      };
+    }
 
     if (this.search) {
       where.OR = [
