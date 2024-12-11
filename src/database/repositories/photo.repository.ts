@@ -153,7 +153,7 @@ export class PhotoRepository {
   }
 
   async findUniqueOrThrowIgnoreSoftDelete(id: string, userId?: string) {
-    return this.prisma.extendedClient().photo.findUniqueOrThrow({
+    return this.prisma.photo.findUniqueOrThrow({
       where: {
         id,
       },

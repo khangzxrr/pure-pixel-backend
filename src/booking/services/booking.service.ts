@@ -537,7 +537,7 @@ export class BookingService {
       title: `Nhiếp ảnh gia đã chấp nhận gói chụp ${booking.photoshootPackageHistory.title}`,
       type: 'BOTH_INAPP_EMAIL',
       content: `Yêu cầu thực hiện gói chụp ${booking.photoshootPackageHistory.title} của bạn đã được chấp nhận, nếu có bất kì yêu cầu nào khác - vui lòng liên hệ nhiếp ảnh gia qua tin nhắn để trao đổi thêm`,
-      payload: booking,
+      payload: updatedBooking,
     });
 
     return plainToInstance(BookingDto, updatedBooking);

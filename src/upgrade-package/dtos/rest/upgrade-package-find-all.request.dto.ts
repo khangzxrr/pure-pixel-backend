@@ -80,6 +80,11 @@ export class UpgradePackageFindAllDto extends PagingPaginatedRequestDto {
             contains: this.search,
           },
         },
+        {
+          id: {
+            contains: this.search,
+          },
+        },
       ];
     }
 

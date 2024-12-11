@@ -194,7 +194,13 @@ export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
   @IsEnum(Prisma.SortOrder)
   orderByUpvote?: Prisma.SortOrder;
 
-  @Exclude()
+  @ApiProperty({
+    required: false,
+  })
+  @IsOptional()
+  @ToArray()
+  @IsArray()
+  @IsNotEmpty({ each: true })
   ids?: string[];
 
   toOrderBy(): Prisma.PhotoOrderByWithRelationInput[] {
@@ -331,10 +337,13 @@ export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
           {
             name: {
               contains: this.photographerName,
+              mode: 'insensitive',
             },
           },
           {
-            normalizedName: Utils.normalizeText(this.photographerName),
+            normalizedName: {
+              contains: Utils.normalizeText(this.photographerName),
+            },
           },
         ],
       };
@@ -345,6 +354,7 @@ export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
         {
           title: {
             contains: this.title,
+            mode: 'insensitive',
           },
         },
         {

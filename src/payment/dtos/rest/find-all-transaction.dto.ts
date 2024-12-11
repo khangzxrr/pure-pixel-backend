@@ -5,6 +5,7 @@ import {
   TransactionStatus,
   TransactionType,
 } from '@prisma/client';
+import { Decimal } from '@prisma/client/runtime/library';
 import { IsArray, IsEnum, IsIn, IsOptional, IsString } from 'class-validator';
 import { PagingPaginatedRequestDto } from 'src/infrastructure/restful/paging-paginated.request.dto';
 import { ToArray } from 'src/infrastructure/transforms/to-array';
@@ -82,7 +83,7 @@ export class FindAllTransactionDto extends PagingPaginatedRequestDto {
           },
         },
         {
-          fee: this.search,
+          fee: new Decimal(this.search),
         },
         {
           amount: this.search,
