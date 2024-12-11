@@ -9,6 +9,7 @@ import { PagingPaginatedResposneDto } from 'src/infrastructure/restful/paging-pa
 import { Prisma } from '@prisma/client';
 import { TransactionUpdateDto } from '../dtos/transaction-update.dto';
 import { TransactionNotInPendingException } from '../exceptions/transaction-not-in-pending.exception';
+import { NotEnoughBalanceException } from 'src/user/exceptions/not-enought-balance.exception';
 
 @Injectable()
 export class TransactionService {
@@ -24,6 +25,14 @@ export class TransactionService {
 
     if (transaction.status !== 'PENDING') {
       throw new TransactionNotInPendingException();
+    }
+
+    const wallet = await this.sepayService.getWalletByUserId(
+      transaction.userId,
+    );
+
+    if (transaction.amount.toNumber() > wallet.walletBalance) {
+      throw new NotEnoughBalanceException();
     }
 
     await this.transactionRepository.update(
@@ -48,11 +57,20 @@ export class TransactionService {
     );
 
     const transactionDtos = plainToInstance(TransactionDto, transactions);
+    const transactionWalletDtoPromises = transactionDtos.map(async (t) => {
+      t.wallet = await this.sepayService.getWalletByUserId(t.userId);
+
+      return t;
+    });
+
+    const transactionWalletDtos = await Promise.all(
+      transactionWalletDtoPromises,
+    );
 
     const response = new PagingPaginatedResposneDto<TransactionDto>(
       findAllDto.limit,
       count,
-      transactionDtos,
+      transactionWalletDtos,
     );
 
     return response;
@@ -63,7 +81,12 @@ export class TransactionService {
       id,
     });
 
-    return plainToInstance(TransactionDto, transaction);
+    const transactionDto = plainToInstance(TransactionDto, transaction);
+    transactionDto.wallet = await this.sepayService.getWalletByUserId(
+      transaction.userId,
+    );
+
+    return transactionDto;
   }
 
   async findByUserIdAndId(userId: string, id: string) {

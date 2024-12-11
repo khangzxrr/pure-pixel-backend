@@ -36,12 +36,6 @@ export class ManageTransactionController {
 
   @Get()
   @ApiOperation({
-    summary: 'total withdrawal',
-  })
-  async calculateWithdrawal() {}
-
-  @Get()
-  @ApiOperation({
     summary: 'get all transactions',
   })
   @ApiOkResponsePaginated(TransactionDto)
@@ -49,6 +43,7 @@ export class ManageTransactionController {
     @Query() findAllDto: FindAllTransactionDto,
     @Req() req: Request,
   ) {
+    console.log(`transactions!ss`);
     return await this.transactionService.findAll(findAllDto, req.url);
   }
 
