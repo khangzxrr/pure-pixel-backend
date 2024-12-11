@@ -24,6 +24,7 @@ export class KeycloakService {
     await this.cachingService.deleteWithPattern(`findUsers:*`);
     await this.cachingService.deleteWithPattern(`getRole:*`);
     await this.cachingService.deleteWithPattern(`getUserRoles:*`);
+    await this.cachingService.deleteWithPattern(`findFirst:*`);
   }
 
   private async getClient() {
@@ -246,10 +247,21 @@ export class KeycloakService {
   }
 
   async findFirst(id: string) {
+    const cachedUser = await this.cachingService.get<UserRepresentation>(
+      `findFirst:${id}`,
+    );
+    if (cachedUser) {
+      return cachedUser;
+    }
+
     const kc = await this.getInstance();
-    return kc.users.findOne({
+    const user = await kc.users.findOne({
       id,
     });
+
+    await this.cachingService.set(`findFirst:${id}`, user);
+
+    return user;
   }
 
   async deleteRolesFromUser(userId: string) {
