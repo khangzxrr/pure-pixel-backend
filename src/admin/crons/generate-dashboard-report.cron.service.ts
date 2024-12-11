@@ -30,6 +30,7 @@ import { PhotoshootPackageDto } from 'src/photoshoot-package/dtos/photoshoot-pac
 import { DashboardReportDto } from '../dtos/dashboard-report.dto';
 
 import { BookingBillItemRepository } from 'src/database/repositories/booking-bill-item.repository';
+import { Transaction } from '@prisma/client';
 
 @Injectable()
 export class GenerateDashboardReportService {
@@ -430,11 +431,67 @@ export class GenerateDashboardReportService {
       },
     });
 
+    const withdrawalTransactions = await this.transactionRepository.aggregate({
+      _sum: {
+        amount: true,
+      },
+      where: {
+        type: 'WITHDRAWAL',
+        status: 'SUCCESS',
+        createdAt: {
+          gte: dashboardRequestDto.fromDate,
+          lte: dashboardRequestDto.toDate,
+        },
+      },
+    });
+
+    const transactions = await this.transactionRepository.findAll({
+      status: 'SUCCESS',
+      createdAt: {
+        gte: dashboardRequestDto.fromDate,
+        lte: dashboardRequestDto.toDate,
+      },
+    });
+    const totalBalance = transactions.reduce((acc: Decimal, t: Transaction) => {
+      //only process success transaction
+      if (t.status !== 'SUCCESS') {
+        return acc;
+      }
+
+      switch (t.type) {
+        case 'DEPOSIT':
+          return acc.add(t.amount);
+
+        case 'IMAGE_BUY':
+          if (t.paymentMethod === 'WALLET') {
+            return acc.sub(t.amount);
+          }
+        case 'IMAGE_SELL':
+          return acc.add(t.amount).sub(t.fee);
+
+        case 'WITHDRAWAL':
+          return acc.sub(t.amount);
+
+        case 'REFUND_FROM_BUY_IMAGE':
+          return acc.add(t.amount);
+
+        case 'UPGRADE_TO_PHOTOGRAPHER':
+          if (t.paymentMethod === 'WALLET') {
+            return acc.sub(t.amount);
+          }
+
+        default:
+          return acc;
+      }
+    }, new Decimal(0));
+
     const newDashboardReportDto: DashboardReportDto = {
       totalCustomer,
       totalPhotographer,
       totalPhotoshootPackage,
       totalCamera,
+      totalBalance: totalBalance.toNumber(),
+      totalWithdrawal: withdrawalTransactions._sum.amount.toNumber(),
       revenueFromUpgradePackage: revenueFromUpgradePackage.toNumber(),
       revenueFromSellingPhoto: revenueFromSellingPhoto.toNumber(),
       totalRevenue: totalRevenue.toNumber(),

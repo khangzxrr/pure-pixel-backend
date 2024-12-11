@@ -9,7 +9,12 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiOkResponse,
+  ApiOperation,
+  ApiProperty,
+  ApiTags,
+} from '@nestjs/swagger';
 import { AuthGuard, Roles } from 'nest-keycloak-connect';
 import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
@@ -28,6 +33,12 @@ export class ManageTransactionController {
   constructor(
     @Inject() private readonly transactionService: TransactionService,
   ) {}
+
+  @Get()
+  @ApiOperation({
+    summary: 'total withdrawal',
+  })
+  async calculateWithdrawal() {}
 
   @Get()
   @ApiOperation({

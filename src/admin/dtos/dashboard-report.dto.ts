@@ -28,6 +28,12 @@ export class DashboardReportDto {
   totalRevenue: number;
 
   @ApiProperty()
+  totalWithdrawal: number;
+
+  @ApiProperty()
+  totalBalance: number;
+
+  @ApiProperty()
   totalPhoto: number;
 
   @ApiProperty()

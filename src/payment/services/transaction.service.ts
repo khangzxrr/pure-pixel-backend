@@ -6,7 +6,7 @@ import { plainToInstance } from 'class-transformer';
 import { TransactionDto } from '../dtos/transaction.dto';
 import { FindAllTransactionDto } from '../dtos/rest/find-all-transaction.dto';
 import { PagingPaginatedResposneDto } from 'src/infrastructure/restful/paging-paginated.response.dto';
-import { PaymentMethod, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { TransactionUpdateDto } from '../dtos/transaction-update.dto';
 import { TransactionNotInPendingException } from '../exceptions/transaction-not-in-pending.exception';
 
@@ -26,7 +26,7 @@ export class TransactionService {
       throw new TransactionNotInPendingException();
     }
 
-    const updatedTransaction = await this.transactionRepository.update(
+    await this.transactionRepository.update(
       {
         id,
       },
