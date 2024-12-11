@@ -51,12 +51,6 @@ export class SepayService {
       throw new NotEnoughBalanceException();
     }
 
-    const cancelAllPreviousPendingWithdrawalTransactions =
-      this.transactionRepository.cancelAllPendingTransactionByIdAndType(
-        userId,
-        'WITHDRAWAL',
-      );
-
     const createWithdrawalTransaction =
       this.withdrawalTransactionRepository.create(
         userId,
@@ -66,8 +60,7 @@ export class SepayService {
         createWithdrawal.bankUsername,
       );
 
-    const [, withdrawalTransaction] = await this.prisma.$transaction([
-      cancelAllPreviousPendingWithdrawalTransactions,
+    const [withdrawalTransaction] = await this.prisma.$transaction([
       createWithdrawalTransaction,
     ]);
 
