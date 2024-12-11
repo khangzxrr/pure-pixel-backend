@@ -291,6 +291,7 @@ INNER JOIN public."UserToUserTransaction" ON public."PhotoBuy"."userToUserTransa
 INNER JOIN public."Transaction" ON public."UserToUserTransaction"."fromUserTransactionId" = public."Transaction"."id"
 WHERE public."Photo"."photographerId" = ${photographerId} AND
 public."PhotoSellHistory"."createdAt" <= ${toDate} AND public."PhotoSellHistory"."createdAt" >= ${fromDate} AND
+public."Photo"."deletedAt" IS NULL AND
 public."Transaction"."status" = 'SUCCESS'
 GROUP BY public."Photo".id
 ORDER BY COUNT(public."PhotoBuy".id) DESC
