@@ -31,6 +31,8 @@ import { DashboardReportDto } from '../dtos/dashboard-report.dto';
 
 import { BookingBillItemRepository } from 'src/database/repositories/booking-bill-item.repository';
 import { Transaction } from '@prisma/client';
+import { SepayService } from 'src/payment/services/sepay.service';
+import { BalanceDto } from '../dtos/balance.dto';
 
 @Injectable()
 export class GenerateDashboardReportService {
@@ -59,6 +61,8 @@ export class GenerateDashboardReportService {
     private readonly photoService: PhotoService,
     @Inject()
     private readonly bookingBillItemRepository: BookingBillItemRepository,
+    @Inject()
+    private readonly sepayService: SepayService,
   ) {}
 
   async getTopSellerDetail(
@@ -230,6 +234,31 @@ export class GenerateDashboardReportService {
     const dtos = await Promise.all(mapPromises);
 
     return dtos;
+  }
+
+  async calculateTotalBalance() {
+    const successTransactions = await this.transactionRepository.findAll({
+      status: 'SUCCESS',
+    });
+    const totalBalance =
+      await this.sepayService.calculateWalletFromTransactions(
+        successTransactions,
+      );
+
+    const withdrawalTransactions = await this.transactionRepository.aggregate({
+      _sum: {
+        amount: true,
+      },
+      where: {
+        type: 'WITHDRAWAL',
+        status: 'SUCCESS',
+      },
+    });
+
+    return plainToInstance(BalanceDto, {
+      totalBalance: totalBalance.toNumber(),
+      totalWithdrawal: withdrawalTransactions._sum.amount.toNumber(),
+    });
   }
 
   async generateDashboardData(
@@ -445,45 +474,17 @@ export class GenerateDashboardReportService {
       },
     });
 
-    const transactions = await this.transactionRepository.findAll({
+    const successTransactions = await this.transactionRepository.findAll({
       status: 'SUCCESS',
       createdAt: {
         gte: dashboardRequestDto.fromDate,
         lte: dashboardRequestDto.toDate,
       },
     });
-    const totalBalance = transactions.reduce((acc: Decimal, t: Transaction) => {
-      //only process success transaction
-      if (t.status !== 'SUCCESS') {
-        return acc;
-      }
-
-      switch (t.type) {
-        case 'DEPOSIT':
-          return acc.add(t.amount);
-
-        case 'IMAGE_BUY':
-          if (t.paymentMethod === 'WALLET') {
-            return acc.sub(t.amount);
-          }
-        case 'IMAGE_SELL':
-          return acc.add(t.amount).sub(t.fee);
-
-        case 'WITHDRAWAL':
-          return acc.sub(t.amount);
-
-        case 'REFUND_FROM_BUY_IMAGE':
-          return acc.add(t.amount);
-
-        case 'UPGRADE_TO_PHOTOGRAPHER':
-          if (t.paymentMethod === 'WALLET') {
-            return acc.sub(t.amount);
-          }
-
-        default:
-          return acc;
-      }
-    }, new Decimal(0));
+    const totalBalance =
+      await this.sepayService.calculateWalletFromTransactions(
+        successTransactions,
+      );
 
     const newDashboardReportDto: DashboardReportDto = {
       totalCustomer,

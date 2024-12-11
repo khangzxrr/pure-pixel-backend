@@ -11,6 +11,7 @@ import { QueueModule } from 'src/queue/queue.module';
 import { GenerateDashboardReportService } from './crons/generate-dashboard-report.cron.service';
 import { NotificationModule } from 'src/notification/notification.module';
 import { CachingModule } from 'src/caching/caching.module';
+import { PaymentModule } from 'src/payment/payment.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { CachingModule } from 'src/caching/caching.module';
     QueueModule,
     NotificationModule,
     CachingModule,
+    PaymentModule,
   ],
   providers: [AdminService, GenerateDashboardReportService],
   controllers: [AdminController],
