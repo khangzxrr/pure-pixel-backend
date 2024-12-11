@@ -18,9 +18,13 @@ export class TransactionRepository {
     });
   }
 
-  cancelAllPendingTransactionByIdAndType(type: TransactionType) {
+  cancelAllPendingTransactionByIdAndType(
+    userId: string,
+    type: TransactionType,
+  ) {
     return this.prisma.transaction.updateMany({
       where: {
+        userId,
         type,
         status: 'PENDING',
       },
