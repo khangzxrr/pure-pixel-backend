@@ -329,7 +329,7 @@ ORDER BY COUNT(public."PhotoBuy".id) DESC
     take: number,
     cursor?: Prisma.PhotoWhereUniqueInput,
   ) {
-    return this.prisma.extendedClient().photo.findMany({
+    return this.prisma.photo.findMany({
       where,
       skip,
       take,
