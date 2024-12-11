@@ -56,6 +56,10 @@ export class TransactionRepository {
     });
   }
 
+  async aggregate(args: Prisma.TransactionAggregateArgs) {
+    return this.prisma.extendedClient().transaction.aggregate(args);
+  }
+
   async findAll(
     where: Prisma.TransactionWhereInput,
     skip?: number,
