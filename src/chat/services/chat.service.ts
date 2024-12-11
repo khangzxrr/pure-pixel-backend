@@ -39,7 +39,9 @@ export class ChatService {
           title: 'Có tin nhắn mới',
           content: `Bạn vừa nhận được tin nhắn mới ${userOfSender ? `đến từ ${userOfSender.name}` : ``}`,
           userId: member.user_id,
-          payload: {},
+          payload: {
+            id: userOfSender.id,
+          },
           referenceType: 'CHAT',
         });
       }

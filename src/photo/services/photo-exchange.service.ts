@@ -472,17 +472,21 @@ export class PhotoExchangeService {
           content: `Bạn đã thanh toán ảnh ${photoSell.photo.title} - kích thước ${pricetag.width}x${pricetag.height} bằng ví thành công`,
           userId: userId,
           type: 'BOTH_INAPP_EMAIL',
-          referenceType: 'PHOTO_BUY',
-          payload: newPhotoBuyByWallet,
+          referenceType: 'CUSTOMER_PHOTO_BUY',
+          payload: {
+            id: photoId,
+          },
         });
 
         await this.notificationService.addNotificationToQueue({
           title: `Bán ảnh ${photoSell.photo.title} thành công`,
-          content: ` Người dùng ${user.name} đã thanh toán ảnh ${photoSell.photo.title} - kích thước ${pricetag.width}x${pricetag.height} bằng ví thành công`,
+          content: ` Người dùng ${user.name} đã thanh toán ảnh ${photoSell.photo.title} - kích thước ${pricetag.width}x${pricetag.height} thành công`,
           userId: photoSell.photo.photographerId,
           type: 'BOTH_INAPP_EMAIL',
-          referenceType: 'PHOTO_BUY',
-          payload: newPhotoBuyByWallet,
+          referenceType: 'PHOTOGRAPHER_PHOTO_SELL',
+          payload: {
+            id: photoId,
+          },
         });
 
         return plainToInstance(PhotoBuyResponseDto, newPhotoBuyByWallet);

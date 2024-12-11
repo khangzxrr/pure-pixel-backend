@@ -321,8 +321,10 @@ export class PhotoProcessConsumer extends WorkerHost {
       await this.notificationService.addNotificationToQueue({
         type: 'IN_APP',
         userId: photo.photographerId,
-        payload: {},
-        referenceType: 'PHOTO',
+        payload: {
+          id: photo.id,
+        },
+        referenceType: 'DUPLICATED_PHOTO',
         title: `Ảnh ${photo.title} của bạn trùng với một ảnh khác!`,
         content: `Ảnh ${photo.title} của bạn có dấu hiệu trùng với một ảnh khác, nếu đây là sự sai sót, vui lòng báo cáo lên quản trị viên để được xem xét. Xin cám ơn!`,
       });
@@ -350,8 +352,10 @@ export class PhotoProcessConsumer extends WorkerHost {
           await this.notificationService.addNotificationToQueue({
             type: 'IN_APP',
             userId: photo.photographerId,
-            payload: {},
-            referenceType: 'PHOTO',
+            payload: {
+              id: photo.id,
+            },
+            referenceType: 'DUPLICATED_PHOTO',
             title: `Ảnh ${photo.title} của bạn trùng với một ảnh khác!`,
             content: `Ảnh ${photo.title} của bạn có dấu hiệu trùng với một ảnh khác, nếu đây là sự sai sót, vui lòng báo cáo lên quản trị viên để được xem xét. Xin cám ơn!`,
           });
