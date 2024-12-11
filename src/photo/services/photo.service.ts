@@ -478,6 +478,9 @@ export class PhotoService {
           active: false,
         },
       },
+      status: {
+        notIn: ['BAN', 'DUPLICATED'],
+      },
     });
 
     const photos = await this.photoRepository.findAll(
@@ -488,6 +491,9 @@ export class PhotoService {
           every: {
             active: false,
           },
+        },
+        status: {
+          notIn: ['BAN', 'DUPLICATED'],
         },
       },
       [],
