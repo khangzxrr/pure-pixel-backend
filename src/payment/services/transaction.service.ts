@@ -81,7 +81,12 @@ export class TransactionService {
       id,
     });
 
-    return plainToInstance(TransactionDto, transaction);
+    const transactionDto = plainToInstance(TransactionDto, transaction);
+    transactionDto.wallet = await this.sepayService.getWalletByUserId(
+      transaction.userId,
+    );
+
+    return transactionDto;
   }
 
   async findByUserIdAndId(userId: string, id: string) {
