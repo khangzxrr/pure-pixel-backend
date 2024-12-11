@@ -203,6 +203,11 @@ export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
   @IsNotEmpty({ each: true })
   ids?: string[];
 
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  id?: string;
+
   toOrderBy(): Prisma.PhotoOrderByWithRelationInput[] {
     const orderBys: Prisma.PhotoOrderByWithRelationInput[] = [];
 
@@ -231,6 +236,12 @@ export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
 
   toWhere(userId: string): Prisma.PhotoWhereInput {
     const where: Prisma.PhotoWhereInput = {};
+
+    if (this.id) {
+      where.id = {
+        contains: this.id,
+      };
+    }
 
     if (this.bookmarked) {
       where.bookmarks = {
