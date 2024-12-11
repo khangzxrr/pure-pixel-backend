@@ -123,7 +123,7 @@ export class TransactionHandlerService {
       photoId,
     });
 
-    if (activePhotoSell.id !== previousPhotoSellId) {
+    if (!activePhotoSell || activePhotoSell.id !== previousPhotoSellId) {
       await this.transactionRepository.update(
         {
           id: userToUserTransaction.fromUserTransaction.id,
