@@ -154,6 +154,9 @@ export class PhotoService {
 
     const availableRes = await this.getAvailablePhotoResolution(photo.id);
 
+    console.log(shareRequest);
+    console.log(availableRes);
+
     if (
       availableRes.findIndex(
         (r) =>
