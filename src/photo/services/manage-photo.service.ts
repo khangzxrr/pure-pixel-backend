@@ -133,7 +133,7 @@ export class ManagePhotoService {
     }
 
     if (photoUpdateDto.visibility && activePhotoSellings) {
-      throw new CannotUpdateVisibilityPhotoHasActiveSellingException();
+      photoUpdateDto.visibility = undefined;
     }
 
     const normalizedTitle = photoUpdateDto.title

@@ -1,10 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 
 export class PhotoSizeDto {
   @ApiProperty()
+  @Type(() => Number)
   width: number;
 
   @ApiProperty()
+  @Type(() => Number)
   height: number;
 
   @ApiPropertyOptional()
