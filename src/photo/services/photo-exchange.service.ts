@@ -73,7 +73,7 @@ export class PhotoExchangeService {
       },
     };
 
-    const count = await this.photoRepository.count(where);
+    const count = await this.photoRepository.countIgnoreSoftDelete(where);
     const photos = await this.photoRepository.findAllIgnoreSoftDelete(
       where,
       [],
