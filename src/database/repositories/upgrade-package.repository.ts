@@ -29,7 +29,7 @@ export class UpgradePackageRepository {
     });
   }
 
-  async update(id: string, upgradePackage: Partial<UpgradePackage>) {
+  async update(id: string, upgradePackage: Prisma.UpgradePackageUpdateInput) {
     return this.prisma.extendedClient().upgradePackage.update({
       where: {
         id,
