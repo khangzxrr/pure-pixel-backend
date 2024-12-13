@@ -202,7 +202,8 @@ export class PhotoProcessConsumer extends WorkerHost {
       temporaryPhoto.file.path,
     );
 
-    const buffer = await sharp.toBuffer();
+    //make sure to rotate buffer with exif
+    const buffer = await sharp.rotate().toBuffer();
 
     if (buffer.length === 0) {
       this.logger.log(

@@ -53,14 +53,18 @@ export class UpgradePackageService {
       }
     }
 
-    const upgradePackage = plainToInstance(
-      UpgradePackageEntity,
-      upgradePackageDto,
-    );
-
     const updatedUpgradePackage = await this.upgradePackageRepository.update(
       id,
-      upgradePackage,
+      {
+        name: upgradePackageDto.name,
+        summary: upgradePackageDto.summary,
+        price: upgradePackageDto.price,
+        minOrderMonth: upgradePackageDto.minOrderMonth,
+        maxPhotoQuota: upgradePackageDto.maxPhotoQuota,
+        maxPackageCount: upgradePackageDto.maxPackageCount,
+        descriptions: upgradePackageDto.descriptions,
+        status: upgradePackageDto.status,
+      },
     );
 
     return plainToInstance(UpgradePackageDto, updatedUpgradePackage);
