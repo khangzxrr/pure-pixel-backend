@@ -244,6 +244,12 @@ export class PhotoRepository {
     });
   }
 
+  async countIgnoreSoftDelete(where: Prisma.PhotoWhereInput) {
+    return this.prisma.photo.count({
+      where,
+    });
+  }
+
   async count(where: Prisma.PhotoWhereInput) {
     return this.prisma.extendedClient().photo.count({
       where,

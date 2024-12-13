@@ -22,7 +22,7 @@ import { BalanceDto } from '../dtos/balance.dto';
 @Controller('admin')
 @ApiTags('admin')
 @UseGuards(AuthGuard, KeycloakRoleGuard)
-@Roles({ roles: [Constants.ADMIN_ROLE] })
+@Roles({ roles: [Constants.ADMIN_ROLE, Constants.MANAGER_ROLE] })
 export class AdminController {
   constructor(
     @Inject() private readonly adminService: AdminService,
