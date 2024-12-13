@@ -79,7 +79,8 @@ export class PhotoProcessService {
   }
 
   async sharpInitFromFilePath(url: string) {
-    return SharpLib(url);
+    //ignore fail on error to process some pixel error photos
+    return SharpLib(url, { failOnError: false });
   }
 
   async sharpInitFromObjectKey(key: string) {
@@ -140,9 +141,16 @@ export class PhotoProcessService {
   async makeWatermark(sharp: SharpLib.Sharp, watermarkText: string) {
     const metadata = await sharp.metadata();
 
-    const fontSizeScaledByWidth = (metadata.width * 10) / 100;
+    let width = metadata.width;
+    let height = metadata.height;
+    if (metadata.orientation >= 5) {
+      width = height;
+      height = width;
+    }
 
-    const svg = `<svg height="${metadata.height}" width="${metadata.width}"> 
+    const fontSizeScaledByWidth = (width * 10) / 100;
+
+    const svg = `<svg height="${height}" width="${width}"> 
         <text x="50%" y="50%" font-family="Roboto" dominant-baseline="middle" text-anchor="middle" font-size="${fontSizeScaledByWidth}"  fill="#fff" fill-opacity="0.7">${watermarkText}</text>         
 </svg>`;
 
