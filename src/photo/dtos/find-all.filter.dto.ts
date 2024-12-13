@@ -5,9 +5,8 @@ import {
   PhotoVisibility,
   Prisma,
 } from '@prisma/client';
-import { Exclude, Transform, Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
-  IsAlpha,
   IsArray,
   IsBoolean,
   IsEnum,
@@ -29,6 +28,11 @@ export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
   @ToBoolean()
   @IsBoolean()
   bookmarked?: boolean;
+
+  @ApiPropertyOptional({})
+  @IsOptional()
+  @IsNotEmpty()
+  search?: string;
 
   @ApiProperty({
     required: false,
@@ -371,6 +375,37 @@ export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
         {
           normalizedTitle: {
             contains: Utils.normalizeText(this.title),
+          },
+        },
+      ];
+    }
+
+    if (this.search) {
+      where.OR = [
+        {
+          photographer: {
+            name: {
+              contains: this.search,
+              mode: 'insensitive',
+            },
+          },
+        },
+        {
+          photographer: {
+            normalizedName: {
+              contains: Utils.normalizeText(this.search),
+            },
+          },
+        },
+        {
+          title: {
+            contains: this.search,
+            mode: 'insensitive',
+          },
+        },
+        {
+          normalizedTitle: {
+            contains: Utils.normalizeText(this.search),
           },
         },
       ];
