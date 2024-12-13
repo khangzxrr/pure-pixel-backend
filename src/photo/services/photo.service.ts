@@ -52,6 +52,7 @@ import { PhotoNotInPendingStateException } from '../exceptions/photo-not-in-pend
 import { DownloadTemporaryPhotoDto } from '../dtos/rest/download-temporary-photo.request.dto';
 import { TemporaryPhotoDto } from '../dtos/temporary-photo.dto';
 import { PhotoBannedException } from '../exceptions/photo-banned.exception';
+import { Sharp } from 'sharp';
 
 @Injectable()
 export class PhotoService {
@@ -83,13 +84,17 @@ export class PhotoService {
   ): Promise<Buffer> {
     const photo = await this.photoRepository.findUniqueOrThrow(id);
 
-    if (photo.status !== 'PENDING') {
-      throw new PhotoNotInPendingStateException();
-    }
+    let sharp: Sharp = null;
 
-    const sharp = await this.photoProcessService.sharpInitFromFilePath(
-      photo.watermark ? photo.watermarkPhotoUrl : photo.originalPhotoUrl,
-    );
+    if (photo.status === 'PENDING') {
+      sharp = await this.photoProcessService.sharpInitFromFilePath(
+        photo.watermark ? photo.watermarkPhotoUrl : photo.originalPhotoUrl,
+      );
+    } else {
+      sharp = await this.photoProcessService.sharpInitFromObjectKey(
+        photo.watermark ? photo.watermarkPhotoUrl : photo.originalPhotoUrl,
+      );
+    }
 
     if (downloadTemporaryPhotoDto.width) {
       const resizedBuffer = await this.photoProcessService.resize(
