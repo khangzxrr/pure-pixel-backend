@@ -157,9 +157,6 @@ export class PhotoService {
 
     const availableRes = await this.getAvailablePhotoResolution(photo.id);
 
-    console.log(shareRequest);
-    console.log(availableRes);
-
     if (
       availableRes.findIndex(
         (r) =>
@@ -400,6 +397,9 @@ export class PhotoService {
         },
       });
 
+      console.log(photoUpdateDto.categoryIds);
+      console.log(categories);
+
       if (categories.length !== photoUpdateDto.categoryIds.length) {
         throw new CategoryNotFoundException();
       }
@@ -435,6 +435,9 @@ export class PhotoService {
       photoUpdateDto.categoryIds = [];
     }
 
+    console.log(`category id`);
+    console.log(photoUpdateDto.categoryIds);
+
     const activePhotoSellings = photo.photoSellings.find(
       (s) => s.active === true,
     );
@@ -454,7 +457,7 @@ export class PhotoService {
     prismaPromises.push(
       this.photoRepository.updateByIdQuery(id, {
         categories: {
-          connect: photoUpdateDto.categoryIds.map((id) => ({ id })),
+          set: photoUpdateDto.categoryIds.map((id) => ({ id })),
         },
         title: photoUpdateDto.title,
         normalizedTitle,
