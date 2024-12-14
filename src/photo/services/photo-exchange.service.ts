@@ -53,16 +53,20 @@ export class PhotoExchangeService {
 
   async getAllPreviousBuyPhoto(userId: string, findAllDto: PhotoBuyFindAllDto) {
     const where: Prisma.PhotoWhereInput = {
-      photoSellings: {
-        some: {
-          photoSellHistories: {
+      AND: [
+        {
+          photoSellings: {
             some: {
-              photoBuy: {
+              photoSellHistories: {
                 some: {
-                  buyerId: userId,
-                  userToUserTransaction: {
-                    fromUserTransaction: {
-                      status: 'SUCCESS',
+                  photoBuy: {
+                    some: {
+                      buyerId: userId,
+                      userToUserTransaction: {
+                        fromUserTransaction: {
+                          status: 'SUCCESS',
+                        },
+                      },
                     },
                   },
                 },
@@ -70,13 +74,16 @@ export class PhotoExchangeService {
             },
           },
         },
-      },
+        {
+          OR: findAllDto.toWhere().OR,
+        },
+      ],
     };
 
     const count = await this.photoRepository.countIgnoreSoftDelete(where);
     const photos = await this.photoRepository.findAllIgnoreSoftDelete(
       where,
-      [],
+      findAllDto.toOrderBy(),
       findAllDto.toSkip(),
       findAllDto.limit,
     );
