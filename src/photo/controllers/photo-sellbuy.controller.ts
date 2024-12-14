@@ -18,7 +18,7 @@ import { Constants } from 'src/infrastructure/utils/constants';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PhotoBuyResponseDto } from '../dtos/rest/photo-buy.response.dto';
 import { PhotoSellDto } from '../dtos/photo-sell.dto';
-import { SignedPhotoBuyDto } from '../dtos/rest/signed-photo-buy.response.dto';
+
 import { PhotoExchangeService } from '../services/photo-exchange.service';
 import { Response } from 'express';
 import { BuyPhotoRequestDto } from '../dtos/rest/buy-photo.request.dto';
