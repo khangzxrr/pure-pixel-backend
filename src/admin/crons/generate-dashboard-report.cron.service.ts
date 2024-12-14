@@ -30,7 +30,7 @@ import { PhotoshootPackageDto } from 'src/photoshoot-package/dtos/photoshoot-pac
 import { DashboardReportDto } from '../dtos/dashboard-report.dto';
 
 import { BookingBillItemRepository } from 'src/database/repositories/booking-bill-item.repository';
-import { Transaction } from '@prisma/client';
+
 import { SepayService } from 'src/payment/services/sepay.service';
 import { BalanceDto } from '../dtos/balance.dto';
 
