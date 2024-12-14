@@ -3,10 +3,8 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PhotoCategoryService } from '../services/photo-category.service';
 import { HttpStatusCode } from 'axios';
 import { PhotoCategoryDto } from '../dtos/photo-category.dto';
-import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 
 @Controller('category')
-@UseInterceptors(CacheInterceptor)
 @ApiTags('category')
 export class PhotoCategoryController {
   constructor(
@@ -14,7 +12,6 @@ export class PhotoCategoryController {
   ) {}
 
   @Get()
-  @CacheTTL(3600)
   @ApiOperation({
     summary: 'get all photo categories',
   })
