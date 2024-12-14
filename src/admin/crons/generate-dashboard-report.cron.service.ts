@@ -443,7 +443,29 @@ export class GenerateDashboardReportService {
           active: true,
         },
       },
+      deletedAt: null,
+      createdAt: {
+        gte: dashboardRequestDto.fromDate,
+        lte: dashboardRequestDto.toDate,
+      },
+    });
 
+    const totalRawPhoto = await this.photoRepository.count({
+      photoType: 'RAW',
+      deletedAt: null,
+      photoSellings: {
+        every: {
+          active: false,
+        },
+      },
+      createdAt: {
+        gte: dashboardRequestDto.fromDate,
+        lte: dashboardRequestDto.toDate,
+      },
+    });
+
+    const totalBookingPhoto = await this.photoRepository.count({
+      photoType: 'BOOKING',
       deletedAt: null,
       createdAt: {
         gte: dashboardRequestDto.fromDate,
@@ -452,7 +474,6 @@ export class GenerateDashboardReportService {
     });
 
     const totalPhoto = await this.photoRepository.count({
-      photoType: 'RAW',
       deletedAt: null,
       createdAt: {
         gte: dashboardRequestDto.fromDate,
@@ -498,6 +519,8 @@ export class GenerateDashboardReportService {
       totalRevenue: totalRevenue.toNumber(),
       totalPhoto,
       totalSellingPhoto,
+      totalRawPhoto,
+      totalBookingPhoto,
       topUsedUpgradePackage,
       topSellingPhoto,
     };

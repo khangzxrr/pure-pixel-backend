@@ -28,6 +28,7 @@ import { BookingRepository } from 'src/database/repositories/booking.repository'
 import { NotificationService } from 'src/notification/services/notification.service';
 import { CannotBanAdminException } from '../exceptions/cannot-ban-admin.exception';
 import { Console } from 'console';
+import { PhoneNumberNotValidException } from '../exceptions/phone-number-not-valid.exception';
 
 @Injectable()
 export class UserService {
@@ -203,6 +204,17 @@ export class UserService {
 
   async updateProfile(userId: string, updateProfileDto: UpdateProfileDto) {
     const user = await this.userRepository.findUniqueOrThrow(userId, {});
+
+    if (
+      updateProfileDto.phonenumber &&
+      updateProfileDto.phonenumber.length >= 0
+    ) {
+      if (
+        !/(84|0[3|5|7|8|9])+([0-9]{8})\b/g.test(updateProfileDto.phonenumber)
+      ) {
+        throw new PhoneNumberNotValidException();
+      }
+    }
 
     if (updateProfileDto.avatar) {
       //temporary use user.avatar
