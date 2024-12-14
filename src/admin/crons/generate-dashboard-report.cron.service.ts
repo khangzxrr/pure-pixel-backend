@@ -257,7 +257,9 @@ export class GenerateDashboardReportService {
 
     return plainToInstance(BalanceDto, {
       totalBalance: totalBalance.toNumber(),
-      totalWithdrawal: withdrawalTransactions._sum.amount.toNumber(),
+      totalWithdrawal: withdrawalTransactions._sum.amount
+        ? withdrawalTransactions._sum.amount.toNumber()
+        : 0,
     });
   }
 
@@ -513,7 +515,9 @@ export class GenerateDashboardReportService {
       totalPhotoshootPackage,
       totalCamera,
       totalBalance: totalBalance.toNumber(),
-      totalWithdrawal: withdrawalTransactions._sum.amount.toNumber(),
+      totalWithdrawal: withdrawalTransactions._sum.amount
+        ? withdrawalTransactions._sum.amount.toNumber()
+        : 0,
       revenueFromUpgradePackage: revenueFromUpgradePackage.toNumber(),
       revenueFromSellingPhoto: revenueFromSellingPhoto.toNumber(),
       totalRevenue: totalRevenue.toNumber(),

@@ -47,8 +47,6 @@ import { FindNextPhotoFilterDto } from '../dtos/find-next.filter.dto';
 import { UserService } from 'src/user/services/user.service';
 import { FileSystemPhotoUploadRequestDto } from '../dtos/rest/file-system-photo-upload.request';
 
-import { PhotoNotInPendingStateException } from '../exceptions/photo-not-in-pending-state.exception';
-
 import { DownloadTemporaryPhotoDto } from '../dtos/rest/download-temporary-photo.request.dto';
 import { TemporaryPhotoDto } from '../dtos/temporary-photo.dto';
 import { PhotoBannedException } from '../exceptions/photo-banned.exception';
@@ -97,7 +95,7 @@ export class PhotoService {
     }
 
     if (downloadTemporaryPhotoDto.width) {
-      const resizedBuffer = await this.photoProcessService.resize(
+      const resizedBuffer = await this.photoProcessService.resizeWithMetadata(
         sharp,
         downloadTemporaryPhotoDto.width,
       );
@@ -105,7 +103,7 @@ export class PhotoService {
       return resizedBuffer;
     }
 
-    return sharp.toBuffer();
+    return sharp.withMetadata().toBuffer();
   }
 
   async sendImageWatermarkQueue(

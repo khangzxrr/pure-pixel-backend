@@ -203,7 +203,7 @@ export class PhotoProcessConsumer extends WorkerHost {
     );
 
     //make sure to rotate buffer with exif
-    const buffer = await sharp.rotate().toBuffer();
+    const buffer = await sharp.rotate().withMetadata().toBuffer();
 
     if (buffer.length === 0) {
       this.logger.log(
@@ -227,11 +227,17 @@ export class PhotoProcessConsumer extends WorkerHost {
     );
     this.logger.log(`uploaded thumbnail for photo id: ${photo.id}`);
 
+    let removedMetaSharp = await this.photoProcessService.sharpInitFromFilePath(
+      temporaryPhoto.file.path,
+    );
+
     const watermark = await this.photoProcessService.makeWatermark(
-      sharp,
+      removedMetaSharp,
       'PXL',
     );
+
     const watermarkBuffer = await watermark.toBuffer();
+
     const watermarkKey = `watermark/${key}`;
     await this.bunnyService.uploadFromBuffer(
       `watermark/${key}`,
