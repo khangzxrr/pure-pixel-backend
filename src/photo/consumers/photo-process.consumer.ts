@@ -236,11 +236,8 @@ export class PhotoProcessConsumer extends WorkerHost {
       'PXL',
     );
 
-    console.log(removedMetaSharp);
-
     const watermarkBuffer = await watermark.toBuffer();
 
-    console.log();
     const watermarkKey = `watermark/${key}`;
     await this.bunnyService.uploadFromBuffer(
       `watermark/${key}`,
