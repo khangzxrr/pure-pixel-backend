@@ -237,7 +237,7 @@ export class UserService {
 
       user.cover += `?updatedAt=${new Date().getTime()}`;
 
-      await this.bunnyService.pruneCache(user.avatar);
+      await this.bunnyService.pruneCache(user.cover);
     }
 
     const normalizedName = updateProfileDto.name
