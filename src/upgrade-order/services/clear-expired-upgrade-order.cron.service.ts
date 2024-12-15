@@ -33,7 +33,7 @@ export class ClearExpiredUpgradeOrder {
     });
   }
 
-  @Cron(CronExpression.EVERY_DAY_AT_6PM)
+  @Cron(CronExpression.EVERY_MINUTE)
   async deactivateAndNotifyExpiredOrder() {
     const currentDate = new Date();
     //find using current date

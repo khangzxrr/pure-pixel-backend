@@ -39,7 +39,7 @@ export class UpgradeServiceConsumer extends WorkerHost {
       referenceType: 'UPGRADE_PACKAGE',
 
       type: 'BOTH_INAPP_EMAIL',
-      title: 'Gói nâng cấp của bạn sắp hết hạn',
+      title: 'Gói nâng cấp của bạn đã hết hạn',
       payload: order,
       content: 'Vui lòng gia hạn lại để được nhận các ưu đãi từ gói nâng cấp!',
     };
