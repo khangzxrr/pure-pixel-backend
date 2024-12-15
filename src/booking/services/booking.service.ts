@@ -42,6 +42,7 @@ import { TemporaryBookingPhotoUpload } from 'src/photo/dtos/temporary-booking-ph
 import { Utils } from 'src/infrastructure/utils/utils';
 import { writeFileSync } from 'fs';
 import { PhotoshootPackageDisabledException } from '../exceptions/photoshoot-package-disabled.exception';
+import { BookingNotFinishedLongEnoughException } from '../exceptions/booking-not-finished-long-enough.exception';
 
 @Injectable()
 export class BookingService {
@@ -352,22 +353,38 @@ export class BookingService {
       throw new BookingNotBelongException();
     }
 
+    const now = new Date();
+
+    const validDeleteDate = new Date(
+      booking.successedAt.getTime() + 30 * 24 * 60 * 60 * 1000,
+    );
+
+    if (booking.status === 'SUCCESSED' && validDeleteDate > now) {
+      throw new BookingNotFinishedLongEnoughException();
+    }
+
     const photo = await this.photoRepository.findUniqueOrThrow(photoId);
 
     await this.photoRepository.deleteById(photoId);
 
     await this.userService.updatePhotoQuota(userId, photo.size);
 
-    await this.notificationService.addNotificationToQueue({
-      userId: booking.userId,
-      type: 'IN_APP',
-      title: `Gói chụp ${booking.photoshootPackageHistory.title} có cập nhật mới`,
-      content: 'Gói chụp của bạn đã được cập nhật ảnh!',
-      payload: {
-        id: booking.id,
+    await this.notificationService.addNotificationToQueue(
+      {
+        userId: booking.userId,
+        type: 'IN_APP',
+        title: `Gói chụp ${booking.photoshootPackageHistory.title} có cập nhật mới`,
+        content: 'Gói chụp của bạn đã được cập nhật ảnh!',
+        payload: {
+          id: booking.id,
+        },
+        referenceType: 'CUSTOMER_BOOKING_PHOTO_REMOVE',
       },
-      referenceType: 'CUSTOMER_BOOKING_PHOTO_REMOVE',
-    });
+      {
+        jobId: `remove_photo_${booking.id}`,
+        delay: 3000,
+      },
+    );
 
     return photo;
   }

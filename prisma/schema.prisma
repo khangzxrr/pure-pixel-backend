@@ -866,8 +866,7 @@ enum BookingStatus {
   ACCEPTED
   DENIED
   SUCCESSED
-  FAILED
-  SUCCESSED_CLEANED_UP
+  FAILED 
 }
 
 enum BookingBillItemType {
