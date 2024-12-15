@@ -269,6 +269,17 @@ export class BookingService {
       updateDto,
     );
 
+    await this.notificationService.addNotificationToQueue({
+      userId: booking.userId,
+      type: 'BOTH_INAPP_EMAIL',
+      title: `Gói chụp ${booking.photoshootPackageHistory.title} của bạn có cập nhật mới`,
+      content: `Gói chụp ${booking.photoshootPackageHistory.title} của bạn vừa được cập nhật ghi chú mới, xin vui lòng kiểm tra`,
+      payload: {
+        id: bookingId,
+      },
+      referenceType: 'CUSTOMER_BOOKING_NOTE_UPDATE',
+    });
+
     return plainToInstance(BookingDto, updatedBooking);
   }
 
@@ -442,16 +453,22 @@ export class BookingService {
       `create temporary watermark for photo id: ${photo.id} of booking id: ${booking.id}`,
     );
 
-    await this.notificationService.addNotificationToQueue({
-      userId: booking.userId,
-      type: 'IN_APP',
-      title: `Gói chụp ${booking.photoshootPackageHistory.title} có cập nhật mới`,
-      content: 'Gói chụp của bạn đã được cập nhật ảnh mới!',
-      payload: {
-        id: booking.id,
+    await this.notificationService.addNotificationToQueue(
+      {
+        userId: booking.userId,
+        type: 'IN_APP',
+        title: `Gói chụp ${booking.photoshootPackageHistory.title} có cập nhật mới`,
+        content: 'Gói chụp của bạn đã được cập nhật ảnh mới!',
+        payload: {
+          id: booking.id,
+        },
+        referenceType: 'CUSTOMER_BOOKING_PHOTO_ADD',
       },
-      referenceType: 'CUSTOMER_BOOKING_PHOTO_ADD',
-    });
+      {
+        jobId: `add_photo_${booking.id}`,
+        delay: 3000,
+      },
+    );
 
     const temporaryBookingPhotoDto: TemporaryBookingPhotoUpload = {
       photographerId: userId,

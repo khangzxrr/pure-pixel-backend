@@ -1,5 +1,6 @@
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
+import { BookingConstant } from 'src/booking/constants/booking.constant';
 import { CameraConstant } from 'src/camera/constants/camera.constant';
 import { CustomConfigModule } from 'src/customConfig/custom-config.module';
 import { BullMqConfigService } from 'src/customConfig/services/bullmq-config.service';
@@ -59,6 +60,12 @@ import { UpgradeConstant } from 'src/upgrade-package/constants/upgrade.constant'
     BullModule.registerQueueAsync({
       imports: [CustomConfigModule],
       name: PhotoshootPackageConstant.PHOTOSHOOT_PACKAGE_QUEUE,
+      useExisting: BullMqQueueRegisterService,
+      inject: [CustomConfigModule],
+    }),
+    BullModule.registerQueueAsync({
+      imports: [CustomConfigModule],
+      name: BookingConstant.BOOKING_QUEUE,
       useExisting: BullMqQueueRegisterService,
       inject: [CustomConfigModule],
     }),

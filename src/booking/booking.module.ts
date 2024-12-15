@@ -16,6 +16,8 @@ import { CachingModule } from 'src/caching/caching.module';
 import { UserModule } from 'src/user/user.module';
 import { QueueModule } from 'src/queue/queue.module';
 
+import { BookingConsumer } from './consumers/booking.consumer';
+
 @Module({
   imports: [
     DatabaseModule,
@@ -29,7 +31,7 @@ import { QueueModule } from 'src/queue/queue.module';
     UserModule,
     QueueModule,
   ],
-  providers: [BookingService, BookingBillItemService],
+  providers: [BookingService, BookingBillItemService, BookingConsumer],
   controllers: [
     CustomerBookingController,
     PhotographerBookingController,

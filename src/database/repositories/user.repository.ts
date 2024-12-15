@@ -151,7 +151,20 @@ export class UserRepository {
     return this.prisma.user.aggregate(aggregate);
   }
 
-  update(userId: string, user: Prisma.UserUpdateInput) {
+  update(
+    userId: string,
+    user: Prisma.UserUpdateInput,
+    tx?: Prisma.TransactionClient,
+  ) {
+    if (tx) {
+      return tx.user.update({
+        where: {
+          id: userId,
+        },
+        data: user,
+      });
+    }
+
     return this.prisma.extendedClient().user.update({
       where: {
         id: userId,

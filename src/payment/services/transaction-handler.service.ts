@@ -115,51 +115,6 @@ export class TransactionHandlerService {
     const photoId =
       userToUserTransaction.photoBuy.photoSellHistory.originalPhotoSell.photoId;
 
-    const previousPhotoSellId =
-      userToUserTransaction.photoBuy.photoSellHistory.originalPhotoSell.id;
-
-    const activePhotoSell = await this.photoSellRepository.findFirst({
-      active: true,
-      photoId,
-    });
-
-    if (!activePhotoSell || activePhotoSell.id !== previousPhotoSellId) {
-      await this.transactionRepository.update(
-        {
-          id: userToUserTransaction.fromUserTransaction.id,
-        },
-        {
-          status: 'FAILED',
-        },
-      );
-
-      await this.transactionRepository.create({
-        fee: 0,
-        status: 'SUCCESS',
-        user: {
-          connect: {
-            id: userToUserTransaction.fromUserTransaction.userId,
-          },
-        },
-        type: 'REFUND_FROM_BUY_IMAGE',
-        amount: userToUserTransaction.fromUserTransaction.amount,
-        paymentMethod: 'WALLET',
-        paymentPayload: {},
-      });
-
-      await this.notificationService.addNotificationToQueue({
-        title: `Mua ảnh thất bại`,
-        content: `Giá ảnh có cập nhật mới, khoản tiền bạn vừa thanh toán sẽ được hoàn về ví`,
-        userId: userToUserTransaction.fromUserTransaction.userId,
-        type: 'BOTH_INAPP_EMAIL',
-        referenceType: 'PHOTO_NEW_PRICE_UPDATED',
-        payload: {
-          id: photoId,
-        },
-      });
-      return;
-    }
-
     await this.userToUserRepository.markSucccessAndCreateToUserTransaction(
       fromUserTransactionId,
       sepay,

@@ -368,11 +368,30 @@ ORDER BY COUNT(public."PhotoBuy".id) DESC
     });
   }
 
+  aggregate(args: Prisma.PhotoAggregateArgs, tx?: Prisma.TransactionClient) {
+    if (tx) {
+      return tx.photo.aggregate(args);
+    }
+    return this.prisma.extendedClient().photo.aggregate(args);
+  }
+
+  deleteAll(where: Prisma.PhotoWhereInput, tx?: Prisma.TransactionClient) {
+    if (tx) {
+      return tx.photo.deleteMany({
+        where,
+      });
+    }
+
+    return this.prisma.extendedClient().photo.deleteMany({
+      where,
+    });
+  }
+
   async findAll(
     where: Prisma.PhotoWhereInput,
     orderBy: Prisma.PhotoOrderByWithRelationInput[],
-    skip: number,
-    take: number,
+    skip?: number,
+    take?: number,
     cursor?: Prisma.PhotoWhereUniqueInput,
   ) {
     return this.prisma.extendedClient().photo.findMany({

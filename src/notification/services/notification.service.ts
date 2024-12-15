@@ -10,7 +10,7 @@ import { plainToInstance } from 'class-transformer';
 import { NotificationDto } from '../dtos/notification.dto';
 import { InjectQueue } from '@nestjs/bullmq';
 import { NotificationConstant } from '../constants/notification.constant';
-import { Queue } from 'bullmq';
+import { JobsOptions, Queue } from 'bullmq';
 import { Prisma } from '@prisma/client';
 
 @Injectable()
@@ -136,10 +136,14 @@ export class NotificationService {
     await this.client().createNotification(notification);
   }
 
-  async addNotificationToQueue(notificationDto: NotificationCreateDto) {
+  async addNotificationToQueue(
+    notificationDto: NotificationCreateDto,
+    jobOpts?: JobsOptions,
+  ) {
     return await this.queue.add(
       NotificationConstant.TEXT_NOTIFICATION_JOB,
       notificationDto,
+      jobOpts,
     );
   }
 }
