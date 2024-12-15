@@ -899,7 +899,7 @@ model Booking {
 
   startDate DateTime
   endDate   DateTime
-  expiredAt DateTime @default(dbgenerated("(NOW() + '30 days'::interval)"))
+  successedAt DateTime?
 
   status      BookingStatus
   description String        @default("")

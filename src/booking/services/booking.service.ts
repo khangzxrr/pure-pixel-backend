@@ -198,6 +198,7 @@ export class BookingService {
     prismaPromises.push(
       this.bookingRepository.updateByIdQuery(bookingId, {
         status: 'SUCCESSED',
+        successedAt: new Date(),
       }),
     );
 
@@ -349,10 +350,6 @@ export class BookingService {
 
     if (booking.originalPhotoshootPackage.userId !== userId) {
       throw new BookingNotBelongException();
-    }
-
-    if (booking.status !== 'ACCEPTED') {
-      throw new BookingNotInValidStateException();
     }
 
     const photo = await this.photoRepository.findUniqueOrThrow(photoId);

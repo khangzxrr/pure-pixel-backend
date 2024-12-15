@@ -19,6 +19,9 @@ export class BookingDto {
   endDate: Date;
 
   @ApiProperty()
+  successedAt: Date;
+
+  @ApiProperty()
   status: BookingStatus;
 
   @ApiProperty()
