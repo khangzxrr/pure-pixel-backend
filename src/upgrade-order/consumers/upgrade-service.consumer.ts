@@ -1,10 +1,11 @@
 import { InjectQueue, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job, Queue } from 'bullmq';
 import { UpgradeConstant } from '../../upgrade-package/constants/upgrade.constant';
-import { Logger } from '@nestjs/common';
+import { Inject, Logger } from '@nestjs/common';
 import { UpgradeOrder } from '@prisma/client';
 import { NotificationConstant } from 'src/notification/constants/notification.constant';
 import { NotificationCreateDto } from 'src/notification/dtos/rest/notification-create.dto';
+import { PhotoRepository } from 'src/database/repositories/photo.repository';
 
 @Processor(UpgradeConstant.UPGRADE_QUEUE)
 export class UpgradeServiceConsumer extends WorkerHost {
@@ -12,6 +13,7 @@ export class UpgradeServiceConsumer extends WorkerHost {
   constructor(
     @InjectQueue(NotificationConstant.NOTIFICATION_QUEUE)
     private readonly notificationQueue: Queue,
+    @Inject() private readonly photoRepository: PhotoRepository,
   ) {
     super();
   }
@@ -50,6 +52,26 @@ export class UpgradeServiceConsumer extends WorkerHost {
     );
   }
 
+  async restorePhotoVisibility(photographerId: string) {
+    const updateManyPhoto = await this.photoRepository.updateManyQuery({
+      where: {
+        photographerId,
+        photoSellings: {
+          some: {
+            active: true,
+          },
+        },
+      },
+      data: {
+        visibility: 'PUBLIC',
+      },
+    });
+
+    this.logger.log(
+      `restore public of ${updateManyPhoto.count} photos, photoshoot package of photographerId ${photographerId}`,
+    );
+  }
+
   async process(job: Job): Promise<any> {
     switch (job.name) {
       case UpgradeConstant.SOON_EXPIRED_ORDER_NOTIFY:
@@ -63,6 +85,10 @@ export class UpgradeServiceConsumer extends WorkerHost {
           `send ${UpgradeConstant.EXPIRED_ORDER_NOTIFY} for order id ${job.data.order.id}`,
         );
         await this.sendExpiredOrderNotification(job.data.order);
+        break;
+      case UpgradeConstant.RESTORE_PHOTO_VISIBILITY:
+        this.logger.log(`restore photo visibility`);
+        await this.restorePhotoVisibility(job.data.photographerId);
         break;
     }
 

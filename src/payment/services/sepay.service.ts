@@ -5,7 +5,7 @@ import { TransactionNotFoundException } from '../exceptions/transaction-not-foun
 import { AmountIsNotEqualException } from '../exceptions/amount-is-not-equal.exception';
 
 import * as QRCode from 'qrcode';
-import { PaymentMethod, Transaction } from '@prisma/client';
+import { Transaction } from '@prisma/client';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { PagingPaginatedResposneDto } from 'src/infrastructure/restful/paging-paginated.response.dto';
 import { CreateDepositRequestDto } from 'src/user/dtos/rest/create-deposit.request.dto';

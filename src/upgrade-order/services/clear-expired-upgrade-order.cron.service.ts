@@ -6,13 +6,16 @@ import { UpgradePackageOrderRepository } from 'src/database/repositories/upgrade
 import { UpgradeConstant } from '../../upgrade-package/constants/upgrade.constant';
 import { KeycloakService } from 'src/authen/services/keycloak.service';
 import { Constants } from 'src/infrastructure/utils/constants';
+import { PhotoRepository } from 'src/database/repositories/photo.repository';
 
 @Injectable()
 export class ClearExpiredUpgradeOrder {
   private readonly logger: Logger = new Logger(ClearExpiredUpgradeOrder.name);
   constructor(
-    @Inject() private readonly upgradeOrder: UpgradePackageOrderRepository,
+    @Inject()
+    private readonly upgradeOrderRepository: UpgradePackageOrderRepository,
     @Inject() private readonly keycloakService: KeycloakService,
+    @Inject() private readonly photoRepository: PhotoRepository,
     @InjectQueue(UpgradeConstant.UPGRADE_QUEUE) private upgradeQueue: Queue,
   ) {}
 
@@ -24,7 +27,9 @@ export class ClearExpiredUpgradeOrder {
     );
 
     const soonExpiredOrders =
-      await this.upgradeOrder.findManyActivateAndExpired(oneWeekLaterDate);
+      await this.upgradeOrderRepository.findManyActivateAndExpired(
+        oneWeekLaterDate,
+      );
 
     soonExpiredOrders.forEach((order) => {
       this.upgradeQueue.add(UpgradeConstant.SOON_EXPIRED_ORDER_NOTIFY, {
@@ -38,11 +43,35 @@ export class ClearExpiredUpgradeOrder {
     const currentDate = new Date();
     //find using current date
     const expiredOrders =
-      await this.upgradeOrder.findManyActivateAndExpired(currentDate);
+      await this.upgradeOrderRepository.findManyActivateAndExpired(currentDate);
+
+    if (expiredOrders.length === 0) {
+      return;
+    }
+
+    await this.photoRepository.updateManyQuery({
+      where: {
+        photographer: {
+          upgradeOrders: {
+            some: {
+              status: 'ACTIVE',
+              expiredAt: {
+                lte: currentDate,
+              },
+            },
+          },
+        },
+      },
+      data: {
+        visibility: 'PRIVATE',
+      },
+    });
 
     //after deactivate but there are(is) booking(s) still going
     //photographer still interact normally until booking is closed or expired
-    await this.upgradeOrder.deactivateActivatedAndExpired(currentDate);
+    await this.upgradeOrderRepository.deactivateActivatedAndExpired(
+      currentDate,
+    );
 
     expiredOrders.forEach(async (order) => {
       await this.keycloakService.deleteRoleFromUser(

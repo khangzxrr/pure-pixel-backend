@@ -29,7 +29,14 @@ export class PhotoRepository {
     });
   }
 
-  updateManyQuery(args: Prisma.PhotoUpdateManyArgs) {
+  updateManyQuery(
+    args: Prisma.PhotoUpdateManyArgs,
+    tx?: Prisma.TransactionClient,
+  ) {
+    if (tx) {
+      return tx.photo.updateMany(args);
+    }
+
     return this.prisma.extendedClient().photo.updateMany(args);
   }
 

@@ -9,7 +9,9 @@ import { KeycloakService } from 'src/authen/services/keycloak.service';
 import { TransactionRepository } from 'src/database/repositories/transaction.repository';
 import { UserToUserRepository } from 'src/database/repositories/user-to-user-transaction.repository';
 import { NotificationService } from 'src/notification/services/notification.service';
-import { PhotoSellRepository } from 'src/database/repositories/photo-sell.repository';
+import { InjectQueue } from '@nestjs/bullmq';
+import { UpgradeConstant } from 'src/upgrade-package/constants/upgrade.constant';
+import { Queue } from 'bullmq';
 
 @Injectable()
 export class TransactionHandlerService {
@@ -25,7 +27,8 @@ export class TransactionHandlerService {
 
     @Inject() private readonly userToUserRepository: UserToUserRepository,
     @Inject() private readonly notificationService: NotificationService,
-    @Inject() private readonly photoSellRepository: PhotoSellRepository,
+    @InjectQueue(UpgradeConstant.UPGRADE_QUEUE)
+    private readonly upgradeQueue: Queue,
   ) {}
 
   async handleUpgradeToPhotographer(
@@ -75,6 +78,10 @@ export class TransactionHandlerService {
       userId,
       Constants.PHOTOGRAPHER_ROLE,
     );
+
+    await this.upgradeQueue.add(UpgradeConstant.RESTORE_PHOTO_VISIBILITY, {
+      photographerId: userId,
+    });
 
     await this.notificationService.addNotificationToQueue({
       payload: updatedTransaction,
