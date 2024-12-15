@@ -43,7 +43,6 @@ export class ManageTransactionController {
     @Query() findAllDto: FindAllTransactionDto,
     @Req() req: Request,
   ) {
-    console.log(`transactions!ss`);
     return await this.transactionService.findAll(findAllDto, req.url);
   }
 
