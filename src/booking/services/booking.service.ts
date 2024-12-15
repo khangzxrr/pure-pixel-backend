@@ -73,11 +73,13 @@ export class BookingService {
     bookingDto.originalPhotoshootPackage.thumbnail =
       this.bunnyService.getPresignedFile(
         bookingDto.originalPhotoshootPackage.thumbnail,
+        `?updatedAt=${booking.originalPhotoshootPackage.updatedAt.getTime()}`,
       );
 
     bookingDto.photoshootPackageHistory.thumbnail =
       this.bunnyService.getPresignedFile(
         bookingDto.photoshootPackageHistory.thumbnail,
+        `?updatedAt=${booking.originalPhotoshootPackage.updatedAt.getTime()}`,
       );
 
     return bookingDto;
