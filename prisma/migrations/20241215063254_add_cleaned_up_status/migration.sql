@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "BookingStatus" ADD VALUE 'SUCCESSED_CLEANED_UP';

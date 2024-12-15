@@ -139,6 +139,7 @@ export class GenerateDashboardReportService {
           originalPhotoshootPackage: {
             userId: user.id,
           },
+          status: 'SUCCESSED',
         },
       },
       _sum: {
@@ -153,6 +154,7 @@ export class GenerateDashboardReportService {
           originalPhotoshootPackage: {
             userId: user.id,
           },
+          status: 'SUCCESSED',
         },
       },
       _sum: {
@@ -483,6 +485,39 @@ export class GenerateDashboardReportService {
       },
     });
 
+    const totalSize = await this.photoRepository.aggregate({
+      where: {
+        OR: [
+          {
+            deletedAt: null,
+            createdAt: {
+              gte: dashboardRequestDto.fromDate,
+              lte: dashboardRequestDto.toDate,
+            },
+          },
+          {
+            deletedAt: {
+              not: null,
+            },
+            photoSellings: {
+              some: {
+                photoSellHistories: {
+                  some: {},
+                },
+              },
+            },
+            createdAt: {
+              gte: dashboardRequestDto.fromDate,
+              lte: dashboardRequestDto.toDate,
+            },
+          },
+        ],
+      },
+      _sum: {
+        size: true,
+      },
+    });
+
     const withdrawalTransactions = await this.transactionRepository.aggregate({
       _sum: {
         amount: true,
@@ -522,6 +557,7 @@ export class GenerateDashboardReportService {
       revenueFromSellingPhoto: revenueFromSellingPhoto.toNumber(),
       totalRevenue: totalRevenue.toNumber(),
       totalPhoto,
+      totalSize: totalSize._sum.size ? totalSize._sum.size : 0,
       totalSellingPhoto,
       totalRawPhoto,
       totalBookingPhoto,

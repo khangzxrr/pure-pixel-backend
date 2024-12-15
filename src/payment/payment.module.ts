@@ -11,9 +11,16 @@ import { PaymentCleanUpCronJob } from './cronjobs/payment-clean-up.service';
 import { TransactionHandlerService } from './services/transaction-handler.service';
 import { ManageTransactionController } from './controllers/manage-transaction.controller';
 import { NotificationModule } from 'src/notification/notification.module';
+import { QueueModule } from 'src/queue/queue.module';
 
 @Module({
-  imports: [DatabaseModule, AuthenModule, StorageModule, NotificationModule],
+  imports: [
+    DatabaseModule,
+    AuthenModule,
+    StorageModule,
+    NotificationModule,
+    QueueModule,
+  ],
   providers: [
     PaymentCleanUpCronJob,
     VietQrBasicStrategy,

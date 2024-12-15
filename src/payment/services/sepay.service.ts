@@ -5,7 +5,7 @@ import { TransactionNotFoundException } from '../exceptions/transaction-not-foun
 import { AmountIsNotEqualException } from '../exceptions/amount-is-not-equal.exception';
 
 import * as QRCode from 'qrcode';
-import { PaymentMethod, Transaction } from '@prisma/client';
+import { Transaction } from '@prisma/client';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { PagingPaginatedResposneDto } from 'src/infrastructure/restful/paging-paginated.response.dto';
 import { CreateDepositRequestDto } from 'src/user/dtos/rest/create-deposit.request.dto';
@@ -130,6 +130,11 @@ export class SepayService {
       (acc: Decimal, t: Transaction) => {
         //only process success transaction
         if (t.status !== 'SUCCESS') {
+          //this is exception case
+          if (t.status === 'PENDING' && t.type === 'WITHDRAWAL') {
+            return acc.sub(t.amount);
+          }
+
           return acc;
         }
 
@@ -167,15 +172,6 @@ export class SepayService {
   }
 
   async getWalletByUserId(userId: string): Promise<WalletDto> {
-    //temporary disable caching
-    const cachedWalletDto = await this.cacheManager.get<WalletDto>(
-      `walletdto2:${userId}`,
-    );
-
-    if (cachedWalletDto) {
-      return cachedWalletDto;
-    }
-
     const transactions = await this.transactionRepository.findAll({
       userId,
     });
@@ -184,7 +180,10 @@ export class SepayService {
       await this.calculateWalletFromTransactions(transactions);
     const walletDto = new WalletDto(walletBalance.toNumber());
 
-    await this.cacheManager.set(`walletdto:${userId}`, walletDto);
+    if (userId === 'd2020c98-60f5-45c2-879f-00a5df97e9cd') {
+      console.log(transactions);
+      console.log(walletBalance);
+    }
 
     return walletDto;
   }

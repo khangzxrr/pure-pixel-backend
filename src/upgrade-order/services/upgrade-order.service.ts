@@ -22,6 +22,9 @@ import { Constants } from 'src/infrastructure/utils/constants';
 import { KeycloakService } from 'src/authen/services/keycloak.service';
 import { NotificationService } from 'src/notification/services/notification.service';
 import { CannotDowngradeOrderException } from '../exceptions/cannot-downgrade-order.exception';
+import { InjectQueue } from '@nestjs/bullmq';
+import { UpgradeConstant } from 'src/upgrade-package/constants/upgrade.constant';
+import { Queue } from 'bullmq';
 
 @Injectable()
 export class UpgradeOrderService {
@@ -35,6 +38,8 @@ export class UpgradeOrderService {
     @Inject() readonly userRepository: UserRepository,
     @Inject() private readonly keycloakService: KeycloakService,
     @Inject() private readonly notificationService: NotificationService,
+    @InjectQueue(UpgradeConstant.UPGRADE_QUEUE)
+    private readonly upgradeQueue: Queue,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -299,6 +304,13 @@ export class UpgradeOrderService {
           await this.keycloakService.addRoleToUser(
             userId,
             Constants.PHOTOGRAPHER_ROLE,
+          );
+
+          await this.upgradeQueue.add(
+            UpgradeConstant.RESTORE_PHOTO_VISIBILITY,
+            {
+              photographer: userId,
+            },
           );
 
           await this.notificationService.addNotificationToQueue({

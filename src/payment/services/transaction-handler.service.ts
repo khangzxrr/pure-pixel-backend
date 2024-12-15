@@ -9,7 +9,9 @@ import { KeycloakService } from 'src/authen/services/keycloak.service';
 import { TransactionRepository } from 'src/database/repositories/transaction.repository';
 import { UserToUserRepository } from 'src/database/repositories/user-to-user-transaction.repository';
 import { NotificationService } from 'src/notification/services/notification.service';
-import { PhotoSellRepository } from 'src/database/repositories/photo-sell.repository';
+import { InjectQueue } from '@nestjs/bullmq';
+import { UpgradeConstant } from 'src/upgrade-package/constants/upgrade.constant';
+import { Queue } from 'bullmq';
 
 @Injectable()
 export class TransactionHandlerService {
@@ -25,7 +27,8 @@ export class TransactionHandlerService {
 
     @Inject() private readonly userToUserRepository: UserToUserRepository,
     @Inject() private readonly notificationService: NotificationService,
-    @Inject() private readonly photoSellRepository: PhotoSellRepository,
+    @InjectQueue(UpgradeConstant.UPGRADE_QUEUE)
+    private readonly upgradeQueue: Queue,
   ) {}
 
   async handleUpgradeToPhotographer(
@@ -76,6 +79,10 @@ export class TransactionHandlerService {
       Constants.PHOTOGRAPHER_ROLE,
     );
 
+    await this.upgradeQueue.add(UpgradeConstant.RESTORE_PHOTO_VISIBILITY, {
+      photographerId: userId,
+    });
+
     await this.notificationService.addNotificationToQueue({
       payload: updatedTransaction,
       title: 'Nâng cấp thành nhiếp ảnh gia thành công',
@@ -114,51 +121,6 @@ export class TransactionHandlerService {
 
     const photoId =
       userToUserTransaction.photoBuy.photoSellHistory.originalPhotoSell.photoId;
-
-    const previousPhotoSellId =
-      userToUserTransaction.photoBuy.photoSellHistory.originalPhotoSell.id;
-
-    const activePhotoSell = await this.photoSellRepository.findFirst({
-      active: true,
-      photoId,
-    });
-
-    if (!activePhotoSell || activePhotoSell.id !== previousPhotoSellId) {
-      await this.transactionRepository.update(
-        {
-          id: userToUserTransaction.fromUserTransaction.id,
-        },
-        {
-          status: 'FAILED',
-        },
-      );
-
-      await this.transactionRepository.create({
-        fee: 0,
-        status: 'SUCCESS',
-        user: {
-          connect: {
-            id: userToUserTransaction.fromUserTransaction.userId,
-          },
-        },
-        type: 'REFUND_FROM_BUY_IMAGE',
-        amount: userToUserTransaction.fromUserTransaction.amount,
-        paymentMethod: 'WALLET',
-        paymentPayload: {},
-      });
-
-      await this.notificationService.addNotificationToQueue({
-        title: `Mua ảnh thất bại`,
-        content: `Giá ảnh có cập nhật mới, khoản tiền bạn vừa thanh toán sẽ được hoàn về ví`,
-        userId: userToUserTransaction.fromUserTransaction.userId,
-        type: 'BOTH_INAPP_EMAIL',
-        referenceType: 'PHOTO_NEW_PRICE_UPDATED',
-        payload: {
-          id: photoId,
-        },
-      });
-      return;
-    }
 
     await this.userToUserRepository.markSucccessAndCreateToUserTransaction(
       fromUserTransactionId,

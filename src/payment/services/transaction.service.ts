@@ -31,7 +31,10 @@ export class TransactionService {
       transaction.userId,
     );
 
-    if (transaction.amount.toNumber() > wallet.walletBalance) {
+    if (
+      updateDto.status === 'SUCCESS' &&
+      transaction.amount.toNumber() > wallet.walletBalance
+    ) {
       throw new NotEnoughBalanceException();
     }
 

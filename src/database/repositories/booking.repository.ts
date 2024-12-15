@@ -6,6 +6,12 @@ import { PrismaService } from 'src/prisma.service';
 export class BookingRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  async findMany(where: Prisma.BookingWhereInput) {
+    return this.prisma.extendedClient().booking.findMany({
+      where,
+    });
+  }
+
   async create(data: Prisma.BookingCreateInput) {
     return this.prisma.extendedClient().booking.create({
       data,
@@ -36,7 +42,20 @@ export class BookingRepository {
     });
   }
 
-  async updateById(id: string, data: Prisma.BookingUpdateInput) {
+  async updateById(
+    id: string,
+    data: Prisma.BookingUpdateInput,
+    tx?: Prisma.TransactionClient,
+  ) {
+    if (tx) {
+      return tx.booking.update({
+        where: {
+          id,
+        },
+        data,
+      });
+    }
+
     return this.prisma.extendedClient().booking.update({
       where: {
         id,
