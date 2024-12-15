@@ -37,6 +37,9 @@ export class DashboardReportDto {
   totalPhoto: number;
 
   @ApiProperty()
+  totalSize: number;
+
+  @ApiProperty()
   totalRawPhoto: number;
 
   @ApiProperty()
