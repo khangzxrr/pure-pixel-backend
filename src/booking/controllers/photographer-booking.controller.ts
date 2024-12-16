@@ -10,7 +10,6 @@ import {
   Put,
   Query,
   UseGuards,
-  Res,
 } from '@nestjs/common';
 import {
   ApiConsumes,
