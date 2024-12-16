@@ -199,7 +199,8 @@ export class SepayService {
 
     const id = sepay.content
       .substring(startIndex + PaymentConstant.PAYMENT_MARK.length, lastIndex)
-      .replaceAll(PaymentConstant.PAYMENT_SEPERATOR, '-');
+      .replaceAll(PaymentConstant.PAYMENT_SEPERATOR, '-')
+      .toLowerCase();
 
     const transaction = await this.transactionRepository.findUniqueOrThrow({
       id,
