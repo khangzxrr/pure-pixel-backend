@@ -1,8 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/prisma.service';
 import { PhotoService } from 'src/photo/services/photo.service';
 import { FindAllPhotoFilterDto } from 'src/photo/dtos/find-all.filter.dto';
-import { UserEntity } from 'src/user/entities/user.entity';
 import { KeycloakService } from 'src/authen/services/keycloak.service';
 import { FindAllPhotographerResponseDto } from '../dtos/find-all-photographer-dtos/find-all-photographer.response.dto';
 import { FindAllPhotographerRequestDto } from '../dtos/find-all-photographer-dtos/find-all-photographer.request.dto';
@@ -12,13 +10,9 @@ import { PhotographerNotFoundException } from '../exceptions/photographer-not-fo
 import { PhotographerProfileDto } from '../dtos/photographer-profile.dto';
 import { UserFilterDto } from 'src/user/dtos/user-filter.dto';
 import { plainToInstance } from 'class-transformer';
-import { PhotoRepository } from 'src/database/repositories/photo.repository';
-import { PhotoVoteRepository } from 'src/database/repositories/photo-vote.repository';
 import { Constants } from 'src/infrastructure/utils/constants';
 
 import { FollowingService } from './following.service';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
 import { Utils } from 'src/infrastructure/utils/utils';
 
 @Injectable()
@@ -27,11 +21,7 @@ export class PhotographerService {
     @Inject() private readonly photoService: PhotoService,
     @Inject() private readonly keycloakService: KeycloakService,
     @Inject() private readonly userRepository: UserRepository,
-    @Inject() private readonly photoRepository: PhotoRepository,
-    @Inject() private readonly photoVoteRepository: PhotoVoteRepository,
     @Inject() private readonly followingService: FollowingService,
-    @Inject(CACHE_MANAGER)
-    private readonly cacheManager: Cache,
   ) {}
 
   async getAllPhotographer(
