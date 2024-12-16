@@ -26,6 +26,7 @@ import { TransactionNotInPendingException } from '../exceptions/transaction-not-
 import { TransactionHandlerService } from './transaction-handler.service';
 import { Decimal } from '@prisma/client/runtime/library';
 import { PaymentConstant } from '../constants/payment-constant';
+import { ExistPendingWithdrawalException } from '../exceptions/exist-pending-withdrawal.exception';
 
 @Injectable()
 export class SepayService {
@@ -52,20 +53,33 @@ export class SepayService {
       throw new NotEnoughBalanceException();
     }
 
-    const createWithdrawalTransaction =
-      this.withdrawalTransactionRepository.create(
-        userId,
-        createWithdrawal.amount,
-        createWithdrawal.bankName,
-        createWithdrawal.bankNumber,
-        createWithdrawal.bankUsername,
-      );
+    return await this.prisma.$transaction(async (tx) => {
+      const existWithdrawalTransaction =
+        await this.withdrawalTransactionRepository.findFirst(
+          {
+            userId,
+            type: 'WITHDRAWAL',
+            status: 'PENDING',
+          },
+          tx,
+        );
 
-    const [withdrawalTransaction] = await this.prisma.$transaction([
-      createWithdrawalTransaction,
-    ]);
+      if (existWithdrawalTransaction) {
+        throw new ExistPendingWithdrawalException();
+      }
 
-    return new CreateWithdrawalResponseDto(withdrawalTransaction.id);
+      const withdrawalTransaction =
+        await this.withdrawalTransactionRepository.create(
+          userId,
+          createWithdrawal.amount,
+          createWithdrawal.bankName,
+          createWithdrawal.bankNumber,
+          createWithdrawal.bankUsername,
+          tx,
+        );
+
+      return new CreateWithdrawalResponseDto(withdrawalTransaction.id);
+    });
   }
 
   async createDeposit(
