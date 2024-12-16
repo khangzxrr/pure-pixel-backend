@@ -80,11 +80,7 @@ export class TransactionRepository {
         fromUserTransaction: true,
         depositTransaction: true,
         serviceTransaction: true,
-        withdrawalTransaction: {
-          include: {
-            bankInfo: true,
-          },
-        },
+        withdrawalTransaction: true,
       },
       orderBy,
     });
@@ -100,11 +96,7 @@ export class TransactionRepository {
         fromUserTransaction: true,
         depositTransaction: true,
         serviceTransaction: true,
-        withdrawalTransaction: {
-          include: {
-            bankInfo: true,
-          },
-        },
+        withdrawalTransaction: true,
       },
     });
   }

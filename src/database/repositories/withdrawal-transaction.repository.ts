@@ -26,18 +26,9 @@ export class WithdrawalTransactionRepository {
         paymentMethod: 'WALLET',
         withdrawalTransaction: {
           create: {
-            bankInfo: {
-              connectOrCreate: {
-                where: {
-                  bankNumber,
-                },
-                create: {
-                  bankName,
-                  bankUsername,
-                  bankNumber,
-                },
-              },
-            },
+            bankName,
+            bankUsername,
+            bankNumber,
           },
         },
       },

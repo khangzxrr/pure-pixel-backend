@@ -26,7 +26,6 @@ import { TransactionNotInPendingException } from '../exceptions/transaction-not-
 import { TransactionHandlerService } from './transaction-handler.service';
 import { Decimal } from '@prisma/client/runtime/library';
 import { PaymentConstant } from '../constants/payment-constant';
-import { sep } from 'path';
 
 @Injectable()
 export class SepayService {
@@ -37,7 +36,7 @@ export class SepayService {
     private readonly withdrawalTransactionRepository: WithdrawalTransactionRepository,
     @Inject()
     private readonly depositTransactionRepository: DepositTransactionRepository,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+
     @Inject()
     private readonly transactionHandlerService: TransactionHandlerService,
     private readonly prisma: PrismaService,
@@ -182,11 +181,6 @@ export class SepayService {
       await this.calculateWalletFromTransactions(transactions);
     const walletDto = new WalletDto(walletBalance.toNumber());
 
-    if (userId === 'd2020c98-60f5-45c2-879f-00a5df97e9cd') {
-      console.log(transactions);
-      console.log(walletBalance);
-    }
-
     return walletDto;
   }
 
@@ -217,9 +211,6 @@ export class SepayService {
     if (transaction.amount.toNumber() != sepay.transferAmount) {
       throw new AmountIsNotEqualException();
     }
-
-    //clear wallet cache
-    await this.cacheManager.del(`walletdto:${transaction.userId}`);
 
     switch (transaction.type) {
       case 'UPGRADE_TO_PHOTOGRAPHER':
