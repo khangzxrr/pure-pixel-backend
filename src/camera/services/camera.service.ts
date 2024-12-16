@@ -13,6 +13,8 @@ import { BunnyService } from 'src/storage/services/bunny.service';
 import { FindAllCameraDto } from '../dtos/rest/find-all-camera.dto';
 import { CameraDto } from '../dtos/camera.dto';
 import { PagingPaginatedResposneDto } from 'src/infrastructure/restful/paging-paginated.response.dto';
+import { PhotoRepository } from 'src/database/repositories/photo.repository';
+import { UserRepository } from 'src/database/repositories/user.repository';
 
 @Injectable()
 export class CameraService {
@@ -20,8 +22,11 @@ export class CameraService {
     @Inject() private readonly cameraRepository: CameraRepository,
     @Inject() private readonly cameraMakerRepository: CameraMakerRepository,
     @Inject() private readonly cameraOnUsersRepository: CameraOnUsersRepository,
+    @Inject() private readonly photoRepository: PhotoRepository,
     @Inject()
     private readonly popularCameraTimeline: PopularCameraTimelineRepository,
+    @Inject()
+    private readonly userRepository: UserRepository,
     @Inject() private readonly bunnyService: BunnyService,
   ) {}
 
@@ -83,21 +88,60 @@ export class CameraService {
 
   async findAll(findAllDto: FindAllCameraDto) {
     const count = await this.cameraRepository.count(findAllDto.toWhere());
-    const cameras: any[] = await this.cameraRepository.findMany(
-      findAllDto.toWhere(),
-      {},
-      findAllDto.toSkip(),
-      findAllDto.limit,
-      findAllDto.toOrderBy(),
-    );
 
-    const cameraDtos = plainToInstance(CameraDto, cameras);
+    if (
+      !findAllDto.orderByTotalPhotoCount &&
+      !findAllDto.orderByTotalUserCount
+    ) {
+      const topCameras = await this.cameraRepository.findTopOrderByPhotoCount(
+        findAllDto.search ? findAllDto.search : '',
+        'desc',
+        findAllDto.toSkip(),
+        findAllDto.limit,
+      );
 
-    return new PagingPaginatedResposneDto<CameraDto>(
-      findAllDto.limit,
-      count,
-      cameraDtos,
-    );
+      const cameraDtos = plainToInstance(CameraDto, topCameras);
+
+      return new PagingPaginatedResposneDto<CameraDto>(
+        findAllDto.limit,
+        count,
+        cameraDtos,
+      );
+    }
+
+    if (findAllDto.orderByTotalPhotoCount) {
+      const topCameras = await this.cameraRepository.findTopOrderByPhotoCount(
+        findAllDto.search ? findAllDto.search : '',
+        findAllDto.orderByTotalPhotoCount,
+        findAllDto.toSkip(),
+        findAllDto.limit,
+      );
+
+      const cameraDtos = plainToInstance(CameraDto, topCameras);
+
+      return new PagingPaginatedResposneDto<CameraDto>(
+        findAllDto.limit,
+        count,
+        cameraDtos,
+      );
+    }
+
+    if (findAllDto.orderByTotalUserCount) {
+      const topCameras = await this.cameraRepository.findTopUsageByUserCount(
+        findAllDto.search ? findAllDto.search : '',
+        findAllDto.orderByTotalPhotoCount,
+        findAllDto.toSkip(),
+        findAllDto.limit,
+      );
+
+      const cameraDtos = plainToInstance(CameraDto, topCameras);
+
+      return new PagingPaginatedResposneDto<CameraDto>(
+        findAllDto.limit,
+        count,
+        cameraDtos,
+      );
+    }
   }
 
   async update(id: string, updateDto: UpdateCameraDto) {

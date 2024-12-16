@@ -4,6 +4,9 @@ import { CameraOnUserDto } from './camera-on-user.dto';
 
 export class CameraDto {
   @ApiProperty()
+  id: string;
+
+  @ApiProperty()
   name: string;
 
   @ApiProperty()

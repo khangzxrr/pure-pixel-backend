@@ -8,13 +8,10 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { BookingService } from '../services/booking.service';
-import { AuthenticatedUser, AuthGuard, Roles } from 'nest-keycloak-connect';
-import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
+import { AuthGuard, Roles } from 'nest-keycloak-connect';
 import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { BookingDto } from '../dtos/booking.dto';
-import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.response.dto';
 
 import { UpdateBookingStatusDto } from '../dtos/rest/update-booking-status.request.dto';
 import { ManageBookingService } from '../services/manage-booking.service';
