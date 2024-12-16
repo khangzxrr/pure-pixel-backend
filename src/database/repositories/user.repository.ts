@@ -41,7 +41,7 @@ export class UserRepository {
     if (isFollowed) {
       return this.prisma.$queryRaw`SELECT *,
                 ("followerId" IS NOT NULL) as "isFollowed",
-                (SELECT COUNT(*) FROM public."Photo" WHERE "photographerId" = public."User"."id" AND "deletedAt" IS NULL) as "photoCount"
+                (SELECT COUNT(*) FROM public."Photo" WHERE "photographerId" = public."User"."id" AND "deletedAt" IS NULL AND "visibility" = 'PUBLIC') as "photoCount"
                 FROM public."User" INNER JOIN public."Follow"
                 ON public."User"."id" = public."Follow"."followingId"
                 WHERE public."User"."id" IN (${Prisma.join(ids)})
@@ -54,7 +54,7 @@ export class UserRepository {
 
     return this.prisma.$queryRaw`SELECT *,
                 (SELECT COUNT(*) > 0 FROM public."Follow" WHERE "followerId" = ${userId} AND "followingId" = "id") as "isFollowed",
-                (SELECT COUNT(*) FROM public."Photo" WHERE "photographerId" = public."User"."id" AND "deletedAt" IS NULL) as "photoCount"
+                (SELECT COUNT(*) FROM public."Photo" WHERE "photographerId" = public."User"."id" AND "deletedAt" IS NULL AND "visibility" = 'PUBLIC') as "photoCount"
                 FROM public."User"
                 WHERE public."User"."id" IN (${Prisma.join(ids)})
                 AND "normalizedName" LIKE CONCAT('%', LOWER(${search}), '%') 
