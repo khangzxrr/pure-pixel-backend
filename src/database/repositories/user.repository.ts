@@ -40,23 +40,25 @@ export class UserRepository {
   ): PrismaPromise<User[]> {
     if (isFollowed) {
       return this.prisma.$queryRaw`SELECT *,
-                ("followerId" IS NOT NULL) as "isFollowed"
+                ("followerId" IS NOT NULL) as "isFollowed",
+                (SELECT COUNT(*) FROM public."Photo" WHERE "photographerId" = public."User"."id" AND "deletedAt" IS NULL) as "photoCount"
                 FROM public."User" INNER JOIN public."Follow"
                 ON public."User"."id" = public."Follow"."followingId"
                 WHERE public."User"."id" IN (${Prisma.join(ids)})
                 AND "normalizedName" LIKE CONCAT('%', LOWER(${search}), '%')
                 AND "followerId" = ${userId}
-                ORDER BY "followerId" DESC NULLS LAST 
+                ORDER BY "followerId" DESC NULLS LAST, "photoCount" DESC 
                 LIMIT ${take} OFFSET ${skip}
 `;
     }
 
     return this.prisma.$queryRaw`SELECT *,
-                (SELECT COUNT(*) > 0 FROM public."Follow" WHERE "followerId" = ${userId} AND "followingId" = "id") as "isFollowed"
+                (SELECT COUNT(*) > 0 FROM public."Follow" WHERE "followerId" = ${userId} AND "followingId" = "id") as "isFollowed",
+                (SELECT COUNT(*) FROM public."Photo" WHERE "photographerId" = public."User"."id" AND "deletedAt" IS NULL) as "photoCount"
                 FROM public."User"
                 WHERE public."User"."id" IN (${Prisma.join(ids)})
                 AND "normalizedName" LIKE CONCAT('%', LOWER(${search}), '%') 
-                ORDER BY "isFollowed" DESC
+                ORDER BY "isFollowed" DESC, "photoCount" DESC
                 LIMIT ${take} OFFSET ${skip}
 `;
   }
