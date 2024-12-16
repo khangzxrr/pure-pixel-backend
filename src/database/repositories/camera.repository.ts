@@ -99,6 +99,40 @@ export class CameraRepository {
     });
   }
 
+  async findTopOrderByPhotoCount(
+    search: string,
+    sortOrder: Prisma.SortOrder,
+    skip: number,
+    take: number,
+  ): Promise<any[]> {
+    return this.prismaService
+      .$queryRaw`SELECT *, (SELECT COUNT(*) FROM public."Photo" WHERE "deletedAt" IS NULL AND "cameraId" = public."Camera"."id") as "photoCount", 
+                  (SELECT COUNT(*)  FROM public."CameraOnUsers" WHERE "cameraId" = public."Camera"."id") as "userCount"
+                FROM "public"."Camera"
+                WHERE LOWER(public."Camera"."name") LIKE LOWER(CONCAT('%', ${search}, '%'))
+                ORDER BY "photoCount" ${sortOrder === 'asc' ? Prisma.sql(['asc']) : Prisma.sql(['desc'])} 
+                OFFSET ${skip}
+                LIMIT ${take} 
+                `;
+  }
+
+  async findTopUsageByUserCount(
+    search: string,
+    sortOrder: Prisma.SortOrder,
+    skip: number,
+    take: number,
+  ): Promise<any[]> {
+    return this.prismaService
+      .$queryRaw`SELECT *, (SELECT COUNT(*) FROM public."Photo" WHERE "deletedAt" IS NULL AND "cameraId" = public."Camera"."id") as "photoCount", 
+                  (SELECT COUNT(*)  FROM public."CameraOnUsers" WHERE "cameraId" = public."Camera"."id") as "userCount"
+                FROM "public"."Camera"
+                WHERE LOWER(public."Camera"."name") LIKE LOWER(CONCAT('%', ${search}, '%'))
+                ORDER BY "userCount" ${sortOrder === 'asc' ? Prisma.sql(['asc']) : Prisma.sql(['desc'])} 
+                OFFSET ${skip}
+                LIMIT ${take} 
+                `;
+  }
+
   async findTopUsageAtTimestamp(
     dateSeperator: string,
     limit: number,

@@ -15,24 +15,29 @@ export class FindAllCameraDto extends PagingPaginatedRequestDto {
   @IsEnum(Prisma.SortOrder)
   orderByCreatedAt?: Prisma.SortOrder;
 
+  @ApiPropertyOptional({
+    enum: Prisma.SortOrder,
+  })
+  @IsOptional()
+  @IsEnum(Prisma.SortOrder)
+  orderByTotalPhotoCount?: Prisma.SortOrder;
+
+  @ApiPropertyOptional({
+    enum: Prisma.SortOrder,
+  })
+  @IsOptional()
+  @IsEnum(Prisma.SortOrder)
+  orderByTotalUserCount?: Prisma.SortOrder;
+
   toWhere() {
     const where: Prisma.CameraWhereInput = {};
 
     if (this.search) {
       where.OR = [
         {
-          id: {
-            contains: this.search,
-          },
-        },
-        {
           name: {
             contains: this.search,
-          },
-        },
-        {
-          description: {
-            contains: this.search,
+            mode: 'insensitive',
           },
         },
       ];
@@ -47,6 +52,23 @@ export class FindAllCameraDto extends PagingPaginatedRequestDto {
     if (this.orderByCreatedAt) {
       orderBy.push({
         createdAt: this.orderByCreatedAt,
+      });
+    }
+
+    if (this.orderByTotalPhotoCount) {
+      console.log(`sort by total photo`);
+      orderBy.push({
+        photos: {
+          _count: this.orderByTotalPhotoCount,
+        },
+      });
+    }
+
+    if (this.orderByTotalUserCount) {
+      orderBy.push({
+        cameraOnUsers: {
+          _count: this.orderByTotalUserCount,
+        },
       });
     }
 
