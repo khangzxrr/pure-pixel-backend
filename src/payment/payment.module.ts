@@ -12,6 +12,7 @@ import { TransactionHandlerService } from './services/transaction-handler.servic
 import { ManageTransactionController } from './controllers/manage-transaction.controller';
 import { NotificationModule } from 'src/notification/notification.module';
 import { QueueModule } from 'src/queue/queue.module';
+import { NestjsFormDataModule } from 'nestjs-form-data';
 
 @Module({
   imports: [
@@ -20,6 +21,8 @@ import { QueueModule } from 'src/queue/queue.module';
     StorageModule,
     NotificationModule,
     QueueModule,
+    StorageModule,
+    NestjsFormDataModule,
   ],
   providers: [
     PaymentCleanUpCronJob,
