@@ -435,9 +435,6 @@ export class PhotoService {
       photoUpdateDto.categoryIds = [];
     }
 
-    console.log(`category id`);
-    console.log(photoUpdateDto.categoryIds);
-
     const activePhotoSellings = photo.photoSellings.find(
       (s) => s.active === true,
     );
