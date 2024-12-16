@@ -143,8 +143,6 @@ model User {
   followers  Follow[] @relation("following")
   followings Follow[] @relation("follower")
 
-  bankInfos BankInfo[]
-
   toUserTransactions UserToUserTransaction[] @relation("toUser")
 
   transactions Transaction[]
@@ -170,20 +168,6 @@ model User {
   newsfeedViewPermissions NewsfeedViewPermission[]
 }
 
-model BankInfo {
-  id String @id @unique @default(uuid())
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  bankName     String
-  bankNumber   String  @unique
-  bankUsername String
-  User         User?   @relation(fields: [userId], references: [id])
-  userId       String?
-
-  withdrawalTransactions WithdrawalTransaction[]
-}
 
 model Follow {
   follower   User   @relation(name: "follower", fields: [followerId], references: [id])
@@ -265,8 +249,9 @@ model UserToUserTransaction {
 model WithdrawalTransaction {
   id String @id @unique @default(uuid())
 
-  bankInfo   BankInfo @relation(fields: [bankInfoId], references: [id])
-  bankInfoId String
+  bankName     String
+  bankNumber   String
+  bankUsername String
 
   transaction   Transaction @relation(fields: [transactionId], references: [id])
   transactionId String      @unique
