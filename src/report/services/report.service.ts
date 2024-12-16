@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotImplementedException } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { ReportRepository } from 'src/database/repositories/report.repository';
 import { ReportFindAllRequestDto } from '../dtos/rest/report-find-all.request.dto';
 import { ReportDto } from '../dtos/report.dto';
@@ -23,7 +23,6 @@ import { UserReportPutUpdateRequestDto } from '../dtos/rest/user-report-put-upda
 import { UserDto } from 'src/user/dtos/user.dto';
 import { BookingRepository } from 'src/database/repositories/booking.repository';
 import { BookingDto } from 'src/booking/dtos/booking.dto';
-import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 
 @Injectable()
 export class ReportService {
@@ -48,7 +47,10 @@ export class ReportService {
         break;
 
       case 'BOOKING':
-        throw new NotImplementedException();
+        obj = await this.bookingRepository.findUniqueOrThrow({
+          id: referenceId,
+        });
+        break;
 
       case 'COMMENT':
         obj = await this.commentRepository.findUniqueOrThrow({
