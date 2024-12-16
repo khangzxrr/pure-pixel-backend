@@ -6,6 +6,24 @@ import { PrismaService } from 'src/prisma.service';
 export class WithdrawalTransactionRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  update(
+    where: Prisma.WithdrawalTransactionWhereUniqueInput,
+    data: Prisma.WithdrawalTransactionUpdateInput,
+    tx: Prisma.TransactionClient,
+  ) {
+    if (tx) {
+      return tx.withdrawalTransaction.update({
+        where,
+        data,
+      });
+    }
+
+    return this.prisma.extendedClient().withdrawalTransaction.update({
+      where,
+      data,
+    });
+  }
+
   findFirst(
     where: Prisma.TransactionWhereInput,
     tx?: Prisma.TransactionClient,

@@ -6,17 +6,148 @@ import { plainToInstance } from 'class-transformer';
 import { TransactionDto } from '../dtos/transaction.dto';
 import { FindAllTransactionDto } from '../dtos/rest/find-all-transaction.dto';
 import { PagingPaginatedResposneDto } from 'src/infrastructure/restful/paging-paginated.response.dto';
-import { Prisma } from '@prisma/client';
+import { Prisma, WithdrawalTransaction } from '@prisma/client';
 import { TransactionUpdateDto } from '../dtos/transaction-update.dto';
 import { TransactionNotInPendingException } from '../exceptions/transaction-not-in-pending.exception';
 import { NotEnoughBalanceException } from 'src/user/exceptions/not-enought-balance.exception';
+import { AcceptWithdrawalTransactionDto } from '../dtos/rest/accept-withdrawal-transaction.dto';
+import { NotAWithdrawalTransaction } from '../exceptions/not-a-withdrawal-transaction.exception';
+import { BunnyService } from 'src/storage/services/bunny.service';
+
+import { DenyWithdrawalTransactionDto } from '../dtos/rest/deny-withdrawal-transaction.dto';
+import { NotificationService } from 'src/notification/services/notification.service';
+import { WithdrawalTransactionRepository } from 'src/database/repositories/withdrawal-transaction.repository';
+import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
 export class TransactionService {
   constructor(
     @Inject() private readonly transactionRepository: TransactionRepository,
+    @Inject()
+    private readonly withdrawalTransactionRepository: WithdrawalTransactionRepository,
     @Inject() private readonly sepayService: SepayService,
+    @Inject() private readonly bunnyService: BunnyService,
+
+    @Inject() private readonly notificationService: NotificationService,
+    @Inject() private readonly prismaService: PrismaService,
   ) {}
+
+  async acceptWithdrawal(
+    id: string,
+    acceptDto: AcceptWithdrawalTransactionDto,
+  ) {
+    const transaction = await this.transactionRepository.findUniqueOrThrow({
+      id,
+    });
+
+    if (transaction.type !== 'WITHDRAWAL') {
+      throw new NotAWithdrawalTransaction();
+    }
+
+    if (transaction.status !== 'PENDING') {
+      throw new TransactionNotInPendingException();
+    }
+
+    const wallet = await this.sepayService.getWalletByUserId(
+      transaction.userId,
+    );
+
+    if (transaction.amount.toNumber() > wallet.walletBalance) {
+      throw new NotEnoughBalanceException();
+    }
+
+    const photoUrl = await this.bunnyService.uploadPublicFromBuffer(
+      acceptDto.photo.buffer,
+      `${transaction.id}.webp`,
+    );
+
+    await this.prismaService.$transaction(async (tx) => {
+      await this.transactionRepository.update(
+        {
+          id,
+        },
+        {
+          status: 'SUCCESS',
+        },
+        tx,
+      );
+      await this.withdrawalTransactionRepository.update(
+        {
+          id: transaction.withdrawalTransaction.id,
+        },
+        {
+          successPhotoUrl: photoUrl,
+        },
+        tx,
+      );
+    });
+
+    await this.notificationService.addNotificationToQueue({
+      userId: transaction.userId,
+      type: 'BOTH_INAPP_EMAIL',
+      title: 'Rút tiền thành công',
+      content:
+        'Yêu cầu rút tiền của bạn đã được duyệt thành công, vui lòng kiểm tra',
+      payload: {
+        id: transaction.id,
+      },
+      referenceType: 'SUCCESS_WITHDRAWAL',
+    });
+  }
+
+  async denyWithdrawal(id: string, denyDto: DenyWithdrawalTransactionDto) {
+    const transaction = await this.transactionRepository.findUniqueOrThrow({
+      id,
+    });
+
+    if (transaction.type === 'WITHDRAWAL') {
+      throw new NotAWithdrawalTransaction();
+    }
+
+    if (transaction.status !== 'PENDING') {
+      throw new TransactionNotInPendingException();
+    }
+
+    const wallet = await this.sepayService.getWalletByUserId(
+      transaction.userId,
+    );
+
+    if (transaction.amount.toNumber() > wallet.walletBalance) {
+      throw new NotEnoughBalanceException();
+    }
+
+    await this.prismaService.$transaction(async (tx) => {
+      await this.transactionRepository.update(
+        {
+          id,
+        },
+        {
+          status: 'FAILED',
+        },
+        tx,
+      );
+      await this.withdrawalTransactionRepository.update(
+        {
+          id: transaction.withdrawalTransaction.id,
+        },
+        {
+          failReason: denyDto.failReason,
+        },
+        tx,
+      );
+    });
+
+    await this.notificationService.addNotificationToQueue({
+      userId: transaction.userId,
+      type: 'BOTH_INAPP_EMAIL',
+      title: 'Rút tiền thất bại',
+      content: `Yêu cầu rút tiền thất bại với lí do ${denyDto.failReason}`,
+      payload: {
+        id: transaction.id,
+      },
+      referenceType: 'FAIL_WITHDRAWAL',
+    });
+  }
 
   async update(id: string, updateDto: TransactionUpdateDto) {
     const transaction = await this.transactionRepository.findUniqueOrThrow({

@@ -125,7 +125,7 @@ export class PhotoProcessService {
       })
       .resize(PhotoConstant.THUMBNAIL_WIDTH)
       .webp({
-        quality: 50,
+        quality: 70,
       })
       .toBuffer();
   }

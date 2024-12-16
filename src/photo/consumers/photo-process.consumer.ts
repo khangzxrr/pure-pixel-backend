@@ -8,7 +8,7 @@ import { TineyeService } from 'src/storage/services/tineye.service';
 import { BunnyService } from 'src/storage/services/bunny.service';
 import { NotificationService } from 'src/notification/services/notification.service';
 import { TemporaryPhotoDto } from '../dtos/temporary-photo.dto';
-import { rm, writeFileSync } from 'fs';
+import { rm } from 'fs';
 import { TemporaryBookingPhotoUpload } from '../dtos/temporary-booking-photo-upload.dto';
 import { BookingRepository } from 'src/database/repositories/booking.repository';
 import { Utils } from 'src/infrastructure/utils/utils';

@@ -10,6 +10,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import {
+  ApiConsumes,
   ApiOkResponse,
   ApiOperation,
   ApiProperty,
@@ -24,6 +25,8 @@ import { TransactionDto } from '../dtos/transaction.dto';
 import { FindAllTransactionDto } from 'src/payment/dtos/rest/find-all-transaction.dto';
 import { TransactionUpdateDto } from '../dtos/transaction-update.dto';
 import { Request } from 'express';
+import { AcceptWithdrawalTransactionDto } from '../dtos/rest/accept-withdrawal-transaction.dto';
+import { FormDataRequest, NestjsFormDataModule } from 'nestjs-form-data';
 
 @Controller('manager/transaction')
 @ApiTags('manager-manage-transaction')
@@ -58,6 +61,19 @@ export class ManageTransactionController {
     @Body() updateDto: TransactionUpdateDto,
   ) {
     return await this.transactionService.update(id, updateDto);
+  }
+
+  @Patch(':id/withdrawal/accept')
+  @ApiOkResponse({
+    type: TransactionDto,
+  })
+  @ApiConsumes('multipart/form-data')
+  @FormDataRequest()
+  async acceptWithdrawal(
+    @Param('id') id: string,
+    @Body() acceptDto: AcceptWithdrawalTransactionDto,
+  ) {
+    return await this.transactionService.acceptWithdrawal(id, acceptDto);
   }
 
   @Get(':id')

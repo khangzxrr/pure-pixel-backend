@@ -253,6 +253,9 @@ model WithdrawalTransaction {
   bankNumber   String
   bankUsername String
 
+  failReason String?
+  successPhotoUrl String?
+
   transaction   Transaction @relation(fields: [transactionId], references: [id])
   transactionId String      @unique
 
@@ -806,6 +809,9 @@ enum NotificationReferenceType {
   PHOTO_BAN
   PHOTO_UNBAN
   BAN
+
+  SUCCESS_WITHDRAWAL
+  FAIL_WITHDRAWAL
 
   PHOTO_COMMENT
   CUSTOMER_PHOTO_BUY

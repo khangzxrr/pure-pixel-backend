@@ -53,7 +53,15 @@ export class TransactionRepository {
   async update(
     where: Prisma.TransactionWhereInput,
     update: Prisma.TransactionUpdateInput,
+    tx?: Prisma.TransactionClient,
   ) {
+    if (tx) {
+      return tx.transaction.updateMany({
+        where,
+        data: update,
+      });
+    }
+
     return this.prisma.transaction.updateMany({
       where,
       data: update,
