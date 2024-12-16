@@ -56,7 +56,6 @@ export class FindAllCameraDto extends PagingPaginatedRequestDto {
     }
 
     if (this.orderByTotalPhotoCount) {
-      console.log(`sort by total photo`);
       orderBy.push({
         photos: {
           _count: this.orderByTotalPhotoCount,
