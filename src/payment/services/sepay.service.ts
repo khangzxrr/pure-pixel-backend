@@ -25,6 +25,8 @@ import { PaymentUrlDto } from '../dtos/payment-url.dto';
 import { TransactionNotInPendingException } from '../exceptions/transaction-not-in-pending.exception';
 import { TransactionHandlerService } from './transaction-handler.service';
 import { Decimal } from '@prisma/client/runtime/library';
+import { PaymentConstant } from '../constants/payment-constant';
+import { sep } from 'path';
 
 @Injectable()
 export class SepayService {
@@ -189,10 +191,18 @@ export class SepayService {
   }
 
   async processTransaction(sepay: SepayRequestDto) {
-    const transactionId = sepay.content.replaceAll(' ', '-');
+    //MOMO case
+    //74135542559-5dcbb72a e1d5 47c5 959e0f9efe633b5d-CHUYEN TIEN-OQCH38888204-MOMO74135542559MOMO
+
+    const startIndex = sepay.content.indexOf(PaymentConstant.PAYMENT_MARK);
+    const lastIndex = sepay.content.lastIndexOf(PaymentConstant.PAYMENT_MARK);
+
+    const id = sepay.content
+      .substring(startIndex + PaymentConstant.PAYMENT_MARK.length, lastIndex)
+      .replaceAll(PaymentConstant.PAYMENT_SEPERATOR, '-');
 
     const transaction = await this.transactionRepository.findUniqueOrThrow({
-      id: transactionId,
+      id,
     });
 
     if (transaction == null) {
@@ -264,7 +274,7 @@ export class SepayService {
   }
 
   generatePaymentUrl(transactionId: string, amount: number) {
-    const removedDashTransactionId = transactionId.trim().replaceAll('-', ' ');
+    const removedDashTransactionId = `${PaymentConstant.PAYMENT_MARK}${transactionId.trim().replaceAll('-', PaymentConstant.PAYMENT_SEPERATOR)}${PaymentConstant.PAYMENT_MARK}`;
 
     return `https://qr.sepay.vn/img?acc=${process.env.SEPAY_ACC}&bank=${process.env.SEPAY_BANK}&amount=${amount}&des=${encodeURIComponent(removedDashTransactionId)}&template=TEMPLATE`;
   }
