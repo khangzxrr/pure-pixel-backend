@@ -7,6 +7,7 @@ import { UpgradeConstant } from '../../upgrade-package/constants/upgrade.constan
 import { KeycloakService } from 'src/authen/services/keycloak.service';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
+import { PhotoshootRepository } from 'src/database/repositories/photoshoot-package.repository';
 
 @Injectable()
 export class ClearExpiredUpgradeOrder {
@@ -16,6 +17,8 @@ export class ClearExpiredUpgradeOrder {
     private readonly upgradeOrderRepository: UpgradePackageOrderRepository,
     @Inject() private readonly keycloakService: KeycloakService,
     @Inject() private readonly photoRepository: PhotoRepository,
+    @Inject()
+    private readonly photoshootPackageRepository: PhotoshootRepository,
     @InjectQueue(UpgradeConstant.UPGRADE_QUEUE) private upgradeQueue: Queue,
   ) {}
 
@@ -66,6 +69,24 @@ export class ClearExpiredUpgradeOrder {
         visibility: 'PRIVATE',
       },
     });
+
+    await this.photoshootPackageRepository.updateMany(
+      {
+        user: {
+          upgradeOrders: {
+            some: {
+              status: 'ACTIVE',
+              expiredAt: {
+                lte: currentDate,
+              },
+            },
+          },
+        },
+      },
+      {
+        status: 'DISABLED',
+      },
+    );
 
     //after deactivate but there are(is) booking(s) still going
     //photographer still interact normally until booking is closed or expired

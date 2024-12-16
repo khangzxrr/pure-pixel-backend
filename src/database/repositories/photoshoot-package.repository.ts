@@ -47,6 +47,16 @@ export class PhotoshootRepository {
     });
   }
 
+  async updateMany(
+    where: Prisma.PhotoshootPackageWhereInput,
+    data: Prisma.PhotoshootPackageUpdateInput,
+  ) {
+    return this.prisma.extendedClient().photoshootPackage.updateMany({
+      where,
+      data,
+    });
+  }
+
   async updateById(
     id: string,
     photoshootPackage: Prisma.PhotoshootPackageUpdateInput,

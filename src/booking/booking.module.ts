@@ -17,6 +17,8 @@ import { UserModule } from 'src/user/user.module';
 import { QueueModule } from 'src/queue/queue.module';
 
 import { BookingConsumer } from './consumers/booking.consumer';
+import { ManagerBookingController } from './controllers/manager-booking.controller';
+import { ManageBookingService } from './services/manage-booking.service';
 
 @Module({
   imports: [
@@ -31,11 +33,17 @@ import { BookingConsumer } from './consumers/booking.consumer';
     UserModule,
     QueueModule,
   ],
-  providers: [BookingService, BookingBillItemService, BookingConsumer],
+  providers: [
+    BookingService,
+    BookingBillItemService,
+    BookingConsumer,
+    ManageBookingService,
+  ],
   controllers: [
     CustomerBookingController,
     PhotographerBookingController,
     PhotographerBookingBillItemController,
+    ManagerBookingController,
   ],
 })
 export class BookingModule {}
