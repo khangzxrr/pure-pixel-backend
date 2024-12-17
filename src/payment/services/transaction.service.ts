@@ -108,7 +108,7 @@ export class TransactionService {
           id,
         },
         {
-          status: 'FAILED',
+          status: 'CANCEL',
         },
         tx,
       );
