@@ -91,11 +91,13 @@ export class BookingService {
     bookingDto.originalPhotoshootPackage.thumbnail =
       this.bunnyService.getPresignedFile(
         bookingDto.originalPhotoshootPackage.thumbnail,
+        `?updatedAt=${bookingDetail.originalPhotoshootPackage.updatedAt.getTime()}`,
       );
 
     bookingDto.photoshootPackageHistory.thumbnail =
       this.bunnyService.getPresignedFile(
         bookingDto.photoshootPackageHistory.thumbnail,
+        `?updatedAt=${bookingDetail.originalPhotoshootPackage.updatedAt.getTime()}`,
       );
 
     const signedPhotoDtoPromises = bookingDetail.photos.map((p) =>

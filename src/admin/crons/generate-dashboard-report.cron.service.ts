@@ -442,54 +442,134 @@ export class GenerateDashboardReportService {
     });
 
     const totalSellingPhoto = await this.photoRepository.count({
-      photoSellings: {
-        some: {
-          active: true,
+      OR: [
+        {
+          photoSellings: {
+            some: {
+              createdAt: {
+                gte: dashboardRequestDto.fromDate,
+                lte: dashboardRequestDto.toDate,
+              },
+            },
+          },
+          deletedAt: null,
+          createdAt: {
+            gte: dashboardRequestDto.fromDate,
+            lte: dashboardRequestDto.toDate,
+          },
         },
-      },
-      deletedAt: null,
-      createdAt: {
-        gte: dashboardRequestDto.fromDate,
-        lte: dashboardRequestDto.toDate,
-      },
+        {
+          photoSellings: {
+            some: {
+              createdAt: {
+                gte: dashboardRequestDto.fromDate,
+                lte: dashboardRequestDto.toDate,
+              },
+            },
+          },
+          deletedAt: {
+            gte: dashboardRequestDto.toDate,
+          },
+          createdAt: {
+            gte: dashboardRequestDto.fromDate,
+            lte: dashboardRequestDto.toDate,
+          },
+        },
+      ],
     });
 
     const totalRawPhoto = await this.photoRepository.count({
-      photoType: 'RAW',
-      deletedAt: null,
-      photoSellings: {
-        every: {
-          active: false,
+      OR: [
+        {
+          photoType: 'RAW',
+          deletedAt: null,
+          photoSellings: {
+            none: {
+              createdAt: {
+                gte: dashboardRequestDto.fromDate,
+                lte: dashboardRequestDto.toDate,
+              },
+            },
+          },
+          createdAt: {
+            gte: dashboardRequestDto.fromDate,
+            lte: dashboardRequestDto.toDate,
+          },
         },
-      },
-      createdAt: {
-        gte: dashboardRequestDto.fromDate,
-        lte: dashboardRequestDto.toDate,
-      },
+        {
+          photoType: 'RAW',
+          deletedAt: {
+            gte: dashboardRequestDto.toDate,
+          },
+          photoSellings: {
+            none: {
+              createdAt: {
+                gte: dashboardRequestDto.fromDate,
+                lte: dashboardRequestDto.toDate,
+              },
+            },
+          },
+          createdAt: {
+            gte: dashboardRequestDto.fromDate,
+            lte: dashboardRequestDto.toDate,
+          },
+        },
+      ],
     });
 
     const totalBookingPhoto = await this.photoRepository.count({
-      photoType: 'BOOKING',
-      deletedAt: null,
-      createdAt: {
-        gte: dashboardRequestDto.fromDate,
-        lte: dashboardRequestDto.toDate,
-      },
+      OR: [
+        {
+          photoType: 'BOOKING',
+          deletedAt: null,
+          createdAt: {
+            gte: dashboardRequestDto.fromDate,
+            lte: dashboardRequestDto.toDate,
+          },
+        },
+        {
+          photoType: 'BOOKING',
+          deletedAt: {
+            gte: dashboardRequestDto.toDate,
+          },
+          createdAt: {
+            gte: dashboardRequestDto.fromDate,
+            lte: dashboardRequestDto.toDate,
+          },
+        },
+      ],
     });
 
     const totalPhoto = await this.photoRepository.count({
-      deletedAt: null,
-      createdAt: {
-        gte: dashboardRequestDto.fromDate,
-        lte: dashboardRequestDto.toDate,
-      },
+      OR: [
+        {
+          deletedAt: null,
+          createdAt: {
+            gte: dashboardRequestDto.fromDate,
+            lte: dashboardRequestDto.toDate,
+          },
+        },
+        {
+          deletedAt: {
+            gte: dashboardRequestDto.toDate,
+          },
+          createdAt: {
+            gte: dashboardRequestDto.fromDate,
+            lte: dashboardRequestDto.toDate,
+          },
+        },
+      ],
     });
 
-    const totalSize = await this.photoRepository.aggregate({
+    const bookingSize = await this.photoRepository.aggregate({
       where: {
         OR: [
           {
             deletedAt: null,
+            bookingId: {
+              not: null,
+            },
+
             createdAt: {
               gte: dashboardRequestDto.fromDate,
               lte: dashboardRequestDto.toDate,
@@ -497,15 +577,12 @@ export class GenerateDashboardReportService {
           },
           {
             deletedAt: {
+              gte: dashboardRequestDto.toDate,
+            },
+            bookingId: {
               not: null,
             },
-            photoSellings: {
-              some: {
-                photoSellHistories: {
-                  some: {},
-                },
-              },
-            },
+
             createdAt: {
               gte: dashboardRequestDto.fromDate,
               lte: dashboardRequestDto.toDate,
@@ -517,6 +594,42 @@ export class GenerateDashboardReportService {
         size: true,
       },
     });
+
+    const photoSize = await this.photoRepository.aggregate({
+      where: {
+        OR: [
+          {
+            deletedAt: null,
+            photoType: 'RAW',
+            createdAt: {
+              gte: dashboardRequestDto.fromDate,
+              lte: dashboardRequestDto.toDate,
+            },
+          },
+          {
+            deletedAt: {
+              gte: dashboardRequestDto.toDate,
+            },
+            photoType: 'RAW',
+            createdAt: {
+              gte: dashboardRequestDto.fromDate,
+              lte: dashboardRequestDto.toDate,
+            },
+          },
+        ],
+      },
+      _sum: {
+        size: true,
+      },
+    });
+
+    let totalSize = new Decimal(0);
+    if (bookingSize._sum.size) {
+      totalSize = totalSize.add(bookingSize._sum.size);
+    }
+    if (photoSize._sum.size) {
+      totalSize = totalSize.add(photoSize._sum.size);
+    }
 
     const withdrawalTransactions = await this.transactionRepository.aggregate({
       _sum: {
@@ -557,7 +670,9 @@ export class GenerateDashboardReportService {
       revenueFromSellingPhoto: revenueFromSellingPhoto.toNumber(),
       totalRevenue: totalRevenue.toNumber(),
       totalPhoto,
-      totalSize: totalSize._sum.size ? totalSize._sum.size : 0,
+      totalSize: totalSize.toNumber(),
+      totalPhotoSize: photoSize._sum.size ? photoSize._sum.size : 0,
+      totalBookingSize: bookingSize._sum.size ? bookingSize._sum.size : 0,
       totalSellingPhoto,
       totalRawPhoto,
       totalBookingPhoto,
