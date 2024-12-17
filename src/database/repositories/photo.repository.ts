@@ -296,7 +296,7 @@ export class PhotoRepository {
     toDate: Date,
   ): Promise<PhotoWithSellingCountDto[]> {
     return this.prisma.$queryRaw`
-SELECT public."Photo".id, COUNT(public."PhotoBuy".id) FROM public."Photo"
+SELECT public."Photo".id, COUNT(*) FROM public."Photo"
 INNER JOIN public."PhotoSell" ON public."PhotoSell"."photoId" = public."Photo".id 
 INNER JOIN public."PhotoSellHistory" ON public."PhotoSell"."id" = public."PhotoSellHistory"."originalPhotoSellId"
 INNER JOIN public."PhotoBuy" ON public."PhotoBuy"."photoSellHistoryId" = public."PhotoSellHistory"."id"
@@ -304,7 +304,6 @@ INNER JOIN public."UserToUserTransaction" ON public."PhotoBuy"."userToUserTransa
 INNER JOIN public."Transaction" ON public."UserToUserTransaction"."fromUserTransactionId" = public."Transaction"."id"
 WHERE public."Photo"."photographerId" = ${photographerId} AND
 public."PhotoSellHistory"."createdAt" <= ${toDate} AND public."PhotoSellHistory"."createdAt" >= ${fromDate} AND
-public."Photo"."deletedAt" IS NULL AND
 public."Transaction"."status" = 'SUCCESS'
 GROUP BY public."Photo".id
 ORDER BY COUNT(public."PhotoBuy".id) DESC

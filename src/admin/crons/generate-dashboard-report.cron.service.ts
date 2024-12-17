@@ -80,7 +80,8 @@ export class GenerateDashboardReportService {
 
     const topSoldPhotoPromises = topSoldPhotoIds.map(async (ts) => {
       const topSoldPhotoDto = new TopSoldPhotoDto();
-      const photo = await this.photoRepository.findUniqueOrThrow(ts.id);
+      const photo =
+        await this.photoRepository.findUniqueOrThrowIgnoreSoftDelete(ts.id);
 
       topSoldPhotoDto.detail = await this.photoService.signPhoto(photo);
       topSoldPhotoDto.soldCount = ts.count;
