@@ -5,11 +5,12 @@ import {
   TransactionStatus,
   TransactionType,
 } from '@prisma/client';
-import { Decimal } from '@prisma/client/runtime/library';
+
 import { IsArray, IsEnum, IsIn, IsOptional, IsString } from 'class-validator';
 import { PagingPaginatedRequestDto } from 'src/infrastructure/restful/paging-paginated.request.dto';
 import { ToArray } from 'src/infrastructure/transforms/to-array';
 import { Constants } from 'src/infrastructure/utils/constants';
+import { Utils } from 'src/infrastructure/utils/utils';
 
 export class FindAllTransactionDto extends PagingPaginatedRequestDto {
   @ApiPropertyOptional()
@@ -95,12 +96,32 @@ export class FindAllTransactionDto extends PagingPaginatedRequestDto {
           },
         },
         {
-          fee: new Decimal(this.search),
+          user: {
+            name: {
+              contains: this.search,
+              mode: 'insensitive',
+            },
+          },
         },
         {
-          amount: this.search,
+          user: {
+            normalizedName: {
+              contains: Utils.normalizeText(this.search),
+              mode: 'insensitive',
+            },
+          },
         },
       ];
+
+      if (Number(this.search)) {
+        where.OR.push({
+          fee: Number(this.search),
+        });
+
+        where.OR.push({
+          amount: Number(this.search),
+        });
+      }
     }
 
     if (this.types) {
