@@ -388,7 +388,7 @@ export class BookingService {
       },
       {
         jobId: `remove_photo_${booking.id}`,
-        delay: 3000,
+        delay: 200,
       },
     );
 
@@ -486,7 +486,7 @@ export class BookingService {
       },
       {
         jobId: `add_photo_${booking.id}`,
-        delay: 3000,
+        delay: 200,
       },
     );
 
