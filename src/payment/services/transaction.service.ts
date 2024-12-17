@@ -92,7 +92,9 @@ export class TransactionService {
       id,
     });
 
-    if (transaction.type === 'WITHDRAWAL') {
+    console.log(transaction);
+
+    if (transaction.type !== 'WITHDRAWAL') {
       throw new NotAWithdrawalTransaction();
     }
 
