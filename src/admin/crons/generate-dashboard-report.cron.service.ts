@@ -91,9 +91,7 @@ export class GenerateDashboardReportService {
     const topSoldPhotos = await Promise.all(topSoldPhotoPromises);
 
     const topPhotoshootPackageEntities =
-      await this.photoshootPackageRepository.findAllInclude(
-        5,
-        0,
+      await this.photoshootPackageRepository.findAllIgnoreSoftDelete(
         {
           userId: user.id,
         },
@@ -109,7 +107,7 @@ export class GenerateDashboardReportService {
             select: {
               bookings: {
                 where: {
-                  // status: 'SUCCESSED',
+                  status: 'SUCCESSED',
                   createdAt: {
                     lte: dashboardRequestDto.toDate,
                     gte: dashboardRequestDto.fromDate,
@@ -124,7 +122,9 @@ export class GenerateDashboardReportService {
 
     const topPhotoshootPackages = plainToInstance(
       PhotoshootPackageDto,
-      topPhotoshootPackageEntities,
+      topPhotoshootPackageEntities.sort(
+        (p1, p2) => p2._count.bookings - p1._count.bookings,
+      ),
     );
 
     const photoSellTransactions = await this.transactionRepository.findAll({
@@ -152,6 +152,10 @@ export class GenerateDashboardReportService {
             userId: user.id,
           },
           status: 'SUCCESSED',
+          createdAt: {
+            lte: dashboardRequestDto.toDate,
+            gte: dashboardRequestDto.fromDate,
+          },
         },
       },
       _sum: {
@@ -167,6 +171,10 @@ export class GenerateDashboardReportService {
             userId: user.id,
           },
           status: 'SUCCESSED',
+          createdAt: {
+            lte: dashboardRequestDto.toDate,
+            gte: dashboardRequestDto.fromDate,
+          },
         },
       },
       _sum: {
