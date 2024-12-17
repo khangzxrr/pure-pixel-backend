@@ -118,13 +118,13 @@ export class PhotoshootRepository {
     });
   }
 
-  async findAllInclude(
-    take: number,
-    skip: number,
+  async findAllIgnoreSoftDelete(
     where: Prisma.PhotoshootPackageWhereInput,
     orderBy: Prisma.PhotoshootPackageOrderByWithRelationInput[],
     include: Prisma.PhotoshootPackageInclude,
-  ): Promise<PhotoshootPackage[]> {
+    take?: number,
+    skip?: number,
+  ) {
     return this.prisma.extendedClient().photoshootPackage.findMany({
       take,
       skip,
