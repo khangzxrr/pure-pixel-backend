@@ -52,6 +52,12 @@ export class ReportService {
         });
         break;
 
+      case 'BOOKING_PHOTOGRAPHER_REPORT_USER':
+        obj = await this.bookingRepository.findUniqueOrThrow({
+          id: referenceId,
+        });
+        break;
+
       case 'COMMENT':
         obj = await this.commentRepository.findUniqueOrThrow({
           id: referenceId,
