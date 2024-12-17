@@ -125,7 +125,7 @@ export class PhotoshootRepository {
     take?: number,
     skip?: number,
   ) {
-    return this.prisma.extendedClient().photoshootPackage.findMany({
+    return this.prisma.photoshootPackage.findMany({
       take,
       skip,
       where,
