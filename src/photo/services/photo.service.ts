@@ -770,11 +770,6 @@ export class PhotoService {
       throw new ExifNotFoundException();
     }
 
-    const stats = statSync(photoUploadDto.file.path);
-    if (stats.mtimeMs !== stats.birthtimeMs) {
-      throw new FileIsNotValidException();
-    }
-
     const exif = JSON.parse(Utils.removedNullChar(JSON.stringify(exifRaw)));
 
     if (!exif['Make']) {
