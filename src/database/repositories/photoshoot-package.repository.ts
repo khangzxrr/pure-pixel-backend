@@ -117,4 +117,20 @@ export class PhotoshootRepository {
       },
     });
   }
+
+  async findAllInclude(
+    take: number,
+    skip: number,
+    where: Prisma.PhotoshootPackageWhereInput,
+    orderBy: Prisma.PhotoshootPackageOrderByWithRelationInput[],
+    include: Prisma.PhotoshootPackageInclude,
+  ): Promise<PhotoshootPackage[]> {
+    return this.prisma.extendedClient().photoshootPackage.findMany({
+      take,
+      skip,
+      where,
+      orderBy,
+      include,
+    });
+  }
 }

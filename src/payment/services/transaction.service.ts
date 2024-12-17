@@ -48,14 +48,6 @@ export class TransactionService {
       throw new TransactionNotInPendingException();
     }
 
-    const wallet = await this.sepayService.getWalletByUserId(
-      transaction.userId,
-    );
-
-    if (transaction.amount.toNumber() > wallet.walletBalance) {
-      throw new NotEnoughBalanceException();
-    }
-
     const photoUrl = await this.bunnyService.uploadPublicFromBuffer(
       acceptDto.photo.buffer,
       `${transaction.id}.webp`,
