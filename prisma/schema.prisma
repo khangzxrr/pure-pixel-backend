@@ -596,6 +596,9 @@ model PhotoSellHistory {
   height Int @default(0)
   price  Decimal
 
+  title String?
+  description String?
+
   createdAt DateTime   @default(now())
   photoBuy  PhotoBuy[]
 }
@@ -676,6 +679,7 @@ enum ReportType {
   USER
   PHOTO
   BOOKING
+  BOOKING_PHOTOGRAPHER_REPORT_USER
   COMMENT
 }
 

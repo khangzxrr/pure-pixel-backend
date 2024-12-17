@@ -424,6 +424,8 @@ export class PhotoExchangeService {
                   width: pricetag.width,
                   height: pricetag.height,
                   price: pricetag.price,
+                  title: photo.title,
+                  description: photo.description,
                   originalPhotoSell: {
                     connect: {
                       id: photoSell.id,
@@ -512,6 +514,8 @@ export class PhotoExchangeService {
                 width: pricetag.width,
                 height: pricetag.height,
                 price: pricetag.price,
+                title: photo.title,
+                description: photo.description,
                 originalPhotoSell: {
                   connect: {
                     id: photoSell.id,
