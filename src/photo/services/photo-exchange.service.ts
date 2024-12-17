@@ -88,9 +88,9 @@ export class PhotoExchangeService {
       findAllDto.limit,
     );
 
-    const signedPhotoPromises = photos.map((p) =>
-      this.photoService.signWatermarkPhotos(p),
-    );
+    const signedPhotoPromises = photos.map((p) => {
+      return this.photoService.signWatermarkPhotos(p);
+    });
     const signedPhotos = await Promise.all(signedPhotoPromises);
 
     const response = new PhotoBuyFindAllResponseDto(
