@@ -159,8 +159,6 @@ export class ManagePhotoshootPackageService {
   }
 
   async findAll(findAllDto: PhotoshootPackageFindAllDto) {
-    console.log(findAllDto);
-
     const count = await this.photoshootRepository.count(findAllDto.toWhere());
 
     const packages = await this.photoshootRepository.findAll(

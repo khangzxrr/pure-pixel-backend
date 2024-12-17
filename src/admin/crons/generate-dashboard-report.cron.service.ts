@@ -91,15 +91,11 @@ export class GenerateDashboardReportService {
     const topSoldPhotos = await Promise.all(topSoldPhotoPromises);
 
     const topPhotoshootPackageEntities =
-      await this.photoshootPackageRepository.findAll(
+      await this.photoshootPackageRepository.findAllInclude(
         5,
         0,
         {
           userId: user.id,
-          createdAt: {
-            lte: dashboardRequestDto.toDate,
-            gte: dashboardRequestDto.fromDate,
-          },
         },
         [
           {
@@ -108,6 +104,21 @@ export class GenerateDashboardReportService {
             },
           },
         ],
+        {
+          _count: {
+            select: {
+              bookings: {
+                where: {
+                  createdAt: {
+                    lte: dashboardRequestDto.toDate,
+                    gte: dashboardRequestDto.fromDate,
+                  },
+                },
+              },
+            },
+          },
+          user: true,
+        },
       );
 
     const topPhotoshootPackages = plainToInstance(
