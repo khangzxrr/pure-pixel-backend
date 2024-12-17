@@ -91,7 +91,7 @@ export class GenerateDashboardReportService {
 
     const topSoldPhotos = await Promise.all(topSoldPhotoPromises);
 
-    const topPhotoshootPackageEntities =
+    const topPhotoshootPackageEntities: any[] =
       await this.photoshootPackageRepository.findAllIgnoreSoftDelete(
         {
           userId: user.id,
