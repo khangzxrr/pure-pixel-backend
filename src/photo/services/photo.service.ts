@@ -51,6 +51,7 @@ import { DownloadTemporaryPhotoDto } from '../dtos/rest/download-temporary-photo
 import { TemporaryPhotoDto } from '../dtos/temporary-photo.dto';
 import { PhotoBannedException } from '../exceptions/photo-banned.exception';
 import { Sharp } from 'sharp';
+import { statSync } from 'fs';
 
 @Injectable()
 export class PhotoService {
@@ -767,6 +768,11 @@ export class PhotoService {
 
     if (!exifRaw) {
       throw new ExifNotFoundException();
+    }
+
+    const stats = statSync(photoUploadDto.file.path);
+    if (stats.mtimeMs !== stats.birthtimeMs) {
+      throw new FileIsNotValidException();
     }
 
     const exif = JSON.parse(Utils.removedNullChar(JSON.stringify(exifRaw)));
