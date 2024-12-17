@@ -189,10 +189,20 @@ export class ReportService {
             break;
           case 'BOOKING':
             r.referencedBooking = null;
-            const booking = await this.bookingRepository.findUniqueOrThrow({
+            const ref = await this.bookingRepository.findUniqueOrThrow({
               id: r.referenceId,
             });
-            r.referencedBooking = plainToInstance(BookingDto, booking);
+            r.referencedBooking = plainToInstance(BookingDto, ref);
+          case 'BOOKING_PHOTOGRAPHER_REPORT_USER':
+            r.referencedBooking = null;
+            const photographerReportUserBooking =
+              await this.bookingRepository.findUniqueOrThrow({
+                id: r.referenceId,
+              });
+            r.referencedBooking = plainToInstance(
+              BookingDto,
+              photographerReportUserBooking,
+            );
 
           default:
             break;
