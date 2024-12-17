@@ -27,6 +27,7 @@ import { TransactionUpdateDto } from '../dtos/transaction-update.dto';
 import { Request } from 'express';
 import { AcceptWithdrawalTransactionDto } from '../dtos/rest/accept-withdrawal-transaction.dto';
 import { FormDataRequest, NestjsFormDataModule } from 'nestjs-form-data';
+import { DenyWithdrawalTransactionDto } from '../dtos/rest/deny-withdrawal-transaction.dto';
 
 @Controller('manager/transaction')
 @ApiTags('manager-manage-transaction')
@@ -74,6 +75,14 @@ export class ManageTransactionController {
     @Body() acceptDto: AcceptWithdrawalTransactionDto,
   ) {
     return await this.transactionService.acceptWithdrawal(id, acceptDto);
+  }
+
+  @Patch(':id/withdrawal/deny')
+  async denyWithdrawal(
+    @Param('id') id: string,
+    @Body() denyDto: DenyWithdrawalTransactionDto,
+  ) {
+    return await this.transactionService.denyWithdrawal(id, denyDto);
   }
 
   @Get(':id')

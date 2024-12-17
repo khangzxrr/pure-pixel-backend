@@ -109,6 +109,7 @@ export class GenerateDashboardReportService {
             select: {
               bookings: {
                 where: {
+                  // status: 'SUCCESSED',
                   createdAt: {
                     lte: dashboardRequestDto.toDate,
                     gte: dashboardRequestDto.fromDate,
