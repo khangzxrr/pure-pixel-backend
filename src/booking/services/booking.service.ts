@@ -359,12 +359,14 @@ export class BookingService {
 
     const now = new Date();
 
-    const validDeleteDate = new Date(
-      booking.successedAt.getTime() + 30 * 24 * 60 * 60 * 1000,
-    );
+    if (booking.status === 'SUCCESSED') {
+      const validDeleteDate = new Date(
+        booking.successedAt.getTime() + 30 * 24 * 60 * 60 * 1000,
+      );
 
-    if (booking.status === 'SUCCESSED' && validDeleteDate > now) {
-      throw new BookingNotFinishedLongEnoughException();
+      if (validDeleteDate >= now) {
+        throw new BookingNotFinishedLongEnoughException();
+      }
     }
 
     const photo = await this.photoRepository.findUniqueOrThrow(photoId);
