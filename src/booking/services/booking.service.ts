@@ -360,12 +360,22 @@ export class BookingService {
     const now = new Date();
 
     if (booking.status === 'SUCCESSED') {
-      const validDeleteDate = new Date(
-        booking.successedAt.getTime() + 30 * 24 * 60 * 60 * 1000,
-      );
+      if (booking.successedAt === null) {
+        const validDeleteDate = new Date(
+          booking.updatedAt.getTime() + 30 * 24 * 60 * 60 * 1000,
+        );
 
-      if (validDeleteDate >= now) {
-        throw new BookingNotFinishedLongEnoughException();
+        if (validDeleteDate >= now) {
+          throw new BookingNotFinishedLongEnoughException();
+        }
+      } else {
+        const validDeleteDate = new Date(
+          booking.successedAt.getTime() + 30 * 24 * 60 * 60 * 1000,
+        );
+
+        if (validDeleteDate >= now) {
+          throw new BookingNotFinishedLongEnoughException();
+        }
       }
     }
 
