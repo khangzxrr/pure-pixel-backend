@@ -117,8 +117,6 @@ export class UpgradeOrderService {
     //70% of activated package of user's total price (upgrade package * totalMonths)
     const maxiumDiscoutPrice = activatedUpgradeOrder
       ? activatedUpgradeOrder.serviceTransaction.transaction.amount
-          .mul(70)
-          .div(100)
       : new Decimal(0);
     //prevent activatedUpgradeOrder null
 
@@ -232,8 +230,8 @@ export class UpgradeOrderService {
 
     const currentDate = new Date();
     const expiredDate = new Date(
-      currentDate.setMonth(currentDate.getMonth() + requestUpgrade.totalMonths),
-    );
+      currentDate.getTime() + 30 * 24 * 60 * 60 * 1000,
+    ); //hardcode 30 days
 
     //should we believe in class-validator?
     //absolutely not
