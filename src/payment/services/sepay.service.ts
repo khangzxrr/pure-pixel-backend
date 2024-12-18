@@ -155,24 +155,33 @@ export class SepayService {
 
         switch (t.type) {
           case 'DEPOSIT':
+            console.log(`1 increases ${t.amount}`);
             return acc.add(t.amount);
 
           case 'IMAGE_BUY':
             if (t.paymentMethod === 'WALLET') {
+              console.log(`2 decrease ${t.amount}`);
               return acc.sub(t.amount);
             }
 
           case 'IMAGE_SELL':
+            if (t.type === 'IMAGE_BUY') {
+              return acc;
+            }
+            console.log(`3 increase ${t.amount}`);
             return acc.add(t.amount).sub(t.fee);
 
           case 'WITHDRAWAL':
+            console.log(`4 decrease ${t.amount}`);
             return acc.sub(t.amount);
 
           case 'REFUND_FROM_BUY_IMAGE':
+            console.log(`5 increase ${t.amount}`);
             return acc.add(t.amount);
 
           case 'UPGRADE_TO_PHOTOGRAPHER':
             if (t.paymentMethod === 'WALLET') {
+              console.log(`6 decreaes ${t.amount}`);
               return acc.sub(t.amount);
             }
 
