@@ -19,12 +19,12 @@ export class PhotoshootPackageCreateRequestDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  title: string;
+  title!: string;
 
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  subtitle: string;
+  subtitle!: string;
 
   @ApiProperty({
     example: 10000,
@@ -32,12 +32,12 @@ export class PhotoshootPackageCreateRequestDto {
   @Type(() => Number)
   @IsNumber()
   @Min(10000)
-  price: number;
+  price!: number;
 
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  description: string;
+  description!: string;
 
   @ApiProperty({
     type: 'file',
@@ -45,7 +45,7 @@ export class PhotoshootPackageCreateRequestDto {
   @IsFile()
   @MaxFileSize(5e7)
   @HasMimeType(['image/*'])
-  thumbnail: MemoryStoredFile;
+  thumbnail!: MemoryStoredFile;
 
   @ApiProperty({
     type: 'file',
@@ -57,5 +57,5 @@ export class PhotoshootPackageCreateRequestDto {
   })
   @HasMimeType(['image/*'], { each: true })
   @ArrayMaxSize(20)
-  showcases: MemoryStoredFile[];
+  showcases!: MemoryStoredFile[];
 }

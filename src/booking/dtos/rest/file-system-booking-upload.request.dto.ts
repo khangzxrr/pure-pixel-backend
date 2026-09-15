@@ -13,5 +13,5 @@ export class FileSystemBookngUploadDto {
   @IsFile()
   @MaxFileSize(209715200)
   @HasMimeType(['image/*'])
-  file: FileSystemStoredFile;
+  file!: FileSystemStoredFile;
 }

@@ -6,28 +6,28 @@ import { UpgradePackageHistoryDto } from 'src/upgrade-package/dtos/upgrade-packa
 
 export class UpgradeOrderDto {
   @ApiProperty()
-  id: string;
+  id!: string;
 
   @ApiProperty()
-  createdAt: Date;
+  createdAt!: Date;
 
   @ApiProperty()
-  updatedAt: Date;
+  updatedAt!: Date;
 
   @ApiProperty()
-  expiredAt: Date;
+  expiredAt!: Date;
 
   @Exclude()
-  userId: string;
+  userId!: string;
 
   @ApiProperty()
-  status: UpgradeOrderStatus;
+  status!: UpgradeOrderStatus;
 
   @ApiProperty()
   @Type(() => ServiceTransactionDto)
-  serviceTransaction: ServiceTransactionDto;
+  serviceTransaction!: ServiceTransactionDto;
 
   @ApiProperty()
   @Type(() => UpgradePackageHistoryDto)
-  upgradePackageHistory: UpgradePackageHistoryDto;
+  upgradePackageHistory!: UpgradePackageHistoryDto;
 }

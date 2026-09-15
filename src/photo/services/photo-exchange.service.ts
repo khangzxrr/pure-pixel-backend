@@ -9,7 +9,7 @@ import { PhotoBuyResponseDto } from '../dtos/rest/photo-buy.response.dto';
 import { SignedPhotoBuyDto } from '../dtos/rest/signed-photo-buy.response.dto';
 import { CannotBuyOwnedPhotoException } from '../exceptions/cannot-buy-owned-photo.exception';
 import { ExistSuccessedPhotoBuyException } from '../exceptions/exist-photo-buy-with-choosed-resolution.exception';
-import { Prisma, PrismaPromise } from '@prisma/client';
+import { Photo, PhotoSell, Prisma, PrismaPromise } from '@prisma/client';
 import { PhotoSellDto } from '../dtos/photo-sell.dto';
 import { PhotoService } from './photo.service';
 import { PhotoSellPriceTagRepository } from 'src/database/repositories/photo-sell-price-tag.repository';
@@ -122,9 +122,11 @@ export class PhotoExchangeService {
 
     const buffer =
       photo.status === 'PENDING'
-        ? await this.photoProcessService.sharpInitFromFilePath(
-            photo.originalPhotoUrl,
-          )
+        ? await (
+            await this.photoProcessService.sharpInitFromFilePath(
+              photo.originalPhotoUrl,
+            )
+          ).toBuffer()
         : await this.photoProcessService.getBufferFromKey(
             photo.originalPhotoUrl,
           );
@@ -232,7 +234,9 @@ export class PhotoExchangeService {
       });
     }
 
-    const prismaQuery: PrismaPromise<any>[] = [];
+    const prismaQuery: PrismaPromise<
+      Photo | PhotoSell | Prisma.BatchPayload
+    >[] = [];
     if (previousActivePhotoSell) {
       const updatePreviousPhotoSellQuery =
         this.photoSellRepository.deactivatePhotoSellByPhotoIdQuery(photoId);

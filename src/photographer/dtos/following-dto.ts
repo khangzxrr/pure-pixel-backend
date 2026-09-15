@@ -5,9 +5,9 @@ import { UserDto } from 'src/user/dtos/user.dto';
 export class FollowDto {
   @ApiProperty()
   @Type(() => UserDto)
-  follower: UserDto;
+  follower!: UserDto;
 
   @ApiProperty()
   @Type(() => UserDto)
-  following: UserDto;
+  following!: UserDto;
 }

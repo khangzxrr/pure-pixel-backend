@@ -6,9 +6,9 @@ import { SignedPhotoDto } from 'src/photo/dtos/signed-photo.dto';
 export class TopSellingPhotoDto {
   @ApiProperty()
   @IsNumber()
-  totalPhotoSold: number;
+  totalPhotoSold!: number;
 
   @ApiProperty()
   @Type(() => SignedPhotoDto)
-  photo: SignedPhotoDto;
+  photo!: SignedPhotoDto;
 }

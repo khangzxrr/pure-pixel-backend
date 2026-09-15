@@ -4,12 +4,12 @@ import { IsUrl } from 'class-validator';
 
 export class PhotoshootPackageShowcaseDto {
   @ApiProperty()
-  id: string;
+  id!: string;
 
   @Exclude()
-  photoshootPackageId: string;
+  photoshootPackageId!: string;
 
   @ApiProperty()
   @IsUrl()
-  photoUrl: string;
+  photoUrl!: string;
 }

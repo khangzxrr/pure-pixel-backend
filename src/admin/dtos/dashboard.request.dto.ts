@@ -8,12 +8,12 @@ export class DashboardRequestDto {
   })
   @Transform(({ value }) => new Date(value))
   @IsDate()
-  fromDate: Date;
+  fromDate!: Date;
 
   @ApiProperty({
     example: '2024-10-19T01:30:14.761+07:00',
   })
   @Transform(({ value }) => new Date(value))
   @IsDate()
-  toDate: Date;
+  toDate!: Date;
 }

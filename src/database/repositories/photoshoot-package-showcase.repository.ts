@@ -1,5 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, PrismaPromise } from '@prisma/client';
+import {
+  PhotoshootPackageShowcasePhoto,
+  Prisma,
+  PrismaPromise,
+} from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
@@ -27,7 +31,7 @@ export class PhotoshootPackageShowcaseRepository {
     skip?: number,
     take?: number,
     orderBy?: Prisma.PhotoshootPackageShowcasePhotoOrderByWithRelationInput[],
-  ): PrismaPromise<any[]> {
+  ): PrismaPromise<PhotoshootPackageShowcasePhoto[]> {
     return this.prismaService
       .extendedClient()
       .photoshootPackageShowcasePhoto.findMany({

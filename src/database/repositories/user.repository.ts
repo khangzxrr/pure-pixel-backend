@@ -191,7 +191,7 @@ export class UserRepository {
     tx: Prisma.TransactionClient,
   ) {
     try {
-      return tx.user.upsert({
+      return await tx.user.upsert({
         where: {
           id: user.id,
         },

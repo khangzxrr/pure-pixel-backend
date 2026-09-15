@@ -6,7 +6,6 @@ import { plainToInstance } from 'class-transformer';
 import { TransactionDto } from '../dtos/transaction.dto';
 import { FindAllTransactionDto } from '../dtos/rest/find-all-transaction.dto';
 import { PagingPaginatedResposneDto } from 'src/infrastructure/restful/paging-paginated.response.dto';
-import { Prisma, WithdrawalTransaction } from '@prisma/client';
 import { TransactionUpdateDto } from '../dtos/transaction-update.dto';
 import { TransactionNotInPendingException } from '../exceptions/transaction-not-in-pending.exception';
 import { NotEnoughBalanceException } from 'src/user/exceptions/not-enought-balance.exception';
@@ -63,6 +62,10 @@ export class TransactionService {
         },
         tx,
       );
+      if (!transaction.withdrawalTransaction) {
+        throw new NotAWithdrawalTransaction();
+      }
+
       await this.withdrawalTransactionRepository.update(
         {
           id: transaction.withdrawalTransaction.id,
@@ -112,6 +115,10 @@ export class TransactionService {
         },
         tx,
       );
+      if (!transaction.withdrawalTransaction) {
+        throw new NotAWithdrawalTransaction();
+      }
+
       await this.withdrawalTransactionRepository.update(
         {
           id: transaction.withdrawalTransaction.id,

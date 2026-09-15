@@ -14,5 +14,5 @@ export class FileSystemPhotoUploadRequestDto {
   // @MinFileSize(4e6)
   @MaxFileSize(209715200)
   @HasMimeType(['image/*'])
-  file: FileSystemStoredFile;
+  file!: FileSystemStoredFile;
 }

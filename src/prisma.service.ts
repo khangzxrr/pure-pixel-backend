@@ -11,7 +11,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     const prisma = this.$extends({
       query: {
         camera: {
-          async $allOperations({ operation, args, query }) {
+          async $allOperations({ operation, args, query }): Promise<unknown> {
             if (
               operation === 'findFirst' ||
               operation === 'findMany' ||
@@ -40,7 +40,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
               return prisma.camera.updateMany({
                 where: args.where,
                 data: {
-                  deleteAt: new Date(),
+                  deletedAt: new Date(),
                 },
               });
             }
@@ -79,7 +79,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
 
             return query(args);
           },
-          async delete({ args }) {
+          async delete({ args }): Promise<unknown> {
             return prisma.photoshootPackage.update({
               where: args.where,
               data: {
@@ -130,7 +130,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
 
             return query(args);
           },
-          async delete({ args }) {
+          async delete({ args }): Promise<unknown> {
             return prisma.upgradePackage.update({
               where: args.where,
               data: {
@@ -196,7 +196,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
 
             return query(args);
           },
-          async delete({ args }) {
+          async delete({ args }): Promise<unknown> {
             return prisma.photo.update({
               where: args.where,
               data: {

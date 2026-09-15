@@ -6,16 +6,16 @@ export class UserReportCreateRequestDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  content: string;
+  content!: string;
 
   @ApiProperty({
     enum: ReportType,
   })
   @IsEnum(ReportType)
-  reportType: ReportType;
+  reportType!: ReportType;
 
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  referenceId: string;
+  referenceId!: string;
 }

@@ -8,6 +8,10 @@ import { MissingMakeExifException } from 'src/photo/exceptions/missing-make-exif
 import { CameraRepository } from 'src/database/repositories/camera.repository';
 import { CameraOnUsersRepository } from 'src/database/repositories/camera-on-users.repository';
 
+export interface AddNewCameraUsageJobData {
+  photoId: string;
+}
+
 @Processor(CameraConstant.CAMERA_PROCESS_QUEUE, {})
 export class CameraConsumer extends WorkerHost {
   private readonly logger = new Logger(CameraConsumer.name);
@@ -20,7 +24,7 @@ export class CameraConsumer extends WorkerHost {
     super();
   }
 
-  async process(job: Job): Promise<any> {
+  async process(job: Job<AddNewCameraUsageJobData>): Promise<void> {
     try {
       switch (job.name) {
         case CameraConstant.ADD_NEW_CAMERA_USAGE_JOB:
@@ -38,14 +42,18 @@ export class CameraConsumer extends WorkerHost {
     this.logger.log(`process camera for photo ${photoId}`);
     const photo = await this.photoRepository.findUniqueOrThrow(photoId);
 
-    const model = photo.exif['Model'];
-    const make = photo.exif['Make'];
+    const exif = photo.exif;
+    const isExifObject =
+      typeof exif === 'object' && exif !== null && !Array.isArray(exif);
 
-    if (!model) {
+    const model = isExifObject ? exif['Model'] : undefined;
+    const make = isExifObject ? exif['Make'] : undefined;
+
+    if (!model || typeof model !== 'string') {
       throw new MissingModelExifException();
     }
 
-    if (!make) {
+    if (!make || typeof make !== 'string') {
       throw new MissingMakeExifException();
     }
 

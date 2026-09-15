@@ -19,11 +19,31 @@ import { Logger } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import KeycloakConnect from 'keycloak-connect';
 import { KeycloakConnectConfig } from 'nest-keycloak-connect';
+import { Socket } from 'socket.io';
 import {
   extractRequest,
   parseToken,
+  TokenClaims,
   useKeycloak,
 } from 'src/infrastructure/utils/utils';
+
+//keycloak-connect builds the Token itself from a raw access token string
+//(GrantManager.createGrant in grant-manager.js), but its typings only accept a Token
+declare module 'keycloak-connect' {
+  interface GrantManager {
+    createGrant(data: { access_token: string }): Promise<KeycloakConnect.Grant>;
+  }
+}
+
+//socket handled by a gateway method guarded with WebsocketAuthGuard
+export interface AuthenticatedSocket extends Socket {
+  user: TokenClaims;
+  accessTokenJWT: string;
+}
+
+//before authentication the socket has no user attached yet
+type WebsocketRequest = Socket &
+  Partial<Pick<AuthenticatedSocket, 'user' | 'accessTokenJWT'>>;
 
 //not work properly with HTTP, use carefully for WS only!
 export default class WebsocketAuthGuard implements CanActivate {
@@ -56,7 +76,9 @@ export default class WebsocketAuthGuard implements CanActivate {
     }
 
     // Extract request/response
-    const [request] = extractRequest(context);
+    const [wsRequest] = extractRequest<WebsocketRequest>(context);
+    //ws contexts always carry the client socket as the first argument
+    const request = wsRequest!;
 
     const jwt = this.extractJwt(request.handshake.auth);
     const isJwtEmpty = jwt === null || jwt === undefined;
@@ -101,7 +123,7 @@ export default class WebsocketAuthGuard implements CanActivate {
     throw new UnauthorizedException();
   }
 
-  private async validateToken(keycloak: KeycloakConnect.Keycloak, jwt: any) {
+  private async validateToken(keycloak: KeycloakConnect.Keycloak, jwt: string) {
     const tokenValidation =
       this.keycloakOpts.tokenValidation || TokenValidation.ONLINE;
 
@@ -123,7 +145,13 @@ export default class WebsocketAuthGuard implements CanActivate {
     );
 
     try {
-      let result: boolean | KeycloakConnect.Token;
+      let result: false | KeycloakConnect.Token;
+
+      //createGrant validates access_token, so a grant without one never reaches here
+      //keep the same outcome as validateToken(undefined): an error that is logged below
+      if (!token) {
+        throw new Error('invalid token (missing)');
+      }
 
       switch (tokenValidation) {
         case TokenValidation.ONLINE:

@@ -7,19 +7,19 @@ import { PhotoshootPackageDto } from 'src/photoshoot-package/dtos/photoshoot-pac
 export class TopSellerDetailDto {
   @ApiProperty()
   @Type(() => UserDto)
-  user: UserDto;
+  user!: UserDto;
 
   @ApiProperty({
     isArray: true,
   })
   @Type(() => TopSoldPhotoDto)
-  topSoldPhotos: TopSoldPhotoDto[];
+  topSoldPhotos!: TopSoldPhotoDto[];
 
   @ApiProperty({
     isArray: true,
   })
   @Type(() => PhotoshootPackageDto)
-  topPhotoshootPackages: PhotoshootPackageDto[];
+  topPhotoshootPackages!: PhotoshootPackageDto[];
 
   @ApiProperty()
   photoSellRevenue: number = 0;

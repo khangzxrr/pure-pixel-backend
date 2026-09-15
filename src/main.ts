@@ -7,8 +7,14 @@ import { json, urlencoded } from 'express';
 import { LoggingInterceptor } from './infrastructure/interceptors/logging.interceptor';
 import { RedisIoAdapter } from './redis-io-adapter';
 
+declare global {
+  interface BigInt {
+    toJSON(): string;
+  }
+}
+
 async function bootstrap() {
-  BigInt.prototype['toJSON'] = function () {
+  BigInt.prototype.toJSON = function () {
     return this.toString();
   };
 
@@ -37,7 +43,9 @@ async function bootstrap() {
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
 
   app.enableCors({
-    origin: ['http://localhost:3000', 'https://purepixel.io.vn', '*'],
+    origin: process.env.CORS_ORIGINS
+      ? process.env.CORS_ORIGINS.split(',')
+      : ['http://localhost:3000', 'https://purepixel.io.vn', '*'],
     allowedHeaders: ['content-type', 'Authorization'],
     credentials: true,
   });

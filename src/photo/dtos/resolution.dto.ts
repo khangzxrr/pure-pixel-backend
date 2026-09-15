@@ -2,8 +2,8 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class ResolutionDto {
   @ApiProperty()
-  pixels: number;
+  pixels!: number;
 
   @ApiProperty()
-  resolution: string;
+  resolution!: string;
 }

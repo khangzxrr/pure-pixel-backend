@@ -2,8 +2,8 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class TimelineDatapointDto {
   @ApiProperty()
-  total: number;
+  total!: number;
 
   @ApiProperty()
-  createdAt: Date;
+  createdAt!: Date;
 }

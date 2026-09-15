@@ -8,5 +8,5 @@ export class PhotoTagGetTopDto {
   @IsNumber()
   @Min(1)
   @Max(999)
-  top: number;
+  top!: number;
 }

@@ -13,5 +13,5 @@ export class AcceptWithdrawalTransactionDto {
   @IsFile()
   @MaxFileSize(209715200)
   @HasMimeType(['image/*'])
-  photo: MemoryStoredFile;
+  photo!: MemoryStoredFile;
 }

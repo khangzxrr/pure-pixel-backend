@@ -12,17 +12,17 @@ export class PhotoshootPackageReplaceRequestDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  title: string;
+  title!: string;
 
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  subtitle: string;
+  subtitle!: string;
 
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  description: string;
+  description!: string;
 
   @ApiProperty({
     example: 10000,
@@ -30,7 +30,7 @@ export class PhotoshootPackageReplaceRequestDto {
   @Type(() => Number)
   @IsNumber()
   @Min(10000)
-  price: number;
+  price!: number;
 
   @ApiProperty({
     type: 'file',
@@ -38,5 +38,5 @@ export class PhotoshootPackageReplaceRequestDto {
   @IsFile()
   @MaxFileSize(5e7)
   @HasMimeType(['image/*'])
-  thumbnail: MemoryStoredFile;
+  thumbnail!: MemoryStoredFile;
 }

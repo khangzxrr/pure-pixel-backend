@@ -7,5 +7,5 @@ export class BuyPhotoRequestDto {
     enum: PaymentMethod,
   })
   @IsEnum(PaymentMethod)
-  paymentMethod: PaymentMethod;
+  paymentMethod!: PaymentMethod;
 }

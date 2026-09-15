@@ -20,6 +20,7 @@ import { DashboardRequestDto } from '../dtos/dashboard.request.dto';
 import { DashboardReportRepository } from 'src/database/repositories/dashboard-report.repository';
 import { Utils } from 'src/infrastructure/utils/utils';
 import { PhotoGenerateWatermarkService } from 'src/photo/services/photo-generate-watermark.service';
+import { CannotCreateNewUserException } from 'src/user/exceptions/cannot-create-new-user.exception';
 
 @Injectable()
 export class AdminService {
@@ -118,7 +119,7 @@ export class AdminService {
 
     const imagePerUserCount = Math.floor(imageList.length / usernames.length);
 
-    for (let username of usernames) {
+    for (const username of usernames) {
       const trimmedUsername = username.trim();
       if (trimmedUsername.length === 0) {
         return;
@@ -129,6 +130,10 @@ export class AdminService {
         `${trimmedUsername}@gmail.com`,
         Constants.PHOTOGRAPHER_ROLE,
       );
+
+      if (!keycloakUser.id) {
+        throw new CannotCreateNewUserException();
+      }
 
       const user = await this.userRepository.upsert({
         id: keycloakUser.id,

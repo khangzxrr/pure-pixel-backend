@@ -3,12 +3,12 @@ import { Type } from 'class-transformer';
 
 export class CameraUsageDto {
   @ApiProperty()
-  id: string;
+  id!: string;
 
   @ApiProperty()
-  name: string;
+  name!: string;
 
   @ApiProperty()
   @Type(() => Number)
-  userCount: number;
+  userCount!: number;
 }

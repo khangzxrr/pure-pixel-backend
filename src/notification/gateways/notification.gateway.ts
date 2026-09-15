@@ -8,7 +8,9 @@ import {
 import { NotificationConstant } from '../constants/notification.constant';
 
 import { Logger, UseGuards } from '@nestjs/common';
-import WebsocketAuthGuard from 'src/authen/guards/ws.auth.guard';
+import WebsocketAuthGuard, {
+  AuthenticatedSocket,
+} from 'src/authen/guards/ws.auth.guard';
 import { Server, Socket } from 'socket.io';
 import { Roles } from 'nest-keycloak-connect';
 import { Constants } from 'src/infrastructure/utils/constants';
@@ -22,7 +24,7 @@ export class NotificationGateway {
   private logger: Logger = new Logger(NotificationGateway.name);
 
   @WebSocketServer()
-  private server: Server;
+  private server!: Server;
 
   @UseGuards(WebsocketAuthGuard)
   @Roles({
@@ -34,14 +36,14 @@ export class NotificationGateway {
     ],
   })
   @SubscribeMessage('join-notification-room')
-  async joinEvent(@ConnectedSocket() socket: any) {
+  async joinEvent(@ConnectedSocket() socket: AuthenticatedSocket) {
     this.logger.log(
       `socket: ${socket.id} with user id: ${socket.user.sub} join`,
     );
 
     const userId = socket.user.sub;
 
-    const socketClient = socket as Socket;
+    const socketClient: Socket = socket;
 
     socketClient.join(userId);
   }

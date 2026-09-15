@@ -20,7 +20,7 @@ export class NotificationConsumer extends WorkerHost {
     super();
   }
 
-  async process(job: Job): Promise<any> {
+  async process(job: Job<NotificationCreateDto>): Promise<null> {
     try {
       switch (job.name) {
         case NotificationConstant.TEXT_NOTIFICATION_JOB:
@@ -58,7 +58,7 @@ export class NotificationConsumer extends WorkerHost {
       notificationCreateDto.content,
     );
 
-    const savedNotification = await this.notificationService.saveNotification({
+    await this.notificationService.saveNotification({
       payload: notificationCreateDto.payload,
       type: notificationCreateDto.type,
       referenceType: notificationCreateDto.referenceType,

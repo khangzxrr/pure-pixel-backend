@@ -3,17 +3,17 @@ import { PhotographerDTO } from './photographer.dto';
 
 export class PhotographerProfileDto {
   @ApiProperty()
-  photographer: PhotographerDTO;
+  photographer!: PhotographerDTO;
 
   @ApiProperty()
-  followersCount: number;
+  followersCount!: number;
 
   @ApiProperty()
-  followingsCount: number;
+  followingsCount!: number;
 
   @ApiProperty()
-  upvoteCount: number;
+  upvoteCount!: number;
 
   @ApiProperty()
-  commentCount: number;
+  commentCount!: number;
 }

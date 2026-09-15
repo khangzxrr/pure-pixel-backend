@@ -1,4 +1,4 @@
-import { Controller, Get, Inject, Post, Req, UseGuards } from '@nestjs/common';
+import { Controller, Inject, Post, Req, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   AuthenticatedUser,

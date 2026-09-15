@@ -6,22 +6,22 @@ export class ReportPutUpdateRequestDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  content: string;
+  content!: string;
 
   @ApiProperty({
     enum: ReportStatus,
   })
   @IsEnum(ReportStatus)
-  reportStatus: ReportStatus;
+  reportStatus!: ReportStatus;
 
   @ApiProperty({
     enum: ReportType,
   })
   @IsEnum(ReportType)
-  reportType: ReportType;
+  reportType!: ReportType;
 
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  referenceId: string;
+  referenceId!: string;
 }

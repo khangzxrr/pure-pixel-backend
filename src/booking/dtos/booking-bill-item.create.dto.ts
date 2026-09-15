@@ -7,22 +7,22 @@ export class BookingBillItemCreateDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  title: string;
+  title!: string;
 
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  description: string;
+  description!: string;
 
   @ApiProperty()
   @Type(() => Number)
   @IsNumber()
   @Min(1000)
-  price: number;
+  price!: number;
 
   @ApiProperty({
     enum: BookingBillItemType,
   })
   @IsEnum(BookingBillItemType)
-  type: BookingBillItemType;
+  type!: BookingBillItemType;
 }

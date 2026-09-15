@@ -5,36 +5,36 @@ import { PhotoSellHistoryDto } from './photo-sell-history.dto';
 
 export class PhotoSellDto {
   @ApiProperty()
-  photoId: string;
+  photoId!: string;
 
   @ApiProperty()
-  photoSellId: string;
+  photoSellId!: string;
 
   @ApiProperty()
-  description: string;
+  description!: string;
 
   @ApiProperty()
-  active: boolean;
+  active!: boolean;
 
   @ApiProperty()
-  createdAt: Date;
+  createdAt!: Date;
 
   @ApiProperty()
-  updatedAt: Date;
+  updatedAt!: Date;
 
   @ApiProperty({
     isArray: true,
     type: PricetagDto,
   })
   @Type(() => PricetagDto)
-  pricetags: PricetagDto[];
+  pricetags!: PricetagDto[];
 
   @ApiProperty({
     isArray: true,
     type: PhotoSellHistoryDto,
   })
   @Type(() => PhotoSellHistoryDto)
-  photoSellHistories: PhotoSellHistoryDto[];
+  photoSellHistories!: PhotoSellHistoryDto[];
 
   //dont exclude parent like Photo, this is a bug from class-transformer cause swagger to be null
   // @Exclude()

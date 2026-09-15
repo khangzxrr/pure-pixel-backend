@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { RequestPhotoshootBookingRequestDto } from '../dtos/rest/request-photoshoot-booking.request.dto';
 import { BookingFindAllRequestDto } from '../dtos/rest/booking-find-all.request.dto';
 import { BookingRepository } from 'src/database/repositories/booking.repository';
@@ -43,6 +43,11 @@ import { Utils } from 'src/infrastructure/utils/utils';
 import { writeFileSync } from 'fs';
 import { PhotoshootPackageDisabledException } from '../exceptions/photoshoot-package-disabled.exception';
 import { BookingNotFinishedLongEnoughException } from '../exceptions/booking-not-finished-long-enough.exception';
+import { FailToParsePhotoException } from 'src/photo/exceptions/fail-to-parse-photo.exception';
+import { PhotoNotFoundException } from 'src/photo/exceptions/photo-not-found.exception';
+
+const ORIGINAL_PHOTOSHOOT_PACKAGE_NOT_FOUND =
+  'OriginalPhotoshootPackageNotFound';
 
 @Injectable()
 export class BookingService {
@@ -70,6 +75,14 @@ export class BookingService {
   async signBooking(booking: Booking) {
     const bookingDto = plainToInstance(BookingDto, booking);
 
+    if (
+      !booking.originalPhotoshootPackage ||
+      !bookingDto.originalPhotoshootPackage ||
+      !bookingDto.photoshootPackageHistory
+    ) {
+      throw new NotFoundException(ORIGINAL_PHOTOSHOOT_PACKAGE_NOT_FOUND);
+    }
+
     bookingDto.originalPhotoshootPackage.thumbnail =
       this.bunnyService.getPresignedFile(
         bookingDto.originalPhotoshootPackage.thumbnail,
@@ -87,6 +100,14 @@ export class BookingService {
 
   async signBookingDetail(bookingDetail: BookingDetail) {
     const bookingDto = plainToInstance(BookingDto, bookingDetail);
+
+    if (
+      !bookingDetail.originalPhotoshootPackage ||
+      !bookingDto.originalPhotoshootPackage ||
+      !bookingDto.photoshootPackageHistory
+    ) {
+      throw new NotFoundException(ORIGINAL_PHOTOSHOOT_PACKAGE_NOT_FOUND);
+    }
 
     bookingDto.originalPhotoshootPackage.thumbnail =
       this.bunnyService.getPresignedFile(
@@ -138,6 +159,10 @@ export class BookingService {
       throw new BookingNotInValidStateException();
     }
 
+    if (booking.originalPhotoshootPackageId === null) {
+      throw new NotFoundException(ORIGINAL_PHOTOSHOOT_PACKAGE_NOT_FOUND);
+    }
+
     const review = await this.photoshootPackageReviewRepository.upsert(
       {
         bookingId_userId: {
@@ -171,6 +196,10 @@ export class BookingService {
       review,
     );
 
+    if (!booking.originalPhotoshootPackage) {
+      throw new NotFoundException(ORIGINAL_PHOTOSHOOT_PACKAGE_NOT_FOUND);
+    }
+
     this.notificationService.addNotificationToQueue({
       userId: booking.originalPhotoshootPackage.userId,
       type: 'IN_APP',
@@ -190,6 +219,10 @@ export class BookingService {
       id: bookingId,
     });
 
+    if (!booking.originalPhotoshootPackage) {
+      throw new NotFoundException(ORIGINAL_PHOTOSHOOT_PACKAGE_NOT_FOUND);
+    }
+
     if (booking.originalPhotoshootPackage.userId !== userId) {
       throw new BookingNotBelongException();
     }
@@ -198,7 +231,7 @@ export class BookingService {
       throw new BookingNotInValidStateException();
     }
 
-    const prismaPromises: PrismaPromise<any>[] = [];
+    const prismaPromises: PrismaPromise<unknown>[] = [];
 
     prismaPromises.push(
       this.bookingRepository.updateByIdQuery(bookingId, {
@@ -250,6 +283,10 @@ export class BookingService {
       id: bookingId,
     });
 
+    if (!booking.originalPhotoshootPackage) {
+      throw new NotFoundException(ORIGINAL_PHOTOSHOOT_PACKAGE_NOT_FOUND);
+    }
+
     if (booking.originalPhotoshootPackage.userId !== userId) {
       throw new BookingNotBelongException();
     }
@@ -263,7 +300,7 @@ export class BookingService {
     if (updateDto.startDate && updateDto.endDate) {
       this.validateStartEndDateOfUser(updateDto.startDate, updateDto.endDate);
 
-      this.validatePreviousBookingOverlap(
+      await this.validatePreviousBookingOverlap(
         booking.userId, //<-- user who book NOT PHOTOGRAPHER
         updateDto.startDate,
         updateDto.endDate,
@@ -294,6 +331,10 @@ export class BookingService {
       id: bookingId,
     });
 
+    if (!booking.originalPhotoshootPackage) {
+      throw new NotFoundException(ORIGINAL_PHOTOSHOOT_PACKAGE_NOT_FOUND);
+    }
+
     if (
       booking.originalPhotoshootPackage.userId !== userId &&
       booking.userId !== userId
@@ -308,6 +349,10 @@ export class BookingService {
     const booking = await this.bookingRepository.findUniqueOrThrow({
       id: bookingId,
     });
+
+    if (!booking.originalPhotoshootPackage) {
+      throw new NotFoundException(ORIGINAL_PHOTOSHOOT_PACKAGE_NOT_FOUND);
+    }
 
     if (
       booking.originalPhotoshootPackage.userId !== userId &&
@@ -353,6 +398,10 @@ export class BookingService {
       id: bookingId,
     });
 
+    if (!booking.originalPhotoshootPackage) {
+      throw new NotFoundException(ORIGINAL_PHOTOSHOOT_PACKAGE_NOT_FOUND);
+    }
+
     if (booking.originalPhotoshootPackage.userId !== userId) {
       throw new BookingNotBelongException();
     }
@@ -377,6 +426,10 @@ export class BookingService {
           throw new BookingNotFinishedLongEnoughException();
         }
       }
+    }
+
+    if (!booking.photos.some((bookingPhoto) => bookingPhoto.id === photoId)) {
+      throw new PhotoNotFoundException();
     }
 
     const photo = await this.photoRepository.findUniqueOrThrow(photoId);
@@ -414,6 +467,10 @@ export class BookingService {
       id: bookingId,
     });
 
+    if (!booking.originalPhotoshootPackage) {
+      throw new NotFoundException(ORIGINAL_PHOTOSHOOT_PACKAGE_NOT_FOUND);
+    }
+
     if (booking.originalPhotoshootPackage.userId !== userId) {
       throw new BookingNotBelongException();
     }
@@ -440,6 +497,10 @@ export class BookingService {
     }
 
     const metadata = await sharp.metadata();
+
+    if (metadata.width === undefined || metadata.height === undefined) {
+      throw new FailToParsePhotoException();
+    }
 
     const watermark = await this.photoProcessService.makeWatermark(
       sharp,
@@ -524,6 +585,10 @@ export class BookingService {
       id: bookingId,
     });
 
+    if (!booking.originalPhotoshootPackage) {
+      throw new NotFoundException(ORIGINAL_PHOTOSHOOT_PACKAGE_NOT_FOUND);
+    }
+
     if (booking.originalPhotoshootPackage.userId !== userId) {
       throw new BookingNotBelongException();
     }
@@ -576,6 +641,10 @@ export class BookingService {
       id: bookingId,
     });
 
+    if (!booking.originalPhotoshootPackage) {
+      throw new NotFoundException(ORIGINAL_PHOTOSHOOT_PACKAGE_NOT_FOUND);
+    }
+
     if (booking.originalPhotoshootPackage.userId !== userId) {
       throw new BookingNotBelongException();
     }
@@ -610,6 +679,10 @@ export class BookingService {
     const booking = await this.bookingRepository.findUniqueOrThrow({
       id: bookingId,
     });
+
+    if (!booking.originalPhotoshootPackage) {
+      throw new NotFoundException(ORIGINAL_PHOTOSHOOT_PACKAGE_NOT_FOUND);
+    }
 
     if (booking.originalPhotoshootPackage.userId !== userId) {
       throw new BookingNotBelongException();

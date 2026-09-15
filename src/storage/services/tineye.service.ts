@@ -3,12 +3,12 @@ import { Inject, Injectable } from '@nestjs/common';
 import { FileShouldNotBeNullException } from '../exceptions/file-should-not-be-null.exception';
 import { firstValueFrom } from 'rxjs';
 import * as FormData from 'form-data';
-import { Readable } from 'stream';
+import { Utils } from 'src/infrastructure/utils/utils';
 @Injectable()
 export class TineyeService {
   constructor(@Inject() private readonly httpService: HttpService) {}
 
-  getAuthenticationHeader(headers: any) {
+  getAuthenticationHeader(headers: Record<string, string>) {
     const authStr = `${process.env.TINEYE_USERNAME}:${process.env.TINEYE_PASSWORD}`;
     const token = Buffer.from(authStr, 'binary').toString('base64');
 
@@ -19,7 +19,7 @@ export class TineyeService {
   }
 
   getEndpoint() {
-    return process.env.TINEYE_ENDPOINT;
+    return Utils.env('TINEYE_ENDPOINT');
   }
 
   async searchByBuffer(buffer: Buffer, filename: string) {

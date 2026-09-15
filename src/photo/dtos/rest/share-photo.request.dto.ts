@@ -7,12 +7,12 @@ export class SharePhotoRequestDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  photoId: string;
+  photoId!: string;
 
   @ApiProperty({
     type: PhotoSizeDto,
   })
   @Type(() => PhotoSizeDto)
   @ValidateNested()
-  size: PhotoSizeDto;
+  size!: PhotoSizeDto;
 }

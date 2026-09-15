@@ -1,3 +1,3 @@
 export class ParsedUserDto {
-  sub: string;
+  sub!: string;
 }

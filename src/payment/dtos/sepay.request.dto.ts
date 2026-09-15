@@ -2,38 +2,38 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class SepayRequestDto {
   @ApiProperty()
-  id: number;
+  id!: number;
 
   @ApiProperty()
-  gateway: string;
+  gateway!: string;
 
   @ApiProperty()
-  transactionDate: Date;
+  transactionDate!: Date;
 
   @ApiProperty()
-  accountNumber: string;
+  accountNumber!: string;
 
   @ApiPropertyOptional()
-  code: string;
+  code!: string;
 
   @ApiProperty()
-  content: string;
+  content!: string;
 
   @ApiProperty()
-  transferType: string;
+  transferType!: string;
 
   @ApiProperty()
-  transferAmount: number;
+  transferAmount!: number;
 
   @ApiProperty()
-  accumulated: number;
+  accumulated!: number;
 
   @ApiPropertyOptional()
-  subAccount: string;
+  subAccount!: string;
 
   @ApiProperty()
-  referenceCode: string;
+  referenceCode!: string;
 
   @ApiProperty()
-  description: string;
+  description!: string;
 }

@@ -1,4 +1,4 @@
-import { Controller, Get, Inject, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Inject } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PhotoCategoryService } from '../services/photo-category.service';
 import { HttpStatusCode } from 'axios';

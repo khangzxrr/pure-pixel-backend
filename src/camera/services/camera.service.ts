@@ -49,10 +49,7 @@ export class CameraService {
   }
 
   async findTopCameraOfBrand(brandId: string, take: number) {
-    const topCameras: any[] = await this.cameraRepository.findByMakerId(
-      brandId,
-      take,
-    );
+    const topCameras = await this.cameraRepository.findByMakerId(brandId, take);
 
     return plainToInstance(CameraDto, topCameras);
   }
@@ -129,7 +126,7 @@ export class CameraService {
     if (findAllDto.orderByTotalUserCount) {
       const topCameras = await this.cameraRepository.findTopUsageByUserCount(
         findAllDto.search ? findAllDto.search : '',
-        findAllDto.orderByTotalPhotoCount,
+        findAllDto.orderByTotalPhotoCount ?? 'desc',
         findAllDto.toSkip(),
         findAllDto.limit,
       );

@@ -1,24 +1,62 @@
 import { Injectable } from '@nestjs/common';
-import { firstValueFrom } from 'rxjs';
-import { HttpService } from '@nestjs/axios';
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  ListObjectsV2Command,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
 import * as crypto from 'crypto';
-import * as querystring from 'querystring';
 import { MemoryStoredFile } from 'nestjs-form-data';
 import { FileShouldNotBeNullException } from '../exceptions/file-should-not-be-null.exception';
 import { v4 } from 'uuid';
+import { Utils } from 'src/infrastructure/utils/utils';
 
+//storage used to be Bunny CDN, it is now any S3 compatible store (MinIO)
+//method signatures are kept so callers do not change
 @Injectable()
 export class BunnyService {
-  constructor(private httpService: HttpService) {}
+  //created lazily by getS3()
+  private s3?: S3Client;
 
-  private getAccessHeader() {
-    return {
-      accessKey: process.env.BUNNY_STORAGE_ACCESS_KEY,
-    };
+  private getS3() {
+    if (this.s3) {
+      return this.s3;
+    }
+
+    this.s3 = new S3Client({
+      endpoint: process.env.STORAGE_ENDPOINT,
+      region: this.getRegion(),
+      forcePathStyle: true,
+      credentials: {
+        accessKeyId: Utils.env('STORAGE_ACCESS_KEY'),
+        secretAccessKey: Utils.env('STORAGE_SECRET_KEY'),
+      },
+    });
+
+    return this.s3;
   }
 
-  private getEdgeStorageUrl(key: string) {
-    return `${process.env.BUNNY_EDGE_STORAGE_CDN}/${process.env.BUNNY_STORAGE_BUCKET}/${key}`;
+  private getRegion() {
+    return process.env.STORAGE_REGION ?? 'us-east-1';
+  }
+
+  private normalizeKey(key: string) {
+    return key.replace(/^\/+/, '');
+  }
+
+  private async putObject(
+    bucket: string | undefined,
+    key: string,
+    body: Buffer,
+  ) {
+    await this.getS3().send(
+      new PutObjectCommand({
+        Bucket: bucket,
+        Key: this.normalizeKey(key),
+        Body: body,
+      }),
+    );
   }
 
   async delete(key: string) {
@@ -26,15 +64,12 @@ export class BunnyService {
       throw new FileShouldNotBeNullException();
     }
 
-    const response = await firstValueFrom(
-      this.httpService.delete(this.getEdgeStorageUrl(key), {
-        headers: {
-          accessKey: process.env.BUNNY_EDGE_STORAGE_ACCESS_KEY,
-        },
+    return await this.getS3().send(
+      new DeleteObjectCommand({
+        Bucket: process.env.STORAGE_BUCKET,
+        Key: this.normalizeKey(key),
       }),
     );
-
-    return response.data;
   }
 
   async download(key: string) {
@@ -42,19 +77,19 @@ export class BunnyService {
       throw new FileShouldNotBeNullException();
     }
 
-    const response = await firstValueFrom(
-      this.httpService.get(
-        `${process.env.BUNNY_EDGE_STORAGE_CDN}/${process.env.BUNNY_STORAGE_BUCKET}/${key}`,
-        {
-          headers: {
-            accessKey: process.env.BUNNY_EDGE_STORAGE_ACCESS_KEY,
-          },
-          responseType: 'arraybuffer',
-        },
-      ),
+    const response = await this.getS3().send(
+      new GetObjectCommand({
+        Bucket: process.env.STORAGE_BUCKET,
+        Key: this.normalizeKey(key),
+      }),
     );
 
-    return response.data;
+    //a successful GetObject always carries a body
+    if (!response.Body) {
+      throw new Error(`object ${key} has no body`);
+    }
+
+    return Buffer.from(await response.Body.transformToByteArray());
   }
 
   async uploadFromBuffer(key: string, buffer: Buffer) {
@@ -62,60 +97,22 @@ export class BunnyService {
       throw new FileShouldNotBeNullException();
     }
 
-    await firstValueFrom(
-      this.httpService.put(
-        `${process.env.BUNNY_EDGE_STORAGE_CDN}/${process.env.BUNNY_STORAGE_BUCKET}/${key}`,
-        buffer,
-        {
-          headers: {
-            'Content-Type': 'application/octet-stream',
-            accept: 'application/json',
-            accessKey: process.env.BUNNY_EDGE_STORAGE_ACCESS_KEY,
-          },
-        },
-      ),
-    );
+    await this.putObject(process.env.STORAGE_BUCKET, key, buffer);
 
     return key;
   }
 
-  async pruneCache(url: string) {
-    const response = await firstValueFrom(
-      this.httpService.post(
-        `https://api.bunny.net/purge?url=${encodeURIComponent(url)}`,
-        null,
-        {
-          headers: {
-            accept: 'application/json',
-            accessKey: process.env.BUNNY_USER_ACCESS_KEY,
-          },
-        },
-      ),
-    );
-
-    console.log(response);
-  }
+  //there is no CDN cache in front of the object store
+  async pruneCache(_url: string) {}
 
   async uploadPublicFromBuffer(buffer: Buffer, filekey: string) {
     if (buffer === null) {
       throw new FileShouldNotBeNullException();
     }
 
-    const response = await firstValueFrom(
-      this.httpService.put(
-        `${process.env.BUNNY_EDGE_STORAGE_CDN}/${process.env.BUNNY_PUBLIC_STORAGE_BUCKET}/${filekey}`,
-        buffer,
-        {
-          headers: {
-            'Content-Type': 'application/octet-stream',
-            accept: 'application/json',
-            accessKey: process.env.BUNNY_PUBLIC_STORAGE_ACCESS_KEY,
-          },
-        },
-      ),
-    );
+    await this.putObject(process.env.STORAGE_PUBLIC_BUCKET, filekey, buffer);
 
-    return `${process.env.BUNNY_PUBLIC_CDN}/${filekey}`;
+    return this.getPublicUrl(filekey);
   }
 
   async uploadPublic(file: MemoryStoredFile, filekey: string) {
@@ -123,21 +120,13 @@ export class BunnyService {
       throw new FileShouldNotBeNullException();
     }
 
-    const response = await firstValueFrom(
-      this.httpService.put(
-        `${process.env.BUNNY_EDGE_STORAGE_CDN}/${process.env.BUNNY_PUBLIC_STORAGE_BUCKET}/${filekey}`,
-        file.buffer,
-        {
-          headers: {
-            'Content-Type': 'application/octet-stream',
-            accept: 'application/json',
-            accessKey: process.env.BUNNY_PUBLIC_STORAGE_ACCESS_KEY,
-          },
-        },
-      ),
+    await this.putObject(
+      process.env.STORAGE_PUBLIC_BUCKET,
+      filekey,
+      file.buffer,
     );
 
-    return `${process.env.BUNNY_PUBLIC_CDN}/${filekey}`;
+    return this.getPublicUrl(filekey);
   }
 
   async upload(file: MemoryStoredFile) {
@@ -147,156 +136,97 @@ export class BunnyService {
 
     const filekey = `${v4()}.${file.extension}`;
 
-    await firstValueFrom(
-      this.httpService.put(
-        `${process.env.BUNNY_EDGE_STORAGE_CDN}/${process.env.BUNNY_STORAGE_BUCKET}/${filekey}`,
-        file.buffer,
-        {
-          headers: {
-            'Content-Type': 'application/octet-stream',
-            accept: 'application/json',
-            accessKey: process.env.BUNNY_EDGE_STORAGE_ACCESS_KEY,
-          },
-        },
-      ),
-    );
+    await this.putObject(process.env.STORAGE_BUCKET, filekey, file.buffer);
 
     return filekey;
   }
 
-  getPresignedFile(filename: string, query: string = '') {
-    return this.signUrl(
-      `${process.env.BUNNY_STORAGE_CDN}/${filename}${query}`,
-      `${process.env.BUNNY_CDN_ACCESS_KEY}`,
-      3600,
-      null,
-      false,
-      `/${filename}`,
-      null,
-      null,
+  private getPublicUrl(filekey: string) {
+    return `${process.env.STORAGE_PUBLIC_URL}/${process.env.STORAGE_PUBLIC_BUCKET}/${this.normalizeKey(filekey)}`;
+  }
+
+  //query used to carry Bunny optimizer params (width) and cache busters (updatedAt)
+  //S3 cannot resize and extra params would invalidate the signature, so it is ignored
+  //signing is done by hand (SigV4 query presign) because callers expect a sync result
+  getPresignedFile(filename: string, _query: string = '') {
+    const publicUrl = new URL(Utils.env('STORAGE_PUBLIC_URL'));
+    const region = this.getRegion();
+    const accessKey = process.env.STORAGE_ACCESS_KEY;
+
+    const amzDate = new Date().toISOString().replace(/[:-]|\.\d{3}/g, '');
+    const dateStamp = amzDate.slice(0, 8);
+    const scope = `${dateStamp}/${region}/s3/aws4_request`;
+
+    const encodedKey = this.normalizeKey(filename)
+      .split('/')
+      .map((segment) => this.encodeRfc3986(segment))
+      .join('/');
+    const basePath = publicUrl.pathname.replace(/\/+$/, '');
+    const canonicalUri = `${basePath}/${process.env.STORAGE_BUCKET}/${encodedKey}`;
+
+    const params: Record<string, string> = {
+      'X-Amz-Algorithm': 'AWS4-HMAC-SHA256',
+      'X-Amz-Credential': `${accessKey}/${scope}`,
+      'X-Amz-Date': amzDate,
+      'X-Amz-Expires': '3600',
+      'X-Amz-SignedHeaders': 'host',
+    };
+    const canonicalQuery = Object.keys(params)
+      .sort()
+      .map(
+        (key) =>
+          `${this.encodeRfc3986(key)}=${this.encodeRfc3986(params[key])}`,
+      )
+      .join('&');
+
+    const canonicalRequest = [
+      'GET',
+      canonicalUri,
+      canonicalQuery,
+      `host:${publicUrl.host}\n`,
+      'host',
+      'UNSIGNED-PAYLOAD',
+    ].join('\n');
+
+    const stringToSign = [
+      'AWS4-HMAC-SHA256',
+      amzDate,
+      scope,
+      crypto.createHash('sha256').update(canonicalRequest).digest('hex'),
+    ].join('\n');
+
+    const hmac = (key: crypto.BinaryLike, data: string) =>
+      crypto.createHmac('sha256', key).update(data).digest();
+
+    const signingKey = hmac(
+      hmac(
+        hmac(hmac(`AWS4${process.env.STORAGE_SECRET_KEY}`, dateStamp), region),
+        's3',
+      ),
+      'aws4_request',
+    );
+    const signature = crypto
+      .createHmac('sha256', signingKey)
+      .update(stringToSign)
+      .digest('hex');
+
+    return `${publicUrl.origin}${canonicalUri}?${canonicalQuery}&X-Amz-Signature=${signature}`;
+  }
+
+  private encodeRfc3986(value: string) {
+    return encodeURIComponent(value).replace(
+      /[!'()*]/g,
+      (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`,
     );
   }
 
   async bunnyFileList() {
-    const url = `${process.env.BUNNY_STORAGE_CDN}/${process.env.BUNNY_STORAGE_BUCKET}/`;
-
-    console.log(this.getAccessHeader());
-    console.log(process.env.BUNNY_STORAGE_ACCESS_KEY);
-    console.log(url);
-    const response = await firstValueFrom(
-      this.httpService.get(url, {
-        headers: {
-          'Content-Type': 'application/json',
-          accessKey: process.env.BUNNY_STORAGE_ACCESS_KEY,
-        },
+    const response = await this.getS3().send(
+      new ListObjectsV2Command({
+        Bucket: process.env.STORAGE_BUCKET,
       }),
     );
 
-    return response.data;
-  }
-
-  private addCountries(url: string, a: string, b: string) {
-    let tempUrl = url;
-    if (a != null) {
-      const tempUrlOne = new URL(tempUrl);
-      tempUrl += (tempUrlOne.search == '' ? '?' : '&') + 'token_countries=' + a;
-    }
-    if (b != null) {
-      const tempUrlTwo = new URL(tempUrl);
-      tempUrl +=
-        (tempUrlTwo.search == '' ? '?' : '&') + 'token_countries_blocked=' + b;
-    }
-    return tempUrl;
-  }
-
-  private signUrl(
-    url: string,
-    securityKey: string,
-    expirationTime = 3600,
-    userIp: string,
-    isDirectory = false,
-    pathAllowed: string,
-    countriesAllowed: string,
-    countriesBlocked: string,
-  ) {
-    /*
-		url: CDN URL w/o the trailing '/' - exp. http://test.b-cdn.net/file.png
-		securityKey: Security token found in your pull zone
-		expirationTime: Authentication validity (default. 86400 sec/24 hrs)
-		userIp: Optional parameter if you have the User IP feature enabled
-		isDirectory: Optional parameter - "true" returns a URL separated by forward slashes (exp. (domain)/bcdn_token=...)
-		pathAllowed: Directory to authenticate (exp. /path/to/images)
-		countriesAllowed: List of countries allowed (exp. CA, US, TH)
-		countriesBlocked: List of countries blocked (exp. CA, US, TH)
-	*/
-    let parameterData = '',
-      parameterDataUrl = '',
-      signaturePath = '',
-      hashableBase = '',
-      token = '';
-
-    const expires = Math.floor(new Date().getTime() / 1000) + expirationTime;
-
-    url = this.addCountries(url, countriesAllowed, countriesBlocked);
-    const parsedUrl = new URL(url);
-    const parameters = new URL(url).searchParams;
-    if (pathAllowed != '') {
-      signaturePath = pathAllowed;
-      parameters.set('token_path', signaturePath);
-    } else {
-      signaturePath = decodeURIComponent(parsedUrl.pathname);
-    }
-    parameters.sort();
-    if (Array.from(parameters).length > 0) {
-      parameters.forEach(function (value, key) {
-        if (value == '') {
-          return;
-        }
-        if (parameterData.length > 0) {
-          parameterData += '&';
-        }
-        parameterData += key + '=' + value;
-        parameterDataUrl += '&' + key + '=' + querystring.escape(value);
-      });
-    }
-    hashableBase =
-      securityKey +
-      signaturePath +
-      expires +
-      (userIp != null ? userIp : '') +
-      parameterData;
-    token = Buffer.from(
-      crypto.createHash('sha256').update(hashableBase).digest(),
-    ).toString('base64');
-    token = token
-      .replace(/\n/g, '')
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=/g, '');
-    if (isDirectory) {
-      return (
-        parsedUrl.protocol +
-        '//' +
-        parsedUrl.host +
-        '/bcdn_token=' +
-        token +
-        parameterDataUrl +
-        '&expires=' +
-        expires +
-        parsedUrl.pathname
-      );
-    } else {
-      return (
-        parsedUrl.protocol +
-        '//' +
-        parsedUrl.host +
-        parsedUrl.pathname +
-        '?token=' +
-        token +
-        parameterDataUrl +
-        '&expires=' +
-        expires
-      );
-    }
+    return response.Contents ?? [];
   }
 }

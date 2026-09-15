@@ -23,7 +23,7 @@ export class BookingConsumer extends WorkerHost {
     super();
   }
 
-  async process(job: Job): Promise<any> {
+  async process(job: Job<unknown>): Promise<void> {
     switch (job.name) {
       default:
         this.logger.error(`unknow job name: ${job.name}`);

@@ -6,12 +6,12 @@ export class NewsfeedViewPermissionCreateDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  userId: string;
+  userId!: string;
 
   @ApiProperty({
     enum: ViewPermission,
   })
   @IsNotEmpty()
   @IsEnum(ViewPermission)
-  permission: ViewPermission;
+  permission!: ViewPermission;
 }

@@ -4,26 +4,26 @@ import { Exclude } from 'class-transformer';
 
 export class BlogDto implements Blog {
   @ApiProperty()
-  id: string;
+  id!: string;
 
   @ApiProperty()
-  title: string;
+  title!: string;
 
   @Exclude()
-  userId: string;
+  userId!: string;
 
   @ApiProperty()
-  status: $Enums.BlogStatus;
+  status!: $Enums.BlogStatus;
 
   @ApiProperty()
-  content: string;
+  content!: string;
 
   @ApiProperty()
-  thumbnail: string;
+  thumbnail!: string;
 
   @ApiProperty()
-  createdAt: Date;
+  createdAt!: Date;
 
   @ApiProperty()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

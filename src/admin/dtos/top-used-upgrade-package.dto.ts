@@ -6,9 +6,9 @@ import { UpgradePackageDto } from 'src/upgrade-package/dtos/upgrade-package.dto'
 export class TopUsedUpgradePackageDto {
   @ApiProperty()
   @IsNumber()
-  totalUsed: number;
+  totalUsed!: number;
 
   @ApiProperty()
   @Type(() => UpgradePackageDto)
-  upgradePackageDto: UpgradePackageDto;
+  upgradePackageDto!: UpgradePackageDto;
 }

@@ -17,7 +17,7 @@ export class BookingBillItemUpdateDto implements BookingBillItemCreateDto {
   @IsOptional()
   @IsString()
   @IsNotEmpty()
-  title: string;
+  title!: string;
 
   @ApiProperty({
     required: false,
@@ -25,7 +25,7 @@ export class BookingBillItemUpdateDto implements BookingBillItemCreateDto {
   @IsOptional()
   @IsString()
   @IsNotEmpty()
-  description: string;
+  description!: string;
 
   @ApiProperty({
     required: false,
@@ -33,7 +33,7 @@ export class BookingBillItemUpdateDto implements BookingBillItemCreateDto {
   @IsOptional()
   @IsNumber()
   @Min(1000)
-  price: number;
+  price!: number;
 
   @ApiProperty({
     required: false,
@@ -41,5 +41,5 @@ export class BookingBillItemUpdateDto implements BookingBillItemCreateDto {
   })
   @IsOptional()
   @IsEnum(BookingBillItemType)
-  type: BookingBillItemType;
+  type!: BookingBillItemType;
 }

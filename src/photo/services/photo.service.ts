@@ -1,5 +1,11 @@
 import { HttpException, Inject, Injectable, Logger } from '@nestjs/common';
-import { Photo, PhotoVisibility, PrismaPromise } from '@prisma/client';
+import {
+  Photo,
+  PhotoTag,
+  PhotoVisibility,
+  Prisma,
+  PrismaPromise,
+} from '@prisma/client';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoIsPrivatedException } from '../exceptions/photo-is-private.exception';
 import { PhotoUploadRequestDto } from '../dtos/rest/photo-upload.request';
@@ -51,7 +57,6 @@ import { DownloadTemporaryPhotoDto } from '../dtos/rest/download-temporary-photo
 import { TemporaryPhotoDto } from '../dtos/temporary-photo.dto';
 import { PhotoBannedException } from '../exceptions/photo-banned.exception';
 import { Sharp } from 'sharp';
-import { statSync } from 'fs';
 
 @Injectable()
 export class PhotoService {
@@ -83,7 +88,7 @@ export class PhotoService {
   ): Promise<Buffer> {
     const photo = await this.photoRepository.findUniqueOrThrow(id);
 
-    let sharp: Sharp = null;
+    let sharp: Sharp;
 
     if (photo.status === 'PENDING') {
       sharp = await this.photoProcessService.sharpInitFromFilePath(
@@ -385,7 +390,9 @@ export class PhotoService {
 
     const exif = photo.exif;
 
-    const prismaPromises: PrismaPromise<any>[] = [];
+    const prismaPromises: PrismaPromise<
+      Photo | PhotoTag | Prisma.BatchPayload
+    >[] = [];
 
     if (photo.photographerId !== userId) {
       throw new NotBelongPhotoException();
@@ -413,6 +420,10 @@ export class PhotoService {
     }
 
     if (photoUpdateDto.gps) {
+      if (typeof exif !== 'object' || exif === null || Array.isArray(exif)) {
+        throw new ExifNotFoundException();
+      }
+
       exif['latitude'] = photoUpdateDto.gps.latitude;
       exif['longitude'] = photoUpdateDto.gps.longitude;
     }
@@ -463,7 +474,7 @@ export class PhotoService {
         description: photoUpdateDto.description,
         photoType: photoUpdateDto.photoType,
         visibility: photoUpdateDto.visibility,
-        exif,
+        exif: exif ?? Prisma.JsonNull,
       }),
     );
 
@@ -471,7 +482,8 @@ export class PhotoService {
       .extendedClient()
       .$transaction(prismaPromises);
 
-    const updatedPhoto = prismaResults[prismaResults.length - 1];
+    //the photo update query is always pushed last
+    const updatedPhoto = prismaResults[prismaResults.length - 1] as Photo;
 
     return await this.signPhoto(updatedPhoto);
   }
@@ -533,7 +545,7 @@ export class PhotoService {
   }
 
   async findAll(userId: string, filter: FindAllPhotoFilterDto) {
-    let idFilterByGPS = [];
+    let idFilterByGPS: string[] = [];
     let count = 0;
 
     if (
@@ -548,7 +560,7 @@ export class PhotoService {
         filter.distance,
       );
 
-      count = countByGPS[0]['count'];
+      count = Number(countByGPS[0].count);
 
       const idWithDistances = await this.photoRepository.findAllIdsByGPS(
         filter.longitude,
@@ -690,6 +702,10 @@ export class PhotoService {
         photoUploadDto.file.buffer,
       );
 
+      if (metadata.width === undefined || metadata.height === undefined) {
+        throw new FileIsNotValidException();
+      }
+
       const photo = await this.photoRepository.create({
         photographer: {
           connect: {
@@ -729,7 +745,9 @@ export class PhotoService {
         throw e;
       }
 
-      throw new UploadPhotoFailedException(e);
+      throw new UploadPhotoFailedException(
+        typeof e === 'object' && e !== null ? e : { message: String(e) },
+      );
     }
   }
 
@@ -758,7 +776,7 @@ export class PhotoService {
       throw new FileIsNotValidException();
     }
 
-    let exifRaw = await this.photoProcessService.parseExifFromFilePath(
+    const exifRaw = await this.photoProcessService.parseExifFromFilePath(
       photoUploadDto.file.path,
     );
 
@@ -805,6 +823,10 @@ export class PhotoService {
     const normalizedTitle = Utils.normalizeText(
       photoUploadDto.file.originalName,
     );
+
+    if (metadata.width === undefined || metadata.height === undefined) {
+      throw new FileIsNotValidException();
+    }
 
     const photo = await this.photoRepository.create({
       photographer: {
@@ -879,7 +901,7 @@ export class PhotoService {
 
     try {
       let performance = Date.now();
-      let exifRaw = await this.photoProcessService.parseExifFromBuffer(
+      const exifRaw = await this.photoProcessService.parseExifFromBuffer(
         photoUploadDto.file.buffer,
       );
 
@@ -927,6 +949,10 @@ export class PhotoService {
       const normalizedTitle = Utils.normalizeText(
         photoUploadDto.file.originalName,
       );
+
+      if (metadata.width === undefined || metadata.height === undefined) {
+        throw new FileIsNotValidException();
+      }
 
       const photo = await this.photoRepository.create({
         photographer: {
@@ -976,7 +1002,9 @@ export class PhotoService {
         throw e;
       }
 
-      throw new UploadPhotoFailedException(e);
+      throw new UploadPhotoFailedException(
+        typeof e === 'object' && e !== null ? e : { message: String(e) },
+      );
     }
   }
 }

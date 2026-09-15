@@ -8,68 +8,68 @@ import { PhotoSellDto } from './photo-sell.dto';
 
 export class PhotoDto {
   @ApiProperty()
-  id: string;
+  id!: string;
 
   @ApiProperty()
-  blurHash: string;
+  blurHash!: string;
 
   @ApiProperty({})
-  title: string;
+  title!: string;
 
   @ApiProperty({})
-  watermark: boolean;
+  watermark!: boolean;
 
   @ApiProperty()
-  viewCount: number;
+  viewCount!: number;
 
   @ApiProperty({})
-  exif: JsonValue;
+  exif!: JsonValue;
 
   @ApiProperty({})
-  description: string;
+  description!: string;
 
   @Exclude()
-  originalPhotoUrl: string;
+  originalPhotoUrl!: string;
 
   @Exclude()
-  watermarkPhotoUrl: string;
+  watermarkPhotoUrl!: string;
 
   @Exclude()
-  thumbnailPhotoUrl: string;
+  thumbnailPhotoUrl!: string;
 
   @Exclude()
-  deletedAt: Date;
+  deletedAt!: Date;
 
   @Exclude()
-  bookingId: string;
+  bookingId!: string;
 
   @Exclude()
-  photographerId: string;
+  photographerId!: string;
 
   @ApiProperty()
-  width: number;
+  width!: number;
 
   @ApiProperty()
-  height: number;
+  height!: number;
 
   @ApiProperty({})
-  photoType: string;
+  photoType!: string;
 
   @ApiProperty({})
-  visibility: string;
+  visibility!: string;
 
   @ApiProperty({})
-  status: string;
+  status!: string;
 
   @ApiProperty({})
-  createdAt: Date;
+  createdAt!: Date;
 
   @ApiProperty({})
-  updatedAt: Date;
+  updatedAt!: Date;
 
   @ApiProperty({})
   @Type(() => PhotographerDTO)
-  photographer: PhotographerDTO;
+  photographer!: PhotographerDTO;
 
   @ApiProperty({
     required: false,
@@ -77,7 +77,7 @@ export class PhotoDto {
     type: PhotoSellDto,
   })
   @Type(() => PhotoSellDto)
-  photoSellings: PhotoSellDto[];
+  photoSellings!: PhotoSellDto[];
 
   @ApiProperty({
     required: false,
@@ -85,7 +85,7 @@ export class PhotoDto {
     type: PhotoTagDto,
   })
   @Type(() => PhotoTagDto)
-  photoTags: PhotoTagDto[];
+  photoTags!: PhotoTagDto[];
 
   @ApiProperty({
     required: false,
@@ -93,5 +93,5 @@ export class PhotoDto {
     type: PhotoCategoryDto,
   })
   @Type(() => PhotoCategoryDto)
-  categories: PhotoCategoryDto[];
+  categories!: PhotoCategoryDto[];
 }

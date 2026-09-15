@@ -3,8 +3,8 @@ import { MakerDto } from './maker.dto';
 
 export class MakerWithUserCountDto {
   @ApiProperty()
-  maker: MakerDto;
+  maker!: MakerDto;
 
   @ApiProperty()
-  userCount: number;
+  userCount!: number;
 }

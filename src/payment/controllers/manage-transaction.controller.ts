@@ -13,7 +13,6 @@ import {
   ApiConsumes,
   ApiOkResponse,
   ApiOperation,
-  ApiProperty,
   ApiTags,
 } from '@nestjs/swagger';
 import { AuthGuard, Roles } from 'nest-keycloak-connect';
@@ -26,7 +25,7 @@ import { FindAllTransactionDto } from 'src/payment/dtos/rest/find-all-transactio
 import { TransactionUpdateDto } from '../dtos/transaction-update.dto';
 import { Request } from 'express';
 import { AcceptWithdrawalTransactionDto } from '../dtos/rest/accept-withdrawal-transaction.dto';
-import { FormDataRequest, NestjsFormDataModule } from 'nestjs-form-data';
+import { FormDataRequest } from 'nestjs-form-data';
 import { DenyWithdrawalTransactionDto } from '../dtos/rest/deny-withdrawal-transaction.dto';
 
 @Controller('manager/transaction')

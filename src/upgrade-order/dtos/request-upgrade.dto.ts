@@ -7,7 +7,7 @@ export class RequestUpgradeDto {
     description: 'upgrade package ID',
   })
   @IsString()
-  upgradePackageId: string;
+  upgradePackageId!: string;
 
   @ApiProperty({
     description: 'number of month this order expired',
@@ -15,12 +15,12 @@ export class RequestUpgradeDto {
   @IsNumber()
   @Min(1)
   @Max(12)
-  totalMonths: number;
+  totalMonths!: number;
 
   @ApiProperty({
     description: 'payment method',
     enum: PaymentMethod,
   })
   @IsEnum(PaymentMethod)
-  paymentMethod: PaymentMethod;
+  paymentMethod!: PaymentMethod;
 }

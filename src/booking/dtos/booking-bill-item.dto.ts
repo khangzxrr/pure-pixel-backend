@@ -5,23 +5,23 @@ import { BookingBillItemType } from '@prisma/client';
 
 export class BookingBillItemDto extends BookingBillItemCreateDto {
   @ApiProperty()
-  id: string;
+  id!: string;
 
   @ApiProperty()
-  type: BookingBillItemType;
+  type!: BookingBillItemType;
 
   @ApiProperty()
-  title: string;
+  title!: string;
 
   @ApiProperty()
-  description: string;
+  description!: string;
 
   @ApiProperty()
-  createdAt: Date;
+  createdAt!: Date;
 
   @ApiProperty()
-  updatedAt: Date;
+  updatedAt!: Date;
 
   @Exclude()
-  bookingId: string;
+  bookingId!: string;
 }

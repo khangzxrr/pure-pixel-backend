@@ -1,7 +1,34 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { UserRepository } from 'src/database/repositories/user.repository';
 import { NotificationService } from 'src/notification/services/notification.service';
+import { Utils } from 'src/infrastructure/utils/utils';
 import { StreamChat } from 'stream-chat';
+
+export interface StreamChatChannelMember {
+  user_id: string;
+}
+
+//fields of a getstream message.new webhook that are read here
+export interface StreamChatNewMessagePayload {
+  message: {
+    user: {
+      id: string;
+    };
+  };
+  channel: {
+    members: StreamChatChannelMember[];
+  };
+}
+
+export type StreamChatWebhookEvent = {
+  type?: string;
+} & Partial<StreamChatNewMessagePayload>;
+
+const isNewMessageEvent = (
+  data: StreamChatWebhookEvent,
+): data is StreamChatWebhookEvent & StreamChatNewMessagePayload =>
+  data.type === 'message.new';
+
 @Injectable()
 export class ChatService {
   private readonly logger = new Logger(ChatService.name);
@@ -13,27 +40,32 @@ export class ChatService {
 
   private getStream() {
     const client = StreamChat.getInstance(
-      process.env.STREAM_ACCESS_KEY,
+      Utils.env('STREAM_ACCESS_KEY'),
       process.env.STREAM_SECRET_KEY,
     );
 
     return client;
   }
 
-  async processWebhook(data: any) {
+  async processWebhook(data: StreamChatWebhookEvent) {
     console.log(`process webhook`);
-    if (data.type === 'message.new') {
+    if (isNewMessageEvent(data)) {
       console.log(`process message.new`);
       await this.notifyToOtherUser(data);
     }
   }
 
-  async notifyToOtherUser(data) {
+  async notifyToOtherUser(data: StreamChatNewMessagePayload) {
     const senderId = data?.message?.user?.id;
-    const members: any[] = data.channel.members;
+    const members: StreamChatChannelMember[] = data.channel.members;
     const userOfSender = await this.userRepository.findUnique(senderId);
-    for (let member of members) {
+    for (const member of members) {
       if (member?.user_id !== senderId) {
+        //payload needs the sender id, this used to fail here with a TypeError
+        if (!userOfSender) {
+          throw new Error(`sender ${senderId} of chat message not found`);
+        }
+
         this.notificationService.addNotificationToQueue({
           type: 'BOTH_INAPP_EMAIL',
           title: 'Có tin nhắn mới',
@@ -70,6 +102,11 @@ export class ChatService {
   }
 
   async upsertUser(userId: string, name: string, avatar: string) {
+    //stream chat is optional, skip when it is not configured
+    if (!process.env.STREAM_ACCESS_KEY) {
+      return null;
+    }
+
     return await this.getStream().upsertUser({
       id: userId,
       name: name,

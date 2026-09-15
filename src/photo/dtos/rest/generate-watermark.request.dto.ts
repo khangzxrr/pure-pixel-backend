@@ -6,5 +6,5 @@ export class GenerateWatermarkRequestDto {
   @IsString()
   @IsNotEmpty()
   @MaxLength(20)
-  text: string;
+  text!: string;
 }

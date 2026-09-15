@@ -6,13 +6,13 @@ import { UpgradePackageHistoryDto } from 'src/upgrade-package/dtos/upgrade-packa
 
 export class RequestUpgradeOrderResponseDto extends PaymentUrlDto {
   @ApiProperty()
-  id: string;
+  id!: string;
 
   @ApiProperty()
   @Type(() => ServiceTransactionDto)
-  serviceTransaction: ServiceTransactionDto;
+  serviceTransaction!: ServiceTransactionDto;
 
   @ApiProperty()
   @Type(() => UpgradePackageHistoryDto)
-  upgradePackageHistory: UpgradePackageHistoryDto;
+  upgradePackageHistory!: UpgradePackageHistoryDto;
 }

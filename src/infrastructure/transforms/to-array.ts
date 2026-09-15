@@ -1,6 +1,6 @@
 import { Transform, TransformFnParams } from 'class-transformer';
 
-export function ToArray(): (target, key) => void {
+export function ToArray(): PropertyDecorator {
   return Transform((params: TransformFnParams) => {
     const { value } = params;
 

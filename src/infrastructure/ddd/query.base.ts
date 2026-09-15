@@ -1,4 +1,4 @@
-export abstract class QueryBase { }
+export abstract class QueryBase {}
 
 export abstract class PaginatedQueryBase extends QueryBase {
   limit: number;

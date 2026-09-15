@@ -15,5 +15,5 @@ export class PhotoshootPackageShowcaseUpdateDto {
     each: true,
   })
   @HasMimeType(['image/*'])
-  showcase: MemoryStoredFile;
+  showcase!: MemoryStoredFile;
 }

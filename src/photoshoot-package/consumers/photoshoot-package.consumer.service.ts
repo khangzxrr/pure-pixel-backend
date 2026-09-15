@@ -5,7 +5,22 @@ import { PhotoshootPackageConstant } from '../constants/photoshoot-package.const
 import { Job, Queue } from 'bullmq';
 import { v4 } from 'uuid';
 import { PhotoProcessService } from 'src/photo/services/photo-process.service';
-import { rm, rmSync } from 'fs';
+import { rmSync } from 'fs';
+import { PhotoshootPackageShowcasePhoto } from '@prisma/client';
+
+export interface UploadToCloudJobData {
+  photoshootPackageId: string;
+}
+
+export interface DeleteTemporaryPhotoJobData {
+  path: string;
+}
+
+//UPLOAD_TO_CLOUD: UploadToCloudJobData, DELETE_TEMPORARY_PHOTO: DeleteTemporaryPhotoJobData
+//the job name constants are typed as string, so each case narrows the data explicitly
+export type PhotoshootPackageJobData =
+  | UploadToCloudJobData
+  | DeleteTemporaryPhotoJobData;
 
 @Processor(PhotoshootPackageConstant.PHOTOSHOOT_PACKAGE_QUEUE, {
   concurrency: 6,
@@ -23,14 +38,21 @@ export class PhotoshootPackageConsumerService extends WorkerHost {
     super();
   }
 
-  async process(job: Job, token?: string): Promise<any> {
+  async process(
+    job: Job<PhotoshootPackageJobData>,
+    _token?: string,
+  ): Promise<void> {
     try {
       switch (job.name) {
         case PhotoshootPackageConstant.UPLOAD_TO_CLOUD:
-          await this.uploadToCloud(job.data.photoshootPackageId);
+          await this.uploadToCloud(
+            (job.data as UploadToCloudJobData).photoshootPackageId,
+          );
           break;
         case PhotoshootPackageConstant.DELETE_TEMPORARY_PHOTO:
-          this.deleteFileSystemPhoto(job.data.path);
+          this.deleteFileSystemPhoto(
+            (job.data as DeleteTemporaryPhotoJobData).path,
+          );
           break;
         default:
           break;
@@ -61,9 +83,11 @@ export class PhotoshootPackageConsumerService extends WorkerHost {
     }
 
     temporaryPhotoPaths.push(photoshootPackage.thumbnail);
-    photoshootPackage.showcases.forEach((showcase) => {
-      temporaryPhotoPaths.push(showcase.photoUrl);
-    });
+    photoshootPackage.showcases.forEach(
+      (showcase: PhotoshootPackageShowcasePhoto) => {
+        temporaryPhotoPaths.push(showcase.photoUrl);
+      },
+    );
 
     const thumbnailKey = `photoshoot_thumbnail/${v4()}.webp`;
 
@@ -78,7 +102,7 @@ export class PhotoshootPackageConsumerService extends WorkerHost {
     );
 
     const showcaseKeysPromises = photoshootPackage.showcases.map(
-      async (showcase) => {
+      async (showcase: PhotoshootPackageShowcasePhoto) => {
         const showcaseKey = `photoshoot_showcase/${v4()}.webp`;
 
         const showcaseSharp =

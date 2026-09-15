@@ -1,7 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
 import { NotificationConstant } from 'src/notification/constants/notification.constant';
-import { NotificationCreateDto } from 'src/notification/dtos/rest/notification-create.dto';
 import { PhotoVoteDto } from '../dtos/photo-vote.dto';
 import { PhotoDto } from '../dtos/photo.dto';
 import { PhotoVoteRequestDto } from '../dtos/rest/photo-vote.request.dto';
@@ -32,7 +31,7 @@ export class PhotoVoteService {
     photoId: string,
     photoVoteRequestDto: PhotoVoteRequestDto,
   ) {
-    const photo = await this.photoRepository.findUniqueOrThrow(photoId);
+    await this.photoRepository.findUniqueOrThrow(photoId);
 
     const vote = await this.photoVoteRepository.vote(
       userId,

@@ -2,8 +2,8 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class PhotoCategoryDto {
   @ApiProperty()
-  id: string;
+  id!: string;
 
   @ApiProperty()
-  name: string;
+  name!: string;
 }

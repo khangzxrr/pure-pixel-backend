@@ -58,7 +58,7 @@ export class PhotoshootPackageService {
       throw new RunOutOfPackageQuotaException();
     }
 
-    const photoshootPackageCreateQuery: PrismaPromise<any> =
+    const photoshootPackageCreateQuery: PrismaPromise<PhotoshootPackageDetail> =
       this.photoshootRepository.create({
         user: {
           connect: {
@@ -214,6 +214,10 @@ export class PhotoshootPackageService {
         showcaseId,
       );
 
+    if (showcase.photoshootPackageId !== photoshootPackage.id) {
+      throw new PhotoshootPackageNotBelongException();
+    }
+
     await this.bunnyService.delete(showcase.photoUrl);
     const key = await this.bunnyService.upload(updateShowcaseDto.showcase);
 
@@ -249,6 +253,10 @@ export class PhotoshootPackageService {
         showcaseId,
       );
 
+    if (showcase.photoshootPackageId !== photoshootPackage.id) {
+      throw new PhotoshootPackageNotBelongException();
+    }
+
     await this.bunnyService.delete(showcase.photoUrl);
 
     await this.photoshootPackageShowcaseRepository.deleteById(showcase.id);
@@ -262,6 +270,10 @@ export class PhotoshootPackageService {
   ) {
     const photoshootPackage =
       await this.photoshootRepository.findUniqueOrThrow(id);
+
+    if (photoshootPackage.status === 'DISABLED') {
+      throw new PhotoshootPackageDisabledException();
+    }
 
     if (photoshootPackage.userId !== userId) {
       throw new PhotoshootPackageNotBelongException();
@@ -400,7 +412,7 @@ export class PhotoshootPackageService {
 
     const showcaseKeys = await Promise.all(showcaseKeysPromises);
 
-    const photoshootPackageCreateQuery: PrismaPromise<any> =
+    const photoshootPackageCreateQuery: PrismaPromise<PhotoshootPackageDetail> =
       this.photoshootRepository.create({
         user: {
           connect: {

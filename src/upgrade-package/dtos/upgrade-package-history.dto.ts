@@ -4,37 +4,37 @@ import { Type } from 'class-transformer';
 
 export class UpgradePackageHistoryDto {
   @ApiProperty()
-  id: string;
+  id!: string;
 
   @ApiProperty()
-  createdAt: Date;
+  createdAt!: Date;
 
   @ApiProperty()
-  updatedAt: Date;
+  updatedAt!: Date;
 
   @ApiProperty()
-  name: string;
+  name!: string;
 
   @ApiProperty()
   @Type(() => Number)
-  price: number;
+  price!: number;
 
   @ApiProperty()
-  minOrderMonth: number;
+  minOrderMonth!: number;
 
   @ApiProperty()
-  maxPhotoQuota: number;
+  maxPhotoQuota!: number;
 
   @ApiProperty()
-  maxPackageCount: number;
+  maxPackageCount!: number;
 
   @ApiProperty()
-  summary: number;
+  summary!: number;
 
   @ApiProperty()
-  descriptions: string[];
+  descriptions!: string[];
 
   @ApiProperty()
   @Type(() => UpgradePackageDto)
-  originalUpgradePackage: UpgradePackageDto;
+  originalUpgradePackage!: UpgradePackageDto;
 }

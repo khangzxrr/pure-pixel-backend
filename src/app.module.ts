@@ -27,6 +27,7 @@ import { AdminModule } from './admin/admin.module';
 import { BookmarkModule } from './bookmark/bookmark.module';
 import { NewsfeedModule } from './newsfeed/newsfeed.module';
 import { TemporaryFileModule } from './temporary-file/temporary-file.module';
+import { ChangeLogModule } from './change-log/change-log.module';
 
 @Module({
   providers: [
@@ -37,7 +38,8 @@ import { TemporaryFileModule } from './temporary-file/temporary-file.module';
   ],
   exports: [],
   imports: [
-    ScheduleModule.forRoot(),
+    //with several replicas only one instance should run @Cron jobs, the others set ENABLE_CRON=false
+    ...(process.env.ENABLE_CRON === 'false' ? [] : [ScheduleModule.forRoot()]),
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
@@ -64,6 +66,7 @@ import { TemporaryFileModule } from './temporary-file/temporary-file.module';
     BookmarkModule,
     NewsfeedModule,
     TemporaryFileModule,
+    ChangeLogModule,
   ],
   controllers: [AppController],
 })

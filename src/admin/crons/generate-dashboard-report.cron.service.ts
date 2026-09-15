@@ -33,6 +33,18 @@ import { BookingBillItemRepository } from 'src/database/repositories/booking-bil
 
 import { SepayService } from 'src/payment/services/sepay.service';
 import { BalanceDto } from '../dtos/balance.dto';
+import { Prisma } from '@prisma/client';
+import { PhotoshootPackage } from 'src/database/types/photoshoot-package';
+import { PhotographerNotFoundException } from 'src/photographer/exceptions/photographer-not-found.exception';
+
+// repository aggregate() methods are not generic, so the precise _sum shape is lost
+type BillItemPriceSum = Prisma.GetBookingBillItemAggregateType<{
+  _sum: { price: true };
+}>;
+type TransactionAmountSum = Prisma.GetTransactionAggregateType<{
+  _sum: { amount: true };
+}>;
+type PhotoSizeSum = Prisma.GetPhotoAggregateType<{ _sum: { size: true } }>;
 
 @Injectable()
 export class GenerateDashboardReportService {
@@ -91,7 +103,7 @@ export class GenerateDashboardReportService {
 
     const topSoldPhotos = await Promise.all(topSoldPhotoPromises);
 
-    const topPhotoshootPackageEntities: any[] =
+    const topPhotoshootPackageEntities: PhotoshootPackage[] =
       await this.photoshootPackageRepository.findAllIgnoreSoftDelete(
         {
           userId: user.id,
@@ -145,7 +157,7 @@ export class GenerateDashboardReportService {
     );
     const photoSellRevenue = summedPhotoSellRevenues.toNumber();
 
-    const increaseBillItem = await this.bookingBillItemRepository.aggregate({
+    const increaseBillItem = (await this.bookingBillItemRepository.aggregate({
       where: {
         type: 'INCREASE',
         booking: {
@@ -162,9 +174,9 @@ export class GenerateDashboardReportService {
       _sum: {
         price: true,
       },
-    });
+    })) as BillItemPriceSum;
 
-    const decreaseBillItem = await this.bookingBillItemRepository.aggregate({
+    const decreaseBillItem = (await this.bookingBillItemRepository.aggregate({
       where: {
         type: 'DECREASE',
         booking: {
@@ -181,7 +193,7 @@ export class GenerateDashboardReportService {
       _sum: {
         price: true,
       },
-    });
+    })) as BillItemPriceSum;
 
     let photoshootPackageRevenue = new Decimal(0);
 
@@ -213,9 +225,13 @@ export class GenerateDashboardReportService {
       -1,
     );
 
-    const topSellers: TopSellerDto[] = [];
+    const topSellers: Omit<TopSellerDto, 'detail'>[] = [];
 
-    for (let photographer of photographers) {
+    for (const photographer of photographers) {
+      if (!photographer.id) {
+        throw new PhotographerNotFoundException();
+      }
+
       const totalPhotoSale = await this.photoBuyRepository.count({
         createdAt: {
           lte: dashboardRequestDto.toDate,
@@ -238,7 +254,6 @@ export class GenerateDashboardReportService {
       topSellers.push({
         id: photographer.id,
         totalPhotoSale,
-        detail: null,
       });
     }
 
@@ -247,12 +262,16 @@ export class GenerateDashboardReportService {
       .filter((t) => t.totalPhotoSale !== 0)
       .slice(0, 10);
 
-    const mapPromises = sortedTopSellers.map(async (seller) => {
-      const user = await this.userRepository.findUniqueOrThrow(seller.id);
-      seller.detail = plainToInstance(UserDto, user);
+    const mapPromises = sortedTopSellers.map(
+      async (seller): Promise<TopSellerDto> => {
+        const user = await this.userRepository.findUniqueOrThrow(seller.id);
 
-      return seller;
-    });
+        return {
+          ...seller,
+          detail: plainToInstance(UserDto, user),
+        };
+      },
+    );
 
     const dtos = await Promise.all(mapPromises);
 
@@ -268,7 +287,7 @@ export class GenerateDashboardReportService {
         successTransactions,
       );
 
-    const withdrawalTransactions = await this.transactionRepository.aggregate({
+    const withdrawalTransactions = (await this.transactionRepository.aggregate({
       _sum: {
         amount: true,
       },
@@ -276,7 +295,7 @@ export class GenerateDashboardReportService {
         type: 'WITHDRAWAL',
         status: 'SUCCESS',
       },
-    });
+    })) as TransactionAmountSum;
 
     return plainToInstance(BalanceDto, {
       totalBalance: totalBalance.toNumber(),
@@ -298,8 +317,9 @@ export class GenerateDashboardReportService {
       -1,
     );
 
-    let totalCustomer = customers.filter(
+    const totalCustomer = customers.filter(
       (c) =>
+        c.createdTimestamp !== undefined &&
         c.createdTimestamp >= startDateTimestamp &&
         c.createdTimestamp <= endDateTimestamp,
     ).length;
@@ -310,8 +330,9 @@ export class GenerateDashboardReportService {
       -1,
     );
 
-    let totalPhotographer = photographers.filter(
+    const totalPhotographer = photographers.filter(
       (p) =>
+        p.createdTimestamp !== undefined &&
         p.createdTimestamp >= startDateTimestamp &&
         p.createdTimestamp <= endDateTimestamp,
     ).length;
@@ -328,7 +349,8 @@ export class GenerateDashboardReportService {
       });
     const revenueFromSellingPhoto: Decimal =
       successPhotoSellingTransactions.reduce(
-        (acc, current) => acc.add(current.toUserTransaction.fee),
+        // where-clause filters on toUserTransaction.status, so the relation exists
+        (acc, current) => acc.add(current.toUserTransaction!.fee),
         new Decimal(0),
       );
 
@@ -582,7 +604,7 @@ export class GenerateDashboardReportService {
       ],
     });
 
-    const bookingSize = await this.photoRepository.aggregate({
+    const bookingSize = (await this.photoRepository.aggregate({
       where: {
         OR: [
           {
@@ -614,9 +636,9 @@ export class GenerateDashboardReportService {
       _sum: {
         size: true,
       },
-    });
+    })) as PhotoSizeSum;
 
-    const photoSize = await this.photoRepository.aggregate({
+    const photoSize = (await this.photoRepository.aggregate({
       where: {
         OR: [
           {
@@ -642,7 +664,7 @@ export class GenerateDashboardReportService {
       _sum: {
         size: true,
       },
-    });
+    })) as PhotoSizeSum;
 
     let totalSize = new Decimal(0);
     if (bookingSize._sum.size) {
@@ -652,7 +674,7 @@ export class GenerateDashboardReportService {
       totalSize = totalSize.add(photoSize._sum.size);
     }
 
-    const withdrawalTransactions = await this.transactionRepository.aggregate({
+    const withdrawalTransactions = (await this.transactionRepository.aggregate({
       _sum: {
         amount: true,
       },
@@ -664,7 +686,7 @@ export class GenerateDashboardReportService {
           lte: dashboardRequestDto.toDate,
         },
       },
-    });
+    })) as TransactionAmountSum;
 
     const successTransactions = await this.transactionRepository.findAll({
       status: 'SUCCESS',

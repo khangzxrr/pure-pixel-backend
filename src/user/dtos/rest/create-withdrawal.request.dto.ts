@@ -11,20 +11,20 @@ export class CreateWithdrawalRequestDto {
   @ApiProperty()
   @IsNumber()
   @Min(10000)
-  amount: number;
+  amount!: number;
 
   @ApiProperty()
   @IsString()
   @IsNumberString()
-  bankNumber: string;
+  bankNumber!: string;
 
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  bankName: string;
+  bankName!: string;
 
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  bankUsername: string;
+  bankUsername!: string;
 }

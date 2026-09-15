@@ -4,26 +4,26 @@ import { SignedPhotoBuyDto } from './rest/signed-photo-buy.response.dto';
 
 export class PhotoSellHistoryDto {
   @ApiProperty()
-  id: string;
+  id!: string;
 
   @ApiProperty()
-  title: string;
+  title!: string;
 
   @ApiProperty()
-  description: string;
+  description!: string;
 
   @ApiProperty()
-  size: number;
+  size!: number;
 
   @ApiProperty()
   @Type(() => Number)
-  price: number;
+  price!: number;
 
   @ApiProperty({
     type: () => SignedPhotoBuyDto,
   })
   @Type(() => SignedPhotoBuyDto)
-  photoBuy: SignedPhotoBuyDto;
+  photoBuy!: SignedPhotoBuyDto;
 
   // @ApiProperty()
   // @Type(() => PhotoSellDto)

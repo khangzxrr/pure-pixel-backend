@@ -4,15 +4,15 @@ import { TransactionDto } from 'src/user/dtos/transaction.dto';
 
 export class ServiceTransactionDto {
   @ApiProperty()
-  id: string;
+  id!: string;
 
   @ApiProperty()
-  updatedAt: Date;
+  updatedAt!: Date;
 
   @ApiProperty()
-  createdAt: Date;
+  createdAt!: Date;
 
   @ApiProperty()
   @Type(() => TransactionDto)
-  transaction: TransactionDto;
+  transaction!: TransactionDto;
 }

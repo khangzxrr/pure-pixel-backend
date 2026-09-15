@@ -22,6 +22,13 @@ import { SftpService } from 'src/storage/services/sftp.service';
 import { PrismaService } from 'src/prisma.service';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 
+//claims of the Keycloak access token that nest-keycloak-connect puts on request.user
+type KeycloakTokenUser = {
+  sub: string;
+  preferred_username: string;
+  email: string;
+};
+
 @Injectable()
 export class KeycloakRoleGuard extends RoleGuard implements CanActivate {
   constructor(
@@ -52,9 +59,11 @@ export class KeycloakRoleGuard extends RoleGuard implements CanActivate {
     const grant = await super.canActivate(context);
 
     if (grant) {
-      const request = context.switchToHttp().getRequest();
+      const request = context
+        .switchToHttp()
+        .getRequest<{ user?: KeycloakTokenUser }>();
 
-      const user = request.user as any;
+      const user = request.user;
 
       if (!user) {
         return grant;

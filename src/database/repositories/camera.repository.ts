@@ -3,6 +3,14 @@ import { Prisma } from '@prisma/client';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { PrismaService } from 'src/prisma.service';
 
+//row returned by the raw camera usage query; Postgres count() comes back as bigint
+export type CameraUsageRow = {
+  id: string;
+  name: string;
+  userCount: bigint;
+  date: Date;
+};
+
 @Injectable()
 export class CameraRepository {
   constructor(private readonly prismaService: PrismaService) {}
@@ -99,20 +107,30 @@ export class CameraRepository {
     });
   }
 
+  //raw rows: every Camera column plus the two computed counts (Postgres COUNT(*) comes back as bigint)
   async findTopOrderByPhotoCount(
     search: string,
     sortOrder: Prisma.SortOrder,
     skip: number,
     take: number,
-  ): Promise<any[]> {
-    return this.prismaService
-      .$queryRaw`SELECT *, (SELECT COUNT(*) FROM public."Photo" WHERE "deletedAt" IS NULL AND "cameraId" = public."Camera"."id") as "photoCount", 
+  ): Promise<
+    (Prisma.CameraGetPayload<object> & {
+      photoCount: bigint;
+      userCount: bigint;
+    })[]
+  > {
+    return this.prismaService.$queryRaw<
+      (Prisma.CameraGetPayload<object> & {
+        photoCount: bigint;
+        userCount: bigint;
+      })[]
+    >`SELECT *, (SELECT COUNT(*) FROM public."Photo" WHERE "deletedAt" IS NULL AND "cameraId" = public."Camera"."id") as "photoCount",
                   (SELECT COUNT(*)  FROM public."CameraOnUsers" WHERE "cameraId" = public."Camera"."id") as "userCount"
                 FROM "public"."Camera"
                 WHERE LOWER(public."Camera"."name") LIKE LOWER(CONCAT('%', ${search}, '%'))
-                ORDER BY "photoCount" ${sortOrder === 'asc' ? Prisma.sql(['asc']) : Prisma.sql(['desc'])} 
+                ORDER BY "photoCount" ${sortOrder === 'asc' ? Prisma.sql(['asc']) : Prisma.sql(['desc'])}
                 OFFSET ${skip}
-                LIMIT ${take} 
+                LIMIT ${take}
                 `;
   }
 
@@ -121,9 +139,18 @@ export class CameraRepository {
     sortOrder: Prisma.SortOrder,
     skip: number,
     take: number,
-  ): Promise<any[]> {
-    return this.prismaService
-      .$queryRaw`SELECT *, (SELECT COUNT(*) FROM public."Photo" WHERE "deletedAt" IS NULL AND "cameraId" = public."Camera"."id") as "photoCount", 
+  ): Promise<
+    (Prisma.CameraGetPayload<object> & {
+      photoCount: bigint;
+      userCount: bigint;
+    })[]
+  > {
+    return this.prismaService.$queryRaw<
+      (Prisma.CameraGetPayload<object> & {
+        photoCount: bigint;
+        userCount: bigint;
+      })[]
+    >`SELECT *, (SELECT COUNT(*) FROM public."Photo" WHERE "deletedAt" IS NULL AND "cameraId" = public."Camera"."id") as "photoCount",
                   (SELECT COUNT(*)  FROM public."CameraOnUsers" WHERE "cameraId" = public."Camera"."id") as "userCount"
                 FROM "public"."Camera"
                 WHERE LOWER(public."Camera"."name") LIKE LOWER(CONCAT('%', ${search}, '%'))
@@ -137,10 +164,11 @@ export class CameraRepository {
     dateSeperator: string,
     limit: number,
     endDate: Date,
-  ): Promise<any[]> {
+  ): Promise<CameraUsageRow[]> {
     //date_trunc(${dateSeperator}, "public"."Camera"."createdAt") "date",
-    return this.prismaService
-      .$queryRaw`SELECT "public"."Camera"."id", "public"."Camera"."name", count("userId") as "userCount", date_trunc(${dateSeperator}, "public"."CameraOnUsers"."createdAt") "date"
+    return this.prismaService.$queryRaw<
+      CameraUsageRow[]
+    >`SELECT "public"."Camera"."id", "public"."Camera"."name", count("userId") as "userCount", date_trunc(${dateSeperator}, "public"."CameraOnUsers"."createdAt") "date"
                 FROM "public"."Camera"
                 INNER JOIN "public"."CameraOnUsers" ON "public"."Camera".id = "public"."CameraOnUsers"."cameraId"
                 WHERE "public"."CameraOnUsers"."createdAt" < ${endDate}

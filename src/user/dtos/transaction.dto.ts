@@ -3,31 +3,31 @@ import { Type } from 'class-transformer';
 
 export class TransactionDto {
   @ApiProperty()
-  id: string;
+  id!: string;
 
   @ApiProperty()
-  paymentPayload: string;
+  paymentPayload!: string;
 
   @ApiProperty()
-  paymentMethod: string;
+  paymentMethod!: string;
 
   @ApiProperty()
-  type: string;
+  type!: string;
 
   @ApiProperty()
-  status: string;
-
-  @ApiProperty()
-  @Type(() => Number)
-  amount: number;
+  status!: string;
 
   @ApiProperty()
   @Type(() => Number)
-  fee: number;
+  amount!: number;
 
   @ApiProperty()
-  createdAt: Date;
+  @Type(() => Number)
+  fee!: number;
 
   @ApiProperty()
-  updatedAt: Date;
+  createdAt!: Date;
+
+  @ApiProperty()
+  updatedAt!: Date;
 }

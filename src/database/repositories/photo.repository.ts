@@ -4,6 +4,11 @@ import { Photo, Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 import { PhotoWithSellingCountDto } from '../dtos/photo-with-selling-count.dto';
 
+export type PhotoIdWithDistance = {
+  id: string;
+  distance: number;
+};
+
 @Injectable()
 export class PhotoRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -46,7 +51,7 @@ export class PhotoRepository {
         where: {
           id: p.id,
         },
-        data: p,
+        data: { ...p, exif: p.exif ?? Prisma.JsonNull },
       }),
     );
   }
@@ -65,7 +70,7 @@ export class PhotoRepository {
       where: {
         id: photo.id,
       },
-      data: photo,
+      data: { ...photo, exif: photo.exif ?? Prisma.JsonNull },
     });
   }
 
@@ -91,7 +96,7 @@ export class PhotoRepository {
     id: string,
     status: string,
     userId: string,
-  ): Promise<Photo> {
+  ): Promise<Photo | null> {
     return this.prisma.extendedClient().photo.findUnique({
       where: {
         id: id,
@@ -101,7 +106,7 @@ export class PhotoRepository {
     });
   }
   async deleteByExpiredUploadDate(date: Date, dayPassed: number) {
-    const offset = dayPassed * 12 * 60 * 60 * 1000;
+    const offset = dayPassed * 24 * 60 * 60 * 1000;
     const lastDay = date.getTime() - offset;
     //subtract days
     const newDate = new Date(lastDay);
@@ -269,7 +274,7 @@ export class PhotoRepository {
   //
   //
   async countByGPS(longitude: number, latitude: number, distance: number) {
-    return this.prisma.$queryRaw`
+    return this.prisma.$queryRaw<{ count: bigint }[]>`
                         SELECT COUNT(id) FROM 
                           (SELECT id, point(${latitude}, ${longitude}) <@>  (point((exif->>'latitude')::float, (exif->>'longitude')::float)::point) as distance
                           FROM public."Photo" 
@@ -281,8 +286,8 @@ export class PhotoRepository {
     longitude: number,
     latitude: number,
     distance: number,
-  ): Promise<any[]> {
-    return this.prisma.$queryRaw`
+  ): Promise<PhotoIdWithDistance[]> {
+    return this.prisma.$queryRaw<PhotoIdWithDistance[]>`
                           SELECT id, point(${latitude}, ${longitude}) <@>  (point((exif->>'latitude')::float, (exif->>'longitude')::float)::point) as distance
                           FROM public."Photo" 
                           WHERE  point(${latitude}, ${longitude}) <@>  (point((exif->>'latitude')::float, (exif->>'longitude')::float)::point) < ${distance}

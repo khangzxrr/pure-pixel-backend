@@ -7,5 +7,5 @@ export class UpdateBookingStatusDto {
     enum: BookingStatus,
   })
   @IsEnum(BookingStatus)
-  status: BookingStatus;
+  status!: BookingStatus;
 }

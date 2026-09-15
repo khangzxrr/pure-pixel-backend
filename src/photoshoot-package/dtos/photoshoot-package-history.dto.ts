@@ -3,18 +3,18 @@ import { Type } from 'class-transformer';
 
 export class PhotoshootPackageHistoryDto {
   @ApiProperty()
-  title: string;
+  title!: string;
 
   @ApiProperty()
-  subtitle: string;
+  subtitle!: string;
 
   @ApiProperty()
   @Type(() => Number)
-  price: number;
+  price!: number;
 
   @ApiProperty()
-  thumbnail: string;
+  thumbnail!: string;
 
   @ApiProperty()
-  description: string;
+  description!: string;
 }

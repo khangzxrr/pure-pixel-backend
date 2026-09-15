@@ -2,8 +2,8 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class PhotoWithSellingCountDto {
   @ApiProperty()
-  id: string;
+  id!: string;
 
   @ApiProperty()
-  count: number;
+  count!: number;
 }

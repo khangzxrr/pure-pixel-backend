@@ -4,9 +4,9 @@ import { Type } from 'class-transformer';
 export class BalanceDto {
   @ApiProperty()
   @Type(() => Number)
-  totalBalance: number;
+  totalBalance!: number;
 
   @ApiProperty()
   @Type(() => Number)
-  totalWithdrawal: number;
+  totalWithdrawal!: number;
 }

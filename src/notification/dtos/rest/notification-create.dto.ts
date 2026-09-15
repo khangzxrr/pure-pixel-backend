@@ -6,31 +6,31 @@ export class NotificationCreateDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  userId: string;
+  userId!: string;
 
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  title: string;
+  title!: string;
 
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  content: string;
+  content!: string;
 
   @ApiProperty({
     enum: NotificationType,
   })
   @IsEnum(NotificationType)
-  type: NotificationType;
+  type!: NotificationType;
 
   @ApiProperty({
     enum: NotificationReferenceType,
   })
   @IsEnum(NotificationReferenceType)
-  referenceType: NotificationReferenceType;
+  referenceType!: NotificationReferenceType;
 
   @ApiProperty()
   @IsNotEmpty()
-  payload: object;
+  payload!: object;
 }

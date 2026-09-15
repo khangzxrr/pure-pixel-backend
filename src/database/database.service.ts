@@ -6,7 +6,9 @@ import { PrismaService } from 'src/prisma.service';
 export class DatabaseService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async applyTransactionMultipleQueries(queries: PrismaPromise<any>[]) {
+  async applyTransactionMultipleQueries<P extends PrismaPromise<unknown>[]>(
+    queries: [...P],
+  ) {
     return await this.prismaService.extendedClient().$transaction([...queries]);
   }
 }

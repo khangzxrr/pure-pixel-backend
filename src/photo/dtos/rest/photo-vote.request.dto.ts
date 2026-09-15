@@ -4,5 +4,5 @@ import { IsBoolean } from 'class-validator';
 export class PhotoVoteRequestDto {
   @ApiProperty()
   @IsBoolean()
-  isUpvote: boolean;
+  isUpvote!: boolean;
 }

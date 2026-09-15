@@ -6,22 +6,22 @@ import { UserDto } from 'src/user/dtos/user.dto';
 
 export class NewsfeedDto {
   @ApiProperty()
-  id: string;
+  id!: string;
 
   @ApiProperty()
-  title: string;
+  title!: string;
 
   @ApiProperty()
-  description: string;
+  description!: string;
 
   @ApiProperty()
   @Type(() => SignedPhotoDto)
-  photos: SignedPhotoDto[];
+  photos!: SignedPhotoDto[];
 
   @ApiProperty()
-  visibility: NewsfeedVisibility;
+  visibility!: NewsfeedVisibility;
 
   @ApiProperty()
   @Type(() => UserDto)
-  user: UserDto;
+  user!: UserDto;
 }

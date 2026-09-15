@@ -263,7 +263,7 @@ export class FindAllPhotoFilterDto extends PagingPaginatedRequestDto {
     if (this.gps) {
       where.exif = {
         path: ['latitude'],
-        not: null,
+        not: Prisma.AnyNull,
       };
     }
 

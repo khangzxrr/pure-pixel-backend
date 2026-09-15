@@ -5,11 +5,33 @@ import {
   KeycloakConnectConfig,
 } from 'nest-keycloak-connect';
 
+//typed by src/types/tieng-viet-khong-dau.d.ts
 import * as tvkd from 'tieng-viet-khong-dau';
 
 type GqlContextType = 'graphql' | ContextType;
 
+//the part of @nestjs/graphql used here (optional dependency, loaded lazily)
+interface GqlModule {
+  GqlExecutionContext: {
+    create(context: ExecutionContext): {
+      getContext<T>(): T;
+    };
+  };
+}
+
+//claims of a decoded keycloak access token that this app reads
+export interface TokenClaims {
+  sub: string;
+  iss: string;
+}
+
 export class Utils {
+  //returns process.env[name] unchanged (undefined when it is not set)
+  //for library options typed as string, so a missing variable behaves exactly as before
+  static env(name: string): string {
+    return process.env[name] as string;
+  }
+
   static getExtension(path: string) {
     return path.split('.').at(-1);
   }
@@ -18,7 +40,10 @@ export class Utils {
     return text.replaceAll(/\0/g, '').replaceAll('\\u0000', '');
   }
 
-  static normalizeText(text?: string) {
+  //note: an empty string still returns null at runtime
+  static normalizeText(text: string): string;
+  static normalizeText(text?: string | null): string | null;
+  static normalizeText(text?: string | null): string | null {
     if (!text) {
       return null;
     }
@@ -44,7 +69,7 @@ export class Utils {
 }
 
 export const useKeycloak = async (
-  request: any,
+  request: unknown,
   jwt: string,
   singleTenant: KeycloakConnect.Keycloak,
   multiTenant: KeycloakMultiTenantService,
@@ -57,24 +82,28 @@ export const useKeycloak = async (
     return await multiTenant.get(realm, request);
   } else if (!opts.realm) {
     const payload = parseToken(jwt);
-    const issuerRealm = payload.iss.split('/').pop();
+    //split always yields at least one segment, so pop never returns undefined
+    const issuerRealm = payload.iss.split('/').pop() as string;
     return await multiTenant.get(issuerRealm, request);
   }
   return singleTenant;
 };
 
-export const extractRequest = (context: ExecutionContext): [any, any] => {
-  let request: any, response: any;
+//both values stay undefined for unsupported context types (response also for ws)
+export const extractRequest = <TRequest = unknown, TResponse = unknown>(
+  context: ExecutionContext,
+): [TRequest | undefined, TResponse | undefined] => {
+  let request: TRequest | undefined, response: TResponse | undefined;
 
   // Check if request is coming from graphql or http
   if (context.getType() === 'http') {
     // http request
     const httpContext = context.switchToHttp();
 
-    request = httpContext.getRequest();
-    response = httpContext.getResponse();
+    request = httpContext.getRequest<TRequest>();
+    response = httpContext.getResponse<TResponse>();
   } else if (context.getType<GqlContextType>() === 'graphql') {
-    let gql: any;
+    let gql: GqlModule;
     // Check if graphql is installed
     try {
       gql = require('@nestjs/graphql');
@@ -83,18 +112,21 @@ export const extractRequest = (context: ExecutionContext): [any, any] => {
     }
 
     // graphql request
-    const gqlContext = gql.GqlExecutionContext.create(context).getContext();
+    const gqlContext = gql.GqlExecutionContext.create(context).getContext<{
+      req: TRequest;
+      res: TResponse;
+    }>();
 
     request = gqlContext.req;
     response = gqlContext.res;
   } else if (context.getType() === 'ws') {
-    request = context.getArgs()[0];
+    request = context.getArgs<[TRequest]>()[0];
   }
 
   return [request, response];
 };
 
-export const parseToken = (token: string): any => {
+export const parseToken = (token: string): TokenClaims => {
   const parts = token.split('.');
   return JSON.parse(Buffer.from(parts[1], 'base64').toString());
 };

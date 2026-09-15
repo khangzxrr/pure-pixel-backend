@@ -22,13 +22,26 @@ import { UserInReport } from 'src/database/types/user';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { Prisma } from '@prisma/client';
+import { RoleRepresentation } from '@s3pweb/keycloak-admin-client-cjs';
 import { ChatService } from 'src/chat/services/chat.service';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { BookingRepository } from 'src/database/repositories/booking.repository';
 import { NotificationService } from 'src/notification/services/notification.service';
 import { CannotBanAdminException } from '../exceptions/cannot-ban-admin.exception';
-import { Console } from 'console';
 import { PhoneNumberNotValidException } from '../exceptions/phone-number-not-valid.exception';
+
+//shape of the errors thrown by the keycloak admin client (NetworkError)
+//the catch blocks below read these fields without checking, see update() and create()
+type KeycloakNetworkError = {
+  response: { status: number };
+  responseData: { errorMessage: string };
+};
+
+type UserWithCount = Prisma.UserGetPayload<{
+  include: {
+    _count: true;
+  };
+}>;
 
 @Injectable()
 export class UserService {
@@ -95,7 +108,9 @@ export class UserService {
       const updatedUser = await this.userRepository.update(id, {
         mail: updateDto.mail,
         name: updateDto.name,
-        normalizedName: Utils.normalizeText(updateDto.name),
+        //name is optional in UpdateUserDto, normalizeText then returns null which the
+        //non nullable column rejects at runtime; kept as is, see report
+        normalizedName: Utils.normalizeText(updateDto.name) as string,
         quote: updateDto.quote,
         location: updateDto.location,
         phonenumber: updateDto.phonenumber,
@@ -107,8 +122,10 @@ export class UserService {
 
       return await this.findOne({ id: updatedUser.id });
     } catch (e) {
-      if (e.response.status === 409) {
-        throw new BadRequestException(e.responseData.errorMessage);
+      const error = e as KeycloakNetworkError;
+
+      if (error.response.status === 409) {
+        throw new BadRequestException(error.responseData.errorMessage);
       }
 
       console.log(e);
@@ -142,8 +159,10 @@ export class UserService {
         id: user.id,
       });
     } catch (e) {
-      if (e.response.status === 409) {
-        throw new BadRequestException(e.responseData.errorMessage);
+      const error = e as KeycloakNetworkError;
+
+      if (error.response.status === 409) {
+        throw new BadRequestException(error.responseData.errorMessage);
       }
 
       console.log(e);
@@ -162,6 +181,14 @@ export class UserService {
         const keycloakUsers = await this.keycloakService.findUsers(skip, -1);
 
         keycloakUsers.forEach(async (ku) => {
+          //users listed by keycloak always have an id, prisma would reject an undefined one
+          //an undefined username would give a null normalizedName, which prisma rejects too
+          if (!ku.id || !ku.username) {
+            throw new Error(
+              `keycloak user ${ku.username} has no id or username`,
+            );
+          }
+
           await this.userRepository.upsert({
             id: ku.id,
             mail: ku.email,
@@ -292,12 +319,18 @@ export class UserService {
       try {
         const kcUser = await this.keycloakService.findFirst(u.id);
 
-        if (kcUser === null) {
+        //findOne resolves undefined for a missing user, that used to throw below and return null from the catch
+        if (!kcUser) {
           return null;
         }
 
-        dto.enabled = kcUser.enabled;
-        dto.username = kcUser.username;
+        //dto has no enabled/username before this, so skipping undefined keeps the same output
+        if (kcUser.enabled !== undefined) {
+          dto.enabled = kcUser.enabled;
+        }
+        if (kcUser.username !== undefined) {
+          dto.username = kcUser.username;
+        }
 
         let roles = await this.keycloakService.getUserRoles(u.id);
 
@@ -310,7 +343,7 @@ export class UserService {
           roles = await this.keycloakService.getUserRoles(u.id);
         }
 
-        dto.roles = roles.map((r) => r.name);
+        dto.roles = this.toRoleNames(roles);
 
         return dto;
       } catch (e) {
@@ -321,7 +354,12 @@ export class UserService {
 
     const userDtos = await Promise.all(userDtoPromises);
 
-    return new UserFindAllResponseDto(findAllDto.limit, count, userDtos);
+    //users that failed to load from keycloak are sent as null entries, kept as is
+    return new UserFindAllResponseDto(
+      findAllDto.limit,
+      count,
+      userDtos as UserDto[],
+    );
   }
 
   async findMe(userId: string) {
@@ -335,7 +373,8 @@ export class UserService {
     //
     // const roles = await this.keycloakService.getUserRoles(keycloakUser.id);
 
-    const user = await this.userRepository.findUnique(userId, {
+    //findUnique takes a non literal include, so prisma cannot infer _count from it
+    const user = (await this.userRepository.findUnique(userId, {
       _count: {
         select: {
           photos: {
@@ -356,7 +395,7 @@ export class UserService {
           },
         },
       },
-    });
+    })) as UserWithCount | null;
 
     if (!user) {
       throw new UserNotFoundException();
@@ -447,9 +486,19 @@ export class UserService {
       groups: [Constants.PHOTOGRAPHER_ROLE],
     });
 
-    userDto.enabled = keycloakUser.enabled;
-    userDto.roles = roles.map((r) => r.name);
+    //userDto has no enabled before this, so skipping undefined keeps the same output
+    if (keycloakUser.enabled !== undefined) {
+      userDto.enabled = keycloakUser.enabled;
+    }
+    userDto.roles = this.toRoleNames(roles);
 
     return userDto;
+  }
+
+  //keycloak roles always carry a name, the filter only narrows the type
+  private toRoleNames(roles: RoleRepresentation[]) {
+    return roles
+      .map((r) => r.name)
+      .filter((name): name is string => name !== undefined);
   }
 }

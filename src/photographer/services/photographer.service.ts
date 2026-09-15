@@ -14,6 +14,21 @@ import { Constants } from 'src/infrastructure/utils/constants';
 
 import { FollowingService } from './following.service';
 import { Utils } from 'src/infrastructure/utils/utils';
+import { Prisma } from '@prisma/client';
+
+type PhotographerProfilePayload = Prisma.UserGetPayload<{
+  include: {
+    _count: {
+      select: {
+        followers: true;
+        followings: true;
+        photos: true;
+      };
+    };
+    followers: true;
+    followings: true;
+  };
+}>;
 
 @Injectable()
 export class PhotographerService {
@@ -33,14 +48,23 @@ export class PhotographerService {
       0,
       -1,
     );
-    const keycloakUserIds = keycloakUsers.map((u) => u.id);
+    const keycloakUserIds = keycloakUsers
+      .map((u) => u.id)
+      .filter((id): id is string => id !== undefined);
 
-    const nameSearch = Utils.normalizeText(findAllRequestDto.search);
+    //Prisma.join throws on an empty list, which happens before anyone has the photographer role
+    if (keycloakUserIds.length === 0) {
+      return new FindAllPhotographerResponseDto(findAllRequestDto.limit, 0, []);
+    }
+
+    const nameSearch = findAllRequestDto.search
+      ? Utils.normalizeText(findAllRequestDto.search)
+      : '';
 
     const rawCountQuery = await this.userRepository.rawCount(
       userId,
       keycloakUserIds,
-      findAllRequestDto.search ? nameSearch : '',
+      nameSearch,
       findAllRequestDto.isFollowed,
     );
 
@@ -49,11 +73,13 @@ export class PhotographerService {
       keycloakUserIds,
       findAllRequestDto.toSkip(),
       findAllRequestDto.limit,
-      findAllRequestDto.search ? nameSearch : '',
+      nameSearch,
       findAllRequestDto.isFollowed,
     );
 
-    const count: number = Number(rawCountQuery[0].count);
+    const count: number = Number(
+      (rawCountQuery as { count: bigint }[])[0].count,
+    );
 
     const dtos = plainToInstance(PhotographerDTO, rawPhotographers);
 
@@ -68,7 +94,7 @@ export class PhotographerService {
     const userFilterDto = new UserFilterDto();
     userFilterDto.id = id;
 
-    const photographer = await this.userRepository.findUnique(id, {
+    const photographer = (await this.userRepository.findUnique(id, {
       _count: {
         select: {
           followers: true,
@@ -79,7 +105,7 @@ export class PhotographerService {
 
       followers: true,
       followings: true,
-    });
+    })) as PhotographerProfilePayload | null;
 
     if (!photographer) {
       throw new PhotographerNotFoundException();

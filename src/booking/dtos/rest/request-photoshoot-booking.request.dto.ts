@@ -9,7 +9,7 @@ export class RequestPhotoshootBookingRequestDto {
   @Transform(({ value }) => new Date(value))
   @IsDate()
   @MinDate(new Date())
-  startDate: Date;
+  startDate!: Date;
 
   @ApiProperty({
     example: '2024-10-19T01:30:14.761+07:00',
@@ -17,8 +17,8 @@ export class RequestPhotoshootBookingRequestDto {
   @Transform(({ value }) => new Date(value))
   @IsDate()
   @MinDate(new Date())
-  endDate: Date;
+  endDate!: Date;
 
   @ApiProperty()
-  description: string;
+  description!: string;
 }

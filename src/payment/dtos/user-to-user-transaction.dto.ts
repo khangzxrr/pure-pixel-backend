@@ -4,25 +4,25 @@ import { TransactionDto } from 'src/user/dtos/transaction.dto';
 
 export class UserToUserTransactionDto {
   @ApiProperty()
-  id: string;
+  id!: string;
 
   @ApiProperty()
-  toUserId: string;
+  toUserId!: string;
 
   @Exclude()
-  transactionId: string;
+  transactionId!: string;
 
   @ApiProperty()
-  createdAt: Date;
+  createdAt!: Date;
 
   @ApiProperty()
-  updatedAt: Date;
-
-  @ApiProperty()
-  @Type(() => TransactionDto)
-  fromUserTransaction: TransactionDto;
+  updatedAt!: Date;
 
   @ApiProperty()
   @Type(() => TransactionDto)
-  toUserTransaction: TransactionDto;
+  fromUserTransaction!: TransactionDto;
+
+  @ApiProperty()
+  @Type(() => TransactionDto)
+  toUserTransaction!: TransactionDto;
 }

@@ -3,51 +3,51 @@ import { Exclude } from 'class-transformer';
 import { ApplicationEntity } from 'src/infrastructure/entities/application.entity';
 
 export class UserEntity extends ApplicationEntity<UserEntity> implements User {
-  deletedAt: Date;
+  deletedAt!: Date;
 
-  normalizedName: string;
+  normalizedName!: string;
 
-  mail: string;
+  mail!: string;
 
-  phonenumber: string;
+  phonenumber!: string;
 
-  socialLinks: string[];
+  socialLinks!: string[];
 
-  expertises: string[];
-
-  @Exclude()
-  maxPhotoQuota: bigint;
+  expertises!: string[];
 
   @Exclude()
-  maxPackageCount: bigint;
+  maxPhotoQuota!: bigint;
 
   @Exclude()
-  photoQuotaUsage: bigint;
+  maxPackageCount!: bigint;
 
   @Exclude()
-  packageCount: bigint;
+  photoQuotaUsage!: bigint;
 
   @Exclude()
-  createdAt: Date;
+  packageCount!: bigint;
 
   @Exclude()
-  updatedAt: Date;
+  createdAt!: Date;
 
   @Exclude()
-  ftpUsername: string;
+  updatedAt!: Date;
 
   @Exclude()
-  ftpPassword: string;
+  ftpUsername!: string;
 
-  cover: string;
+  @Exclude()
+  ftpPassword!: string;
 
-  location: string;
+  cover!: string;
 
-  id: string;
+  location!: string;
 
-  avatar: string;
+  id!: string;
 
-  name: string;
+  avatar!: string;
 
-  quote: string;
+  name!: string;
+
+  quote!: string;
 }

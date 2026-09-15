@@ -20,7 +20,7 @@ export class CachingService {
   async deleteWithPattern(pattern: string) {
     const keys = await this.cache.store.keys(pattern);
 
-    for (let key of keys) {
+    for (const key of keys) {
       await this.cache.del(key);
     }
   }

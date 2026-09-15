@@ -935,3 +935,28 @@ model Review {
 
   @@unique([bookingId, userId])
 }
+
+enum ChangeLogStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model ChangeLog {
+  id String @id @default(uuid())
+
+  version String
+  title   String
+  content String
+
+  status ChangeLogStatus @default(DRAFT)
+
+  //set when an entry becomes visible to users, drives ordering and the "new" badge
+  publishedAt DateTime?
+
+  authorId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, publishedAt])
+}

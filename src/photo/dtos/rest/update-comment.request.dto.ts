@@ -7,5 +7,5 @@ export class UpdateCommentRequestDto {
   @IsString()
   @IsNotEmpty()
   @Transform(({ value }: TransformFnParams) => value?.trim())
-  content: string;
+  content!: string;
 }

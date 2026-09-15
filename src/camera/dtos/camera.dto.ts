@@ -4,26 +4,26 @@ import { CameraOnUserDto } from './camera-on-user.dto';
 
 export class CameraDto {
   @ApiProperty()
-  id: string;
+  id!: string;
 
   @ApiProperty()
-  name: string;
+  name!: string;
 
   @ApiProperty()
-  thumbnail: string;
+  thumbnail!: string;
 
   @ApiProperty()
-  description: string;
+  description!: string;
 
   @Exclude()
-  cameraOnUsers: CameraOnUserDto[];
+  cameraOnUsers!: CameraOnUserDto[];
 
   @Exclude()
-  cameraMakerId: string;
+  cameraMakerId!: string;
 
   @Exclude()
-  createdAt: Date;
+  createdAt!: Date;
 
   @Exclude()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

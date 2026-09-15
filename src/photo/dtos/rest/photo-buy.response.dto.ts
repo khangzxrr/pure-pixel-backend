@@ -7,24 +7,24 @@ import { PaymentUrlDto } from 'src/payment/dtos/payment-url.dto';
 
 export class PhotoBuyResponseDto extends PaymentUrlDto {
   @Exclude()
-  photoSellHistoryId: string;
+  photoSellHistoryId!: string;
 
   @Exclude()
-  userToUserTransactionId: string;
+  userToUserTransactionId!: string;
 
   @ApiProperty()
-  transactionId: string;
+  transactionId!: string;
 
   @ApiProperty()
-  photoSellId: string;
+  photoSellId!: string;
 
   @ApiProperty({
     type: () => PhotoSellHistoryDto,
   })
   @Type(() => PhotoSellHistoryDto)
-  photoSellHistory: PhotoSellHistoryDto;
+  photoSellHistory!: PhotoSellHistoryDto;
 
   @ApiProperty()
   @Type(() => UserToUserTransactionDto)
-  userToUserTransaction: UserToUserTransactionDto;
+  userToUserTransaction!: UserToUserTransactionDto;
 }

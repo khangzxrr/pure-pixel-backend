@@ -3,17 +3,17 @@ import { Exclude } from 'class-transformer';
 
 export class PhotoVoteDto {
   @Exclude()
-  userId: string;
+  userId!: string;
 
   @Exclude()
-  photoId: string;
+  photoId!: string;
 
   @ApiProperty()
-  isUpvote: boolean;
+  isUpvote!: boolean;
 
   @ApiProperty()
-  createdAt: Date;
+  createdAt!: Date;
 
   @ApiProperty()
-  updatedAt: Date;
+  updatedAt!: Date;
 }
