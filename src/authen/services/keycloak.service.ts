@@ -384,6 +384,17 @@ export class KeycloakService {
     return users;
   }
 
+  //the realm's "User registration" switch; reading it needs the realm-management view-realm role
+  async isRegistrationAllowed(): Promise<boolean> {
+    const instance = await this.getAuthenticatedInstance();
+
+    const realm = await instance.realms.findOne({
+      realm: Utils.env('KEYCLOAK_REALM'),
+    });
+
+    return realm?.registrationAllowed === true;
+  }
+
   async countUsers() {
     const kc = await this.getAuthenticatedInstance();
 
