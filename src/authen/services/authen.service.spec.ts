@@ -7,14 +7,7 @@ import { PrismaService } from 'src/prisma.service';
 import { SftpService } from 'src/storage/services/sftp.service';
 import { UserFilterDto } from 'src/user/dtos/user-filter.dto';
 import { UserEntity } from 'src/user/entities/user.entity';
-import { StreamChat } from 'stream-chat';
 import { AuthenService } from './authen.service';
-
-jest.mock('stream-chat', () => ({
-  StreamChat: { getInstance: jest.fn() },
-}));
-
-const getInstanceMock = StreamChat.getInstance as unknown as jest.Mock;
 
 describe('AuthenService', () => {
   const originalEnv = process.env;
@@ -26,13 +19,10 @@ describe('AuthenService', () => {
   };
   let cache: { get: jest.Mock; set: jest.Mock };
   let prisma: { $transaction: jest.Mock };
-  let upsertUser: jest.Mock;
   let service: AuthenService;
 
   beforeEach(() => {
     process.env = { ...originalEnv };
-    delete process.env.STREAM_ACCESS_KEY;
-    delete process.env.STREAM_SECRET_KEY;
 
     jest.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
 
@@ -50,9 +40,6 @@ describe('AuthenService', () => {
           fn(tx),
       ),
     };
-    upsertUser = jest.fn().mockResolvedValue({});
-    getInstanceMock.mockReset();
-    getInstanceMock.mockReturnValue({ upsertUser });
 
     service = new AuthenService(
       userRepository as unknown as UserRepository,
@@ -115,27 +102,5 @@ describe('AuthenService', () => {
     expect(newUser.cover).toBe(Constants.DEFAULT_COVER);
     expect(newUser.ftpUsername).toMatch(/^Võ Khang[A-Za-z0-9]{5}$/);
     expect(newUser.ftpPassword).toMatch(/^[A-Za-z0-9]{12}$/);
-    expect(getInstanceMock).not.toHaveBeenCalled();
-  });
-
-  it('upserts the user to stream chat when it is configured', async () => {
-    process.env.STREAM_ACCESS_KEY = 'stream-key';
-    process.env.STREAM_SECRET_KEY = 'stream-secret';
-
-    await service.createUserIfNotExist('u1', 'john', 'j@m.c');
-
-    expect(getInstanceMock).toHaveBeenCalledWith('stream-key', 'stream-secret');
-    expect(upsertUser).toHaveBeenCalledWith({ id: 'u1', name: 'john' });
-    expect(userRepository.createIfNotExistTransaction).toHaveBeenCalled();
-  });
-
-  it('does not create the database user when stream chat fails', async () => {
-    process.env.STREAM_ACCESS_KEY = 'stream-key';
-    upsertUser.mockRejectedValue(new Error('stream down'));
-
-    await expect(
-      service.createUserIfNotExist('u1', 'john', 'j@m.c'),
-    ).rejects.toThrow('stream down');
-    expect(userRepository.createIfNotExistTransaction).not.toHaveBeenCalled();
   });
 });

@@ -2,7 +2,6 @@ import { BadRequestException } from '@nestjs/common';
 import { Cache } from 'cache-manager';
 import { MemoryStoredFile } from 'nestjs-form-data';
 import { KeycloakService } from 'src/authen/services/keycloak.service';
-import { ChatService } from 'src/chat/services/chat.service';
 import { BookingRepository } from 'src/database/repositories/booking.repository';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { UserRepository } from 'src/database/repositories/user.repository';
@@ -42,7 +41,6 @@ describe('UserService', () => {
     getUserRoles: jest.Mock;
     addRoleToUser: jest.Mock;
   };
-  let chatService: { upsertUser: jest.Mock };
   let photoRepository: { count: jest.Mock };
   let bookingRepository: { count: jest.Mock };
   let cache: { del: jest.Mock; set: jest.Mock };
@@ -78,7 +76,6 @@ describe('UserService', () => {
       getUserRoles: jest.fn(),
       addRoleToUser: jest.fn(),
     };
-    chatService = { upsertUser: jest.fn() };
     photoRepository = { count: jest.fn() };
     bookingRepository = { count: jest.fn() };
     cache = { del: jest.fn(), set: jest.fn() };
@@ -88,7 +85,6 @@ describe('UserService', () => {
       userRepository as unknown as UserRepository,
       bunnyService as unknown as BunnyService,
       keycloakService as unknown as KeycloakService,
-      chatService as unknown as ChatService,
       photoRepository as unknown as PhotoRepository,
       bookingRepository as unknown as BookingRepository,
       cache as unknown as Cache,
@@ -411,11 +407,6 @@ describe('UserService', () => {
         socialLinks: { set: ['fb'] },
         expertises: { set: ['wedding'] },
       });
-      expect(chatService.upsertUser).toHaveBeenCalledWith(
-        'u1',
-        'Nguyễn Văn A',
-        avatarUrl,
-      );
       expect(cache.del).toHaveBeenCalledWith('me_u1');
       expect(result).toBeInstanceOf(UserDto);
       expect(result.name).toBe('Nguyễn Văn A');
@@ -437,11 +428,6 @@ describe('UserService', () => {
         socialLinks: undefined,
         expertises: undefined,
       });
-      expect(chatService.upsertUser).toHaveBeenCalledWith(
-        'u1',
-        'Old Name',
-        'old-avatar',
-      );
       expect(result).toBeInstanceOf(UserDto);
     });
   });

@@ -23,7 +23,6 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { Prisma } from '@prisma/client';
 import { RoleRepresentation } from '@s3pweb/keycloak-admin-client-cjs';
-import { ChatService } from 'src/chat/services/chat.service';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { BookingRepository } from 'src/database/repositories/booking.repository';
 import { NotificationService } from 'src/notification/services/notification.service';
@@ -49,7 +48,6 @@ export class UserService {
     @Inject() private readonly userRepository: UserRepository,
     @Inject() private readonly bunnyService: BunnyService,
     @Inject() private readonly keycloakService: KeycloakService,
-    @Inject() private readonly chatService: ChatService,
     @Inject() private readonly photoRepository: PhotoRepository,
     @Inject() private readonly bookingRepository: BookingRepository,
     @Inject(CACHE_MANAGER) private cache: Cache,
@@ -292,11 +290,6 @@ export class UserService {
         : undefined,
     });
 
-    await this.chatService.upsertUser(
-      userId,
-      updatedUser.name,
-      updatedUser.avatar,
-    );
     await this.cache.del(`me_${userId}`);
 
     return plainToInstance(UserDto, updatedUser);
