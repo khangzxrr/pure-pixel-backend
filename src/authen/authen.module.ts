@@ -1,20 +1,31 @@
-import { Module } from '@nestjs/common';
-import { KeycloakConnectModule } from 'nest-keycloak-connect';
-import { KeycloakConfigService } from 'src/customConfig/services/keycloak-config.service';
-import { CustomConfigModule } from 'src/customConfig/custom-config.module';
-import { KeycloakService } from './services/keycloak.service';
+import { Global, Module } from '@nestjs/common';
 import { CachingModule } from 'src/caching/caching.module';
+import { CustomConfigModule } from 'src/customConfig/custom-config.module';
+import { DatabaseModule } from 'src/database/database.module';
+import { StorageModule } from 'src/storage/storage.module';
+import { PrismaService } from 'src/prisma.service';
+import { RoleGuard } from './guards/role.guard';
+import WebsocketAuthGuard from './guards/ws.auth.guard';
+import { AuthGuard, TokenVerifier } from './oidc';
+import { IdentityService } from './services/identity.service';
 
+@Global()
 @Module({
-  providers: [KeycloakService],
-  exports: [KeycloakConnectModule, KeycloakService],
-  imports: [
-    CustomConfigModule,
-    CachingModule,
-    KeycloakConnectModule.registerAsync({
-      useExisting: KeycloakConfigService,
-      imports: [CustomConfigModule],
-    }),
+  providers: [
+    IdentityService,
+    TokenVerifier,
+    AuthGuard,
+    RoleGuard,
+    WebsocketAuthGuard,
+    PrismaService,
   ],
+  exports: [
+    IdentityService,
+    TokenVerifier,
+    AuthGuard,
+    RoleGuard,
+    WebsocketAuthGuard,
+  ],
+  imports: [CustomConfigModule, CachingModule, DatabaseModule, StorageModule],
 })
 export class AuthenModule {}

@@ -14,12 +14,7 @@ import { NewsfeedService } from '../services/newsfeed.service';
 import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.response.dto';
 import { NewsfeedDto } from '../dtos/newsfeed.dto';
 import { NewsfeedFindAllDto } from '../dtos/rest/newsfeed-find-all.dto';
-import {
-  AuthenticatedUser,
-  AuthGuard,
-  Public,
-  Roles,
-} from 'src/authen/oidc';
+import { AuthenticatedUser, AuthGuard, Public, Roles } from 'src/authen/oidc';
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
 import { NewsfeedCreateDto } from '../dtos/newsfeed.create.dto';
 import { RoleGuard } from 'src/authen/guards/role.guard';

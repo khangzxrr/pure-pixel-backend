@@ -10,12 +10,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import {
-  AuthenticatedUser,
-  AuthGuard,
-  Public,
-  Roles,
-} from 'src/authen/oidc';
+import { AuthenticatedUser, AuthGuard, Public, Roles } from 'src/authen/oidc';
 import { RoleGuard } from 'src/authen/guards/role.guard';
 import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.response.dto';
 import { Constants } from 'src/infrastructure/utils/constants';

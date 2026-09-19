@@ -8,12 +8,7 @@ import {
 } from '@nestjs/common';
 import { PhotographerService } from '../services/photographer.service';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import {
-  AuthenticatedUser,
-  AuthGuard,
-  Public,
-  Roles,
-} from 'src/authen/oidc';
+import { AuthenticatedUser, AuthGuard, Public, Roles } from 'src/authen/oidc';
 import { RoleGuard } from 'src/authen/guards/role.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { FindAllPhotoFilterDto } from 'src/photo/dtos/find-all.filter.dto';

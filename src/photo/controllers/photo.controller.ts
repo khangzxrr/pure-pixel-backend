@@ -13,12 +13,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { PhotoService } from '../services/photo.service';
-import {
-  AuthenticatedUser,
-  AuthGuard,
-  Public,
-  Roles,
-} from 'src/authen/oidc';
+import { AuthenticatedUser, AuthGuard, Public, Roles } from 'src/authen/oidc';
 import { RoleGuard } from 'src/authen/guards/role.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
 import {
