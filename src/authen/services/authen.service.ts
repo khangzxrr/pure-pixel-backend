@@ -8,7 +8,6 @@ import { PrismaService } from 'src/prisma.service';
 import { SftpService } from 'src/storage/services/sftp.service';
 import { UserFilterDto } from 'src/user/dtos/user-filter.dto';
 import { UserEntity } from 'src/user/entities/user.entity';
-import { StreamChat } from 'stream-chat';
 //typed by src/types/tieng-viet-khong-dau.d.ts
 import * as tvkd from 'tieng-viet-khong-dau';
 
@@ -65,17 +64,6 @@ export class AuthenService {
         //   newUser.ftpPassword,
         // );
         //
-        //stream chat is optional, skip when it is not configured
-        if (process.env.STREAM_ACCESS_KEY) {
-          await StreamChat.getInstance(
-            process.env.STREAM_ACCESS_KEY,
-            process.env.STREAM_SECRET_KEY,
-          ).upsertUser({
-            id: userId,
-            name: username,
-          });
-        }
-
         await this.userRepository.createIfNotExistTransaction(newUser, tx);
 
         this.logger.log(`create new user to database,`);

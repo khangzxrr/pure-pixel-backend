@@ -1,5 +1,6 @@
 import {
   ExecutionContext,
+  ForbiddenException,
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -9,8 +10,10 @@ import {
   KEYCLOAK_COOKIE_DEFAULT,
   KeycloakConnectConfig,
   KeycloakMultiTenantService,
+  META_ROLES,
   META_SKIP_AUTH,
   META_UNPROTECTED,
+  RoleMatchingMode,
   TokenValidation,
 } from 'nest-keycloak-connect';
 import WebsocketAuthGuard from './ws.auth.guard';
@@ -25,7 +28,11 @@ const makeJwt = (payload: object) =>
 describe('WebsocketAuthGuard', () => {
   const jwt = makeJwt({ sub: 'u1', iss: 'https://kc/realms/purepixel' });
 
-  let metadata: { unprotected?: boolean; skipAuth?: boolean };
+  let metadata: {
+    unprotected?: boolean;
+    skipAuth?: boolean;
+    roles?: { roles: string[]; mode?: RoleMatchingMode };
+  };
   let reflector: { getAllAndOverride: jest.Mock };
   let logger: { verbose: jest.Mock; warn: jest.Mock };
   let grantManager: {
@@ -57,12 +64,19 @@ describe('WebsocketAuthGuard', () => {
     metadata = {};
     reflector = {
       getAllAndOverride: jest.fn((key: string) =>
-        key === META_UNPROTECTED ? metadata.unprotected : metadata.skipAuth,
+        key === META_ROLES
+          ? metadata.roles
+          : key === META_UNPROTECTED
+            ? metadata.unprotected
+            : metadata.skipAuth,
       ),
     };
     logger = { verbose: jest.fn(), warn: jest.fn() };
 
-    token = { token: jwt } as unknown as KeycloakConnect.Token;
+    token = {
+      token: jwt,
+      hasRole: jest.fn((role: string) => role === 'customer'),
+    } as unknown as KeycloakConnect.Token;
     grantManager = {
       createGrant: jest.fn().mockResolvedValue({ access_token: token }),
       validateAccessToken: jest.fn().mockResolvedValue(token),
@@ -137,6 +151,32 @@ describe('WebsocketAuthGuard', () => {
       iss: 'https://kc/realms/purepixel',
     });
     expect(client.accessTokenJWT).toBe(jwt);
+  });
+
+  it('allows a token that has any of the handler roles', async () => {
+    metadata = { roles: { roles: ['photographer', 'customer'] } };
+
+    await expect(createGuard().canActivate(context)).resolves.toBe(true);
+    expect(token.hasRole).toHaveBeenCalledWith('customer');
+  });
+
+  it('rejects a token without any of the handler roles', async () => {
+    metadata = { roles: { roles: ['manager', 'admin'] } };
+
+    await expect(createGuard().canActivate(context)).rejects.toBeInstanceOf(
+      ForbiddenException,
+    );
+    expect(client.user).toBeUndefined();
+  });
+
+  it('requires every role in ALL matching mode', async () => {
+    metadata = {
+      roles: { roles: ['customer', 'manager'], mode: RoleMatchingMode.ALL },
+    };
+
+    await expect(createGuard().canActivate(context)).rejects.toBeInstanceOf(
+      ForbiddenException,
+    );
   });
 
   it('accepts a lowercase bearer prefix and resolves the realm from the issuer without a configured realm', async () => {
