@@ -10,8 +10,8 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { HttpStatusCode } from 'axios';
-import { AuthGuard, AuthenticatedUser, Roles } from 'nest-keycloak-connect';
-import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
+import { AuthGuard, AuthenticatedUser, Roles } from 'src/authen/oidc';
+import { RoleGuard } from 'src/authen/guards/role.guard';
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
 import { RequestUpgradeOrderResponseDto } from '../dtos/request-upgrade-order.response.dto';
 import { RequestUpgradeDto } from '../dtos/request-upgrade.dto';
@@ -21,7 +21,7 @@ import { UpgradeTransferFeeRequestDto } from '../dtos/rest/upgrade-transfer-fee.
 
 @Controller('upgrade-order')
 @ApiTags('upgrade-order')
-@UseGuards(AuthGuard, KeycloakRoleGuard)
+@UseGuards(AuthGuard, RoleGuard)
 @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
 export class UpgradeOrderController {
   constructor(

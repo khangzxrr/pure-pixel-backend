@@ -5,7 +5,7 @@ import { SepayRequestDto } from '../dtos/sepay.request.dto';
 import { UserRepository } from 'src/database/repositories/user.repository';
 import { ServiceTransactionRepository } from 'src/database/repositories/service-transaction.repository';
 import { DatabaseService } from 'src/database/database.service';
-import { KeycloakService } from 'src/authen/services/keycloak.service';
+import { IdentityService } from 'src/authen/services/identity.service';
 import { TransactionRepository } from 'src/database/repositories/transaction.repository';
 import { UserToUserRepository } from 'src/database/repositories/user-to-user-transaction.repository';
 import { NotificationService } from 'src/notification/services/notification.service';
@@ -24,7 +24,7 @@ export class TransactionHandlerService {
     private readonly serviceTransactionRepository: ServiceTransactionRepository,
     @Inject()
     private readonly databaseService: DatabaseService,
-    @Inject() private readonly keycloakService: KeycloakService,
+    @Inject() private readonly keycloakService: IdentityService,
     @Inject()
     private readonly transactionRepository: TransactionRepository,
 

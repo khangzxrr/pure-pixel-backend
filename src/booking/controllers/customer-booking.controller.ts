@@ -11,10 +11,10 @@ import {
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { BookingService } from '../services/booking.service';
-import { AuthenticatedUser, AuthGuard, Roles } from 'nest-keycloak-connect';
+import { AuthenticatedUser, AuthGuard, Roles } from 'src/authen/oidc';
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
 import { RequestPhotoshootBookingRequestDto } from '../dtos/rest/request-photoshoot-booking.request.dto';
-import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
+import { RoleGuard } from 'src/authen/guards/role.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { BookingFindAllRequestDto } from '../dtos/rest/booking-find-all.request.dto';
 import { BookingBillItemFindAllRequestDto } from '../dtos/rest/booking-bill-item-find-all.request.dto';
@@ -35,7 +35,7 @@ export class CustomerBookingController {
   @ApiOperation({
     summary: 'find all booking by current user',
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
   async findAllBooking(
     @AuthenticatedUser() user: ParsedUserDto,
@@ -48,7 +48,7 @@ export class CustomerBookingController {
   @ApiOperation({
     summary: 'compress to zip and download (contain all photos) by bookingId',
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
   async downloadAll(
     @AuthenticatedUser() user: ParsedUserDto,
@@ -68,7 +68,7 @@ export class CustomerBookingController {
   @ApiOperation({
     summary: 'get booking detail by ID',
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
   async getBookingId(
     @AuthenticatedUser() user: ParsedUserDto,
@@ -82,7 +82,7 @@ export class CustomerBookingController {
     summary: 'find all booking bill item by bookingId',
   })
   @ApiOkResponse({ type: BookingBillItemFindAllResponseDto })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
   async findAllBookingBillItems(
     @AuthenticatedUser() user: ParsedUserDto,
@@ -100,7 +100,7 @@ export class CustomerBookingController {
   @ApiOperation({
     summary: 'request booking by packageId',
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
   async requestBooking(
     @AuthenticatedUser() user: ParsedUserDto,
@@ -121,7 +121,7 @@ export class CustomerBookingController {
   @ApiOkResponse({
     type: PhotoshootPackageReviewDto,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
   async createReview(
     @AuthenticatedUser() user: ParsedUserDto,

@@ -1,4 +1,4 @@
-import { KeycloakService } from 'src/authen/services/keycloak.service';
+import { IdentityService } from 'src/authen/services/identity.service';
 import { UserRepository } from 'src/database/repositories/user.repository';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { FindAllPhotoFilterDto } from 'src/photo/dtos/find-all.filter.dto';
@@ -47,7 +47,7 @@ describe('PhotographerService', () => {
 
     service = new PhotographerService(
       photoService as unknown as PhotoService,
-      keycloakService as unknown as KeycloakService,
+      keycloakService as unknown as IdentityService,
       userRepository as unknown as UserRepository,
       followingService as unknown as FollowingService,
     );

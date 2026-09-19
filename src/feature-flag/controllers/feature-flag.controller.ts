@@ -1,7 +1,7 @@
 import { Controller, Get, Logger } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Public } from 'nest-keycloak-connect';
-import { KeycloakService } from 'src/authen/services/keycloak.service';
+import { Public } from 'src/authen/oidc';
+import { IdentityService } from 'src/authen/services/identity.service';
 import { FeatureFlagsDto } from '../dtos/feature-flags.dto';
 
 //a flag is on unless its env variable is exactly "false", so a missing variable keeps the feature
@@ -16,7 +16,7 @@ export class FeatureFlagController {
   private readonly logger = new Logger(FeatureFlagController.name);
   private registrationCache?: { value: boolean; expiresAt: number };
 
-  constructor(private readonly keycloakService: KeycloakService) {}
+  constructor(private readonly keycloakService: IdentityService) {}
 
   @Get()
   @ApiOperation({ summary: 'feature flags read by the frontend at startup' })

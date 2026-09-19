@@ -17,9 +17,9 @@ import {
 } from '@nestjs/swagger';
 import { PhotoshootPackageService } from '../services/photoshoot-package.service';
 
-import { AuthGuard, Roles, AuthenticatedUser } from 'nest-keycloak-connect';
+import { AuthGuard, Roles, AuthenticatedUser } from 'src/authen/oidc';
 import { FormDataRequest } from 'nestjs-form-data';
-import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
+import { RoleGuard } from 'src/authen/guards/role.guard';
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
 import { PhotoshootPackageShowcaseDto } from '../dtos/photoshoot-package-showcase.dto';
 import { PhotoshootPackageShowcaseUpdateDto } from '../dtos/rest/photoshoot-package-showcase.update.dto';
@@ -29,7 +29,7 @@ import { PhotoshootPackageShowcaseFindAllDto } from '../dtos/rest/photoshoot-pac
 
 @Controller('photographer/photoshoot-package-showcase')
 @ApiTags('photographer-photoshoot-package-showcase')
-@UseGuards(AuthGuard, KeycloakRoleGuard)
+@UseGuards(AuthGuard, RoleGuard)
 @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
 export class PhotographerPhotoshootPackageShowCaseController {
   constructor(

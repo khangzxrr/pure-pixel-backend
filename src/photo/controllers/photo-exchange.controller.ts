@@ -3,8 +3,8 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PhotoExchangeService } from '../services/photo-exchange.service';
 import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.response.dto';
 import { SignedPhotoDto } from '../dtos/signed-photo.dto';
-import { AuthenticatedUser, AuthGuard, Roles } from 'nest-keycloak-connect';
-import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
+import { AuthenticatedUser, AuthGuard, Roles } from 'src/authen/oidc';
+import { RoleGuard } from 'src/authen/guards/role.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
 import { PhotoBuyFindAllDto } from '../dtos/rest/photo-buy-find-all.dto';
@@ -19,7 +19,7 @@ export class PhotoExchangeController {
     summary: 'get all photo-buys of me',
   })
   @ApiOkResponsePaginated(SignedPhotoDto)
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
   async findAllPhotobuys(
     @AuthenticatedUser() user: ParsedUserDto,

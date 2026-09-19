@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { PhotoService } from 'src/photo/services/photo.service';
 import { FindAllPhotoFilterDto } from 'src/photo/dtos/find-all.filter.dto';
-import { KeycloakService } from 'src/authen/services/keycloak.service';
+import { IdentityService } from 'src/authen/services/identity.service';
 import { FindAllPhotographerResponseDto } from '../dtos/find-all-photographer-dtos/find-all-photographer.response.dto';
 import { FindAllPhotographerRequestDto } from '../dtos/find-all-photographer-dtos/find-all-photographer.request.dto';
 import { PhotographerDTO } from '../dtos/photographer.dto';
@@ -34,7 +34,7 @@ type PhotographerProfilePayload = Prisma.UserGetPayload<{
 export class PhotographerService {
   constructor(
     @Inject() private readonly photoService: PhotoService,
-    @Inject() private readonly keycloakService: KeycloakService,
+    @Inject() private readonly keycloakService: IdentityService,
     @Inject() private readonly userRepository: UserRepository,
     @Inject() private readonly followingService: FollowingService,
   ) {}

@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { KeycloakService } from 'src/authen/services/keycloak.service';
+import { IdentityService } from 'src/authen/services/identity.service';
 import { UserRepository } from 'src/database/repositories/user.repository';
 import { Constants } from 'src/infrastructure/utils/constants';
 
@@ -26,7 +26,7 @@ import { CannotCreateNewUserException } from 'src/user/exceptions/cannot-create-
 export class AdminService {
   constructor(
     @Inject() private readonly userRepository: UserRepository,
-    @Inject() private readonly keycloakService: KeycloakService,
+    @Inject() private readonly keycloakService: IdentityService,
     @Inject() private readonly photoService: PhotoService,
     @Inject() private readonly photoProcessConsumer: PhotoProcessConsumer,
     @Inject() private readonly userService: UserService,

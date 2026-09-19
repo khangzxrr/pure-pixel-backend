@@ -3,7 +3,7 @@ import { getQueueToken } from '@nestjs/bullmq';
 import * as fs from 'fs';
 import * as path from 'path';
 import { UserRepository } from 'src/database/repositories/user.repository';
-import { KeycloakService } from 'src/authen/services/keycloak.service';
+import { IdentityService } from 'src/authen/services/identity.service';
 import { PhotoService } from 'src/photo/services/photo.service';
 import { PhotoProcessConsumer } from 'src/photo/consumers/photo-process.consumer';
 import { UserService } from 'src/user/services/user.service';
@@ -37,7 +37,7 @@ describe('AdminService', () => {
       providers: [
         AdminService,
         { provide: UserRepository, useValue: userRepository },
-        { provide: KeycloakService, useValue: keycloakService },
+        { provide: IdentityService, useValue: keycloakService },
         { provide: PhotoService, useValue: photoService },
         { provide: PhotoProcessConsumer, useValue: photoProcessConsumer },
         { provide: UserService, useValue: userService },

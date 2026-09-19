@@ -9,10 +9,10 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { AuthenticatedUser, AuthGuard, Roles } from 'nest-keycloak-connect';
+import { AuthenticatedUser, AuthGuard, Roles } from 'src/authen/oidc';
 import { ParsedUserDto } from '../dtos/parsed-user.dto';
 import { WalletDto } from '../dtos/wallet.dto';
-import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
+import { RoleGuard } from 'src/authen/guards/role.guard';
 import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.response.dto';
 import { TransactionDto } from '../dtos/transaction.dto';
 import { FindAllTransactionDto } from '../../payment/dtos/rest/find-all-transaction.dto';
@@ -36,7 +36,7 @@ export class WalletController {
   @ApiOkResponse({
     type: WalletDto,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
   async getWallet(@AuthenticatedUser() user: ParsedUserDto) {
     return await this.sepayService.getWalletByUserId(user.sub);
@@ -49,7 +49,7 @@ export class WalletController {
   @ApiOkResponse({
     type: CreateWithdrawalResponseDto,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   async createWithdrawal(
     @AuthenticatedUser() user: ParsedUserDto,
     @Body() createWithdrawlDto: CreateWithdrawalRequestDto,
@@ -67,7 +67,7 @@ export class WalletController {
   @ApiOkResponse({
     type: CreateDepositResponseDto,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
   async createDeposit(
     @AuthenticatedUser() user: ParsedUserDto,
@@ -81,7 +81,7 @@ export class WalletController {
     summary: 'get users wallet transaction',
   })
   @ApiOkResponsePaginated(TransactionDto)
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
   async getTransactions(
     @AuthenticatedUser() user: ParsedUserDto,

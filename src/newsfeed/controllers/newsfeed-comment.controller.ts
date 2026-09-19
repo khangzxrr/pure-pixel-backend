@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { NewsfeedCommentService } from '../services/newsfeed-comment.service';
-import { AuthenticatedUser, AuthGuard, Public } from 'nest-keycloak-connect';
+import { AuthenticatedUser, AuthGuard, Public } from 'src/authen/oidc';
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
 import { NewsfeedCommentFindAllDto } from '../dtos/rest/newsfeed-comment-find-all.request.dto';
 
@@ -20,7 +20,7 @@ import { NewsfeedCommentCreateDto } from '../dtos/newsfeed-comment.create.dto';
 import { NewsfeedCommentUpdateDto } from '../dtos/newsfeed-comment.update.dto';
 import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.response.dto';
 import { NewsfeedCommentDto } from '../dtos/newsfeed-comment.dto';
-import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
+import { RoleGuard } from 'src/authen/guards/role.guard';
 
 @Controller('newsfeed')
 @ApiTags('newsfeed-comment')
@@ -34,7 +34,7 @@ export class NewsfeedCommentController {
     summary: 'get all comment by newsfeedId',
   })
   @ApiOkResponsePaginated(NewsfeedCommentDto)
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Public(false)
   async findAll(
     @AuthenticatedUser() user: ParsedUserDto,
@@ -53,7 +53,7 @@ export class NewsfeedCommentController {
     summary: 'get all comments replies by newsfeedId and commentId',
   })
   @ApiOkResponsePaginated(NewsfeedCommentDto)
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Public(false)
   async findAllReplies(
     @AuthenticatedUser() user: ParsedUserDto,
@@ -76,7 +76,7 @@ export class NewsfeedCommentController {
   @ApiOkResponse({
     type: NewsfeedCommentDto,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   async create(
     @AuthenticatedUser() user: ParsedUserDto,
     @Param('newsfeedId') newsfeedId: string,
@@ -96,7 +96,7 @@ export class NewsfeedCommentController {
   @ApiOkResponse({
     type: NewsfeedCommentDto,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   async createReply(
     @AuthenticatedUser() user: ParsedUserDto,
     @Param('newsfeedId') newsfeedId: string,
@@ -118,7 +118,7 @@ export class NewsfeedCommentController {
   @ApiOkResponse({
     type: NewsfeedCommentDto,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   async update(
     @AuthenticatedUser() user: ParsedUserDto,
     @Param('newsfeedId') newsfeedId: string,
@@ -140,7 +140,7 @@ export class NewsfeedCommentController {
   @ApiOkResponse({
     type: NewsfeedCommentDto,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   async delete(
     @AuthenticatedUser() user: ParsedUserDto,
     @Param('newsfeedId') newsfeedId: string,

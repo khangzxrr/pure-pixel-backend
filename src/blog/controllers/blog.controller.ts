@@ -27,8 +27,8 @@ import {
   AuthGuard,
   Public,
   Roles,
-} from 'nest-keycloak-connect';
-import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
+} from 'src/authen/oidc';
+import { RoleGuard } from 'src/authen/guards/role.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { BlogCreateRequestDto } from '../dtos/rest/blog-create.request.dto';
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
@@ -68,7 +68,7 @@ export class BlogController {
   @ApiOperation({
     summary: 'delete a specific blog by blogId',
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.MANAGER_ROLE, Constants.ADMIN_ROLE] })
   async deleteById(@Param('id') id: string) {
     return await this.blogService.delete(id);
@@ -82,7 +82,7 @@ export class BlogController {
   @ApiOkResponse({
     type: BlogDto,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.MANAGER_ROLE, Constants.ADMIN_ROLE] })
   @FormDataRequest()
   async createBlog(
@@ -100,7 +100,7 @@ export class BlogController {
   @ApiOperation({
     summary: 'update blog info by blogId',
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.MANAGER_ROLE, Constants.ADMIN_ROLE] })
   @FormDataRequest()
   async updateById(
@@ -118,7 +118,7 @@ export class BlogController {
     summary: 'replace blog info by blogId',
   })
   @ApiConsumes('multipart/form-data')
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.MANAGER_ROLE, Constants.ADMIN_ROLE] })
   @FormDataRequest()
   async putUpdateById(

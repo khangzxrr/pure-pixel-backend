@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Inject, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { AuthenticatedUser, AuthGuard, Public, Roles } from 'nest-keycloak-connect';
-import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
+import { AuthenticatedUser, AuthGuard, Public, Roles } from 'src/authen/oidc';
+import { RoleGuard } from 'src/authen/guards/role.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { ChatService } from '../services/chat.service';
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
@@ -22,7 +22,7 @@ const CHAT_ROLES = {
 @Controller('chat')
 @ApiTags('chat')
 @ApiBearerAuth()
-@UseGuards(AuthGuard, KeycloakRoleGuard)
+@UseGuards(AuthGuard, RoleGuard)
 @Roles(CHAT_ROLES)
 @Public(false)
 export class ChatController {

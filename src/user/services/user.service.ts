@@ -6,7 +6,7 @@ import { UserNotFoundException } from '../exceptions/user-not-found.exception';
 
 import { UpdateProfileDto } from '../dtos/rest/update-profile.request.dto';
 import { plainToInstance } from 'class-transformer';
-import { KeycloakService } from 'src/authen/services/keycloak.service';
+import { IdentityService } from 'src/authen/services/identity.service';
 import { Constants } from 'src/infrastructure/utils/constants';
 
 import { BunnyService } from 'src/storage/services/bunny.service';
@@ -47,7 +47,7 @@ export class UserService {
   constructor(
     @Inject() private readonly userRepository: UserRepository,
     @Inject() private readonly bunnyService: BunnyService,
-    @Inject() private readonly keycloakService: KeycloakService,
+    @Inject() private readonly keycloakService: IdentityService,
     @Inject() private readonly photoRepository: PhotoRepository,
     @Inject() private readonly bookingRepository: BookingRepository,
     @Inject(CACHE_MANAGER) private cache: Cache,

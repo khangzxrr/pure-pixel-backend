@@ -6,7 +6,7 @@ import { ChangeLogController } from './controllers/change-log.controller';
 import { ChangeLogService } from './services/change-log.service';
 
 @Module({
-  //StorageModule provides SftpService, which KeycloakRoleGuard injects
+  //StorageModule provides SftpService, which RoleGuard injects
   imports: [DatabaseModule, StorageModule, AuthenModule],
   providers: [ChangeLogService],
   controllers: [ChangeLogController],

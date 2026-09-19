@@ -19,11 +19,11 @@ import {
 import { PhotoshootPackageService } from '../services/photoshoot-package.service';
 import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.response.dto';
 import { PhotoshootPackageDto } from '../dtos/photoshoot-package.dto';
-import { AuthenticatedUser, AuthGuard, Roles } from 'nest-keycloak-connect';
+import { AuthenticatedUser, AuthGuard, Roles } from 'src/authen/oidc';
 import { PhotoshootPackageFindAllDto } from '../dtos/rest/photoshoot-package-find-all.request.dto';
 import { PhotoshootPackageCreateRequestDto } from '../dtos/rest/photoshoot-package-create.request.dto';
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
-import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
+import { RoleGuard } from 'src/authen/guards/role.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { FileSystemStoredFile, FormDataRequest } from 'nestjs-form-data';
 import { PhotoshootPackageUpdateRequestDto } from '../dtos/rest/photoshoot-package-update.request.dto';
@@ -53,7 +53,7 @@ export class PhotographerPhotoShootPackageController {
     summary: 'get all photoshoot package of current photographer',
   })
   @ApiOkResponsePaginated(PhotoshootPackageDto)
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   async findAllByPhotographer(
     @AuthenticatedUser() user: ParsedUserDto,
@@ -74,7 +74,7 @@ export class PhotographerPhotoShootPackageController {
   @ApiOkResponse({
     type: PhotoshootPackageDto,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   async create(
     @AuthenticatedUser() user: ParsedUserDto,
@@ -97,7 +97,7 @@ export class PhotographerPhotoShootPackageController {
     type: PhotoshootPackageDto,
   })
   @ApiConsumes('multipart/form-data')
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   async createWithFileSystemUpload(
     @AuthenticatedUser() user: ParsedUserDto,
@@ -118,7 +118,7 @@ export class PhotographerPhotoShootPackageController {
   @ApiOkResponse({
     type: PhotoshootPackageDto,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   async updatePhotoshoot(
     @AuthenticatedUser() user: ParsedUserDto,
@@ -128,7 +128,7 @@ export class PhotographerPhotoShootPackageController {
     return await this.photoshootPackageService.update(user.sub, id, updateDto);
   }
 
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   @Put(':id')
   @ApiOperation({
@@ -139,7 +139,7 @@ export class PhotographerPhotoShootPackageController {
   @ApiOkResponse({
     type: PhotoshootPackageDto,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   async replacePhotoshoot(
     @AuthenticatedUser() user: ParsedUserDto,
@@ -160,7 +160,7 @@ export class PhotographerPhotoShootPackageController {
   @ApiOkResponse({
     type: PhotoshootPackageDto,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   async deletePhotoshootPackage(
     @AuthenticatedUser() user: ParsedUserDto,

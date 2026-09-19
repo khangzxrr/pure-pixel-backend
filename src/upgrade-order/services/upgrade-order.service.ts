@@ -19,7 +19,7 @@ import { UpgradeTransferFeeRequestDto } from '../dtos/rest/upgrade-transfer-fee.
 
 import { UserRepository } from 'src/database/repositories/user.repository';
 import { Constants } from 'src/infrastructure/utils/constants';
-import { KeycloakService } from 'src/authen/services/keycloak.service';
+import { IdentityService } from 'src/authen/services/identity.service';
 import { NotificationService } from 'src/notification/services/notification.service';
 import { CannotDowngradeOrderException } from '../exceptions/cannot-downgrade-order.exception';
 import { InjectQueue } from '@nestjs/bullmq';
@@ -43,7 +43,7 @@ export class UpgradeOrderService {
     @Inject()
     private readonly sepayService: SepayService,
     @Inject() readonly userRepository: UserRepository,
-    @Inject() private readonly keycloakService: KeycloakService,
+    @Inject() private readonly keycloakService: IdentityService,
     @Inject() private readonly notificationService: NotificationService,
     @InjectQueue(UpgradeConstant.UPGRADE_QUEUE)
     private readonly upgradeQueue: Queue,

@@ -1,5 +1,5 @@
 import { Logger } from '@nestjs/common';
-import { KeycloakService } from 'src/authen/services/keycloak.service';
+import { IdentityService } from 'src/authen/services/identity.service';
 import {
   FeatureFlagController,
   REGISTRATION_CACHE_MS,
@@ -17,7 +17,7 @@ describe('FeatureFlagController', () => {
       isRegistrationAllowed: jest.fn().mockResolvedValue(true),
     };
     controller = new FeatureFlagController(
-      keycloakService as unknown as KeycloakService,
+      keycloakService as unknown as IdentityService,
     );
   });
 

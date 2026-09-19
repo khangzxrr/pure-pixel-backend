@@ -1,7 +1,5 @@
-import { PolicyEnforcementMode, TokenValidation } from 'nest-keycloak-connect';
 import { BullMqConfigService } from './bullmq-config.service';
 import { BullMqQueueRegisterService } from './bullmq-queue-register.service';
-import { KeycloakConfigService } from './keycloak-config.service';
 
 describe('custom config services', () => {
   const originalEnv = process.env;
@@ -11,10 +9,6 @@ describe('custom config services', () => {
       ...originalEnv,
       REDIS_HOSTNAME: 'redis-host',
       REDIS_PORT: '6380',
-      KEYCLOAK_AUTH_URL: 'http://keycloak',
-      KEYCLOAK_REALM: 'realm',
-      KEYCLOAK_CLIENT_ID: 'client',
-      KEYCLOAK_SECRET_KEY: 'secret',
     };
   });
 
@@ -40,16 +34,4 @@ describe('custom config services', () => {
     });
   });
 
-  it('KeycloakConfigService should build keycloak options', () => {
-    expect(new KeycloakConfigService().createKeycloakConnectOptions()).toEqual({
-      authServerUrl: 'http://keycloak',
-      realm: 'realm',
-      clientId: 'client',
-      secret: 'secret',
-      logLevels: ['log'],
-      useNestLogger: false,
-      policyEnforcement: PolicyEnforcementMode.PERMISSIVE,
-      tokenValidation: TokenValidation.OFFLINE,
-    });
-  });
 });

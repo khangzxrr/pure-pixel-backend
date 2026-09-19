@@ -15,8 +15,8 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { AuthGuard, Roles } from 'nest-keycloak-connect';
-import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
+import { AuthGuard, Roles } from 'src/authen/oidc';
+import { RoleGuard } from 'src/authen/guards/role.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { TransactionService } from '../services/transaction.service';
 import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.response.dto';
@@ -30,7 +30,7 @@ import { DenyWithdrawalTransactionDto } from '../dtos/rest/deny-withdrawal-trans
 
 @Controller('manager/transaction')
 @ApiTags('manager-manage-transaction')
-@UseGuards(AuthGuard, KeycloakRoleGuard)
+@UseGuards(AuthGuard, RoleGuard)
 @Roles({ roles: [Constants.ADMIN_ROLE, Constants.MANAGER_ROLE] })
 export class ManageTransactionController {
   constructor(
