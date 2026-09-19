@@ -28,6 +28,7 @@ import { BookmarkModule } from './bookmark/bookmark.module';
 import { NewsfeedModule } from './newsfeed/newsfeed.module';
 import { TemporaryFileModule } from './temporary-file/temporary-file.module';
 import { ChangeLogModule } from './change-log/change-log.module';
+import { FeatureFlagModule } from './feature-flag/feature-flag.module';
 
 @Module({
   providers: [
@@ -67,6 +68,7 @@ import { ChangeLogModule } from './change-log/change-log.module';
     NewsfeedModule,
     TemporaryFileModule,
     ChangeLogModule,
+    FeatureFlagModule,
   ],
   controllers: [AppController],
 })
