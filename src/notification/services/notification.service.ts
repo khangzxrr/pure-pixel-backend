@@ -87,7 +87,7 @@ export class NotificationService {
   createTextNotification(name: string, title: string, content: string) {
     const notification = new OneSignal.Notification();
 
-    notification.app_id = process.env.ONESIGNAL_APP_ID;
+    notification.app_id = process.env.ONESIGNAL_APP_ID!;
     notification.name = name;
     notification.headings = {
       en: title,

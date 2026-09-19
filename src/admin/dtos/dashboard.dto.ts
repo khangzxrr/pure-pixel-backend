@@ -5,37 +5,37 @@ import { Type } from 'class-transformer';
 export class DashboardDto {
   @ApiProperty()
   @Type(() => TimelineDatapointDto)
-  totalCustomer: TimelineDatapointDto;
+  totalCustomer!: TimelineDatapointDto;
 
   @ApiProperty()
   @Type(() => TimelineDatapointDto)
-  totalPhotographer: TimelineDatapointDto;
+  totalPhotographer!: TimelineDatapointDto;
 
   @ApiProperty()
   @Type(() => TimelineDatapointDto)
-  totalEmployeGraph: TimelineDatapointDto;
+  totalEmployeGraph!: TimelineDatapointDto;
 
   @ApiProperty()
   @Type(() => TimelineDatapointDto)
-  totalRevenueGraph: TimelineDatapointDto[];
+  totalRevenueGraph!: TimelineDatapointDto[];
 
   @ApiProperty()
   @Type(() => TimelineDatapointDto)
-  revenueFromUpgradePackageGraph: TimelineDatapointDto[];
+  revenueFromUpgradePackageGraph!: TimelineDatapointDto[];
 
   @ApiProperty()
   @Type(() => TimelineDatapointDto)
-  revenueFromSellingPhotoGraph: TimelineDatapointDto[];
+  revenueFromSellingPhotoGraph!: TimelineDatapointDto[];
 
   @ApiProperty()
   @Type(() => TimelineDatapointDto)
-  photoTotalGraph: TimelineDatapointDto[];
+  photoTotalGraph!: TimelineDatapointDto[];
 
   @ApiProperty()
   @Type(() => TimelineDatapointDto)
-  userTotalGraph: TimelineDatapointDto[];
+  userTotalGraph!: TimelineDatapointDto[];
 
   @ApiProperty()
   @Type(() => TimelineDatapointDto)
-  topUsedPackageGraph: TimelineDatapointDto[];
+  topUsedPackageGraph!: TimelineDatapointDto[];
 }

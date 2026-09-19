@@ -12,6 +12,9 @@ import { NotificationService } from 'src/notification/services/notification.serv
 import { InjectQueue } from '@nestjs/bullmq';
 import { UpgradeConstant } from 'src/upgrade-package/constants/upgrade.constant';
 import { Queue } from 'bullmq';
+import { TransactionNotFoundException } from '../exceptions/transaction-not-found.exception';
+import { PhotoBuyNotFoundException } from 'src/photo/exceptions/photo-buy-not-found.exception';
+import { CurrentUpgradePackageOrderNotFound } from 'src/upgrade-order/exceptions/current-upgrade-package-order-not-found.exception';
 
 @Injectable()
 export class TransactionHandlerService {
@@ -59,6 +62,10 @@ export class TransactionHandlerService {
         },
       },
     });
+
+    if (!serviceTransaction.upgradeOrder) {
+      throw new CurrentUpgradePackageOrderNotFound();
+    }
 
     const updateUserMaxQuotaQuery = this.userRepository.updateMaxQuotaByUserId(
       userId,
@@ -118,6 +125,14 @@ export class TransactionHandlerService {
     const userToUserTransaction = await this.userToUserRepository.getById(
       fromUserTransactionId,
     );
+
+    if (!userToUserTransaction) {
+      throw new TransactionNotFoundException();
+    }
+
+    if (!userToUserTransaction.photoBuy) {
+      throw new PhotoBuyNotFoundException();
+    }
 
     const photoId =
       userToUserTransaction.photoBuy.photoSellHistory.originalPhotoSell.photoId;

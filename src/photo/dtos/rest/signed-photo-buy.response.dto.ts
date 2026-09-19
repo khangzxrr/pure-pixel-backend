@@ -3,8 +3,8 @@ import { PhotoBuyResponseDto } from './photo-buy.response.dto';
 
 export class SignedPhotoBuyDto extends PhotoBuyResponseDto {
   @ApiProperty()
-  downloadUrl: string;
+  downloadUrl!: string;
 
   @ApiProperty()
-  previewUrl: string;
+  previewUrl!: string;
 }

@@ -5,25 +5,25 @@ import { UserDto } from 'src/user/dtos/user.dto';
 
 export class PhotoshootPackageReviewDto {
   @ApiProperty()
-  id: string;
+  id!: string;
 
   @ApiProperty()
   @Min(0)
   @IsNumber()
   @Max(5)
-  star: number;
+  star!: number;
 
   @ApiProperty()
   @IsString()
-  description: string;
+  description!: string;
 
   @Exclude()
-  photoshootPackageId: string;
+  photoshootPackageId!: string;
 
   @Exclude()
-  bookingId: string;
+  bookingId!: string;
 
   @ApiProperty()
   @Type(() => UserDto)
-  user: UserDto;
+  user!: UserDto;
 }

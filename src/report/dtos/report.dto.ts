@@ -9,46 +9,46 @@ import { BookingDto } from 'src/booking/dtos/booking.dto';
 
 export class ReportDto {
   @ApiProperty()
-  id: string;
+  id!: string;
 
   @ApiProperty()
-  content: string;
+  content!: string;
 
   @ApiProperty()
-  reportStatus: ReportStatus;
+  reportStatus!: ReportStatus;
 
   @ApiProperty()
-  reportType: ReportType;
+  reportType!: ReportType;
 
   @Exclude()
-  userId: string;
+  userId!: string;
 
   @ApiProperty()
-  referenceId: string;
+  referenceId!: string;
 
   @ApiProperty()
   @Type(() => UserDto)
-  user: UserDto;
+  user!: UserDto;
 
   @ApiProperty()
-  createdAt: Date;
+  createdAt!: Date;
 
   @ApiProperty()
-  updatedAt: Date;
+  updatedAt!: Date;
 
   @ApiPropertyOptional()
   @Type(() => UserDto)
-  referencedUser?: UserDto;
+  referencedUser?: UserDto | null;
 
   @ApiPropertyOptional()
   @Type(() => PhotoDto)
-  referencedPhoto?: PhotoDto;
+  referencedPhoto?: PhotoDto | null;
 
   @ApiPropertyOptional()
   @Type(() => CommentDto)
-  referencedComment?: CommentDto;
+  referencedComment?: CommentDto | null;
 
   @ApiPropertyOptional()
   @Type(() => BookingDto)
-  referencedBooking?: BookingDto;
+  referencedBooking?: BookingDto | null;
 }

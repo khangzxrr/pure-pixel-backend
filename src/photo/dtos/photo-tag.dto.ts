@@ -3,11 +3,11 @@ import { Exclude } from 'class-transformer';
 
 export class PhotoTagDto {
   @Exclude()
-  id: string;
+  id!: string;
 
   @Exclude()
-  photoId: string;
+  photoId!: string;
 
   @ApiProperty()
-  name: string;
+  name!: string;
 }

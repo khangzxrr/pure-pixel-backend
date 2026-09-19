@@ -2,15 +2,12 @@ import {
   Body,
   Controller,
   Delete,
-  FileTypeValidator,
   Get,
   Param,
-  ParseFilePipe,
   Patch,
   Post,
   Put,
   Query,
-  UploadedFile,
   UseGuards,
 } from '@nestjs/common';
 import {

@@ -36,7 +36,7 @@ export class ReportService {
   ) {}
 
   async validateReferenceId(reportType: ReportType, referenceId: string) {
-    let obj: object = null;
+    let obj: object | null = null;
 
     switch (reportType) {
       case 'USER':

@@ -162,6 +162,9 @@ model User {
  
   cameraOnUsers CameraOnUsers[]
 
+  conversationParticipants ConversationParticipant[]
+  sentMessages             Message[]
+
   newsfeeds               Newsfeed[]
   newsfeedComments        NewsfeedComment[]
   newsfeedLikes           NewsfeedLike[]
@@ -544,6 +547,44 @@ model ChatMessage {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
+}
+
+model Conversation {
+  id            String   @id @default(uuid())
+  // "<smallerUserId>:<largerUserId>" (the two user ids sorted with default string sort, joined by ':')
+  directKey     String   @unique
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  lastMessageAt DateTime @default(now())
+
+  participants ConversationParticipant[]
+  messages     Message[]
+
+  @@index([lastMessageAt])
+}
+
+model ConversationParticipant {
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  conversationId String
+  user           User         @relation(fields: [userId], references: [id])
+  userId         String
+  lastReadAt     DateTime     @default(now())
+  createdAt      DateTime     @default(now())
+
+  @@id([conversationId, userId])
+  @@index([userId])
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  conversationId String
+  sender         User         @relation(fields: [senderId], references: [id])
+  senderId       String
+  content        String
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId, createdAt])
 }
 
 model PhotoTag {
@@ -934,4 +975,29 @@ model Review {
   updatedAt DateTime @updatedAt
 
   @@unique([bookingId, userId])
+}
+
+enum ChangeLogStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model ChangeLog {
+  id String @id @default(uuid())
+
+  version String
+  title   String
+  content String
+
+  status ChangeLogStatus @default(DRAFT)
+
+  //set when an entry becomes visible to users, drives ordering and the "new" badge
+  publishedAt DateTime?
+
+  authorId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, publishedAt])
 }

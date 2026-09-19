@@ -4,18 +4,18 @@ import { CameraDto } from './camera.dto';
 
 export class MakerDto {
   @ApiProperty()
-  name: string;
+  name!: string;
 
   @ApiProperty()
-  thumbnail: string;
+  thumbnail!: string;
 
   @ApiProperty()
   @Type(() => CameraDto)
-  cameras: CameraDto[];
+  cameras!: CameraDto[];
 
   @Exclude()
-  createdAt: Date;
+  createdAt!: Date;
 
   @Exclude()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

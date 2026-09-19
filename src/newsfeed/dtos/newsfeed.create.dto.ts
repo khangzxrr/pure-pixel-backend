@@ -15,19 +15,19 @@ export class NewsfeedCreateDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  title: string;
+  title!: string;
 
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  description: string;
+  description!: string;
 
   @ApiProperty({
     enum: NewsfeedVisibility,
   })
   @IsNotEmpty()
   @IsEnum(NewsfeedVisibility)
-  visibility: NewsfeedVisibility;
+  visibility!: NewsfeedVisibility;
 
   @ApiProperty({
     isArray: true,
@@ -38,7 +38,7 @@ export class NewsfeedCreateDto {
     each: true,
   })
   @Type(() => NewsfeedViewPermissionCreateDto)
-  permissions: NewsfeedViewPermissionCreateDto[];
+  permissions!: NewsfeedViewPermissionCreateDto[];
 
   @ApiProperty({
     isArray: true,
@@ -47,5 +47,5 @@ export class NewsfeedCreateDto {
   @IsString({ each: true })
   @IsNotEmpty({ each: true })
   @ArrayMinSize(1)
-  photos: string[];
+  photos!: string[];
 }

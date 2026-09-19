@@ -3,7 +3,7 @@ import { User } from '@prisma/client';
 import { Exclude } from 'class-transformer';
 
 export class PhotographerDTO implements User {
-  deletedAt: Date;
+  deletedAt!: Date;
 
   @ApiProperty()
   photoCount: number = 0;
@@ -12,73 +12,73 @@ export class PhotographerDTO implements User {
   voteCount: number = 0;
 
   @ApiProperty()
-  normalizedName: string;
+  normalizedName!: string;
 
   @Exclude()
-  maxPhotoQuota: bigint;
+  maxPhotoQuota!: bigint;
 
   @Exclude()
-  maxPackageCount: bigint;
+  maxPackageCount!: bigint;
 
   @Exclude()
-  maxBookingPhotoQuota: bigint;
+  maxBookingPhotoQuota!: bigint;
 
   @Exclude()
-  maxBookingVideoQuota: bigint;
+  maxBookingVideoQuota!: bigint;
 
   @Exclude()
-  photoQuotaUsage: bigint;
+  photoQuotaUsage!: bigint;
 
   @Exclude()
-  packageCount: bigint;
+  packageCount!: bigint;
 
   @Exclude()
-  bookingPhotoQuotaUsage: bigint;
+  bookingPhotoQuotaUsage!: bigint;
 
   @Exclude()
-  bookingVideoQuotaUsage: bigint;
+  bookingVideoQuotaUsage!: bigint;
 
   @ApiProperty()
-  mail: string;
+  mail!: string;
 
   @ApiProperty()
-  phonenumber: string;
+  phonenumber!: string;
 
   @ApiProperty()
-  socialLinks: string[];
+  socialLinks!: string[];
 
   @ApiProperty()
-  expertises: string[];
+  expertises!: string[];
 
   @Exclude()
-  ftpUsername: string;
+  ftpUsername!: string;
 
   @Exclude()
-  ftpPassword: string;
+  ftpPassword!: string;
 
   @ApiProperty()
-  id: string;
+  id!: string;
 
   @ApiProperty()
-  name: string;
+  name!: string;
 
   @ApiProperty()
-  avatar: string;
+  avatar!: string;
 
   @ApiProperty()
-  cover: string;
+  cover!: string;
 
   @ApiProperty()
-  quote: string;
+  quote!: string;
 
   @ApiProperty()
-  location: string;
+  location!: string;
 
   @ApiProperty()
-  createdAt: Date;
+  createdAt!: Date;
 
   @ApiProperty()
-  updatedAt: Date;
+  updatedAt!: Date;
 
   @ApiPropertyOptional()
   isFollowed?: boolean;

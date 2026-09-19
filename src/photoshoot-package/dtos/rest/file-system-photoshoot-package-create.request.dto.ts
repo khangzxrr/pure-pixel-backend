@@ -19,12 +19,12 @@ export class FileSystemPhotoshootPackageCreateRequestDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  title: string;
+  title!: string;
 
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  subtitle: string;
+  subtitle!: string;
 
   @ApiProperty({
     example: 10000,
@@ -32,12 +32,12 @@ export class FileSystemPhotoshootPackageCreateRequestDto {
   @Type(() => Number)
   @IsNumber()
   @Min(10000)
-  price: number;
+  price!: number;
 
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  description: string;
+  description!: string;
 
   @ApiProperty({
     type: 'file',
@@ -45,7 +45,7 @@ export class FileSystemPhotoshootPackageCreateRequestDto {
   @IsFile()
   @MaxFileSize(5e7)
   @HasMimeType(['image/*'])
-  thumbnail: FileSystemStoredFile;
+  thumbnail!: FileSystemStoredFile;
 
   @ApiProperty({
     type: 'file',
@@ -57,5 +57,5 @@ export class FileSystemPhotoshootPackageCreateRequestDto {
   })
   @HasMimeType(['image/*'], { each: true })
   @ArrayMaxSize(20)
-  showcases: FileSystemStoredFile[];
+  showcases!: FileSystemStoredFile[];
 }

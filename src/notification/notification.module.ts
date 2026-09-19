@@ -10,7 +10,6 @@ import { AuthenModule } from 'src/authen/authen.module';
 import { StorageModule } from 'src/storage/storage.module';
 import { NotificationGateway } from './gateways/notification.gateway';
 
-import { CacheModule } from '@nestjs/cache-manager';
 import { CachingModule } from 'src/caching/caching.module';
 
 @Module({

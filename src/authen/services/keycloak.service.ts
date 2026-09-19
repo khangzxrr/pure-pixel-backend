@@ -9,11 +9,13 @@ import { CreateKeycloakUserDto } from '../dtos/create-keycloak-user.dto';
 import { UpdateKeycloakUserDto } from '../dtos/update-keycloak-user.dto';
 import { Inject, Injectable } from '@nestjs/common';
 import { CachingService } from 'src/caching/services/caching.service';
+import { Utils } from 'src/infrastructure/utils/utils';
 
 @Injectable()
 export class KeycloakService {
-  private kcInstance: KeycloakAdminClient;
-  private clientInstance: ClientRepresentation;
+  //both are created lazily on first use
+  private kcInstance?: KeycloakAdminClient;
+  private clientInstance?: ClientRepresentation & { id: string };
 
   private refreshTokenDate: Date = new Date('2022-10-24');
 
@@ -32,13 +34,22 @@ export class KeycloakService {
       return this.clientInstance;
     }
 
-    const kc = await this.getInstance();
+    const kc = await this.getAuthenticatedInstance();
 
     const clientByIdResult = await kc.clients.find({
       clientId: process.env.KEYCLOAK_CLIENT_ID,
     });
 
-    this.clientInstance = clientByIdResult[0];
+    const client = clientByIdResult[0];
+
+    //callers used client.id directly, an unknown client used to fail there with a TypeError
+    if (!client?.id) {
+      throw new Error(
+        `keycloak client ${process.env.KEYCLOAK_CLIENT_ID} is not found`,
+      );
+    }
+
+    this.clientInstance = { ...client, id: client.id };
 
     return this.clientInstance;
   }
@@ -49,12 +60,12 @@ export class KeycloakService {
     const diff = now.getTime() - this.refreshTokenDate.getTime();
     const diffInMiniutes = diff / 1000 / 60;
 
-    if (diffInMiniutes >= 10) {
+    if (diffInMiniutes >= 10 && this.kcInstance) {
       await this.kcInstance.auth({
         username: process.env.KEYCLOAK_REALM_ADMIN_USERNAME,
         password: process.env.KEYCLOAK_REALM_ADMIN_PASSWORD,
         grantType: 'password',
-        clientId: process.env.KEYCLOAK_CLIENT_ID,
+        clientId: Utils.env('KEYCLOAK_CLIENT_ID'),
       });
     }
   }
@@ -76,7 +87,7 @@ export class KeycloakService {
         username: process.env.KEYCLOAK_REALM_ADMIN_USERNAME,
         password: process.env.KEYCLOAK_REALM_ADMIN_PASSWORD,
         grantType: 'password',
-        clientId: process.env.KEYCLOAK_CLIENT_ID,
+        clientId: Utils.env('KEYCLOAK_CLIENT_ID'),
       });
 
       this.refreshTokenDate = new Date('2023-10-24');
@@ -87,8 +98,20 @@ export class KeycloakService {
     }
   }
 
-  async disableUserAndClearSession(id: string) {
+  //getInstance() logs and returns undefined when the admin client cannot authenticate
+  //every caller used the result directly, which used to fail with a TypeError
+  private async getAuthenticatedInstance() {
     const instance = await this.getInstance();
+
+    if (!instance) {
+      throw new Error('keycloak admin client is not available');
+    }
+
+    return instance;
+  }
+
+  async disableUserAndClearSession(id: string) {
+    const instance = await this.getAuthenticatedInstance();
 
     await instance.users.update(
       {
@@ -109,7 +132,7 @@ export class KeycloakService {
   }
 
   async enableUser(id: string) {
-    const instance = await this.getInstance();
+    const instance = await this.getAuthenticatedInstance();
 
     await instance.users.update(
       {
@@ -125,7 +148,7 @@ export class KeycloakService {
   }
 
   async updateById(id: string, updateDto: UpdateKeycloakUserDto) {
-    const instance = await this.getInstance();
+    const instance = await this.getAuthenticatedInstance();
 
     const user = await instance.users.update(
       {
@@ -149,7 +172,7 @@ export class KeycloakService {
   }
 
   async create(createDto: CreateKeycloakUserDto) {
-    const instance = await this.getInstance();
+    const instance = await this.getAuthenticatedInstance();
 
     const user = await instance.users.create({
       username: createDto.username,
@@ -167,7 +190,7 @@ export class KeycloakService {
   }
 
   async upsert(username: string, email: string, role: string, id?: string) {
-    const instance = await this.getInstance();
+    const instance = await this.getAuthenticatedInstance();
 
     const existUser = await instance.users.find({
       username,
@@ -207,7 +230,7 @@ export class KeycloakService {
       return cachedRole;
     }
 
-    const instance = await this.getInstance();
+    const instance = await this.getAuthenticatedInstance();
     const client = await this.getClient();
 
     const role = await instance.clients.findRole({
@@ -234,12 +257,12 @@ export class KeycloakService {
       return cachedUserRoles;
     }
 
-    const instance = await this.getInstance();
+    const instance = await this.getAuthenticatedInstance();
     const client = await this.getClient();
 
     const roles = await instance.users.listClientRoleMappings({
       id: userId,
-      clientUniqueId: client.id!,
+      clientUniqueId: client.id,
     });
 
     await this.cachingService.set(`getUserRoles:${userId}`, roles);
@@ -254,7 +277,7 @@ export class KeycloakService {
       return cachedUser;
     }
 
-    const kc = await this.getInstance();
+    const kc = await this.getAuthenticatedInstance();
     const user = await kc.users.findOne({
       id,
     });
@@ -268,6 +291,11 @@ export class KeycloakService {
     const roles = await this.getUserRoles(userId);
 
     for (const role of roles) {
+      //role mappings returned by keycloak always carry a name
+      if (!role.name) {
+        throw new Error(`role ${role.id} of user ${userId} has no name`);
+      }
+
       await this.deleteRoleFromUser(userId, role.name);
     }
 
@@ -280,18 +308,23 @@ export class KeycloakService {
   }
 
   async deleteRoleFromUser(userId: string, roleName: string) {
-    const kc = await this.getInstance();
+    const kc = await this.getAuthenticatedInstance();
     const client = await this.getClient();
     const role = await this.getRole(roleName);
 
+    //findRole resolves null for an unknown role, this used to fail with a TypeError
+    if (!role?.id || !role.name) {
+      throw new Error(`keycloak role ${roleName} is not found`);
+    }
+
     await kc.users.delClientRoleMappings({
       id: userId,
-      clientUniqueId: client.id!,
+      clientUniqueId: client.id,
 
       roles: [
         {
-          id: role.id!,
-          name: role.name!,
+          id: role.id,
+          name: role.name,
         },
       ],
     });
@@ -300,18 +333,23 @@ export class KeycloakService {
   }
 
   async addRoleToUser(userId: string, roleName: string) {
-    const kc = await this.getInstance();
+    const kc = await this.getAuthenticatedInstance();
     const client = await this.getClient();
     const role = await this.getRole(roleName);
 
+    //findRole resolves null for an unknown role, this used to fail with a TypeError
+    if (!role?.id || !role.name) {
+      throw new Error(`keycloak role ${roleName} is not found`);
+    }
+
     await kc.users.addClientRoleMappings({
       id: userId,
-      clientUniqueId: client.id!,
+      clientUniqueId: client.id,
 
       roles: [
         {
-          id: role.id!,
-          name: role.name!,
+          id: role.id,
+          name: role.name,
         },
       ],
     });
@@ -328,7 +366,7 @@ export class KeycloakService {
       return cachedUsers;
     }
 
-    const kc = await this.getInstance();
+    const kc = await this.getAuthenticatedInstance();
     const client = await this.getClient();
 
     const users = await kc.clients.findUsersWithRole({
@@ -346,8 +384,19 @@ export class KeycloakService {
     return users;
   }
 
+  //the realm's "User registration" switch; reading it needs the realm-management view-realm role
+  async isRegistrationAllowed(): Promise<boolean> {
+    const instance = await this.getAuthenticatedInstance();
+
+    const realm = await instance.realms.findOne({
+      realm: Utils.env('KEYCLOAK_REALM'),
+    });
+
+    return realm?.registrationAllowed === true;
+  }
+
   async countUsers() {
-    const kc = await this.getInstance();
+    const kc = await this.getAuthenticatedInstance();
 
     return await kc.users.count({});
   }
@@ -361,7 +410,7 @@ export class KeycloakService {
       return cachedUsers;
     }
 
-    const kc = await this.getInstance();
+    const kc = await this.getAuthenticatedInstance();
     const client = await this.getClient();
 
     const users = await kc.users.find({

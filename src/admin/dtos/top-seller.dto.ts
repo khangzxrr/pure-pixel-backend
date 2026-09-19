@@ -4,12 +4,12 @@ import { UserDto } from 'src/user/dtos/user.dto';
 
 export class TopSellerDto {
   @ApiProperty()
-  id: string;
+  id!: string;
 
   @ApiProperty()
-  totalPhotoSale: number;
+  totalPhotoSale!: number;
 
   @ApiProperty()
   @Type(() => UserDto)
-  detail: UserDto;
+  detail!: UserDto;
 }

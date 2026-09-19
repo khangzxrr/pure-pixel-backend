@@ -26,6 +26,13 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { UpgradeConstant } from 'src/upgrade-package/constants/upgrade.constant';
 import { Queue } from 'bullmq';
 
+type UpgradeTransferFee = Omit<
+  UpgradeTransferFeeDto,
+  'currentActivePackage'
+> & {
+  currentActivePackage: UpgradeOrderDto | null;
+};
+
 @Injectable()
 export class UpgradeOrderService {
   constructor(
@@ -45,7 +52,7 @@ export class UpgradeOrderService {
 
   async findActiveUpgradePackageOrderByUserId(
     userId: string,
-  ): Promise<UpgradeOrderDto> {
+  ): Promise<UpgradeOrderDto | null> {
     const upgradeOrder =
       await this.upgradePackageOrderRepository.findCurrentUpgradePackageByUserId(
         userId,
@@ -73,11 +80,28 @@ export class UpgradeOrderService {
     return upgradePackage;
   }
 
+  //add calendar months, clamping to the last day of the target month (Jan 31 + 1 month = Feb 28/29)
+  private addCalendarMonths(date: Date, months: number): Date {
+    const result = new Date(date.getTime());
+    const dayOfMonth = result.getUTCDate();
+
+    result.setUTCDate(1);
+    result.setUTCMonth(result.getUTCMonth() + months);
+
+    const lastDayOfTargetMonth = new Date(
+      Date.UTC(result.getUTCFullYear(), result.getUTCMonth() + 1, 0),
+    ).getUTCDate();
+
+    result.setUTCDate(Math.min(dayOfMonth, lastDayOfTargetMonth));
+
+    return result;
+  }
+
   async calculateTransferFee(
     userId: string,
     packageId: string,
     upgradeTransferFeeRequestDto: UpgradeTransferFeeRequestDto,
-  ): Promise<UpgradeTransferFeeDto> {
+  ): Promise<UpgradeTransferFee> {
     const activatedUpgradeOrder =
       await this.upgradePackageOrderRepository.findCurrentUpgradePackageByUserId(
         userId,
@@ -114,13 +138,18 @@ export class UpgradeOrderService {
       throw new CannotTransferToTheSameUpgradePackage();
     }
 
-    //70% of activated package of user's total price (upgrade package * totalMonths)
+    //discount is capped at 100% of the amount the user paid for the activated order
     const maxiumDiscoutPrice = activatedUpgradeOrder
       ? activatedUpgradeOrder.serviceTransaction.transaction.amount
       : new Decimal(0);
     //prevent activatedUpgradeOrder null
 
-    let remainPrice = upgradePackage.price.mul(upgradePackage.minOrderMonth);
+    //the new package is always priced for the requested total months
+    const newPackageTotalPrice = upgradePackage.price.mul(
+      upgradeTransferFeeRequestDto.totalMonths,
+    );
+
+    let remainPrice = newPackageTotalPrice;
 
     if (!activatedUpgradeOrder) {
       return {
@@ -139,11 +168,12 @@ export class UpgradeOrderService {
     const timeSpanRemainOfCurrentUpgradeOrder =
       now.getTime() - activatedUpgradeOrder.createdAt.getTime();
 
-    const maxiumDiscoutTimeSpan = activatedUpgradeOrder.expiredAt.getTime();
+    //total duration of the activated plan
+    const maxiumDiscoutTimeSpan =
+      activatedUpgradeOrder.expiredAt.getTime() -
+      activatedUpgradeOrder.createdAt.getTime();
 
-    remainPrice = upgradePackage.price
-      .mul(upgradePackage.minOrderMonth)
-      .sub(maxiumDiscoutPrice);
+    remainPrice = newPackageTotalPrice.sub(maxiumDiscoutPrice);
 
     //rare case which user request upgrade to another package instantly (which cannot be real! unless hes superman)
     if (timeSpanRemainOfCurrentUpgradeOrder === 0) {
@@ -164,9 +194,7 @@ export class UpgradeOrderService {
     if (timeSpanRemainOfCurrentUpgradeOrder >= maxiumDiscoutTimeSpan) {
       return {
         refundPrice: 0,
-        remainPrice: upgradePackage.price
-          .mul(upgradeTransferFeeRequestDto.totalMonths)
-          .toNumber(),
+        remainPrice: newPackageTotalPrice.toNumber(),
         timeSpanPassed: timeSpanRemainOfCurrentUpgradeOrder,
         discountPrice: 0,
         maxiumDiscoutPrice: maxiumDiscoutPrice.toNumber(),
@@ -178,15 +206,15 @@ export class UpgradeOrderService {
       };
     }
 
-    const timediffRatio =
-      timeSpanRemainOfCurrentUpgradeOrder / maxiumDiscoutTimeSpan;
+    //credit for unused time = paid amount * (1 - timePassed / totalPlanDuration)
+    const timediffRatio = new Decimal(timeSpanRemainOfCurrentUpgradeOrder).div(
+      maxiumDiscoutTimeSpan,
+    );
 
     const discoutPercent = new Decimal(1).sub(timediffRatio);
     const discoutRemain = maxiumDiscoutPrice.mul(discoutPercent);
 
-    remainPrice = upgradePackage.price
-      .mul(upgradeTransferFeeRequestDto.totalMonths)
-      .sub(discoutRemain);
+    remainPrice = newPackageTotalPrice.sub(discoutRemain);
 
     return {
       remainPrice: remainPrice.gte(0) ? remainPrice.floor().toNumber() : 0,
@@ -229,9 +257,10 @@ export class UpgradeOrderService {
     }
 
     const currentDate = new Date();
-    const expiredDate = new Date(
-      currentDate.getTime() + 30 * 24 * 60 * 60 * 1000,
-    ); //hardcode 30 days
+    const expiredDate = this.addCalendarMonths(
+      currentDate,
+      requestUpgrade.totalMonths,
+    );
 
     //should we believe in class-validator?
     //absolutely not
@@ -307,7 +336,7 @@ export class UpgradeOrderService {
           await this.upgradeQueue.add(
             UpgradeConstant.RESTORE_PHOTO_VISIBILITY,
             {
-              photographer: userId,
+              photographerId: userId,
             },
           );
 
@@ -335,8 +364,9 @@ export class UpgradeOrderService {
 
     if (requestUpgrade.paymentMethod === 'SEPAY') {
       const paymentDto = await this.sepayService.generatePayment(
-        newUpgradeOrder.serviceTransaction.transaction.id,
-        newUpgradeOrder.serviceTransaction.transaction.amount.toNumber(),
+        //the SEPAY branch of the transaction above always returns the created order
+        newUpgradeOrder!.serviceTransaction.transaction.id,
+        newUpgradeOrder!.serviceTransaction.transaction.amount.toNumber(),
       );
       responseDto.paymentUrl = paymentDto.paymentUrl;
       responseDto.mockQrCode = paymentDto.mockQrCode;

@@ -6,12 +6,12 @@ import { SignedPhotoDto } from '../dtos/signed-photo.dto';
 import { PagingPaginatedResposneDto } from 'src/infrastructure/restful/paging-paginated.response.dto';
 import { PhotoUpdateRequestDto } from '../dtos/rest/photo-update.request.dto';
 import { CategoryRepository } from 'src/database/repositories/category.repository';
-import { PrismaPromise } from '@prisma/client';
+import { Photo, PhotoTag, Prisma, PrismaPromise } from '@prisma/client';
 
-import { CannotUpdateVisibilityPhotoHasActiveSellingException } from '../exceptions/cannot-update-visibility-photo-has-active-selling.exception';
 import { CannotUpdateWatermarkPhotoHasActiveSellingException } from '../exceptions/cannot-update-watermark-photo-has-active-selling.exception';
 import { CategoryNotFoundException } from '../exceptions/category-not-found.exception';
 import { DuplicatedTagFoundException } from '../exceptions/duplicated-tag-found.exception';
+import { ExifNotFoundException } from '../exceptions/exif-not-found.exception';
 import { PhotoTagRepository } from 'src/database/repositories/photo-tag.repository';
 import { Utils } from 'src/infrastructure/utils/utils';
 import { PrismaService } from 'src/prisma.service';
@@ -86,7 +86,9 @@ export class ManagePhotoService {
 
     const exif = photo.exif;
 
-    const prismaPromises: PrismaPromise<any>[] = [];
+    const prismaPromises: PrismaPromise<
+      Photo | PhotoTag | Prisma.BatchPayload
+    >[] = [];
 
     if (photoUpdateDto.categoryIds) {
       const categories = await this.categoryRepository.findMany({
@@ -101,6 +103,10 @@ export class ManagePhotoService {
     }
 
     if (photoUpdateDto.gps) {
+      if (typeof exif !== 'object' || exif === null || Array.isArray(exif)) {
+        throw new ExifNotFoundException();
+      }
+
       exif['latitude'] = photoUpdateDto.gps.latitude;
       exif['longitude'] = photoUpdateDto.gps.longitude;
     }
@@ -151,7 +157,7 @@ export class ManagePhotoService {
         description: photoUpdateDto.description,
         photoType: photoUpdateDto.photoType,
         visibility: photoUpdateDto.visibility,
-        exif,
+        exif: exif ?? Prisma.JsonNull,
       }),
     );
 
@@ -159,7 +165,8 @@ export class ManagePhotoService {
       .extendedClient()
       .$transaction(prismaPromises);
 
-    const updatedPhoto = prismaResults[prismaResults.length - 1];
+    //the photo update query is always pushed last
+    const updatedPhoto = prismaResults[prismaResults.length - 1] as Photo;
 
     return await this.photoService.signPhoto(updatedPhoto);
   }

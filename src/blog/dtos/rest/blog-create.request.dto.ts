@@ -13,17 +13,17 @@ export class BlogCreateRequestDto {
     enum: BlogStatus,
   })
   @IsEnum(BlogStatus)
-  status: BlogStatus;
+  status!: BlogStatus;
 
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  content: string;
+  content!: string;
 
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  title: string;
+  title!: string;
 
   @ApiProperty({
     type: 'file',
@@ -32,5 +32,5 @@ export class BlogCreateRequestDto {
   @IsFile()
   @MaxFileSize(5e7)
   @HasMimeType(['image/*'])
-  thumbnailFile: MemoryStoredFile;
+  thumbnailFile!: MemoryStoredFile;
 }

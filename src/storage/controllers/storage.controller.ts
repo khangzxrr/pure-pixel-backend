@@ -39,7 +39,7 @@ export class StorageController {
 
   @Get('/presignedPutObject')
   @Public()
-  async getPutObjectPresignedUrl(): Promise<string> {
+  async getPutObjectPresignedUrl(): Promise<string | undefined> {
     try {
       const command = new PutObjectCommand({
         Key: 'test.txt',
@@ -82,7 +82,7 @@ export class StorageController {
       ],
     };
 
-    const buckets = await this.storageService.getS3().send(
+    await this.storageService.getS3().send(
       new PutBucketPolicyCommand({
         Bucket: process.env.S3_BUCKET,
         Policy: JSON.stringify(policy),

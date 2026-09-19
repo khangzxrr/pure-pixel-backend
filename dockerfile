@@ -2,33 +2,46 @@
 # BUILD FOR PRODUCTION
 ###################
 
-FROM node:18.19.1-alpine As build
+FROM node:18.19.1-alpine AS build
 
 WORKDIR /usr/src/app
 
-COPY --chown=node:node package*.json ./
+COPY package*.json ./
+COPY prisma ./prisma
 
-COPY --chown=node:node . .
+# locked: both stages share this cache, so their installs take turns instead of racing
+RUN --mount=type=cache,target=/root/.npm,sharing=locked \
+  npm ci --include=dev --fetch-retries=5 --fetch-retry-mintimeout=20000
 
-RUN npm ci --include=dev && npm cache clean --force
+COPY . .
 
-RUN node -e 'console.log(process.arch)'
-
-RUN npx prisma generate 
-
-RUN npm run build
-
-USER node
+RUN npx prisma generate && npm run build
 
 ###################
 # PRODUCTION
 ###################
 
-FROM node:18.19.1-alpine As production
+FROM node:18.19.1-alpine AS production
 
-RUN apk add fontconfig font-roboto
+RUN apk add --no-cache fontconfig font-roboto
 
-COPY --chown=node:node --from=build /usr/src/app/node_modules ./node_modules
-COPY --chown=node:node --from=build /usr/src/app/dist ./dist
+WORKDIR /usr/src/app
+
+ENV NODE_ENV=production
+
+COPY package*.json ./
+COPY prisma ./prisma
+
+RUN --mount=type=cache,target=/root/.npm,sharing=locked \
+  npm ci --omit=dev --fetch-retries=5 --fetch-retry-mintimeout=20000
+
+# the lockfile keeps the prisma CLI as a production package, so migrations can run from this image
+RUN npx prisma generate
+
+COPY --from=build /usr/src/app/dist ./dist
+
+USER node
+
+EXPOSE 3001
 
 CMD [ "node", "dist/src/main" ]

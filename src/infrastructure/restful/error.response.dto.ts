@@ -2,16 +2,16 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class ErrorResponseDto {
   @ApiProperty({ example: 400 })
-  readonly statusCode: number;
+  readonly statusCode!: number;
 
   @ApiProperty({ example: 'Validation error' })
-  readonly message: string;
+  readonly message!: string;
 
   @ApiProperty({ example: 'Bad request' })
-  readonly error: string;
+  readonly error!: string;
 
   @ApiProperty({ example: 'DeaPgq' })
-  readonly correlationId: string;
+  readonly correlationId!: string;
 
   @ApiProperty({
     example: ['incorrect email'],

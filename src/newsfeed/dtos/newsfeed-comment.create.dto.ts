@@ -5,5 +5,5 @@ export class NewsfeedCommentCreateDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  content: string;
+  content!: string;
 }

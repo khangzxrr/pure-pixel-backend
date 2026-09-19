@@ -4,8 +4,6 @@ import {
   ArrayMinSize,
   ArrayUnique,
   IsArray,
-  IsNotEmpty,
-  IsString,
   ValidateNested,
 } from 'class-validator';
 
@@ -22,5 +20,5 @@ export class CreatePhotoSellingDto {
   @ArrayUnique()
   @ValidateNested()
   @Type(() => CreatePriceMapDto)
-  pricetags: CreatePriceMapDto[];
+  pricetags!: CreatePriceMapDto[];
 }

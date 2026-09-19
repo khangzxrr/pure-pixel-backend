@@ -51,7 +51,7 @@ export class PatchUpdateUpgradePackageDto {
   @IsOptional()
   @IsNumber()
   @Min(0)
-  maxPhotoQuota: number;
+  maxPhotoQuota!: number;
 
   @ApiProperty({
     required: false,

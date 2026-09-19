@@ -13,5 +13,5 @@ export class UploadFileDto {
   @IsFile()
   @MaxFileSize(5e7)
   @HasMimeType(['image/*'])
-  file: MemoryStoredFile;
+  file!: MemoryStoredFile;
 }

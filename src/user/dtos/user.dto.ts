@@ -8,59 +8,59 @@ export class UserDto extends ResponseBaseDto {
   roles: string[] = [];
 
   @ApiProperty()
-  enabled: boolean;
+  enabled!: boolean;
 
   @ApiProperty()
-  username: string;
+  username!: string;
 
   @Expose({ groups: [Constants.PHOTOGRAPHER_ROLE] })
-  photoQuotaUsage: string;
+  photoQuotaUsage!: string;
 
   @Expose({ groups: [Constants.PHOTOGRAPHER_ROLE] })
-  packageCount: string;
+  packageCount!: string;
 
   @Expose({ groups: [Constants.PHOTOGRAPHER_ROLE] })
-  maxPhotoQuota: string;
+  maxPhotoQuota!: string;
 
   @Expose({ groups: [Constants.PHOTOGRAPHER_ROLE] })
-  maxPackageCount: string;
+  maxPackageCount!: string;
 
   @Expose({ groups: [Constants.PHOTOGRAPHER_ROLE] })
-  ftpUsername: string;
+  ftpUsername!: string;
 
   @Expose({ groups: [Constants.PHOTOGRAPHER_ROLE] })
-  ftpPassword: string;
+  ftpPassword!: string;
 
   @ApiProperty()
-  cover: string;
+  cover!: string;
 
   @ApiProperty()
-  location: string;
+  location!: string;
 
   @ApiProperty()
-  mail: string;
+  mail!: string;
 
   @ApiProperty()
-  phonenumber: string;
+  phonenumber!: string;
 
   @ApiProperty()
-  socialLinks: string[];
+  socialLinks!: string[];
 
   @ApiProperty()
-  expertises: string[];
+  expertises!: string[];
 
   @Exclude()
-  normalizedName: string;
+  normalizedName!: string;
 
   @ApiProperty()
-  id: string;
+  id!: string;
 
   @ApiProperty()
-  avatar: string;
+  avatar!: string;
 
   @ApiProperty()
-  name: string;
+  name!: string;
 
   @ApiProperty()
-  quote: string;
+  quote!: string;
 }

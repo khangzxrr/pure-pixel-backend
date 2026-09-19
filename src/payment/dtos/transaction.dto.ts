@@ -9,50 +9,50 @@ import { WalletDto } from 'src/user/dtos/wallet.dto';
 
 export class TransactionDto {
   @ApiProperty()
-  id: string;
+  id!: string;
 
   @ApiProperty()
-  paymentPayload: JsonValue;
+  paymentPayload!: JsonValue;
 
   @ApiProperty()
-  paymentMethod: $Enums.PaymentMethod;
+  paymentMethod!: $Enums.PaymentMethod;
 
   @ApiProperty()
-  type: $Enums.TransactionType;
+  type!: $Enums.TransactionType;
 
   @ApiProperty()
-  status: $Enums.TransactionStatus;
+  status!: $Enums.TransactionStatus;
 
   @ApiProperty()
   @Type(() => UserDto)
-  user: UserDto;
+  user!: UserDto;
 
   @ApiProperty()
   @Type(() => Number)
-  amount: number;
+  amount!: number;
 
   @ApiProperty()
   @Type(() => Number)
-  fee: Decimal;
+  fee!: Decimal;
 
   @ApiProperty()
   @Type(() => WalletDto)
-  wallet: WalletDto;
+  wallet!: WalletDto;
 
   @ApiProperty()
-  createdAt: Date;
+  createdAt!: Date;
 
   @ApiProperty()
-  updatedAt: Date;
+  updatedAt!: Date;
 
   @ApiProperty()
-  userId: string;
+  userId!: string;
 
   @ApiProperty()
   @Type(() => UserToUserTransactionDto)
-  toUserTransaction: UserToUserTransactionDto;
+  toUserTransaction!: UserToUserTransactionDto;
 
   @ApiProperty()
   @Type(() => ServiceTransactionDto)
-  serviceTransaction: ServiceTransactionDto;
+  serviceTransaction!: ServiceTransactionDto;
 }

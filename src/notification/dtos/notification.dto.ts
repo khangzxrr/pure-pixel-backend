@@ -8,38 +8,38 @@ import { Exclude } from 'class-transformer';
 
 export class NotificationDto {
   @ApiProperty()
-  id: string;
+  id!: string;
 
   @Exclude()
-  userId: string;
+  userId!: string;
 
   @ApiProperty()
-  title: string;
+  title!: string;
 
   @ApiProperty()
-  content: string;
+  content!: string;
 
   @ApiProperty({
     enum: NotificationStatus,
   })
-  status: NotificationStatus;
+  status!: NotificationStatus;
 
   @ApiProperty({
     enum: NotificationType,
   })
-  type: NotificationType;
+  type!: NotificationType;
 
   @ApiProperty({
     enum: NotificationReferenceType,
   })
-  referenceType: NotificationReferenceType;
+  referenceType!: NotificationReferenceType;
 
   @ApiProperty()
-  payload: object;
+  payload!: object;
 
   @ApiProperty()
-  createdAt: Date;
+  createdAt!: Date;
 
   @ApiProperty()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

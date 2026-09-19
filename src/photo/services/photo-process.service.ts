@@ -7,10 +7,13 @@ import exifr from 'exifr';
 import * as SharpLib from 'sharp';
 import { PhotoConstant } from '../constants/photo.constant';
 import { BunnyService } from 'src/storage/services/bunny.service';
-import * as phash from 'sharp-phash';
-import * as dist from 'sharp-phash/distance';
-import { decode, encode } from 'blurhash';
+import { encode } from 'blurhash';
 import { SignedUrl } from '../dtos/photo-signed-url.dto';
+import { FailToParsePhotoException } from '../exceptions/fail-to-parse-photo.exception';
+
+//both modules export a single function; typed by src/types/sharp-phash.d.ts
+import phash = require('sharp-phash');
+import dist = require('sharp-phash/distance');
 
 @Injectable()
 export class PhotoProcessService {
@@ -50,7 +53,7 @@ export class PhotoProcessService {
   }
 
   isExistHash(target: string, compares: string[], threshold = 5) {
-    for (let compare of compares) {
+    for (const compare of compares) {
       const d = dist(target, compare);
       if (d < threshold) {
         return true;
@@ -143,9 +146,13 @@ export class PhotoProcessService {
 
     let width = metadata.width;
     let height = metadata.height;
-    if (metadata.orientation >= 5) {
+    if (metadata.orientation !== undefined && metadata.orientation >= 5) {
       width = height;
       height = width;
+    }
+
+    if (width === undefined || height === undefined) {
+      throw new FailToParsePhotoException();
     }
 
     const fontSizeScaledByWidth = (width * 10) / 100;

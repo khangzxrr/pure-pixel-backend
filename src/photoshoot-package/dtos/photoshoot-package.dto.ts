@@ -7,43 +7,43 @@ import { PhotoshootPackageReviewDto } from './photoshoot-package-review.dto';
 
 export class PhotoshootPackageDto {
   @ApiProperty()
-  id: string;
+  id!: string;
 
   @ApiProperty()
-  title: string;
+  title!: string;
 
   @ApiProperty()
-  subtitle: string;
+  subtitle!: string;
 
   @ApiProperty()
   @Type(() => Number)
-  price: number;
+  price!: number;
 
   @ApiProperty()
-  thumbnail: string;
+  thumbnail!: string;
 
   @ApiProperty()
-  description: string;
+  description!: string;
 
   @ApiProperty()
-  status: PhotoshootPackageStatus;
+  status!: PhotoshootPackageStatus;
 
   @Exclude()
-  userId: string;
+  userId!: string;
 
   @ApiProperty()
   @Type(() => UserDto)
-  user: UserDto;
+  user!: UserDto;
 
   @ApiProperty({
     isArray: true,
   })
   @Type(() => PhotoshootPackageReviewDto)
-  reviews: PhotoshootPackageReviewDto[];
+  reviews!: PhotoshootPackageReviewDto[];
 
   @ApiProperty({
     isArray: true,
   })
   @Type(() => PhotoshootPackageShowcaseDto)
-  showcases: PhotoshootPackageShowcaseDto[];
+  showcases!: PhotoshootPackageShowcaseDto[];
 }

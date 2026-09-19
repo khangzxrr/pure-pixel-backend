@@ -4,27 +4,27 @@ import { UserDto } from 'src/user/dtos/user.dto';
 
 export class NewsfeedCommentDto {
   @ApiProperty()
-  id: string;
+  id!: string;
 
   @ApiProperty()
-  content: string;
+  content!: string;
 
   @ApiProperty()
   @Type(() => UserDto)
-  user: UserDto;
+  user!: UserDto;
 
   @ApiProperty({
     isArray: true,
   })
   @Type(() => NewsfeedCommentDto)
-  replies: NewsfeedCommentDto[];
+  replies!: NewsfeedCommentDto[];
 
   @Exclude()
-  parentId: string;
+  parentId!: string;
 
   @Exclude()
-  newsfeedId: string;
+  newsfeedId!: string;
 
   @Exclude()
-  userId: string;
+  userId!: string;
 }

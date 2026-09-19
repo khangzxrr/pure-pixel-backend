@@ -4,24 +4,24 @@ import { CameraDto } from './camera.dto';
 
 export class PopularCameraDataPointDto {
   @ApiProperty()
-  id: string;
+  id!: string;
 
   @Exclude()
-  timelineId: string;
+  timelineId!: string;
 
   @Exclude()
-  createdAt: Date;
+  createdAt!: Date;
 
   @Exclude()
-  updatedAt: Date;
+  updatedAt!: Date;
 
   @Exclude()
-  cameraId: string;
+  cameraId!: string;
 
   @ApiProperty()
-  userCount: number;
+  userCount!: number;
 
   @ApiProperty()
   @Type(() => CameraDto)
-  camera: CameraDto;
+  camera!: CameraDto;
 }

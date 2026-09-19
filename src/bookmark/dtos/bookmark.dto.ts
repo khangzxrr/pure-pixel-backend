@@ -3,17 +3,17 @@ import { SignedPhotoDto } from 'src/photo/dtos/signed-photo.dto';
 
 export class BookmarkDto {
   @ApiProperty()
-  photoId: string;
+  photoId!: string;
 
   @ApiProperty()
-  id: string;
+  id!: string;
 
   @ApiProperty()
-  createdAt: Date;
+  createdAt!: Date;
 
   @ApiProperty()
-  updatedAt: Date;
+  updatedAt!: Date;
 
   @ApiPropertyOptional()
-  photo: SignedPhotoDto;
+  photo!: SignedPhotoDto;
 }

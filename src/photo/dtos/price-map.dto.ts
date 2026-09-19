@@ -10,19 +10,19 @@ export class PricetagDto {
   @Type(() => Number)
   @IsNumber()
   @Min(PhotoConstant.MIN_PHOTO_WIDTH)
-  width: number;
+  width!: number;
 
   @ApiProperty()
   @Type(() => Number)
   @IsNumber()
-  height: number;
+  height!: number;
 
   @ApiProperty()
   @Type(() => Number)
   @IsNumber()
   @Min(1000)
-  price: number;
+  price!: number;
 
   @ApiProperty()
-  preview: string;
+  preview!: string;
 }

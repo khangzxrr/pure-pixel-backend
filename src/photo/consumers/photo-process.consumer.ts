@@ -13,6 +13,28 @@ import { TemporaryBookingPhotoUpload } from '../dtos/temporary-booking-photo-upl
 import { BookingRepository } from 'src/database/repositories/booking.repository';
 import { Utils } from 'src/infrastructure/utils/utils';
 
+export interface PhotoIdJobData {
+  id: string;
+}
+
+export interface DeletePhotoJobData {
+  originalPhotoUrl: string;
+}
+
+//data of each job name, as enqueued:
+//UPLOAD_BOOKING_PHOTO_JOB_NAME: TemporaryBookingPhotoUpload
+//UPLOAD_PHOTO_JOB_NAME: TemporaryPhotoDto
+//PROCESS_PHOTO_JOB_NAME, BAN_PHOTO_JOB, UNBAN_PHOTO_JOB: PhotoIdJobData
+//DELETE_PHOTO_JOB_NAME: DeletePhotoJobData
+//DELETE_TEMPORARY_PHOTO_JOB_NAME: file path
+//the job name constants are typed as string, so each case narrows the data explicitly
+export type PhotoProcessJobData =
+  | TemporaryBookingPhotoUpload
+  | TemporaryPhotoDto
+  | PhotoIdJobData
+  | DeletePhotoJobData
+  | string;
+
 @Processor(PhotoConstant.PHOTO_PROCESS_QUEUE, {
   concurrency: 6,
 })
@@ -32,29 +54,31 @@ export class PhotoProcessConsumer extends WorkerHost {
     super();
   }
 
-  async process(job: Job): Promise<any> {
+  async process(job: Job<PhotoProcessJobData>): Promise<void> {
     try {
       switch (job.name) {
         case PhotoConstant.UPLOAD_BOOKING_PHOTO_JOB_NAME:
-          this.uploadBookingPhoto(job.data);
+          this.uploadBookingPhoto(job.data as TemporaryBookingPhotoUpload);
           break;
         case PhotoConstant.UPLOAD_PHOTO_JOB_NAME:
-          await this.uploadToCloudStorage(job.data);
+          await this.uploadToCloudStorage(job.data as TemporaryPhotoDto);
           break;
         case PhotoConstant.PROCESS_PHOTO_JOB_NAME:
-          await this.processPhoto(job.data.id);
+          await this.processPhoto((job.data as PhotoIdJobData).id);
           break;
         case PhotoConstant.DELETE_PHOTO_JOB_NAME:
-          await this.deleteTineyePhoto(job.data.originalPhotoUrl);
+          await this.deleteTineyePhoto(
+            (job.data as DeletePhotoJobData).originalPhotoUrl,
+          );
           break;
         case PhotoConstant.BAN_PHOTO_JOB:
-          await this.banPhoto(job.data.id);
+          await this.banPhoto((job.data as PhotoIdJobData).id);
           break;
         case PhotoConstant.UNBAN_PHOTO_JOB:
-          await this.unban(job.data.id);
+          await this.unban((job.data as PhotoIdJobData).id);
           break;
         case PhotoConstant.DELETE_TEMPORARY_PHOTO_JOB_NAME:
-          this.deleteTemporaryPhoto(job.data);
+          this.deleteTemporaryPhoto(job.data as string);
           break;
       }
     } catch (e) {
@@ -227,9 +251,10 @@ export class PhotoProcessConsumer extends WorkerHost {
     );
     this.logger.log(`uploaded thumbnail for photo id: ${photo.id}`);
 
-    let removedMetaSharp = await this.photoProcessService.sharpInitFromFilePath(
-      temporaryPhoto.file.path,
-    );
+    const removedMetaSharp =
+      await this.photoProcessService.sharpInitFromFilePath(
+        temporaryPhoto.file.path,
+      );
 
     const watermark = await this.photoProcessService.makeWatermark(
       removedMetaSharp,

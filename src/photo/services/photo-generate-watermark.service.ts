@@ -58,7 +58,7 @@ export class PhotoGenerateWatermarkService {
   private async generateWatermarkFromFileSystem(
     photoId: string,
     path: string,
-    generateWatermarkRequest: GenerateWatermarkRequestDto,
+    _generateWatermarkRequest: GenerateWatermarkRequestDto,
   ) {
     const sharp = await this.photoProcessService.sharpInitFromFilePath(path);
 

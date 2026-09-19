@@ -5,5 +5,5 @@ export class CreateDepositRequestDto {
   @ApiProperty()
   @IsNumber()
   @Min(10000)
-  amount: number;
+  amount!: number;
 }

@@ -1,6 +1,6 @@
 import { Transform, TransformFnParams } from 'class-transformer';
 
-export function ToBoolean(): (target, key) => void {
+export function ToBoolean(): PropertyDecorator {
   return Transform((params: TransformFnParams) => {
     const { value } = params;
 

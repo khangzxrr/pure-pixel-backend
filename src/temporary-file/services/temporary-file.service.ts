@@ -28,9 +28,11 @@ export class TemporaryfileService {
 
       return await sharp.toBuffer();
     } catch (e) {
-      if (e.message.includes(`Input file is missing`)) {
+      if (e instanceof Error && e.message.includes(`Input file is missing`)) {
         throw new PhotoNotFoundException();
       }
+
+      throw e;
     }
   }
 }

@@ -13,7 +13,7 @@ export class PagingPaginatedRequestDto {
   @Transform(({ value }) => {
     return Number(value);
   })
-  readonly limit: number;
+  readonly limit!: number;
 
   @IsInt()
   @Min(0)
@@ -25,7 +25,7 @@ export class PagingPaginatedRequestDto {
   @Transform(({ value }) => {
     return Number(value);
   })
-  readonly page: number;
+  readonly page!: number;
 
   toSkip() {
     return this.page * this.limit;

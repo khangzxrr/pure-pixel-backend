@@ -14,33 +14,33 @@ export class PutUpdateUpgradePackageDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  name: string;
+  name!: string;
 
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  summary: string;
+  summary!: string;
 
   @ApiProperty()
   @Type(() => Number)
   @IsNumber()
   @Min(10000)
-  price: number;
+  price!: number;
 
   @ApiProperty()
   @IsNumber()
   @Min(1)
-  minOrderMonth: number;
+  minOrderMonth!: number;
 
   @ApiProperty()
   @IsNumber()
   @Min(0)
-  maxPhotoQuota: number;
+  maxPhotoQuota!: number;
 
   @ApiProperty()
   @IsNumber()
   @Min(0)
-  maxPackageCount: number;
+  maxPackageCount!: number;
 
   @ApiProperty({
     isArray: true,
@@ -53,12 +53,12 @@ export class PutUpdateUpgradePackageDto {
   @IsNotEmpty({
     each: true,
   })
-  descriptions: string[];
+  descriptions!: string[];
 
   @ApiProperty({
     enum: UpgradePackageStatus,
   })
   @IsEnum(UpgradePackageStatus)
   @IsNotEmpty()
-  status: UpgradePackageStatus;
+  status!: UpgradePackageStatus;
 }

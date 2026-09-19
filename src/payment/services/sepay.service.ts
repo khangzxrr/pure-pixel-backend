@@ -6,7 +6,6 @@ import { AmountIsNotEqualException } from '../exceptions/amount-is-not-equal.exc
 
 import * as QRCode from 'qrcode';
 import { Transaction } from '@prisma/client';
-import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { PagingPaginatedResposneDto } from 'src/infrastructure/restful/paging-paginated.response.dto';
 import { CreateDepositRequestDto } from 'src/user/dtos/rest/create-deposit.request.dto';
 import { CreateDepositResponseDto } from 'src/user/dtos/rest/create-deposit.response.dto';
@@ -237,6 +236,10 @@ export class SepayService {
 
     switch (transaction.type) {
       case 'UPGRADE_TO_PHOTOGRAPHER':
+        if (!transaction.serviceTransaction) {
+          throw new TransactionNotFoundException();
+        }
+
         await this.transactionHandlerService.handleUpgradeToPhotographer(
           transaction.userId,
           transaction.serviceTransaction.id,
@@ -255,6 +258,10 @@ export class SepayService {
       case 'IMAGE_SELL':
         break;
       case 'IMAGE_BUY':
+        if (!transaction.fromUserTransaction) {
+          throw new TransactionNotFoundException();
+        }
+
         await this.transactionHandlerService.handleBuy(
           transaction,
           transaction.fromUserTransaction.id,

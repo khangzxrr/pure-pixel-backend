@@ -3,30 +3,30 @@ import { Type } from 'class-transformer';
 
 export class UpgradePackageDto {
   @ApiProperty()
-  id: string;
+  id!: string;
 
   @ApiProperty()
-  name: string;
+  name!: string;
 
   @ApiProperty()
   @Type(() => Number)
-  price: number;
+  price!: number;
 
   @ApiProperty()
-  description: string[];
+  description!: string[];
 
   @ApiProperty()
-  summary: string;
+  summary!: string;
 
   @ApiProperty()
-  status: string;
+  status!: string;
 
   @ApiProperty()
-  minOrderMonth: number;
+  minOrderMonth!: number;
 
   @ApiProperty()
-  maxPhotoQuota: number;
+  maxPhotoQuota!: number;
 
   @ApiProperty()
-  maxPackageCount: number;
+  maxPackageCount!: number;
 }

@@ -80,7 +80,6 @@
     "sharp": "^0.33.5",
     "sharp-phash": "^2.1.0",
     "socket.io": "^4.8.1",
-    "stream-chat": "^8.40.9",
     "tieng-viet-khong-dau": "^1.0.1",
     "uuid": "^10.0.0"
   },
@@ -130,8 +129,30 @@
       "^.+\\.(t|j)s$": "ts-jest"
     },
     "collectCoverageFrom": [
-      "**/*.(t|j)s"
+      "**/*.(t|j)s",
+      "!main.ts",
+      "!**/*.module.ts",
+      "!**/*.spec.ts",
+      "!**/dtos/**",
+      "!**/*.dto.ts",
+      "!**/entities/**",
+      "!**/*.entity.ts",
+      "!**/constants/**",
+      "!**/*.constant.ts",
+      "!**/*.constants.ts",
+      "!**/exceptions/**",
+      "!**/*.exception.ts",
+      "!**/*.interface.ts",
+      "!**/types/**"
     ],
+    "coverageThreshold": {
+      "global": {
+        "statements": 90,
+        "branches": 90,
+        "functions": 90,
+        "lines": 90
+      }
+    },
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
   }

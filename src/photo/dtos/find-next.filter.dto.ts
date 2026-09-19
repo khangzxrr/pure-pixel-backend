@@ -7,12 +7,12 @@ import { ToBoolean } from 'src/infrastructure/transforms/to-boolean';
 export class FindNextPhotoFilterDto {
   @ApiProperty()
   @IsNotEmpty()
-  cursor: string;
+  cursor!: string;
 
   @ApiProperty()
   @ToBoolean()
   @IsBoolean()
-  forward: boolean;
+  forward!: boolean;
 
   toCursor(): Prisma.PhotoWhereUniqueInput {
     return {

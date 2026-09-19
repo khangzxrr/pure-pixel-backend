@@ -44,7 +44,7 @@ export class ReportFindAllRequestDto extends PagingPaginatedRequestDto {
   })
   @IsOptional()
   @IsEnum(Prisma.SortOrder)
-  orderByCreatedAt: Prisma.SortOrder;
+  orderByCreatedAt!: Prisma.SortOrder;
 
   @ApiProperty({
     required: false,
@@ -52,7 +52,7 @@ export class ReportFindAllRequestDto extends PagingPaginatedRequestDto {
   })
   @IsOptional()
   @IsEnum(Prisma.SortOrder)
-  orderByUpdatedAt: Prisma.SortOrder;
+  orderByUpdatedAt!: Prisma.SortOrder;
 
   toWhere(): Prisma.ReportWhereInput {
     const where: Prisma.ReportWhereInput = {};

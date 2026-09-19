@@ -4,36 +4,36 @@ import { UserDto } from 'src/user/dtos/user.dto';
 
 export class CommentReplyCountDto {
   @ApiProperty()
-  replies: number;
+  replies!: number;
 }
 
 export class CommentDto {
   @ApiProperty()
-  id: string;
+  id!: string;
 
   @ApiProperty()
-  createdAt: Date;
+  createdAt!: Date;
 
   @ApiProperty()
-  updatedAt: Date;
+  updatedAt!: Date;
 
   @Exclude()
-  userId: string;
+  userId!: string;
 
   @Exclude()
-  parentId: string;
+  parentId!: string;
 
   @ApiProperty()
   @Type(() => UserDto)
-  user: UserDto;
+  user!: UserDto;
 
   @ApiProperty({
     isArray: true,
   })
   @Type(() => CommentDto)
-  replies: CommentDto[];
+  replies!: CommentDto[];
 
   @ApiProperty()
   @Type(() => CommentReplyCountDto)
-  _count: CommentReplyCountDto;
+  _count!: CommentReplyCountDto;
 }

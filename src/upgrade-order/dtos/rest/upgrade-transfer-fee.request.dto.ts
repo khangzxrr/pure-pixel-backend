@@ -8,5 +8,5 @@ export class UpgradeTransferFeeRequestDto {
   @IsNumber()
   @Min(1)
   @Max(12)
-  totalMonths: number;
+  totalMonths!: number;
 }

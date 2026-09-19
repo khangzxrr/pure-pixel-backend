@@ -8,5 +8,5 @@ export class GetTopDto {
   @Type(() => Number)
   @Min(1)
   @Max(100)
-  top: number;
+  top!: number;
 }

@@ -9,7 +9,11 @@ import {
   PutObjectAclCommand,
   PutObjectCommand,
   S3Client,
+  ServiceInputTypes,
+  ServiceOutputTypes,
 } from '@aws-sdk/client-s3';
+import type { Command, HttpHandlerOptions } from '@smithy/types';
+import type { SmithyResolvedConfiguration } from '@smithy/smithy-client';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 import { getSignedUrl as getSignedUrlByCloudfront } from '@aws-sdk/cloudfront-signer';
@@ -19,6 +23,7 @@ import { CloudFrontClient } from '@aws-sdk/client-cloudfront';
 import { Upload } from '@aws-sdk/lib-storage';
 import { firstValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
+import { Utils } from 'src/infrastructure/utils/utils';
 
 @Injectable()
 export class StorageService {
@@ -26,8 +31,9 @@ export class StorageService {
 
   constructor(private httpService: HttpService) {}
 
-  private s3: S3Client;
-  private cfClient: CloudFrontClient;
+  //both are created lazily on first use
+  private s3?: S3Client;
+  private cfClient?: CloudFrontClient;
 
   async bunnyFileList() {
     const response = await firstValueFrom(
@@ -46,8 +52,8 @@ export class StorageService {
       region: process.env.S3_REGION,
       useAccelerateEndpoint: process.env.S3_ENABLE_ACCELERATE === 'true',
       credentials: {
-        accessKeyId: process.env.S3_ACCESS_KEY_ID,
-        secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
+        accessKeyId: Utils.env('S3_ACCESS_KEY_ID'),
+        secretAccessKey: Utils.env('S3_SECRET_ACCESS_KEY'),
       },
     });
 
@@ -70,13 +76,24 @@ export class StorageService {
 
     return getSignedUrlByCloudfront({
       url: `${process.env.AWS_CLOUDFRONT_S3_ORIGIN}/${key}`,
-      keyPairId: process.env.AWS_CLOUDFRONT_ACCESS_KEY,
-      privateKey: process.env.AWS_CLOUDFRONT_PRIVATE_KEY.replace(/\\n/g, '\n'),
+      keyPairId: Utils.env('AWS_CLOUDFRONT_ACCESS_KEY'),
+      privateKey: Utils.env('AWS_CLOUDFRONT_PRIVATE_KEY').replace(/\\n/g, '\n'),
       dateLessThan: oneHourAfterCurrentDate.toString(),
     });
   }
 
-  async sendCommand(command) {
+  async sendCommand<
+    InputType extends ServiceInputTypes,
+    OutputType extends ServiceOutputTypes,
+  >(
+    command: Command<
+      ServiceInputTypes,
+      InputType,
+      ServiceOutputTypes,
+      OutputType,
+      SmithyResolvedConfiguration<HttpHandlerOptions>
+    >,
+  ) {
     return this.getS3().send(command);
   }
 
@@ -96,6 +113,11 @@ export class StorageService {
     });
 
     const response = await this.getS3().send(command);
+
+    //a successful GetObject always carries a body
+    if (!response.Body) {
+      throw new Error(`object ${key} has no body`);
+    }
 
     return response.Body.transformToByteArray();
   }

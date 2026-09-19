@@ -8,16 +8,12 @@ import { PrismaService } from 'src/prisma.service';
 import { SftpService } from 'src/storage/services/sftp.service';
 import { UserFilterDto } from 'src/user/dtos/user-filter.dto';
 import { UserEntity } from 'src/user/entities/user.entity';
-import { StreamChat } from 'stream-chat';
+//typed by src/types/tieng-viet-khong-dau.d.ts
 import * as tvkd from 'tieng-viet-khong-dau';
 
 @Injectable()
 export class AuthenService {
   private readonly logger = new Logger(AuthenService.name);
-  private readonly streamChatClient = StreamChat.getInstance(
-    process.env.STREAM_ACCESS_KEY,
-    process.env.STREAM_SECRET_KEY,
-  );
 
   constructor(
     @Inject() private userRepository: UserRepository,
@@ -25,7 +21,7 @@ export class AuthenService {
     @Inject(CACHE_MANAGER) private cache: Cache,
     private prisma: PrismaService,
   ) {}
-  async createUserIfNotExist(userId: string, username: string, email: string) {
+  async createUserIfNotExist(userId: string, username: string, _email: string) {
     await this.prisma.$transaction(
       async (tx) => {
         const userFilterDto = new UserFilterDto();
@@ -68,11 +64,6 @@ export class AuthenService {
         //   newUser.ftpPassword,
         // );
         //
-        await this.streamChatClient.upsertUser({
-          id: userId,
-          name: username,
-        });
-
         await this.userRepository.createIfNotExistTransaction(newUser, tx);
 
         this.logger.log(`create new user to database,`);

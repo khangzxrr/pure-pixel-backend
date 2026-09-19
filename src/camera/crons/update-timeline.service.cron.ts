@@ -21,11 +21,11 @@ export class UpdateTimelineService {
 
   private async generateDataForTimestamp(date: Date) {
     const timeline = await this.popularCameraTimelineRepository.upsert(date);
-    const topUsage = (await this.cameraRepository.findTopUsageAtTimestamp(
+    const topUsage = await this.cameraRepository.findTopUsageAtTimestamp(
       'day',
       5,
       date,
-    )) as any[];
+    );
 
     const dtos = plainToInstance(CameraUsageDto, topUsage);
 

@@ -7,6 +7,11 @@ import { GenerateWatermarkRequestDto } from '../dtos/rest/generate-watermark.req
 import { PhotoGateway } from '../gateways/photo.gateway';
 import { PhotoProcessService } from '../services/photo-process.service';
 
+export interface GenerateWatermarkJobData {
+  userId: string;
+  generateWatermarkRequest: GenerateWatermarkRequestDto;
+}
+
 @Processor(PhotoConstant.PHOTO_WATERMARK_QUEUE, {
   concurrency: 2,
 })
@@ -21,7 +26,7 @@ export class PhotoWatermarkConsumer extends WorkerHost {
     super();
   }
 
-  async process(job: Job): Promise<any> {
+  async process(job: Job<GenerateWatermarkJobData>): Promise<void> {
     try {
       switch (job.name) {
         case PhotoConstant.GENERATE_WATERMARK_JOB:
@@ -51,7 +56,7 @@ export class PhotoWatermarkConsumer extends WorkerHost {
   }
 
   async generateWatermark(
-    generateWatermarkRequest: GenerateWatermarkRequestDto,
+    _generateWatermarkRequest: GenerateWatermarkRequestDto,
   ) {
     //    const photo = await this.photoRepository.getPhotoById(
     //       generateWatermarkRequest.photoId,

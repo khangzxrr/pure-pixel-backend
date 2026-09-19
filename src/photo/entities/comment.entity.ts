@@ -5,25 +5,25 @@ import { UserEntity } from 'src/user/entities/user.entity';
 
 export class CommentEntity implements PrismaCommentEntity {
   @ApiProperty()
-  id: string;
+  id!: string;
 
   @Exclude()
-  photoId: string;
+  photoId!: string;
 
   @ApiProperty()
-  content: string;
+  content!: string;
 
   @ApiProperty()
-  createdAt: Date;
+  createdAt!: Date;
 
   @ApiProperty()
-  updatedAt: Date;
+  updatedAt!: Date;
 
   @ApiProperty({ required: false, nullable: true })
-  userId: string | null;
+  userId!: string;
 
   @ApiProperty()
-  parentId: string;
+  parentId!: string;
 
   @ApiProperty({ required: false, type: UserEntity })
   user?: UserEntity;

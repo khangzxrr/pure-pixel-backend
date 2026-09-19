@@ -11,8 +11,6 @@ import { UpgradeOrderModule } from 'src/upgrade-order/upgrade-order.module';
 import { UserController } from './controllers/user.controller';
 import { NestjsFormDataModule } from 'nestjs-form-data';
 
-import { ChatModule } from 'src/chat/chat.module';
-
 import { NotificationModule } from 'src/notification/notification.module';
 
 @Module({
@@ -25,7 +23,6 @@ import { NotificationModule } from 'src/notification/notification.module';
     PaymentModule,
     CachingModule,
     NestjsFormDataModule,
-    ChatModule,
     NotificationModule,
   ],
   exports: [UserService],

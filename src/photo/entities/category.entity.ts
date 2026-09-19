@@ -6,11 +6,11 @@ export class CategoryEntity
   extends ApplicationEntity<CategoryEntity>
   implements Category
 {
-  id: string;
-  name: string;
-  description: string;
+  id!: string;
+  name!: string;
+  description!: string;
   @Exclude()
-  createdAt: Date;
+  createdAt!: Date;
   @Exclude()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

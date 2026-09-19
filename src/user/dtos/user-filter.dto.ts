@@ -8,5 +8,5 @@ export class UserFilterDto {
   })
   @IsString()
   @IsNotEmpty()
-  id: string;
+  id!: string;
 }

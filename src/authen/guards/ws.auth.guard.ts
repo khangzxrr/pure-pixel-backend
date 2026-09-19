@@ -1,6 +1,7 @@
 import {
   CanActivate,
   ExecutionContext,
+  ForbiddenException,
   Inject,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -11,19 +12,44 @@ import {
   KEYCLOAK_LOGGER,
   KEYCLOAK_MULTITENANT_SERVICE,
   KeycloakMultiTenantService,
+  META_ROLES,
   META_SKIP_AUTH,
   META_UNPROTECTED,
+  RoleMatchingMode,
   TokenValidation,
 } from 'nest-keycloak-connect';
 import { Logger } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import KeycloakConnect from 'keycloak-connect';
 import { KeycloakConnectConfig } from 'nest-keycloak-connect';
+import { Socket } from 'socket.io';
 import {
   extractRequest,
   parseToken,
+  TokenClaims,
   useKeycloak,
 } from 'src/infrastructure/utils/utils';
+
+//keycloak-connect builds the Token itself from a raw access token string
+//(GrantManager.createGrant in grant-manager.js), but its typings only accept a Token
+declare module 'keycloak-connect' {
+  interface GrantManager {
+    createGrant(data: { access_token: string }): Promise<KeycloakConnect.Grant>;
+  }
+}
+
+//metadata set by @Roles (nest-keycloak-connect does not export its interface)
+type RoleMetadata = { roles?: string[]; mode?: RoleMatchingMode };
+
+//socket handled by a gateway method guarded with WebsocketAuthGuard
+export interface AuthenticatedSocket extends Socket {
+  user: TokenClaims;
+  accessTokenJWT: string;
+}
+
+//before authentication the socket has no user attached yet
+type WebsocketRequest = Socket &
+  Partial<Pick<AuthenticatedSocket, 'user' | 'accessTokenJWT'>>;
 
 //not work properly with HTTP, use carefully for WS only!
 export default class WebsocketAuthGuard implements CanActivate {
@@ -56,7 +82,9 @@ export default class WebsocketAuthGuard implements CanActivate {
     }
 
     // Extract request/response
-    const [request] = extractRequest(context);
+    const [wsRequest] = extractRequest<WebsocketRequest>(context);
+    //ws contexts always carry the client socket as the first argument
+    const request = wsRequest!;
 
     const jwt = this.extractJwt(request.handshake.auth);
     const isJwtEmpty = jwt === null || jwt === undefined;
@@ -84,9 +112,29 @@ export default class WebsocketAuthGuard implements CanActivate {
       this.multiTenant,
       this.keycloakOpts,
     );
-    const isValidToken = await this.validateToken(keycloak, jwt);
+    const token = await this.validateToken(keycloak, jwt);
 
-    if (isValidToken) {
+    if (token) {
+      //@Roles on a gateway handler: the same check RoleGuard does for http routes
+      const roleMetadata =
+        this.reflector.getAllAndOverride<RoleMetadata>(
+          META_ROLES,
+          [context.getClass(), context.getHandler()],
+        );
+      if (roleMetadata && roleMetadata.roles?.length) {
+        const matches = (role: string) => token.hasRole(role);
+        const roles = roleMetadata.roles;
+        const allowed =
+          roleMetadata.mode === RoleMatchingMode.ALL
+            ? roles.every(matches)
+            : roles.some(matches);
+
+        if (!allowed) {
+          this.logger.verbose(`Missing any of roles ${roles.join(', ')}`);
+          throw new ForbiddenException();
+        }
+      }
+
       // Attach user info object
       request.user = parseToken(jwt);
       // Attach raw access token JWT extracted from bearer/cookie
@@ -101,7 +149,11 @@ export default class WebsocketAuthGuard implements CanActivate {
     throw new UnauthorizedException();
   }
 
-  private async validateToken(keycloak: KeycloakConnect.Keycloak, jwt: any) {
+  //resolves the validated token, or null when it is not valid
+  private async validateToken(
+    keycloak: KeycloakConnect.Keycloak,
+    jwt: string,
+  ): Promise<KeycloakConnect.Token | null> {
     const tokenValidation =
       this.keycloakOpts.tokenValidation || TokenValidation.ONLINE;
 
@@ -113,7 +165,7 @@ export default class WebsocketAuthGuard implements CanActivate {
     } catch (ex) {
       this.logger.warn(`Cannot validate access token: ${ex}`);
       // It will fail to create grants on invalid access token (i.e expired or wrong domain)
-      return false;
+      return null;
     }
 
     const token = grant.access_token;
@@ -123,26 +175,32 @@ export default class WebsocketAuthGuard implements CanActivate {
     );
 
     try {
-      let result: boolean | KeycloakConnect.Token;
+      let result: false | KeycloakConnect.Token;
+
+      //createGrant validates access_token, so a grant without one never reaches here
+      //keep the same outcome as validateToken(undefined): an error that is logged below
+      if (!token) {
+        throw new Error('invalid token (missing)');
+      }
 
       switch (tokenValidation) {
         case TokenValidation.ONLINE:
           result = await gm.validateAccessToken(token);
-          return result === token;
+          return result === token ? token : null;
         case TokenValidation.OFFLINE:
           result = await gm.validateToken(token, 'Bearer');
-          return result === token;
+          return result === token ? token : null;
         case TokenValidation.NONE:
-          return true;
+          return token;
         default:
           this.logger.warn(`Unknown validation method: ${tokenValidation}`);
-          return false;
+          return null;
       }
     } catch (ex) {
       this.logger.warn(`Cannot validate access token: ${ex}`);
     }
 
-    return false;
+    return null;
   }
 
   private extractJwt(headers: { [key: string]: string }) {

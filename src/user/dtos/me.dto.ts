@@ -5,16 +5,16 @@ import { Constants } from 'src/infrastructure/utils/constants';
 
 export class MeDto extends ResponseBaseDto {
   @ApiProperty()
-  photoQuotaUsage: string;
+  photoQuotaUsage!: string;
 
   @ApiProperty()
-  packageCount: string;
+  packageCount!: string;
 
   @ApiProperty()
-  maxPhotoQuota: string;
+  maxPhotoQuota!: string;
 
   @ApiProperty()
-  maxPackageCount: string;
+  maxPackageCount!: string;
 
   @ApiProperty()
   sellingPhotoCount: number = 0;
@@ -33,41 +33,41 @@ export class MeDto extends ResponseBaseDto {
 
   @Expose({ groups: [Constants.PHOTOGRAPHER_ROLE] })
   @ApiProperty()
-  ftpUsername: string;
+  ftpUsername!: string;
 
   @ApiProperty()
-  ftpPassword: string;
+  ftpPassword!: string;
 
   @ApiProperty()
-  cover: string;
+  cover!: string;
 
   @ApiProperty()
-  location: string;
+  location!: string;
 
   @ApiProperty()
-  mail: string;
+  mail!: string;
 
   @ApiProperty()
-  phonenumber: string;
+  phonenumber!: string;
 
   @ApiProperty()
-  socialLinks: string[];
+  socialLinks!: string[];
 
   @ApiProperty()
-  expertises: string[];
+  expertises!: string[];
 
   @Exclude()
-  normalizedName: string;
+  normalizedName!: string;
 
   @ApiProperty()
-  id: string;
+  id!: string;
 
   @ApiProperty()
-  avatar: string;
+  avatar!: string;
 
   @ApiProperty()
-  name: string;
+  name!: string;
 
   @ApiProperty()
-  quote: string;
+  quote!: string;
 }

@@ -7,6 +7,19 @@ import { NotificationConstant } from 'src/notification/constants/notification.co
 import { NotificationCreateDto } from 'src/notification/dtos/rest/notification-create.dto';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 
+export interface OrderNotifyJobData {
+  order: UpgradeOrder;
+}
+
+export interface RestorePhotoVisibilityJobData {
+  photographerId: string;
+}
+
+//SOON_EXPIRED_ORDER_NOTIFY, EXPIRED_ORDER_NOTIFY: OrderNotifyJobData
+//RESTORE_PHOTO_VISIBILITY: RestorePhotoVisibilityJobData
+//the job name constants are typed as string, so each case narrows the data explicitly
+export type UpgradeJobData = OrderNotifyJobData | RestorePhotoVisibilityJobData;
+
 @Processor(UpgradeConstant.UPGRADE_QUEUE)
 export class UpgradeServiceConsumer extends WorkerHost {
   private readonly logger: Logger = new Logger(UpgradeServiceConsumer.name);
@@ -72,23 +85,29 @@ export class UpgradeServiceConsumer extends WorkerHost {
     );
   }
 
-  async process(job: Job): Promise<any> {
+  async process(job: Job<UpgradeJobData>): Promise<null> {
     switch (job.name) {
-      case UpgradeConstant.SOON_EXPIRED_ORDER_NOTIFY:
+      case UpgradeConstant.SOON_EXPIRED_ORDER_NOTIFY: {
+        const data = job.data as OrderNotifyJobData;
         this.logger.log(
-          `send SOON_EXPIRED_ORDER_NOTIFY for order id ${job.data.order.id}`,
+          `send SOON_EXPIRED_ORDER_NOTIFY for order id ${data.order.id}`,
         );
-        await this.sendSoonExpiredOrderNotification(job.data.order);
+        await this.sendSoonExpiredOrderNotification(data.order);
         break;
-      case UpgradeConstant.EXPIRED_ORDER_NOTIFY:
+      }
+      case UpgradeConstant.EXPIRED_ORDER_NOTIFY: {
+        const data = job.data as OrderNotifyJobData;
         this.logger.log(
-          `send ${UpgradeConstant.EXPIRED_ORDER_NOTIFY} for order id ${job.data.order.id}`,
+          `send ${UpgradeConstant.EXPIRED_ORDER_NOTIFY} for order id ${data.order.id}`,
         );
-        await this.sendExpiredOrderNotification(job.data.order);
+        await this.sendExpiredOrderNotification(data.order);
         break;
+      }
       case UpgradeConstant.RESTORE_PHOTO_VISIBILITY:
         this.logger.log(`restore photo visibility`);
-        await this.restorePhotoVisibility(job.data.photographerId);
+        await this.restorePhotoVisibility(
+          (job.data as RestorePhotoVisibilityJobData).photographerId,
+        );
         break;
     }
 

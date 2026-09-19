@@ -5,25 +5,25 @@ import { UpgradePackageDto } from 'src/upgrade-package/dtos/upgrade-package.dto'
 
 export class UpgradeTransferFeeDto {
   @ApiProperty()
-  remainPrice: number;
+  remainPrice!: number;
 
   @ApiProperty()
-  discountPrice: number;
+  discountPrice!: number;
 
   @ApiProperty()
-  refundPrice: number;
+  refundPrice!: number;
 
   @ApiProperty()
-  timeSpanPassed: number;
+  timeSpanPassed!: number;
 
   @ApiProperty()
-  maxiumDiscoutPrice: number;
+  maxiumDiscoutPrice!: number;
 
   @ApiProperty()
   @Type(() => UpgradeOrderDto)
-  currentActivePackage: UpgradeOrderDto;
+  currentActivePackage!: UpgradeOrderDto;
 
   @ApiProperty()
   @Type(() => UpgradePackageDto)
-  upgradePackage: UpgradePackageDto;
+  upgradePackage!: UpgradePackageDto;
 }

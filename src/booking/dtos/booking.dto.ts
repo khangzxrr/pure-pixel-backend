@@ -10,34 +10,34 @@ import { PhotoshootPackageReviewDto } from 'src/photoshoot-package/dtos/photosho
 
 export class BookingDto {
   @ApiProperty()
-  id: string;
+  id!: string;
 
   @ApiProperty()
-  startDate: Date;
+  startDate!: Date;
 
   @ApiProperty()
-  endDate: Date;
+  endDate!: Date;
 
   @ApiProperty()
-  successedAt: Date;
+  successedAt!: Date;
 
   @ApiProperty()
-  status: BookingStatus;
+  status!: BookingStatus;
 
   @ApiProperty()
-  description: string;
+  description!: string;
 
   @Exclude()
-  photoshootPackageId: string;
+  photoshootPackageId!: string;
 
   @Exclude()
-  userId: string;
+  userId!: string;
 
   @Exclude()
-  photoshootPackageHistoryId: string;
+  photoshootPackageHistoryId!: string;
 
   @Exclude()
-  originalPhotoshootPackageId: string;
+  originalPhotoshootPackageId!: string;
 
   @ApiPropertyOptional()
   @Type(() => PhotoshootPackageHistoryDto)
@@ -49,15 +49,15 @@ export class BookingDto {
 
   @ApiPropertyOptional()
   @Type(() => SignedPhotoDto)
-  photos: SignedPhotoDto[];
+  photos!: SignedPhotoDto[];
 
   @ApiProperty()
   @Type(() => BookingBillItemDto)
-  billItems: BookingBillItemDto[];
+  billItems!: BookingBillItemDto[];
 
   @ApiProperty()
   @Type(() => Number)
-  totalBillItem: number;
+  totalBillItem!: number;
 
   @ApiPropertyOptional()
   @Type(() => UserDto)
@@ -65,5 +65,5 @@ export class BookingDto {
 
   @ApiPropertyOptional()
   @Type(() => PhotoshootPackageReviewDto)
-  reviews: PhotoshootPackageReviewDto;
+  reviews!: PhotoshootPackageReviewDto;
 }

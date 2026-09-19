@@ -1,7 +1,7 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { BookingBillItemRepository } from 'src/database/repositories/booking-bill-item.repository';
 import { BookingBillItemFindAllRequestDto } from '../dtos/rest/booking-bill-item-find-all.request.dto';
-import { BookingBillItem, BookingStatus } from '@prisma/client';
+import { BookingBillItem, BookingStatus, Prisma } from '@prisma/client';
 import { plainToInstance } from 'class-transformer';
 import { BookingBillItemDto } from '../dtos/booking-bill-item.dto';
 import { BookingBillItemFindAllResponseDto } from '../dtos/rest/booking-bill-item-find-all.response.dto';
@@ -12,6 +12,14 @@ import { BookingBillItemCreateDto } from '../dtos/booking-bill-item.create.dto';
 import { BookingNotInValidStateException } from '../exceptions/booking-not-in-valid-state.exception';
 import { BookingBillItemUpdateDto } from '../dtos/booking-bill-item.update.dto';
 import { NotificationService } from 'src/notification/services/notification.service';
+
+const ORIGINAL_PHOTOSHOOT_PACKAGE_NOT_FOUND =
+  'OriginalPhotoshootPackageNotFound';
+
+// repository aggregate() is not generic, so the precise _sum shape is lost
+type BillItemPriceSum = Prisma.GetBookingBillItemAggregateType<{
+  _sum: { price: true };
+}>;
 
 @Injectable()
 export class BookingBillItemService {
@@ -33,6 +41,10 @@ export class BookingBillItemService {
     const booking = await this.bookinRepository.findUniqueOrThrow({
       id: bookingId,
     });
+
+    if (!booking.originalPhotoshootPackage) {
+      throw new NotFoundException(ORIGINAL_PHOTOSHOOT_PACKAGE_NOT_FOUND);
+    }
 
     if (booking.originalPhotoshootPackage.userId !== userId) {
       throw new BookingNotBelongException();
@@ -69,6 +81,10 @@ export class BookingBillItemService {
     const booking = await this.bookinRepository.findUniqueOrThrow({
       id: bookingId,
     });
+
+    if (!booking.originalPhotoshootPackage) {
+      throw new NotFoundException(ORIGINAL_PHOTOSHOOT_PACKAGE_NOT_FOUND);
+    }
 
     if (booking.originalPhotoshootPackage.userId !== userId) {
       throw new BookingNotBelongException();
@@ -110,6 +126,10 @@ export class BookingBillItemService {
       id: bookingId,
     });
 
+    if (!booking.originalPhotoshootPackage) {
+      throw new NotFoundException(ORIGINAL_PHOTOSHOOT_PACKAGE_NOT_FOUND);
+    }
+
     if (booking.originalPhotoshootPackage.userId !== userId) {
       throw new BookingNotBelongException();
     }
@@ -146,7 +166,7 @@ export class BookingBillItemService {
   }
 
   async sumBookingBill(bookingId: string) {
-    const sumIncrease = await this.bookingBillItemRepository.aggregate({
+    const sumIncrease = (await this.bookingBillItemRepository.aggregate({
       where: {
         bookingId,
         type: 'INCREASE',
@@ -154,9 +174,9 @@ export class BookingBillItemService {
       _sum: {
         price: true,
       },
-    });
+    })) as BillItemPriceSum;
 
-    const sumDecrease = await this.bookingBillItemRepository.aggregate({
+    const sumDecrease = (await this.bookingBillItemRepository.aggregate({
       where: {
         bookingId,
         type: 'DECREASE',
@@ -164,7 +184,7 @@ export class BookingBillItemService {
       _sum: {
         price: true,
       },
-    });
+    })) as BillItemPriceSum;
 
     let totalAmount: Decimal = new Decimal(0);
 
@@ -188,11 +208,14 @@ export class BookingBillItemService {
       id: bookingId,
     });
 
-    if (
-      booking.userId !== userId &&
-      booking.originalPhotoshootPackage.userId !== userId
-    ) {
-      throw new BookingNotBelongException();
+    if (booking.userId !== userId) {
+      if (!booking.originalPhotoshootPackage) {
+        throw new NotFoundException(ORIGINAL_PHOTOSHOOT_PACKAGE_NOT_FOUND);
+      }
+
+      if (booking.originalPhotoshootPackage.userId !== userId) {
+        throw new BookingNotBelongException();
+      }
     }
 
     findAllDto.bookingId = bookingId;

@@ -2,17 +2,17 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class KeycloakUserDto {
   @ApiProperty()
-  id: string;
+  id!: string;
 
   @ApiProperty()
-  username: string;
+  username!: string;
 
   @ApiProperty()
-  email: string;
+  email!: string;
 
   @ApiProperty()
-  enabled: boolean;
+  enabled!: boolean;
 
   @ApiProperty()
-  roles: string[];
+  roles!: string[];
 }

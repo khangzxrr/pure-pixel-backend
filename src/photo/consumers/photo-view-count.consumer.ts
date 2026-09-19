@@ -5,6 +5,10 @@ import { Logger, Inject } from '@nestjs/common';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoProcessConsumer } from './photo-process.consumer';
 
+export interface IncreaseViewCountJobData {
+  id: string;
+}
+
 @Processor(PhotoConstant.PHOTO_VIEWCOUNT_QUEUE, {
   concurrency: 1,
 })
@@ -14,7 +18,7 @@ export class PhotoViewCountConsumer extends WorkerHost {
   constructor(@Inject() private readonly photoRepository: PhotoRepository) {
     super();
   }
-  async process(job: Job): Promise<any> {
+  async process(job: Job<IncreaseViewCountJobData>): Promise<null> {
     try {
       if (job.name === PhotoConstant.INCREASE_VIEW_COUNT_JOB) {
         await this.increasePhotoViewCount(job.data.id);

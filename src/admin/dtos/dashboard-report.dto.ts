@@ -7,62 +7,62 @@ import { TopSellingPhotoDto } from './top-selled-photo.dto';
 
 export class DashboardReportDto {
   @ApiProperty()
-  totalCustomer: number;
+  totalCustomer!: number;
 
   @ApiProperty()
-  totalPhotographer: number;
+  totalPhotographer!: number;
 
   @ApiProperty()
-  totalPhotoshootPackage: number;
+  totalPhotoshootPackage!: number;
 
   @ApiProperty()
-  totalCamera: number;
+  totalCamera!: number;
 
   @ApiProperty()
-  revenueFromUpgradePackage: number;
+  revenueFromUpgradePackage!: number;
 
   @ApiProperty()
-  revenueFromSellingPhoto: number;
+  revenueFromSellingPhoto!: number;
 
   @ApiProperty()
-  totalRevenue: number;
+  totalRevenue!: number;
 
   @ApiProperty()
-  totalWithdrawal: number;
+  totalWithdrawal!: number;
 
   @ApiProperty()
-  totalBalance: number;
+  totalBalance!: number;
 
   @ApiProperty()
-  totalPhoto: number;
+  totalPhoto!: number;
 
   @ApiProperty()
-  totalSize: number;
+  totalSize!: number;
 
   @ApiProperty()
-  totalBookingSize: number;
+  totalBookingSize!: number;
 
   @ApiProperty()
-  totalPhotoSize: number;
+  totalPhotoSize!: number;
 
   @ApiProperty()
-  totalRawPhoto: number;
+  totalRawPhoto!: number;
 
   @ApiProperty()
-  totalBookingPhoto: number;
+  totalBookingPhoto!: number;
 
   @ApiProperty()
-  totalSellingPhoto: number;
+  totalSellingPhoto!: number;
 
   @ApiProperty({
     type: TopUsedUpgradePackageDto,
   })
   @Type(() => TopUsedUpgradePackageDto)
-  topUsedUpgradePackage: TopUsedUpgradePackageDto[];
+  topUsedUpgradePackage!: TopUsedUpgradePackageDto[];
 
   @ApiProperty({
     type: TopSellingPhotoDto,
   })
   @Type(() => TopSellingPhotoDto)
-  topSellingPhoto: TopSellingPhotoDto[];
+  topSellingPhoto!: TopSellingPhotoDto[];
 }

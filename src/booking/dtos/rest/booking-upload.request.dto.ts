@@ -7,5 +7,5 @@ export class BookingUploadRequestDto {
   })
   @IsFile()
   @HasMimeType(['image/jpeg', 'image/png'])
-  file: MemoryStoredFile;
+  file!: MemoryStoredFile;
 }
