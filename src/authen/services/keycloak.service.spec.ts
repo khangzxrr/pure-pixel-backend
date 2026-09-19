@@ -10,6 +10,7 @@ const KeycloakAdminClientMock = KeycloakAdminClient as unknown as jest.Mock;
 
 type KcMock = {
   auth: jest.Mock;
+  realms: { findOne: jest.Mock };
   clients: {
     find: jest.Mock;
     findRole: jest.Mock;
@@ -70,6 +71,7 @@ describe('KeycloakService', () => {
 
     kc = {
       auth: jest.fn().mockResolvedValue(undefined),
+      realms: { findOne: jest.fn() },
       clients: {
         find: jest
           .fn()
@@ -106,6 +108,20 @@ describe('KeycloakService', () => {
     process.env = originalEnv;
     jest.useRealTimers();
     jest.restoreAllMocks();
+  });
+
+  describe('isRegistrationAllowed', () => {
+    it.each([
+      [{ registrationAllowed: true }, true],
+      [{ registrationAllowed: false }, false],
+      [{}, false],
+      [undefined, false],
+    ])('reads the realm setting %p', async (realm, expected) => {
+      kc.realms.findOne.mockResolvedValue(realm);
+
+      await expect(service.isRegistrationAllowed()).resolves.toBe(expected);
+      expect(kc.realms.findOne).toHaveBeenCalledWith({ realm: 'purepixel' });
+    });
   });
 
   describe('admin client instance', () => {
