@@ -24,7 +24,7 @@ export interface DeletePhotoJobData {
 //data of each job name, as enqueued:
 //UPLOAD_BOOKING_PHOTO_JOB_NAME: TemporaryBookingPhotoUpload
 //UPLOAD_PHOTO_JOB_NAME: TemporaryPhotoDto
-//PROCESS_PHOTO_JOB_NAME, BAN_PHOTO_JOB, UNBAN_PHOTO_JOB: PhotoIdJobData
+//PROCESS_PHOTO_JOB_NAME, REGENERATE_BLURHASH_JOB, BAN_PHOTO_JOB, UNBAN_PHOTO_JOB: PhotoIdJobData
 //DELETE_PHOTO_JOB_NAME: DeletePhotoJobData
 //DELETE_TEMPORARY_PHOTO_JOB_NAME: file path
 //the job name constants are typed as string, so each case narrows the data explicitly
@@ -65,6 +65,9 @@ export class PhotoProcessConsumer extends WorkerHost {
           break;
         case PhotoConstant.PROCESS_PHOTO_JOB_NAME:
           await this.processPhoto((job.data as PhotoIdJobData).id);
+          break;
+        case PhotoConstant.REGENERATE_BLURHASH_JOB:
+          await this.regenerateBlurhash((job.data as PhotoIdJobData).id);
           break;
         case PhotoConstant.DELETE_PHOTO_JOB_NAME:
           await this.deleteTineyePhoto(
@@ -251,6 +254,9 @@ export class PhotoProcessConsumer extends WorkerHost {
     );
     this.logger.log(`uploaded thumbnail for photo id: ${photo.id}`);
 
+    //this upload never goes through processPhoto, so the photo gets its blurhash here
+    const blurHash = await this.photoProcessService.bufferToBlurhash(buffer);
+
     const removedMetaSharp =
       await this.photoProcessService.sharpInitFromFilePath(
         temporaryPhoto.file.path,
@@ -283,6 +289,7 @@ export class PhotoProcessConsumer extends WorkerHost {
       status: 'PARSED',
       originalPhotoUrl: key,
       watermarkPhotoUrl: watermarkKey,
+      blurHash,
     });
 
     this.photoProcessQueue.addBulk([
@@ -322,6 +329,24 @@ export class PhotoProcessConsumer extends WorkerHost {
     this.logger.log(`generated thumbnail for photo id: ${photoId}`);
   }
 
+  //photos stored before the blurhash was generated keep a placeholder; this makes their own one
+  //without the duplicate detection processPhoto does
+  async regenerateBlurhash(photoId: string) {
+    const photo = await this.photoRepository.findUniqueOrThrow(photoId);
+
+    const buffer = await this.photoProcessService.getBufferFromKey(
+      photo.originalPhotoUrl,
+    );
+
+    const blurHash = await this.photoProcessService.bufferToBlurhash(buffer);
+
+    await this.photoRepository.updateById(photoId, {
+      blurHash,
+    });
+
+    this.logger.log(`regenerated blurhash for photo id: ${photoId}`);
+  }
+
   async processPhoto(photoId: string) {
     console.log(`process photo id: ${photoId}`);
 
@@ -333,16 +358,23 @@ export class PhotoProcessConsumer extends WorkerHost {
 
     await this.generateThumbnail(photoId, buffer);
 
+    const blurHash = await this.photoProcessService.bufferToBlurhash(buffer);
+
     if (photo.photoType === 'BOOKING') {
+      await this.photoRepository.updateById(photoId, {
+        blurHash,
+      });
+
       return;
     }
 
     const hash = await this.photoProcessService.getHashFromBuffer(buffer);
 
-    const blurHash = await this.photoProcessService.bufferToBlurhash(buffer);
-
     const existPhotoWithHash = await this.photoRepository.findFirst({
       hash,
+      id: {
+        not: photo.id,
+      },
     });
     if (existPhotoWithHash) {
       await this.photoRepository.updateById(photo.id, {

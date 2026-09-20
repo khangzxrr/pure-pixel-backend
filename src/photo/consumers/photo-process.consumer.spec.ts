@@ -143,6 +143,18 @@ describe('PhotoProcessConsumer', () => {
       expect(spy).toHaveBeenCalledWith('p1');
     });
 
+    it('dispatches REGENERATE_BLURHASH_JOB', async () => {
+      const spy = jest
+        .spyOn(consumer, 'regenerateBlurhash')
+        .mockResolvedValue(undefined);
+
+      await consumer.process(
+        job(PhotoConstant.REGENERATE_BLURHASH_JOB, { id: 'p1' }),
+      );
+
+      expect(spy).toHaveBeenCalledWith('p1');
+    });
+
     it('dispatches DELETE_PHOTO_JOB_NAME', async () => {
       const spy = jest
         .spyOn(consumer, 'deleteTineyePhoto')
@@ -385,10 +397,14 @@ describe('PhotoProcessConsumer', () => {
         'thumbnail/watermark/p1.webp',
         watermarkThumb,
       );
+      expect(photoProcessService.bufferToBlurhash).toHaveBeenCalledWith(
+        original,
+      );
       expect(photoRepository.updateById).toHaveBeenCalledWith('p1', {
         status: 'PARSED',
         originalPhotoUrl: 'u1/p1.jpg',
         watermarkPhotoUrl: 'watermark/u1/p1.jpg',
+        blurHash: 'blur',
       });
       expect(photoProcessQueue.addBulk).toHaveBeenCalledWith([
         expect.objectContaining({
@@ -424,8 +440,34 @@ describe('PhotoProcessConsumer', () => {
     );
   });
 
+  describe('regenerateBlurhash', () => {
+    it('stores a blurhash made from the stored photo', async () => {
+      photoProcessService.getBufferFromKey.mockResolvedValue(
+        Buffer.from('stored'),
+      );
+      photoProcessService.bufferToBlurhash.mockResolvedValue('fresh-blur');
+
+      await consumer.regenerateBlurhash('p1');
+
+      expect(photoProcessService.getBufferFromKey).toHaveBeenCalledWith(
+        'u1/p1.jpg',
+      );
+      expect(photoRepository.updateById).toHaveBeenCalledWith('p1', {
+        blurHash: 'fresh-blur',
+      });
+    });
+
+    it('leaves the photo alone and does not detect duplicates', async () => {
+      await consumer.regenerateBlurhash('p1');
+
+      expect(photoProcessService.getHashFromBuffer).not.toHaveBeenCalled();
+      expect(photoRepository.findFirst).not.toHaveBeenCalled();
+      expect(tineyeService.search).not.toHaveBeenCalled();
+    });
+  });
+
   describe('processPhoto', () => {
-    it('only generates thumbnail for booking photos', async () => {
+    it('only generates thumbnail and blurhash for booking photos', async () => {
       photoRepository.findUniqueOrThrow.mockResolvedValue({
         ...photo,
         photoType: 'BOOKING',
@@ -438,7 +480,9 @@ describe('PhotoProcessConsumer', () => {
         Buffer.from('thumb'),
       );
       expect(photoProcessService.getHashFromBuffer).not.toHaveBeenCalled();
-      expect(photoRepository.updateById).not.toHaveBeenCalled();
+      expect(photoRepository.updateById).toHaveBeenCalledWith('p1', {
+        blurHash: 'blur',
+      });
     });
 
     it('marks photo as duplicated when hash already exists', async () => {
@@ -446,7 +490,10 @@ describe('PhotoProcessConsumer', () => {
 
       await consumer.processPhoto('p1');
 
-      expect(photoRepository.findFirst).toHaveBeenCalledWith({ hash: 'hash' });
+      expect(photoRepository.findFirst).toHaveBeenCalledWith({
+        hash: 'hash',
+        id: { not: 'p1' },
+      });
       expect(photoRepository.updateById).toHaveBeenCalledWith('p1', {
         status: 'DUPLICATED',
         visibility: 'PRIVATE',

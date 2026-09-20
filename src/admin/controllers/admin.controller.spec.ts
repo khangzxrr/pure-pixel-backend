@@ -7,6 +7,7 @@ import { AdminController } from './admin.controller';
 describe('AdminController', () => {
   const adminService = {
     triggerProcessAllPhotos: jest.fn(),
+    triggerRegenerateAllBlurhash: jest.fn(),
     seed: jest.fn(),
     triggerProcess: jest.fn(),
     generateWatermarkPhoto: jest.fn(),
@@ -85,6 +86,15 @@ describe('AdminController', () => {
 
     await expect(controller.triggerProcessAllPhotos()).resolves.toBeUndefined();
     expect(adminService.triggerProcessAllPhotos).toHaveBeenCalled();
+  });
+
+  it('triggerRegenerateAllBlurhash should delegate to admin service', async () => {
+    adminService.triggerRegenerateAllBlurhash.mockResolvedValue(undefined);
+
+    await expect(
+      controller.triggerRegenerateAllBlurhash(),
+    ).resolves.toBeUndefined();
+    expect(adminService.triggerRegenerateAllBlurhash).toHaveBeenCalled();
   });
 
   it('seedDatabase should delegate to admin service', async () => {
