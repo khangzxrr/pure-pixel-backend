@@ -5,6 +5,11 @@ export class PhotoConstant {
 
   static PROCESS_PHOTO_JOB_NAME = 'PROCESS_PHOTO_JOB_NAME';
 
+  static REGENERATE_BLURHASH_JOB = 'REGENERATE_BLURHASH_JOB';
+
+  //flat grey, stands in until the photo is processed and its own blurhash is stored
+  static PLACEHOLDER_BLURHASH = 'U07-Zw?bfQ?b?bj[fQj[fQfQfQfQ?bj[fQj[';
+
   static UPLOAD_BOOKING_PHOTO_JOB_NAME = 'UPLOAD_BOOKING_PHOTO_JOB_NAME';
 
   static DELETE_TEMPORARY_PHOTO_JOB_NAME = 'DELETE_TEMPORARY_PHOTO_JOB_NAME';

@@ -76,6 +76,28 @@ export class AdminService {
     }
   }
 
+  async triggerRegenerateAllBlurhash() {
+    let skip = 0;
+    while (true) {
+      const photos = await this.photoRepository.findAll({}, [], skip, 100);
+
+      if (photos.length === 0) {
+        break;
+      }
+
+      await this.photoProcessQueue.addBulk(
+        photos.map((p) => ({
+          name: PhotoConstant.REGENERATE_BLURHASH_JOB,
+          data: {
+            id: p.id,
+          },
+        })),
+      );
+
+      skip += photos.length;
+    }
+  }
+
   async generateWatermarkPhoto(photoId: string) {
     return await this.photoGenerateWatermark.generateWatermark(photoId, {
       text: 'PXL',

@@ -99,6 +99,22 @@ describe('AdminService', () => {
     expect(photoProcessQueue.addBulk).toHaveBeenNthCalledWith(2, []);
   });
 
+  it('triggerRegenerateAllBlurhash should queue photos page by page until no photo left', async () => {
+    photoRepository.findAll
+      .mockResolvedValueOnce([{ id: 'p1' }, { id: 'p2' }])
+      .mockResolvedValueOnce([]);
+
+    await service.triggerRegenerateAllBlurhash();
+
+    expect(photoRepository.findAll).toHaveBeenNthCalledWith(1, {}, [], 0, 100);
+    expect(photoRepository.findAll).toHaveBeenNthCalledWith(2, {}, [], 2, 100);
+    expect(photoProcessQueue.addBulk).toHaveBeenCalledTimes(1);
+    expect(photoProcessQueue.addBulk).toHaveBeenCalledWith([
+      { name: PhotoConstant.REGENERATE_BLURHASH_JOB, data: { id: 'p1' } },
+      { name: PhotoConstant.REGENERATE_BLURHASH_JOB, data: { id: 'p2' } },
+    ]);
+  });
+
   it('generateWatermarkPhoto should generate PXL watermark', async () => {
     photoGenerateWatermark.generateWatermark.mockResolvedValue('done');
 
