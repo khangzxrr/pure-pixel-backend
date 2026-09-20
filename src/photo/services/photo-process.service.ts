@@ -202,6 +202,8 @@ export class PhotoProcessService {
     const sharp = await this.sharpInitFromBuffer(buffer);
 
     const resize = sharp
+      //the blurhash stands in for the photo as it is shown, so follow the exif orientation
+      .rotate()
       .raw({})
       .ensureAlpha()
       .resize(32, 32, { fit: 'inside' });
@@ -209,9 +211,6 @@ export class PhotoProcessService {
     return new Promise((resolve, reject) => {
       resize.toBuffer((err, buffer, { width, height }) => {
         if (err) return reject(err);
-
-        console.log(buffer);
-        console.log(width, height);
 
         resolve(encode(new Uint8ClampedArray(buffer), width, height, 4, 4));
       });

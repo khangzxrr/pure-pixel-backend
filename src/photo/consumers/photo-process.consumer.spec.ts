@@ -5,7 +5,6 @@ import { BookingRepository } from 'src/database/repositories/booking.repository'
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { NotificationService } from 'src/notification/services/notification.service';
 import { BunnyService } from 'src/storage/services/bunny.service';
-import { TineyeService } from 'src/storage/services/tineye.service';
 import { PhotoConstant } from '../constants/photo.constant';
 import { TemporaryBookingPhotoUpload } from '../dtos/temporary-booking-photo-upload.dto';
 import { TemporaryPhotoDto } from '../dtos/temporary-photo.dto';
@@ -36,7 +35,6 @@ describe('PhotoProcessConsumer', () => {
     | 'bufferToBlurhash',
     jest.Mock
   >;
-  let tineyeService: Record<'delete' | 'search' | 'add', jest.Mock>;
   let bunnyService: Record<'uploadFromBuffer' | 'getPresignedFile', jest.Mock>;
   let notificationService: Record<'addNotificationToQueue', jest.Mock>;
   let photoProcessQueue: Record<'addBulk', jest.Mock>;
@@ -75,11 +73,6 @@ describe('PhotoProcessConsumer', () => {
       getHashFromBuffer: jest.fn().mockResolvedValue('hash'),
       bufferToBlurhash: jest.fn().mockResolvedValue('blur'),
     };
-    tineyeService = {
-      delete: jest.fn().mockResolvedValue({}),
-      search: jest.fn().mockResolvedValue({ data: { result: [] } }),
-      add: jest.fn().mockResolvedValue({ status: 200 }),
-    };
     bunnyService = {
       uploadFromBuffer: jest.fn().mockResolvedValue(undefined),
       getPresignedFile: jest.fn().mockReturnValue('signed-url'),
@@ -93,7 +86,6 @@ describe('PhotoProcessConsumer', () => {
       photoRepository as unknown as PhotoRepository,
       bookingRepository as unknown as BookingRepository,
       photoProcessService as unknown as PhotoProcessService,
-      tineyeService as unknown as TineyeService,
       bunnyService as unknown as BunnyService,
       notificationService as unknown as NotificationService,
       photoProcessQueue as unknown as Queue,
@@ -143,16 +135,16 @@ describe('PhotoProcessConsumer', () => {
       expect(spy).toHaveBeenCalledWith('p1');
     });
 
-    it('dispatches DELETE_PHOTO_JOB_NAME', async () => {
+    it('dispatches REGENERATE_BLURHASH_JOB', async () => {
       const spy = jest
-        .spyOn(consumer, 'deleteTineyePhoto')
+        .spyOn(consumer, 'regenerateBlurhash')
         .mockResolvedValue(undefined);
 
       await consumer.process(
-        job(PhotoConstant.DELETE_PHOTO_JOB_NAME, { originalPhotoUrl: 'k' }),
+        job(PhotoConstant.REGENERATE_BLURHASH_JOB, { id: 'p1' }),
       );
 
-      expect(spy).toHaveBeenCalledWith('k');
+      expect(spy).toHaveBeenCalledWith('p1');
     });
 
     it('dispatches BAN_PHOTO_JOB', async () => {
@@ -385,10 +377,14 @@ describe('PhotoProcessConsumer', () => {
         'thumbnail/watermark/p1.webp',
         watermarkThumb,
       );
+      expect(photoProcessService.bufferToBlurhash).toHaveBeenCalledWith(
+        original,
+      );
       expect(photoRepository.updateById).toHaveBeenCalledWith('p1', {
         status: 'PARSED',
         originalPhotoUrl: 'u1/p1.jpg',
         watermarkPhotoUrl: 'watermark/u1/p1.jpg',
+        blurHash: 'blur',
       });
       expect(photoProcessQueue.addBulk).toHaveBeenCalledWith([
         expect.objectContaining({
@@ -399,12 +395,6 @@ describe('PhotoProcessConsumer', () => {
         }),
       ]);
     });
-  });
-
-  it('deletes photo from tineye', async () => {
-    await consumer.deleteTineyePhoto('u1/p1.jpg');
-
-    expect(tineyeService.delete).toHaveBeenCalledWith('u1/p1.jpg');
   });
 
   it('generates and uploads thumbnail', async () => {
@@ -424,8 +414,33 @@ describe('PhotoProcessConsumer', () => {
     );
   });
 
+  describe('regenerateBlurhash', () => {
+    it('stores a blurhash made from the stored photo', async () => {
+      photoProcessService.getBufferFromKey.mockResolvedValue(
+        Buffer.from('stored'),
+      );
+      photoProcessService.bufferToBlurhash.mockResolvedValue('fresh-blur');
+
+      await consumer.regenerateBlurhash('p1');
+
+      expect(photoProcessService.getBufferFromKey).toHaveBeenCalledWith(
+        'u1/p1.jpg',
+      );
+      expect(photoRepository.updateById).toHaveBeenCalledWith('p1', {
+        blurHash: 'fresh-blur',
+      });
+    });
+
+    it('leaves the photo alone and does not detect duplicates', async () => {
+      await consumer.regenerateBlurhash('p1');
+
+      expect(photoProcessService.getHashFromBuffer).not.toHaveBeenCalled();
+      expect(photoRepository.findFirst).not.toHaveBeenCalled();
+    });
+  });
+
   describe('processPhoto', () => {
-    it('only generates thumbnail for booking photos', async () => {
+    it('only generates thumbnail and blurhash for booking photos', async () => {
       photoRepository.findUniqueOrThrow.mockResolvedValue({
         ...photo,
         photoType: 'BOOKING',
@@ -438,7 +453,9 @@ describe('PhotoProcessConsumer', () => {
         Buffer.from('thumb'),
       );
       expect(photoProcessService.getHashFromBuffer).not.toHaveBeenCalled();
-      expect(photoRepository.updateById).not.toHaveBeenCalled();
+      expect(photoRepository.updateById).toHaveBeenCalledWith('p1', {
+        blurHash: 'blur',
+      });
     });
 
     it('marks photo as duplicated when hash already exists', async () => {
@@ -446,7 +463,10 @@ describe('PhotoProcessConsumer', () => {
 
       await consumer.processPhoto('p1');
 
-      expect(photoRepository.findFirst).toHaveBeenCalledWith({ hash: 'hash' });
+      expect(photoRepository.findFirst).toHaveBeenCalledWith({
+        hash: 'hash',
+        id: { not: 'p1' },
+      });
       expect(photoRepository.updateById).toHaveBeenCalledWith('p1', {
         status: 'DUPLICATED',
         visibility: 'PRIVATE',
@@ -454,76 +474,15 @@ describe('PhotoProcessConsumer', () => {
       expect(notificationService.addNotificationToQueue).toHaveBeenCalledWith(
         expect.objectContaining({ referenceType: 'DUPLICATED_PHOTO' }),
       );
-      expect(tineyeService.search).not.toHaveBeenCalled();
-    });
-
-    it('marks photo as duplicated when tineye match is at least 10 percent', async () => {
-      tineyeService.search.mockResolvedValue({
-        data: { result: [{ match_percent: 10 }] },
-      });
-
-      await consumer.processPhoto('p1');
-
-      expect(bunnyService.getPresignedFile).toHaveBeenCalledWith(
-        'u1/p1.jpg',
-        `?width=${PhotoConstant.TINEYE_MIN_PHOTO_WIDTH}`,
-      );
-      expect(tineyeService.search).toHaveBeenCalledWith('signed-url');
-      expect(photoRepository.updateById).toHaveBeenCalledWith('p1', {
-        status: 'DUPLICATED',
-        visibility: 'PRIVATE',
-      });
-      expect(notificationService.addNotificationToQueue).toHaveBeenCalledTimes(
-        1,
-      );
-      expect(tineyeService.add).not.toHaveBeenCalled();
-    });
-
-    it.each([
-      ['low match', { data: { result: [{ match_percent: 9 }] } }],
-      ['empty result', { data: { result: [] } }],
-      ['missing result', { data: {} }],
-    ])(
-      'adds photo to tineye and saves hashes on %s',
-      async (_name, response) => {
-        tineyeService.search.mockResolvedValue(response);
-
-        await consumer.processPhoto('p1');
-
-        expect(tineyeService.add).toHaveBeenCalledWith(
-          'u1/p1.jpg',
-          'signed-url',
-        );
-        expect(photoRepository.updateById).toHaveBeenCalledWith('p1', {
-          hash: 'hash',
-          blurHash: 'blur',
-        });
-        expect(Logger.prototype.log).toHaveBeenCalledWith(
-          'uploaded photo u1/p1.jpg to tineye',
-        );
-      },
-    );
-
-    it('continues when tineye search and add fail', async () => {
-      tineyeService.search.mockRejectedValue(new Error('search'));
-      tineyeService.add.mockRejectedValue(new Error('add'));
-
-      await consumer.processPhoto('p1');
-
-      expect(photoRepository.updateById).toHaveBeenCalledWith('p1', {
+      expect(photoRepository.updateById).not.toHaveBeenCalledWith('p1', {
         hash: 'hash',
         blurHash: 'blur',
       });
     });
 
-    it('does not log upload when tineye add is not ok', async () => {
-      tineyeService.add.mockResolvedValue({ status: 500 });
-
+    it('saves the hash and the blurhash of a photo that is not a duplicate', async () => {
       await consumer.processPhoto('p1');
 
-      expect(Logger.prototype.log).not.toHaveBeenCalledWith(
-        'uploaded photo u1/p1.jpg to tineye',
-      );
       expect(photoRepository.updateById).toHaveBeenCalledWith('p1', {
         hash: 'hash',
         blurHash: 'blur',

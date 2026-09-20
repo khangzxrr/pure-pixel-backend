@@ -5,13 +5,16 @@ export class PhotoConstant {
 
   static PROCESS_PHOTO_JOB_NAME = 'PROCESS_PHOTO_JOB_NAME';
 
+  static REGENERATE_BLURHASH_JOB = 'REGENERATE_BLURHASH_JOB';
+
+  //flat grey, stands in until the photo is processed and its own blurhash is stored
+  static PLACEHOLDER_BLURHASH = 'U07-Zw?bfQ?b?bj[fQj[fQfQfQfQ?bj[fQj[';
+
   static UPLOAD_BOOKING_PHOTO_JOB_NAME = 'UPLOAD_BOOKING_PHOTO_JOB_NAME';
 
   static DELETE_TEMPORARY_PHOTO_JOB_NAME = 'DELETE_TEMPORARY_PHOTO_JOB_NAME';
 
   static UPLOAD_PHOTO_JOB_NAME = 'UPLOAD_PHOTO_JOB_NAME';
-
-  static DELETE_PHOTO_JOB_NAME = 'DELETE_PHOTO_JOB_NAME';
 
   static GENERATE_WATERMARK_JOB = 'GENERATE_WATERMARK_JOB';
 
@@ -28,6 +31,4 @@ export class PhotoConstant {
   static MIN_PHOTO_SIZE = 4000000;
 
   static MIN_PHOTO_WIDTH = 480;
-
-  static TINEYE_MIN_PHOTO_WIDTH = 600;
 }

@@ -89,6 +89,14 @@ export class AdminController {
     await this.adminService.triggerProcessAllPhotos();
   }
 
+  @Post('/photo-trigger/blurhash')
+  @ApiOperation({
+    summary: 'regenerate the blurhash of all photos',
+  })
+  async triggerRegenerateAllBlurhash() {
+    await this.adminService.triggerRegenerateAllBlurhash();
+  }
+
   @Post('seed')
   @ApiOperation({
     summary: 'seed database',

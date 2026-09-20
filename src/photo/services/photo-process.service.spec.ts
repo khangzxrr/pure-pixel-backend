@@ -442,6 +442,7 @@ describe('PhotoProcessService', () => {
       await expect(service.bufferToBlurhash(Buffer.from('x'))).resolves.toBe(
         'blurhash',
       );
+      expect(sharp.rotate).toHaveBeenCalled();
       expect(sharp.resize).toHaveBeenCalledWith(32, 32, { fit: 'inside' });
       expect(encodeMock).toHaveBeenCalledWith(
         new Uint8ClampedArray(raw),

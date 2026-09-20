@@ -4,7 +4,6 @@ import { Job, Queue } from 'bullmq';
 import { Inject, Logger } from '@nestjs/common';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoProcessService } from '../services/photo-process.service';
-import { TineyeService } from 'src/storage/services/tineye.service';
 import { BunnyService } from 'src/storage/services/bunny.service';
 import { NotificationService } from 'src/notification/services/notification.service';
 import { TemporaryPhotoDto } from '../dtos/temporary-photo.dto';
@@ -17,22 +16,16 @@ export interface PhotoIdJobData {
   id: string;
 }
 
-export interface DeletePhotoJobData {
-  originalPhotoUrl: string;
-}
-
 //data of each job name, as enqueued:
 //UPLOAD_BOOKING_PHOTO_JOB_NAME: TemporaryBookingPhotoUpload
 //UPLOAD_PHOTO_JOB_NAME: TemporaryPhotoDto
-//PROCESS_PHOTO_JOB_NAME, BAN_PHOTO_JOB, UNBAN_PHOTO_JOB: PhotoIdJobData
-//DELETE_PHOTO_JOB_NAME: DeletePhotoJobData
+//PROCESS_PHOTO_JOB_NAME, REGENERATE_BLURHASH_JOB, BAN_PHOTO_JOB, UNBAN_PHOTO_JOB: PhotoIdJobData
 //DELETE_TEMPORARY_PHOTO_JOB_NAME: file path
 //the job name constants are typed as string, so each case narrows the data explicitly
 export type PhotoProcessJobData =
   | TemporaryBookingPhotoUpload
   | TemporaryPhotoDto
   | PhotoIdJobData
-  | DeletePhotoJobData
   | string;
 
 @Processor(PhotoConstant.PHOTO_PROCESS_QUEUE, {
@@ -45,7 +38,6 @@ export class PhotoProcessConsumer extends WorkerHost {
     @Inject() private readonly photoRepository: PhotoRepository,
     @Inject() private readonly bookingRepository: BookingRepository,
     @Inject() private readonly photoProcessService: PhotoProcessService,
-    @Inject() private readonly tineyeService: TineyeService,
     @Inject() private readonly bunnyService: BunnyService,
     @Inject() private readonly notificationService: NotificationService,
     @InjectQueue(PhotoConstant.PHOTO_PROCESS_QUEUE)
@@ -66,10 +58,8 @@ export class PhotoProcessConsumer extends WorkerHost {
         case PhotoConstant.PROCESS_PHOTO_JOB_NAME:
           await this.processPhoto((job.data as PhotoIdJobData).id);
           break;
-        case PhotoConstant.DELETE_PHOTO_JOB_NAME:
-          await this.deleteTineyePhoto(
-            (job.data as DeletePhotoJobData).originalPhotoUrl,
-          );
+        case PhotoConstant.REGENERATE_BLURHASH_JOB:
+          await this.regenerateBlurhash((job.data as PhotoIdJobData).id);
           break;
         case PhotoConstant.BAN_PHOTO_JOB:
           await this.banPhoto((job.data as PhotoIdJobData).id);
@@ -251,6 +241,9 @@ export class PhotoProcessConsumer extends WorkerHost {
     );
     this.logger.log(`uploaded thumbnail for photo id: ${photo.id}`);
 
+    //this upload never goes through processPhoto, so the photo gets its blurhash here
+    const blurHash = await this.photoProcessService.bufferToBlurhash(buffer);
+
     const removedMetaSharp =
       await this.photoProcessService.sharpInitFromFilePath(
         temporaryPhoto.file.path,
@@ -283,6 +276,7 @@ export class PhotoProcessConsumer extends WorkerHost {
       status: 'PARSED',
       originalPhotoUrl: key,
       watermarkPhotoUrl: watermarkKey,
+      blurHash,
     });
 
     this.photoProcessQueue.addBulk([
@@ -303,12 +297,6 @@ export class PhotoProcessConsumer extends WorkerHost {
     ]);
   }
 
-  async deleteTineyePhoto(originalPhotoUrl: string) {
-    await this.tineyeService.delete(originalPhotoUrl);
-
-    this.logger.log(`delete ${originalPhotoUrl} from tineye database`);
-  }
-
   async generateThumbnail(photoId: string, buffer: Buffer) {
     const sharp = await this.photoProcessService.sharpInitFromBuffer(buffer);
 
@@ -322,6 +310,24 @@ export class PhotoProcessConsumer extends WorkerHost {
     this.logger.log(`generated thumbnail for photo id: ${photoId}`);
   }
 
+  //photos stored before the blurhash was generated keep a placeholder; this makes their own one
+  //without the duplicate detection processPhoto does
+  async regenerateBlurhash(photoId: string) {
+    const photo = await this.photoRepository.findUniqueOrThrow(photoId);
+
+    const buffer = await this.photoProcessService.getBufferFromKey(
+      photo.originalPhotoUrl,
+    );
+
+    const blurHash = await this.photoProcessService.bufferToBlurhash(buffer);
+
+    await this.photoRepository.updateById(photoId, {
+      blurHash,
+    });
+
+    this.logger.log(`regenerated blurhash for photo id: ${photoId}`);
+  }
+
   async processPhoto(photoId: string) {
     console.log(`process photo id: ${photoId}`);
 
@@ -333,16 +339,23 @@ export class PhotoProcessConsumer extends WorkerHost {
 
     await this.generateThumbnail(photoId, buffer);
 
+    const blurHash = await this.photoProcessService.bufferToBlurhash(buffer);
+
     if (photo.photoType === 'BOOKING') {
+      await this.photoRepository.updateById(photoId, {
+        blurHash,
+      });
+
       return;
     }
 
     const hash = await this.photoProcessService.getHashFromBuffer(buffer);
 
-    const blurHash = await this.photoProcessService.bufferToBlurhash(buffer);
-
     const existPhotoWithHash = await this.photoRepository.findFirst({
       hash,
+      id: {
+        not: photo.id,
+      },
     });
     if (existPhotoWithHash) {
       await this.photoRepository.updateById(photo.id, {
@@ -362,54 +375,6 @@ export class PhotoProcessConsumer extends WorkerHost {
       });
 
       return;
-    }
-
-    const signedPhotoUrl = this.bunnyService.getPresignedFile(
-      photo.originalPhotoUrl,
-      `?width=${PhotoConstant.TINEYE_MIN_PHOTO_WIDTH}`,
-    );
-
-    try {
-      const response = await this.tineyeService.search(signedPhotoUrl);
-
-      const result = response.data.result;
-
-      if (result) {
-        if (result.length > 0 && result[0].match_percent >= 10) {
-          await this.photoRepository.updateById(photo.id, {
-            status: 'DUPLICATED',
-            visibility: 'PRIVATE',
-          });
-
-          await this.notificationService.addNotificationToQueue({
-            type: 'IN_APP',
-            userId: photo.photographerId,
-            payload: {
-              id: photo.id,
-            },
-            referenceType: 'DUPLICATED_PHOTO',
-            title: `Ảnh ${photo.title} của bạn trùng với một ảnh khác!`,
-            content: `Ảnh ${photo.title} của bạn có dấu hiệu trùng với một ảnh khác, nếu đây là sự sai sót, vui lòng báo cáo lên quản trị viên để được xem xét. Xin cám ơn!`,
-          });
-
-          return;
-        }
-      }
-    } catch (e) {
-      console.log(e);
-    }
-
-    try {
-      const data = await this.tineyeService.add(
-        photo.originalPhotoUrl,
-        signedPhotoUrl,
-      );
-
-      if (data.status === 200) {
-        this.logger.log(`uploaded photo ${photo.originalPhotoUrl} to tineye`);
-      }
-    } catch (e) {
-      console.log(e);
     }
 
     await this.photoRepository.updateById(photoId, {

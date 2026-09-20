@@ -619,10 +619,6 @@ export class PhotoService {
         photoId,
       );
 
-    await this.photoProcessQueue.add(PhotoConstant.DELETE_PHOTO_JOB_NAME, {
-      originalPhotoUrl: photo.originalPhotoUrl,
-    });
-
     await this.photoRepository.deleteById(photo.id);
 
     await this.userService.updatePhotoQuota(userId, photo.size);
@@ -849,7 +845,7 @@ export class PhotoService {
       height,
       status: 'PENDING',
       photoType: 'RAW',
-      blurHash: 'UhCa0+RjM|oJlCWBaeaeESofoeaxIVj[j?j?',
+      blurHash: PhotoConstant.PLACEHOLDER_BLURHASH,
       watermark: false,
       visibility: 'PRIVATE',
       originalPhotoUrl: photoUploadDto.file.path,
@@ -932,10 +928,7 @@ export class PhotoService {
 
       performance = Date.now();
 
-      await this.photoValidateService.validateHashAndMatching(
-        photoUploadDto.file.buffer,
-        photoUploadDto.file.originalName,
-      );
+      await this.photoValidateService.validateHash(photoUploadDto.file.buffer);
 
       this.logger.log(`validate hash: `, Date.now() - performance);
 
@@ -977,7 +970,7 @@ export class PhotoService {
         height,
         status: 'PARSED',
         photoType: 'RAW',
-        blurHash: 'UhCa0+RjM|oJlCWBaeaeESofoeaxIVj[j?j?',
+        blurHash: PhotoConstant.PLACEHOLDER_BLURHASH,
         watermark: false,
         visibility: 'PRIVATE',
         originalPhotoUrl: storageObjectKey,
