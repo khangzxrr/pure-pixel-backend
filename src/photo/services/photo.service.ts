@@ -619,10 +619,6 @@ export class PhotoService {
         photoId,
       );
 
-    await this.photoProcessQueue.add(PhotoConstant.DELETE_PHOTO_JOB_NAME, {
-      originalPhotoUrl: photo.originalPhotoUrl,
-    });
-
     await this.photoRepository.deleteById(photo.id);
 
     await this.userService.updatePhotoQuota(userId, photo.size);
@@ -932,10 +928,7 @@ export class PhotoService {
 
       performance = Date.now();
 
-      await this.photoValidateService.validateHashAndMatching(
-        photoUploadDto.file.buffer,
-        photoUploadDto.file.originalName,
-      );
+      await this.photoValidateService.validateHash(photoUploadDto.file.buffer);
 
       this.logger.log(`validate hash: `, Date.now() - performance);
 

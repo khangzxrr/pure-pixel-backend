@@ -81,7 +81,7 @@ describe('PhotoService', () => {
   let photoTagRepository: Record<'deleteByPhotoId' | 'create', jest.Mock>;
   let categoryRepository: Record<'findMany', jest.Mock>;
   let bunnyService: Record<'getPresignedFile' | 'upload', jest.Mock>;
-  let photoValidateService: Record<'validateHashAndMatching', jest.Mock>;
+  let photoValidateService: Record<'validateHash', jest.Mock>;
   let photoGenerateWatermarkService: Record<'generateWatermark', jest.Mock>;
   let photoProcessQueue: Record<'add', jest.Mock>;
   let cameraQueue: Record<'add', jest.Mock>;
@@ -210,7 +210,7 @@ describe('PhotoService', () => {
       upload: jest.fn().mockResolvedValue('u1/uploaded.jpg'),
     };
     photoValidateService = {
-      validateHashAndMatching: jest.fn().mockResolvedValue(undefined),
+      validateHash: jest.fn().mockResolvedValue(undefined),
     };
     photoGenerateWatermarkService = {
       generateWatermark: jest.fn().mockResolvedValue(undefined),
@@ -888,13 +888,9 @@ describe('PhotoService', () => {
     });
   });
 
-  it('deletes photo, queues tineye deletion and restores quota', async () => {
+  it('deletes photo and restores quota', async () => {
     await expect(service.deleteById('u1', 'p1')).resolves.toBe(true);
 
-    expect(photoProcessQueue.add).toHaveBeenCalledWith(
-      PhotoConstant.DELETE_PHOTO_JOB_NAME,
-      { originalPhotoUrl: 'u1/p1.jpg' },
-    );
     expect(photoRepository.deleteById).toHaveBeenCalledWith('p1');
     expect(userService.updatePhotoQuota).toHaveBeenCalledWith('u1', 100);
   });
@@ -1225,7 +1221,7 @@ describe('PhotoService', () => {
     });
 
     it('rethrows validation errors', async () => {
-      photoValidateService.validateHashAndMatching.mockRejectedValue(
+      photoValidateService.validateHash.mockRejectedValue(
         new FailToPerformOnDuplicatedPhotoException(),
       );
 
@@ -1250,9 +1246,8 @@ describe('PhotoService', () => {
 
       const result = await service.uploadPhoto('u1', { file });
 
-      expect(photoValidateService.validateHashAndMatching).toHaveBeenCalledWith(
+      expect(photoValidateService.validateHash).toHaveBeenCalledWith(
         file.buffer,
-        'Ảnh Đẹp.jpg',
       );
       expect(bunnyService.upload).toHaveBeenCalledWith(file);
       expect(photoRepository.create).toHaveBeenCalledWith(
