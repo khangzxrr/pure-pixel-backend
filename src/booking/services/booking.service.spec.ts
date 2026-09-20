@@ -111,6 +111,7 @@ describe('BookingService', () => {
     getBufferFromKey: jest.Mock;
     sharpInitFromFilePath: jest.Mock;
     makeWatermark: jest.Mock;
+    getDisplaySize: jest.Mock;
   };
   let userService: { updatePhotoQuota: jest.Mock };
   let watermarkService: { generateWatermarkFromBuffer: jest.Mock };
@@ -153,6 +154,7 @@ describe('BookingService', () => {
       getBufferFromKey: jest.fn(),
       sharpInitFromFilePath: jest.fn(),
       makeWatermark: jest.fn(),
+      getDisplaySize: jest.fn(PhotoProcessService.prototype.getDisplaySize),
     };
     userService = { updatePhotoQuota: jest.fn() };
     watermarkService = { generateWatermarkFromBuffer: jest.fn() };
@@ -819,7 +821,7 @@ describe('BookingService', () => {
 
     const makeSharp = (
       buffer: Buffer,
-      metadata: { width?: number; height?: number },
+      metadata: { width?: number; height?: number; orientation?: number },
     ) => ({
       toBuffer: jest.fn().mockResolvedValue(buffer),
       metadata: jest.fn().mockResolvedValue(metadata),
@@ -877,6 +879,31 @@ describe('BookingService', () => {
         },
       );
       expect(result).toEqual({ id: 'photo-id', signed: true });
+    });
+
+    it('should store the displayed size of a quarter turned photo', async () => {
+      bookingRepository.findUniqueOrThrow.mockResolvedValue(makeBooking());
+      photoProcessService.sharpInitFromFilePath.mockResolvedValue(
+        makeSharp(Buffer.from('image'), {
+          width: 4032,
+          height: 3024,
+          orientation: 6,
+        }),
+      );
+      photoProcessService.makeWatermark.mockResolvedValue({
+        toBuffer: jest.fn().mockResolvedValue(Buffer.from('watermark')),
+      });
+      photoRepository.create.mockResolvedValue({ id: 'photo-id' });
+
+      await service.filesystemUploadPhoto(
+        PHOTOGRAPHER_ID,
+        BOOKING_ID,
+        uploadDto,
+      );
+
+      expect(photoRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({ width: 3024, height: 4032 }),
+      );
     });
 
     it('should skip when temporary file is empty', async () => {

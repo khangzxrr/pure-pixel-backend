@@ -498,7 +498,9 @@ export class BookingService {
 
     const metadata = await sharp.metadata();
 
-    if (metadata.width === undefined || metadata.height === undefined) {
+    const { width, height } = this.photoProcessService.getDisplaySize(metadata);
+
+    if (width === undefined || height === undefined) {
       throw new FailToParsePhotoException();
     }
 
@@ -524,8 +526,8 @@ export class BookingService {
       normalizedTitle: Utils.normalizeText(bookingUploadDto.file.originalName),
       size: bookingUploadDto.file.size,
       exif: {},
-      width: metadata.width,
-      height: metadata.height,
+      width,
+      height,
       status: 'PENDING',
       photoType: 'BOOKING',
       blurHash: '',

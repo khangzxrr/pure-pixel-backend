@@ -72,6 +72,7 @@ describe('PhotoService', () => {
     | 'bufferToBlurhash'
     | 'parseExifFromFilePath'
     | 'parseMetadataFromFilePath'
+    | 'getDisplaySize'
     | 'getHashFromBuffer'
     | 'isExistHash'
     | 'parseExifFromBuffer',
@@ -188,6 +189,7 @@ describe('PhotoService', () => {
       parseMetadataFromFilePath: jest
         .fn()
         .mockResolvedValue({ width: 1000, height: 800 }),
+      getDisplaySize: jest.fn(PhotoProcessService.prototype.getDisplaySize),
       getHashFromBuffer: jest.fn().mockResolvedValue('hash'),
       isExistHash: jest.fn().mockReturnValue(false),
       parseExifFromBuffer: jest
@@ -1012,6 +1014,20 @@ describe('PhotoService', () => {
       expect(result.signedUrl).toEqual(signedUrl);
     });
 
+    it('stores the displayed size of a quarter turned photo', async () => {
+      photoProcessService.parseMetadataFromBuffer.mockResolvedValue({
+        width: 4032,
+        height: 3024,
+        orientation: 6,
+      });
+
+      await service.uploadBookingPhoto('u1', { file: memoryFile() });
+
+      expect(photoRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({ width: 3024, height: 4032 }),
+      );
+    });
+
     it.each([[{ height: 800 }], [{ width: 1000 }]])(
       'rethrows http exception when metadata is %p',
       async (metadata) => {
@@ -1127,6 +1143,20 @@ describe('PhotoService', () => {
       await expect(
         service.fileSystemPhotoUpload('u1', { file: fileSystemFile() }),
       ).rejects.toBeInstanceOf(FileIsNotValidException);
+    });
+
+    it('stores the displayed size of a quarter turned photo', async () => {
+      photoProcessService.parseMetadataFromFilePath.mockResolvedValue({
+        width: 4032,
+        height: 3024,
+        orientation: 6,
+      });
+
+      await service.fileSystemPhotoUpload('u1', { file: fileSystemFile() });
+
+      expect(photoRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({ width: 3024, height: 4032 }),
+      );
     });
 
     it('creates a pending photo and queues upload and camera jobs', async () => {
@@ -1246,6 +1276,20 @@ describe('PhotoService', () => {
         { photoId: 'new' },
       );
       expect(result.signedUrl).toEqual(signedUrl);
+    });
+
+    it('stores the displayed size of a quarter turned photo', async () => {
+      photoProcessService.parseMetadataFromBuffer.mockResolvedValue({
+        width: 4032,
+        height: 3024,
+        orientation: 6,
+      });
+
+      await service.uploadPhoto('u1', { file: memoryFile() });
+
+      expect(photoRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({ width: 3024, height: 4032 }),
+      );
     });
 
     it('wraps unknown errors', async () => {

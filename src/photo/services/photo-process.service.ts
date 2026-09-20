@@ -141,15 +141,22 @@ export class PhotoProcessService {
     return watermarkPhoto.toBuffer();
   }
 
+  //sharp reports the pixel size as stored; an exif orientation of 5 or more turns the photo
+  //a quarter turn when it is displayed, so the displayed width and height are swapped
+  getDisplaySize(metadata: SharpLib.Metadata) {
+    const turned =
+      metadata.orientation !== undefined && metadata.orientation >= 5;
+
+    return {
+      width: turned ? metadata.height : metadata.width,
+      height: turned ? metadata.width : metadata.height,
+    };
+  }
+
   async makeWatermark(sharp: SharpLib.Sharp, watermarkText: string) {
     const metadata = await sharp.metadata();
 
-    let width = metadata.width;
-    let height = metadata.height;
-    if (metadata.orientation !== undefined && metadata.orientation >= 5) {
-      width = height;
-      height = width;
-    }
+    const { width, height } = this.getDisplaySize(metadata);
 
     if (width === undefined || height === undefined) {
       throw new FailToParsePhotoException();
@@ -161,11 +168,15 @@ export class PhotoProcessService {
         <text x="50%" y="50%" font-family="Roboto" dominant-baseline="middle" text-anchor="middle" font-size="${fontSizeScaledByWidth}"  fill="#fff" fill-opacity="0.7">${watermarkText}</text>         
 </svg>`;
 
-    return sharp.clone().composite([
-      {
-        input: Buffer.from(svg),
-      },
-    ]);
+    //rotate first so the text is laid over the photo the way it is displayed
+    return sharp
+      .clone()
+      .rotate()
+      .composite([
+        {
+          input: Buffer.from(svg),
+        },
+      ]);
   }
 
   async convertJpeg(sharp: SharpLib.Sharp) {
