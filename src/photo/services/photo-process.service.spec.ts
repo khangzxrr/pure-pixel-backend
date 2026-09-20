@@ -28,6 +28,7 @@ type SharpMock = Record<
   | 'resize'
   | 'webp'
   | 'composite'
+  | 'rotate'
   | 'jpeg'
   | 'raw'
   | 'ensureAlpha'
@@ -45,6 +46,7 @@ const createSharp = (): SharpMock => {
     'resize',
     'webp',
     'composite',
+    'rotate',
     'jpeg',
     'raw',
     'ensureAlpha',
@@ -235,6 +237,34 @@ describe('PhotoProcessService', () => {
     expect(sharp.webp).toHaveBeenCalled();
   });
 
+  describe('getDisplaySize', () => {
+    it('keeps the size of an upright photo', () => {
+      expect(
+        service.getDisplaySize({ width: 4032, height: 3024, orientation: 1 }),
+      ).toEqual({ width: 4032, height: 3024 });
+    });
+
+    it('swaps the size of a quarter turned photo', () => {
+      expect(
+        service.getDisplaySize({ width: 4032, height: 3024, orientation: 6 }),
+      ).toEqual({ width: 3024, height: 4032 });
+    });
+
+    it('keeps the size when there is no orientation', () => {
+      expect(service.getDisplaySize({ width: 4032, height: 3024 })).toEqual({
+        width: 4032,
+        height: 3024,
+      });
+    });
+
+    it('keeps a missing size missing', () => {
+      expect(service.getDisplaySize({ orientation: 6 })).toEqual({
+        width: undefined,
+        height: undefined,
+      });
+    });
+  });
+
   describe('makeWatermark', () => {
     it('composites a text svg scaled by width', async () => {
       const sharp = createSharp();
@@ -251,7 +281,7 @@ describe('PhotoProcessService', () => {
       expect(svg).toContain('>PXL</text>');
     });
 
-    it('still composites watermark for rotated photos', async () => {
+    it('sizes the svg to the displayed photo for rotated photos', async () => {
       const sharp = createSharp();
       sharp.metadata.mockResolvedValue({
         width: 1000,
@@ -262,6 +292,16 @@ describe('PhotoProcessService', () => {
       await service.makeWatermark(asSharp(sharp), 'PXL');
 
       expect(sharp.composite).toHaveBeenCalledTimes(1);
+      const [[layers]] = sharp.composite.mock.calls;
+      expect(layers[0].input.toString()).toContain('height="1000" width="500"');
+    });
+
+    it('rotates the photo before compositing', async () => {
+      const sharp = createSharp();
+
+      await service.makeWatermark(asSharp(sharp), 'PXL');
+
+      expect(sharp.rotate).toHaveBeenCalled();
     });
 
     it('does not treat low orientation as rotated', async () => {

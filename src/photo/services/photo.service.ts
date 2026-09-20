@@ -702,7 +702,10 @@ export class PhotoService {
         photoUploadDto.file.buffer,
       );
 
-      if (metadata.width === undefined || metadata.height === undefined) {
+      const { width, height } =
+        this.photoProcessService.getDisplaySize(metadata);
+
+      if (width === undefined || height === undefined) {
         throw new FileIsNotValidException();
       }
 
@@ -717,8 +720,8 @@ export class PhotoService {
         normalizedTitle,
         size: photoUploadDto.file.size,
         exif: {},
-        width: metadata.width,
-        height: metadata.height,
+        width,
+        height,
         status: 'PARSED',
         photoType: 'BOOKING',
         blurHash,
@@ -824,7 +827,9 @@ export class PhotoService {
       photoUploadDto.file.originalName,
     );
 
-    if (metadata.width === undefined || metadata.height === undefined) {
+    const { width, height } = this.photoProcessService.getDisplaySize(metadata);
+
+    if (width === undefined || height === undefined) {
       throw new FileIsNotValidException();
     }
 
@@ -840,8 +845,8 @@ export class PhotoService {
       hash,
       size: photoUploadDto.file.size,
       exif,
-      width: metadata.width,
-      height: metadata.height,
+      width,
+      height,
       status: 'PENDING',
       photoType: 'RAW',
       blurHash: 'UhCa0+RjM|oJlCWBaeaeESofoeaxIVj[j?j?',
@@ -950,7 +955,10 @@ export class PhotoService {
         photoUploadDto.file.originalName,
       );
 
-      if (metadata.width === undefined || metadata.height === undefined) {
+      const { width, height } =
+        this.photoProcessService.getDisplaySize(metadata);
+
+      if (width === undefined || height === undefined) {
         throw new FileIsNotValidException();
       }
 
@@ -965,8 +973,8 @@ export class PhotoService {
         normalizedTitle,
         size: photoUploadDto.file.size,
         exif,
-        width: metadata.width,
-        height: metadata.height,
+        width,
+        height,
         status: 'PARSED',
         photoType: 'RAW',
         blurHash: 'UhCa0+RjM|oJlCWBaeaeESofoeaxIVj[j?j?',
