@@ -5,7 +5,7 @@ import { UpgradePackageOrderRepository } from 'src/database/repositories/upgrade
 import { UpgradePackageRepository } from 'src/database/repositories/upgrade-package.repository';
 import { SepayService } from 'src/payment/services/sepay.service';
 import { UserRepository } from 'src/database/repositories/user.repository';
-import { KeycloakService } from 'src/authen/services/keycloak.service';
+import { IdentityService } from 'src/authen/services/identity.service';
 import { NotificationService } from 'src/notification/services/notification.service';
 import { PrismaService } from 'src/prisma.service';
 import { UpgradeConstant } from 'src/upgrade-package/constants/upgrade.constant';
@@ -105,7 +105,7 @@ describe('UpgradeOrderService', () => {
         },
         { provide: SepayService, useValue: sepayService },
         { provide: UserRepository, useValue: userRepository },
-        { provide: KeycloakService, useValue: keycloakService },
+        { provide: IdentityService, useValue: keycloakService },
         { provide: NotificationService, useValue: notificationService },
         {
           provide: getQueueToken(UpgradeConstant.UPGRADE_QUEUE),

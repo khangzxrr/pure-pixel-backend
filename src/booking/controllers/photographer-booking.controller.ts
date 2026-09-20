@@ -19,9 +19,9 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { BookingService } from '../services/booking.service';
-import { AuthenticatedUser, AuthGuard, Roles } from 'nest-keycloak-connect';
+import { AuthenticatedUser, AuthGuard, Roles } from 'src/authen/oidc';
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
-import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
+import { RoleGuard } from 'src/authen/guards/role.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { BookingFindAllRequestDto } from '../dtos/rest/booking-find-all.request.dto';
 import { DenyBookingRequestDto } from '../dtos/rest/deny-booking.request.dto';
@@ -44,7 +44,7 @@ export class PhotographerBookingController {
     summary: 'get all booking from current photographer',
   })
   @ApiOkResponsePaginated(BookingDto)
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   async findAllBooking(
     @AuthenticatedUser() user: ParsedUserDto,
@@ -61,7 +61,7 @@ export class PhotographerBookingController {
     summary: 'get booking detail by bookingId',
   })
   @ApiOkResponsePaginated(BookingDto)
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   async getBookingDetail(
     @AuthenticatedUser() user: ParsedUserDto,
@@ -80,7 +80,7 @@ export class PhotographerBookingController {
       'accepted file and start to process photo, when done it will notify via websocket (notification)',
     type: SignedPhotoDto,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   @ApiConsumes('multipart/form-data')
   @FormDataRequest({
@@ -108,7 +108,7 @@ export class PhotographerBookingController {
   @ApiOkResponse({
     type: SignedPhotoDto,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   @ApiConsumes('multipart/form-data')
   @FormDataRequest()
@@ -129,7 +129,7 @@ export class PhotographerBookingController {
     summary: 'get booking detail by bookingId',
   })
   @ApiOkResponsePaginated(BookingDto)
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   async deletePhotoBooking(
     @AuthenticatedUser() user: ParsedUserDto,
@@ -146,7 +146,7 @@ export class PhotographerBookingController {
   @ApiOkResponse({
     type: BookingDto,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   async acceptBooking(
     @AuthenticatedUser() user: ParsedUserDto,
@@ -162,7 +162,7 @@ export class PhotographerBookingController {
   @ApiOkResponse({
     type: BookingDto,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   async denyBooking(
     @AuthenticatedUser() user: ParsedUserDto,
@@ -179,7 +179,7 @@ export class PhotographerBookingController {
   @ApiOkResponse({
     type: BookingDto,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   async updateBooking(
     @AuthenticatedUser() user: ParsedUserDto,
@@ -196,7 +196,7 @@ export class PhotographerBookingController {
   @ApiOkResponse({
     type: BookingDto,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   async paidBooking(
     @AuthenticatedUser() user: ParsedUserDto,

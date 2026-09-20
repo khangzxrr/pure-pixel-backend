@@ -9,8 +9,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { AuthenticatedUser, AuthGuard, Roles } from 'nest-keycloak-connect';
-import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
+import { AuthenticatedUser, AuthGuard, Roles } from 'src/authen/oidc';
+import { RoleGuard } from 'src/authen/guards/role.guard';
 import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.response.dto';
 import { FollowingService } from '../services/following.service';
 import { FindAllFollowRequestDto } from '../dtos/find-all-following-dtos/find-all-following.request.dto';
@@ -31,7 +31,7 @@ export class FollowingController {
   @ApiOkResponse({
     type: FollowDto,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
   async checkFollow(
     @AuthenticatedUser() user: ParsedUserDto,
@@ -47,7 +47,7 @@ export class FollowingController {
   @ApiOkResponse({
     type: FollowDto,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
   async unfollow(
     @AuthenticatedUser() user: ParsedUserDto,
@@ -61,7 +61,7 @@ export class FollowingController {
     summary: 'get all users who follow me',
   })
   @ApiOkResponsePaginated(FollowDto)
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
   async findallFollower(
     @AuthenticatedUser() user: ParsedUserDto,
@@ -80,7 +80,7 @@ export class FollowingController {
   @ApiOkResponse({
     type: FollowDto,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
   async follow(
     @AuthenticatedUser() user: ParsedUserDto,
@@ -94,7 +94,7 @@ export class FollowingController {
     summary: 'get all users who followed by me',
   })
   @ApiOkResponsePaginated(FollowDto)
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
   async findAllFollowing(
     @AuthenticatedUser() user: ParsedUserDto,

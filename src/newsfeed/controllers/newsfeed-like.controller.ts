@@ -9,13 +9,13 @@ import {
 } from '@nestjs/common';
 import { NewsfeedLikeService } from '../services/newsfeed-like.service';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { AuthenticatedUser, AuthGuard } from 'nest-keycloak-connect';
+import { AuthenticatedUser, AuthGuard } from 'src/authen/oidc';
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
-import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
+import { RoleGuard } from 'src/authen/guards/role.guard';
 
 @Controller('newsfeed')
 @ApiTags('newsfeed-like')
-@UseGuards(AuthGuard, KeycloakRoleGuard)
+@UseGuards(AuthGuard, RoleGuard)
 export class NewsfeedLikeController {
   constructor(
     @Inject() private readonly newsfeedLikeService: NewsfeedLikeService,

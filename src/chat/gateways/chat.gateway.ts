@@ -10,7 +10,7 @@ import WebsocketAuthGuard, {
   AuthenticatedSocket,
 } from 'src/authen/guards/ws.auth.guard';
 import { Server } from 'socket.io';
-import { Roles } from 'nest-keycloak-connect';
+import { Roles } from 'src/authen/oidc';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { MessageDto } from '../dtos/message.dto';
 

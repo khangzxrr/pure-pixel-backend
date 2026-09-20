@@ -13,13 +13,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { PhotoService } from '../services/photo.service';
-import {
-  AuthenticatedUser,
-  AuthGuard,
-  Public,
-  Roles,
-} from 'nest-keycloak-connect';
-import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
+import { AuthenticatedUser, AuthGuard, Public, Roles } from 'src/authen/oidc';
+import { RoleGuard } from 'src/authen/guards/role.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
 import {
   ApiConsumes,
@@ -65,7 +60,7 @@ export class PhotoController {
   @ApiOkResponse({
     type: SignedPhotoDto,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Public(false)
   async getNextPublicPhoto(
     @AuthenticatedUser() user: ParsedUserDto,
@@ -82,7 +77,7 @@ export class PhotoController {
     summary: 'get public photos',
   })
   @ApiOkResponsePaginated(SignedPhotoDto)
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Public(false)
   async getAllPublicPhoto(
     @AuthenticatedUser() user: ParsedUserDto,
@@ -98,7 +93,7 @@ export class PhotoController {
   @ApiOperation({
     summary: 'delete a photo by id',
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   async deletePhoto(
     @AuthenticatedUser() user: ParsedUserDto,
@@ -116,7 +111,7 @@ export class PhotoController {
     description: 'return image',
     type: SignedPhotoDto,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Public(false)
   async findPhotoById(
     @AuthenticatedUser() user: ParsedUserDto,
@@ -136,7 +131,7 @@ export class PhotoController {
   @ApiResponse({
     status: HttpStatusCode.Accepted,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   async generateWatermark(
     @AuthenticatedUser() user: ParsedUserDto,
@@ -159,7 +154,7 @@ export class PhotoController {
     isArray: true,
     type: PhotoDto,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   async updatePhoto(
     @AuthenticatedUser() user: ParsedUserDto,
@@ -177,7 +172,7 @@ export class PhotoController {
   })
   @ApiConsumes('multipart/form-data')
   @FormDataRequest()
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   async uploadPhoto(
     @AuthenticatedUser() user: ParsedUserDto,
@@ -197,7 +192,7 @@ export class PhotoController {
     type: SignedPhotoDto,
   })
   @ApiConsumes('multipart/form-data')
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   @FormDataRequest({
     storage: FileSystemStoredFile,
@@ -250,7 +245,7 @@ export class PhotoController {
     isArray: true,
     type: ResolutionDto,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
   async getPhotoAvailableResolution(
     @Param('id') id: string,
@@ -274,7 +269,7 @@ export class PhotoController {
     status: HttpStatusCode.Ok,
     type: String,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   async sharePhoto(
     @AuthenticatedUser() user: ParsedUserDto,

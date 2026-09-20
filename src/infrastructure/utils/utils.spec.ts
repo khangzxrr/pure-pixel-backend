@@ -1,11 +1,6 @@
 import { ExecutionContext } from '@nestjs/common';
-import KeycloakConnect from 'keycloak-connect';
-import {
-  KeycloakConnectConfig,
-  KeycloakMultiTenantService,
-} from 'nest-keycloak-connect';
 import { Constants } from './constants';
-import { Utils, extractRequest, parseToken, useKeycloak } from './utils';
+import { Utils, extractRequest, parseToken } from './utils';
 
 describe('Utils', () => {
   describe('env', () => {
@@ -70,72 +65,6 @@ describe('parseToken', () => {
     expect(parseToken(`header.${payload}.signature`)).toEqual({
       iss: 'http://kc/realms/pure',
     });
-  });
-});
-
-describe('useKeycloak', () => {
-  const request = { headers: {} };
-  const singleTenant = { single: true } as unknown as KeycloakConnect.Keycloak;
-  const tenantInstance = {
-    tenant: true,
-  } as unknown as KeycloakConnect.Keycloak;
-  const get = jest.fn();
-  const multiTenant = { get } as unknown as KeycloakMultiTenantService;
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-    get.mockResolvedValue(tenantInstance);
-  });
-
-  it('should resolve realm synchronously via realmResolver', async () => {
-    const opts = {
-      multiTenant: { realmResolver: jest.fn(() => 'sync-realm') },
-    } as unknown as KeycloakConnectConfig;
-
-    await expect(
-      useKeycloak(request, 'jwt', singleTenant, multiTenant, opts),
-    ).resolves.toBe(tenantInstance);
-    expect(get).toHaveBeenCalledWith('sync-realm', request);
-  });
-
-  it('should await realm resolved asynchronously', async () => {
-    const opts = {
-      multiTenant: {
-        realmResolver: jest.fn(() => Promise.resolve('async-realm')),
-      },
-    } as unknown as KeycloakConnectConfig;
-
-    await expect(
-      useKeycloak(request, 'jwt', singleTenant, multiTenant, opts),
-    ).resolves.toBe(tenantInstance);
-    expect(get).toHaveBeenCalledWith('async-realm', request);
-  });
-
-  it('should use the token issuer realm when no realm is configured', async () => {
-    const payload = Buffer.from(
-      JSON.stringify({ iss: 'http://kc/realms/issuer-realm' }),
-    ).toString('base64');
-    const opts = { multiTenant: {} } as unknown as KeycloakConnectConfig;
-
-    await expect(
-      useKeycloak(
-        request,
-        `header.${payload}.sig`,
-        singleTenant,
-        multiTenant,
-        opts,
-      ),
-    ).resolves.toBe(tenantInstance);
-    expect(get).toHaveBeenCalledWith('issuer-realm', request);
-  });
-
-  it('should return the single tenant instance when realm is configured', async () => {
-    const opts = { realm: 'pure' } as KeycloakConnectConfig;
-
-    await expect(
-      useKeycloak(request, 'jwt', singleTenant, multiTenant, opts),
-    ).resolves.toBe(singleTenant);
-    expect(get).not.toHaveBeenCalled();
   });
 });
 

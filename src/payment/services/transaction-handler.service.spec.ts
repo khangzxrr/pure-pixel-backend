@@ -4,7 +4,7 @@ import { Prisma, Transaction } from '@prisma/client';
 import { UserRepository } from 'src/database/repositories/user.repository';
 import { ServiceTransactionRepository } from 'src/database/repositories/service-transaction.repository';
 import { DatabaseService } from 'src/database/database.service';
-import { KeycloakService } from 'src/authen/services/keycloak.service';
+import { IdentityService } from 'src/authen/services/identity.service';
 import { TransactionRepository } from 'src/database/repositories/transaction.repository';
 import { UserToUserRepository } from 'src/database/repositories/user-to-user-transaction.repository';
 import { NotificationService } from 'src/notification/services/notification.service';
@@ -66,7 +66,7 @@ describe('TransactionHandlerService', () => {
           useValue: serviceTransactionRepository,
         },
         { provide: DatabaseService, useValue: databaseService },
-        { provide: KeycloakService, useValue: keycloakService },
+        { provide: IdentityService, useValue: keycloakService },
         { provide: TransactionRepository, useValue: transactionRepository },
         { provide: UserToUserRepository, useValue: userToUserRepository },
         { provide: NotificationService, useValue: notificationService },

@@ -1,7 +1,7 @@
 import { Test } from '@nestjs/testing';
 import { getQueueToken } from '@nestjs/bullmq';
 import { UpgradePackageOrderRepository } from 'src/database/repositories/upgrade-package-order.repository';
-import { KeycloakService } from 'src/authen/services/keycloak.service';
+import { IdentityService } from 'src/authen/services/identity.service';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoshootRepository } from 'src/database/repositories/photoshoot-package.repository';
 import { UpgradeConstant } from 'src/upgrade-package/constants/upgrade.constant';
@@ -40,7 +40,7 @@ describe('ClearExpiredUpgradeOrder', () => {
           provide: UpgradePackageOrderRepository,
           useValue: upgradeOrderRepository,
         },
-        { provide: KeycloakService, useValue: keycloakService },
+        { provide: IdentityService, useValue: keycloakService },
         { provide: PhotoRepository, useValue: photoRepository },
         {
           provide: PhotoshootRepository,

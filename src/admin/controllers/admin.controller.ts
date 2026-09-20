@@ -9,8 +9,8 @@ import {
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AdminService } from '../services/admin.service';
-import { AuthGuard, Roles } from 'nest-keycloak-connect';
-import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
+import { AuthGuard, Roles } from 'src/authen/oidc';
+import { RoleGuard } from 'src/authen/guards/role.guard';
 import { UpdateTimelineService } from 'src/camera/crons/update-timeline.service.cron';
 import { Constants } from 'src/infrastructure/utils/constants';
 
@@ -21,7 +21,7 @@ import { BalanceDto } from '../dtos/balance.dto';
 
 @Controller('admin')
 @ApiTags('admin')
-@UseGuards(AuthGuard, KeycloakRoleGuard)
+@UseGuards(AuthGuard, RoleGuard)
 @Roles({ roles: [Constants.ADMIN_ROLE, Constants.MANAGER_ROLE] })
 export class AdminController {
   constructor(

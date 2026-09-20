@@ -11,8 +11,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { AuthGuard, Roles, AuthenticatedUser } from 'nest-keycloak-connect';
-import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
+import { AuthGuard, Roles, AuthenticatedUser } from 'src/authen/oidc';
+import { RoleGuard } from 'src/authen/guards/role.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
 import { BookingBillItemFindAllRequestDto } from '../dtos/rest/booking-bill-item-find-all.request.dto';
@@ -23,7 +23,7 @@ import { BookingBillItemUpdateDto } from '../dtos/booking-bill-item.update.dto';
 
 @Controller('photographer/booking')
 @ApiTags('photographer-booking-bill-item')
-@UseGuards(AuthGuard, KeycloakRoleGuard)
+@UseGuards(AuthGuard, RoleGuard)
 @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
 export class PhotographerBookingBillItemController {
   constructor(

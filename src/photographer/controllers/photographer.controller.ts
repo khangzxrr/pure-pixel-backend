@@ -8,13 +8,8 @@ import {
 } from '@nestjs/common';
 import { PhotographerService } from '../services/photographer.service';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import {
-  AuthenticatedUser,
-  AuthGuard,
-  Public,
-  Roles,
-} from 'nest-keycloak-connect';
-import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
+import { AuthenticatedUser, AuthGuard, Public, Roles } from 'src/authen/oidc';
+import { RoleGuard } from 'src/authen/guards/role.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { FindAllPhotoFilterDto } from 'src/photo/dtos/find-all.filter.dto';
 import { FindAllPhotographerRequestDto } from '../dtos/find-all-photographer-dtos/find-all-photographer.request.dto';
@@ -37,7 +32,7 @@ export class PhotographerController {
     summary: 'get all photographers',
   })
   @ApiOkResponsePaginated(PhotographerDTO)
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Public(false)
   async findAllPhotographers(
     @AuthenticatedUser() user: ParsedUserDto,
@@ -56,7 +51,7 @@ export class PhotographerController {
   @ApiOkResponse({
     type: PhotographerProfileDto,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Public(false)
   async getPhotographerProfile(
     @AuthenticatedUser() user: ParsedUserDto,
@@ -73,7 +68,7 @@ export class PhotographerController {
     summary: 'get all photos of mine',
   })
   @ApiOkResponsePaginated(SignedPhotoDto)
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   async getPhotoOfMine(
     @AuthenticatedUser() user: ParsedUserDto,

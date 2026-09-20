@@ -10,8 +10,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { AuthGuard, Public, AuthenticatedUser } from 'nest-keycloak-connect';
-import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
+import { AuthGuard, Public, AuthenticatedUser } from 'src/authen/oidc';
+import { RoleGuard } from 'src/authen/guards/role.guard';
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
 import { CreateCommentRequestDto } from '../dtos/rest/create-comment.request.dto';
 import { CommentService } from '../services/comment.service';
@@ -32,7 +32,7 @@ export class PhotoCommentController {
     type: CommentDto,
     isArray: true,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Public(false)
   async getComments(
     @AuthenticatedUser() user: ParsedUserDto,
@@ -49,7 +49,7 @@ export class PhotoCommentController {
     isArray: true,
     type: CommentDto,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Public(false)
   async getCommentReply(
     @AuthenticatedUser() user: ParsedUserDto,
@@ -70,7 +70,7 @@ export class PhotoCommentController {
   @ApiOkResponse({
     type: CommentDto,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   async createReply(
     @AuthenticatedUser() user: ParsedUserDto,
     @Param('photoId') photoId: string,
@@ -93,7 +93,7 @@ export class PhotoCommentController {
   @ApiOkResponse({
     type: CommentDto,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   async updateComment(
     @AuthenticatedUser() user: ParsedUserDto,
     @Param('photoId') photoId: string,
@@ -116,7 +116,7 @@ export class PhotoCommentController {
   @ApiOkResponse({
     type: CommentDto,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   async deleteComment(
     @AuthenticatedUser() user: ParsedUserDto,
     @Param('photoId') photoId: string,
@@ -128,7 +128,7 @@ export class PhotoCommentController {
       commentId,
     );
   }
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Post('/photo/:id')
   @ApiOperation({
     summary: 'create a comment to photo',
@@ -136,7 +136,7 @@ export class PhotoCommentController {
   @ApiOkResponse({
     type: CommentDto,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   async createComment(
     @AuthenticatedUser() user: ParsedUserDto,
     @Param('id') id: string,

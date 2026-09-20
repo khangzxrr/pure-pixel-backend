@@ -8,8 +8,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { AuthGuard, Roles } from 'nest-keycloak-connect';
-import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
+import { AuthGuard, Roles } from 'src/authen/oidc';
+import { RoleGuard } from 'src/authen/guards/role.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { BookingDto } from '../dtos/booking.dto';
 
@@ -30,7 +30,7 @@ export class ManagerBookingController {
   @ApiOkResponse({
     type: BookingDto,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.ADMIN_ROLE, Constants.MANAGER_ROLE] })
   async getBookingDetail(@Param('bookingId') bookingId: string) {
     return await this.manageBookingService.findById(bookingId);
@@ -43,7 +43,7 @@ export class ManagerBookingController {
   @ApiOkResponse({
     type: BookingDto,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.ADMIN_ROLE, Constants.MANAGER_ROLE] })
   async updateBooking(
     @Param('bookingId') bookingId: string,

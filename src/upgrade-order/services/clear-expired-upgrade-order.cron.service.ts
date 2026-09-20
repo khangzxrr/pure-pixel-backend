@@ -4,7 +4,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { Queue } from 'bullmq';
 import { UpgradePackageOrderRepository } from 'src/database/repositories/upgrade-package-order.repository';
 import { UpgradeConstant } from '../../upgrade-package/constants/upgrade.constant';
-import { KeycloakService } from 'src/authen/services/keycloak.service';
+import { IdentityService } from 'src/authen/services/identity.service';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoshootRepository } from 'src/database/repositories/photoshoot-package.repository';
@@ -15,7 +15,7 @@ export class ClearExpiredUpgradeOrder {
   constructor(
     @Inject()
     private readonly upgradeOrderRepository: UpgradePackageOrderRepository,
-    @Inject() private readonly keycloakService: KeycloakService,
+    @Inject() private readonly keycloakService: IdentityService,
     @Inject() private readonly photoRepository: PhotoRepository,
     @Inject()
     private readonly photoshootPackageRepository: PhotoshootRepository,

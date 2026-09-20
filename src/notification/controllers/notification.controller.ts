@@ -20,8 +20,8 @@ import { Response } from 'express';
 import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.response.dto';
 import { NotificationFindAllDto } from '../dtos/rest/notification-find-all.request.dto';
 import { NotificationService } from '../services/notification.service';
-import { AuthenticatedUser, AuthGuard } from 'nest-keycloak-connect';
-import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
+import { AuthenticatedUser, AuthGuard } from 'src/authen/oidc';
+import { RoleGuard } from 'src/authen/guards/role.guard';
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
 
 @Controller('notification')
@@ -58,7 +58,7 @@ export class NotificationController {
   @ApiOperation({
     summary: 'get all notification',
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   async getAllNotification(
     @AuthenticatedUser() user: ParsedUserDto,
     @Query() notificationFindAllDto: NotificationFindAllDto,

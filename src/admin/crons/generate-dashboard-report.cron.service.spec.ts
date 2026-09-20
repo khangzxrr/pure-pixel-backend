@@ -1,6 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { Prisma } from '@prisma/client';
-import { KeycloakService } from 'src/authen/services/keycloak.service';
+import { IdentityService } from 'src/authen/services/identity.service';
 import { PhotoSellRepository } from 'src/database/repositories/photo-sell.repository';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoshootRepository } from 'src/database/repositories/photoshoot-package.repository';
@@ -71,7 +71,7 @@ describe('GenerateDashboardReportService', () => {
     const moduleRef = await Test.createTestingModule({
       providers: [
         GenerateDashboardReportService,
-        { provide: KeycloakService, useValue: keycloakService },
+        { provide: IdentityService, useValue: keycloakService },
         {
           provide: UpgradePackageOrderRepository,
           useValue: upgradeOrderRepository,

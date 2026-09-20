@@ -14,8 +14,8 @@ import { UserService } from '../services/user.service';
 import { UserFindAllRequestDto } from '../dtos/rest/user-find-all.request.dto';
 import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.response.dto';
 import { UserDto } from '../dtos/user.dto';
-import { AuthenticatedUser, AuthGuard, Roles } from 'nest-keycloak-connect';
-import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
+import { AuthenticatedUser, AuthGuard, Roles } from 'src/authen/oidc';
+import { RoleGuard } from 'src/authen/guards/role.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { CreateUserDto } from '../dtos/create-user.dto';
 import { UpdateUserDto } from '../dtos/update-user.dto';
@@ -23,7 +23,7 @@ import { ParsedUserDto } from '../dtos/parsed-user.dto';
 
 @Controller('user')
 @ApiTags('admin-manage-user')
-@UseGuards(AuthGuard, KeycloakRoleGuard)
+@UseGuards(AuthGuard, RoleGuard)
 @Roles({ roles: [Constants.ADMIN_ROLE, Constants.MANAGER_ROLE] })
 export class UserController {
   constructor(@Inject() private readonly userService: UserService) {}

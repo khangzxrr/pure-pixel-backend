@@ -8,8 +8,8 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
-import { AuthenticatedUser, AuthGuard } from 'nest-keycloak-connect';
-import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
+import { AuthenticatedUser, AuthGuard } from 'src/authen/oidc';
+import { RoleGuard } from 'src/authen/guards/role.guard';
 import { UserService } from '../services/user.service';
 import {
   ApiConsumes,
@@ -44,7 +44,7 @@ export class MeController {
     type: UserDto,
   })
   @Get()
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   async getMeInfo(
     @AuthenticatedUser()
     user: ParsedUserDto,
@@ -60,7 +60,7 @@ export class MeController {
     type: UserDto,
   })
   @ApiConsumes('multipart/form-data')
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @FormDataRequest()
   async patchUpdateProfile(
     @AuthenticatedUser() user: ParsedUserDto,
@@ -82,7 +82,7 @@ export class MeController {
     type: UpgradeOrderDto,
   })
   @Get('/current-upgrade-package')
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   async getMeCurrentUpgradePackage(
     @AuthenticatedUser() user: ParsedUserDto,
     @Res() res: Response,

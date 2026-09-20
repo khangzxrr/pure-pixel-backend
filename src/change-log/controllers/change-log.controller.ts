@@ -10,13 +10,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import {
-  AuthenticatedUser,
-  AuthGuard,
-  Public,
-  Roles,
-} from 'nest-keycloak-connect';
-import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
+import { AuthenticatedUser, AuthGuard, Public, Roles } from 'src/authen/oidc';
+import { RoleGuard } from 'src/authen/guards/role.guard';
 import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.response.dto';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
@@ -58,7 +53,7 @@ export class ChangeLogController {
     summary: 'get all change log entries including drafts',
   })
   @ApiOkResponsePaginated(ChangeLogDto)
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.MANAGER_ROLE, Constants.ADMIN_ROLE] })
   async findAll(@Query() findAllRequestDto: ChangeLogFindAllRequestDto) {
     return await this.changeLogService.findAll(findAllRequestDto);
@@ -71,7 +66,7 @@ export class ChangeLogController {
   @ApiOkResponse({
     type: ChangeLogDto,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.MANAGER_ROLE, Constants.ADMIN_ROLE] })
   async create(
     @AuthenticatedUser() user: ParsedUserDto,
@@ -87,7 +82,7 @@ export class ChangeLogController {
   @ApiOkResponse({
     type: ChangeLogDto,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.MANAGER_ROLE, Constants.ADMIN_ROLE] })
   async updateById(
     @Param('id') id: string,
@@ -103,7 +98,7 @@ export class ChangeLogController {
   @ApiOkResponse({
     description: 'deleted',
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.MANAGER_ROLE, Constants.ADMIN_ROLE] })
   async deleteById(@Param('id') id: string) {
     return await this.changeLogService.delete(id);

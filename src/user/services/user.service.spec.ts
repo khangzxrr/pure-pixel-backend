@@ -1,7 +1,10 @@
 import { BadRequestException } from '@nestjs/common';
 import { Cache } from 'cache-manager';
 import { MemoryStoredFile } from 'nestjs-form-data';
-import { KeycloakService } from 'src/authen/services/keycloak.service';
+import {
+  IdentityConflictError,
+  IdentityService,
+} from 'src/authen/services/identity.service';
 import { BookingRepository } from 'src/database/repositories/booking.repository';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { UserRepository } from 'src/database/repositories/user.repository';
@@ -47,10 +50,11 @@ describe('UserService', () => {
   let notificationService: { addNotificationToQueue: jest.Mock };
   let service: UserService;
 
-  const keycloakError = (status: number, errorMessage = 'conflict') => ({
-    response: { status },
-    responseData: { errorMessage },
-  });
+  //IdentityService signals a duplicate username/email with IdentityConflictError, anything else is a plain Error
+  const keycloakError = (status: number, errorMessage = 'conflict') =>
+    status === 409
+      ? new IdentityConflictError(errorMessage)
+      : new Error(`identity provider failed with ${status}`);
 
   beforeEach(() => {
     jest.spyOn(console, 'log').mockImplementation(() => undefined);
@@ -84,7 +88,7 @@ describe('UserService', () => {
     service = new UserService(
       userRepository as unknown as UserRepository,
       bunnyService as unknown as BunnyService,
-      keycloakService as unknown as KeycloakService,
+      keycloakService as unknown as IdentityService,
       photoRepository as unknown as PhotoRepository,
       bookingRepository as unknown as BookingRepository,
       cache as unknown as Cache,

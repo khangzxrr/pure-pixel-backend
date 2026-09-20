@@ -8,14 +8,14 @@ import {
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { BookmarkService } from '../services/bookmark.service';
-import { AuthenticatedUser, AuthGuard } from 'nest-keycloak-connect';
-import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
+import { AuthenticatedUser, AuthGuard } from 'src/authen/oidc';
+import { RoleGuard } from 'src/authen/guards/role.guard';
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
 import { BookmarkDto } from '../dtos/bookmark.dto';
 
 @Controller('bookmark')
 @ApiTags('bookmark')
-@UseGuards(AuthGuard, KeycloakRoleGuard)
+@UseGuards(AuthGuard, RoleGuard)
 export class BookmarkController {
   constructor(@Inject() private readonly bookmarkService: BookmarkService) {}
 

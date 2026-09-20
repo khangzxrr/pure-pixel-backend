@@ -14,15 +14,10 @@ import { NewsfeedService } from '../services/newsfeed.service';
 import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.response.dto';
 import { NewsfeedDto } from '../dtos/newsfeed.dto';
 import { NewsfeedFindAllDto } from '../dtos/rest/newsfeed-find-all.dto';
-import {
-  AuthenticatedUser,
-  AuthGuard,
-  Public,
-  Roles,
-} from 'nest-keycloak-connect';
+import { AuthenticatedUser, AuthGuard, Public, Roles } from 'src/authen/oidc';
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
 import { NewsfeedCreateDto } from '../dtos/newsfeed.create.dto';
-import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
+import { RoleGuard } from 'src/authen/guards/role.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { NewsfeedUpdateDto } from '../dtos/newsfeed.update.dto';
 
@@ -36,7 +31,7 @@ export class NewsfeedController {
     summary: 'get all newsfeed',
   })
   @ApiOkResponsePaginated(NewsfeedDto)
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Public(false)
   async findAll(
     @AuthenticatedUser() user: ParsedUserDto,
@@ -52,7 +47,7 @@ export class NewsfeedController {
   @ApiOkResponse({
     type: NewsfeedDto,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   async createNewsfeed(
     @AuthenticatedUser() user: ParsedUserDto,
@@ -65,7 +60,7 @@ export class NewsfeedController {
   @ApiOperation({
     summary: 'update one or more field of newsfeed using newsfeed id',
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   async updateNewsfeed(
     @AuthenticatedUser() user: ParsedUserDto,

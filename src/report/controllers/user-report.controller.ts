@@ -11,8 +11,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import { AuthenticatedUser, AuthGuard, Roles } from 'nest-keycloak-connect';
-import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
+import { AuthenticatedUser, AuthGuard, Roles } from 'src/authen/oidc';
+import { RoleGuard } from 'src/authen/guards/role.guard';
 import { ReportService } from '../services/report.service';
 import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.response.dto';
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
@@ -25,7 +25,7 @@ import { UserReportPathUpdateDto } from '../dtos/rest/user-report-patch-update.r
 
 @Controller('user/report')
 @ApiTags('user-report')
-@UseGuards(AuthGuard, KeycloakRoleGuard)
+@UseGuards(AuthGuard, RoleGuard)
 @Roles({
   roles: [Constants.CUSTOMER_ROLE, Constants.PHOTOGRAPHER_ROLE],
 })
@@ -61,7 +61,7 @@ export class UserReportController {
   @ApiOkResponse({
     type: ReportDto,
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   async createReport(
     @AuthenticatedUser() user: ParsedUserDto,
     @Body() report: ReportCreateRequestDto,

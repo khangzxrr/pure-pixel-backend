@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 
 import { Decimal } from '@prisma/client/runtime/library';
 import { plainToInstance } from 'class-transformer';
-import { KeycloakService } from 'src/authen/services/keycloak.service';
+import { IdentityService } from 'src/authen/services/identity.service';
 import { PhotoSellRepository } from 'src/database/repositories/photo-sell.repository';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { PhotoshootRepository } from 'src/database/repositories/photoshoot-package.repository';
@@ -49,7 +49,7 @@ type PhotoSizeSum = Prisma.GetPhotoAggregateType<{ _sum: { size: true } }>;
 @Injectable()
 export class GenerateDashboardReportService {
   constructor(
-    @Inject() private readonly keycloakService: KeycloakService,
+    @Inject() private readonly keycloakService: IdentityService,
     @Inject()
     private readonly upgradeOrderRepository: UpgradePackageOrderRepository,
     @Inject()

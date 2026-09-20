@@ -1,9 +1,4 @@
 import { ContextType, ExecutionContext } from '@nestjs/common';
-import KeycloakConnect from 'keycloak-connect';
-import {
-  KeycloakMultiTenantService,
-  KeycloakConnectConfig,
-} from 'nest-keycloak-connect';
 
 //typed by src/types/tieng-viet-khong-dau.d.ts
 import * as tvkd from 'tieng-viet-khong-dau';
@@ -19,10 +14,16 @@ interface GqlModule {
   };
 }
 
-//claims of a decoded keycloak access token that this app reads
+//claims of a decoded OIDC access token that this app reads
 export interface TokenClaims {
   sub: string;
   iss: string;
+  aud?: string | string[];
+  exp?: number;
+  name?: string;
+  email?: string;
+  preferred_username?: string;
+  resource_access?: Record<string, { roles: string[] }>;
 }
 
 export class Utils {
@@ -67,27 +68,6 @@ export class Utils {
 
   static regexFileExtension = /(?:\.([^.]+))?$/;
 }
-
-export const useKeycloak = async (
-  request: unknown,
-  jwt: string,
-  singleTenant: KeycloakConnect.Keycloak,
-  multiTenant: KeycloakMultiTenantService,
-  opts: KeycloakConnectConfig,
-): Promise<KeycloakConnect.Keycloak> => {
-  if (opts.multiTenant && opts.multiTenant.realmResolver) {
-    const resolvedRealm = opts.multiTenant.realmResolver(request);
-    const realm =
-      resolvedRealm instanceof Promise ? await resolvedRealm : resolvedRealm;
-    return await multiTenant.get(realm, request);
-  } else if (!opts.realm) {
-    const payload = parseToken(jwt);
-    //split always yields at least one segment, so pop never returns undefined
-    const issuerRealm = payload.iss.split('/').pop() as string;
-    return await multiTenant.get(issuerRealm, request);
-  }
-  return singleTenant;
-};
 
 //both values stay undefined for unsupported context types (response also for ws)
 export const extractRequest = <TRequest = unknown, TResponse = unknown>(

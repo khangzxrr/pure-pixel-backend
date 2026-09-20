@@ -8,8 +8,8 @@ import {
 } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { TransactionService } from '../services/transaction.service';
-import { AuthenticatedUser, AuthGuard, Roles } from 'nest-keycloak-connect';
-import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
+import { AuthenticatedUser, AuthGuard, Roles } from 'src/authen/oidc';
+import { RoleGuard } from 'src/authen/guards/role.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
 import { PaymentUrlDto } from '../dtos/payment-url.dto';
@@ -22,7 +22,7 @@ export class TransactionController {
   ) {}
 
   @Get('/transaction/:id')
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
   async getTransactionById(
     @AuthenticatedUser() user: ParsedUserDto,
@@ -32,7 +32,7 @@ export class TransactionController {
   }
 
   @Post('/transaction/:id/generate-payment-url')
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
   @ApiOkResponse({
     type: PaymentUrlDto,

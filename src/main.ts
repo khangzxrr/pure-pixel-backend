@@ -61,7 +61,7 @@ async function bootstrap() {
     .setVersion('1.0')
     .addSecurity('openid', {
       type: 'openIdConnect',
-      openIdConnectUrl: config.get<string>('KEYCLOAK_OPENID_URL'),
+      openIdConnectUrl: `${config.get<string>('OIDC_ISSUER')}.well-known/openid-configuration`,
     })
     .addSecurityRequirements('openid')
     .build();
@@ -71,11 +71,10 @@ async function bootstrap() {
     swaggerOptions: {
       persistAuthorization: true,
       initOAuth: {
-        clientId: config.get<string>('KEYCLOAK_CLIENT_ID'),
-        realm: config.get<string>('KEYCLOAK_REALM'),
+        clientId: config.get<string>('OIDC_CLIENT_ID'),
         appName: 'purepixel',
-        clientSecret: config.get<string>('KEYCLOAK_SECRET_KEY'),
-        scopes: ['offline_access', 'openid', 'profile', 'roles', 'email'],
+        scopes: ['openid', 'profile', 'email', 'offline_access'],
+        usePkceWithAuthorizationCodeGrant: true,
       },
     },
   });

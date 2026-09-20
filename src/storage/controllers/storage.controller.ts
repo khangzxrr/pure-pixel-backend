@@ -1,5 +1,5 @@
 import { Controller, Get, Inject, Param } from '@nestjs/common';
-import { Public } from 'nest-keycloak-connect';
+import { Public } from 'src/authen/oidc';
 import { StorageService } from '../services/storage.service';
 import {
   GetBucketPolicyCommand,

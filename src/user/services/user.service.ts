@@ -6,7 +6,11 @@ import { UserNotFoundException } from '../exceptions/user-not-found.exception';
 
 import { UpdateProfileDto } from '../dtos/rest/update-profile.request.dto';
 import { plainToInstance } from 'class-transformer';
-import { KeycloakService } from 'src/authen/services/keycloak.service';
+import {
+  IdentityConflictError,
+  IdentityRole,
+  IdentityService,
+} from 'src/authen/services/identity.service';
 import { Constants } from 'src/infrastructure/utils/constants';
 
 import { BunnyService } from 'src/storage/services/bunny.service';
@@ -22,19 +26,11 @@ import { UserInReport } from 'src/database/types/user';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { Prisma } from '@prisma/client';
-import { RoleRepresentation } from '@s3pweb/keycloak-admin-client-cjs';
 import { PhotoRepository } from 'src/database/repositories/photo.repository';
 import { BookingRepository } from 'src/database/repositories/booking.repository';
 import { NotificationService } from 'src/notification/services/notification.service';
 import { CannotBanAdminException } from '../exceptions/cannot-ban-admin.exception';
 import { PhoneNumberNotValidException } from '../exceptions/phone-number-not-valid.exception';
-
-//shape of the errors thrown by the keycloak admin client (NetworkError)
-//the catch blocks below read these fields without checking, see update() and create()
-type KeycloakNetworkError = {
-  response: { status: number };
-  responseData: { errorMessage: string };
-};
 
 type UserWithCount = Prisma.UserGetPayload<{
   include: {
@@ -47,7 +43,7 @@ export class UserService {
   constructor(
     @Inject() private readonly userRepository: UserRepository,
     @Inject() private readonly bunnyService: BunnyService,
-    @Inject() private readonly keycloakService: KeycloakService,
+    @Inject() private readonly keycloakService: IdentityService,
     @Inject() private readonly photoRepository: PhotoRepository,
     @Inject() private readonly bookingRepository: BookingRepository,
     @Inject(CACHE_MANAGER) private cache: Cache,
@@ -120,10 +116,8 @@ export class UserService {
 
       return await this.findOne({ id: updatedUser.id });
     } catch (e) {
-      const error = e as KeycloakNetworkError;
-
-      if (error.response.status === 409) {
-        throw new BadRequestException(error.responseData.errorMessage);
+      if (e instanceof IdentityConflictError) {
+        throw new BadRequestException(e.message);
       }
 
       console.log(e);
@@ -157,10 +151,8 @@ export class UserService {
         id: user.id,
       });
     } catch (e) {
-      const error = e as KeycloakNetworkError;
-
-      if (error.response.status === 409) {
-        throw new BadRequestException(error.responseData.errorMessage);
+      if (e instanceof IdentityConflictError) {
+        throw new BadRequestException(e.message);
       }
 
       console.log(e);
@@ -488,8 +480,8 @@ export class UserService {
     return userDto;
   }
 
-  //keycloak roles always carry a name, the filter only narrows the type
-  private toRoleNames(roles: RoleRepresentation[]) {
+  //identity roles always carry a name, the filter only narrows the type
+  private toRoleNames(roles: IdentityRole[]) {
     return roles
       .map((r) => r.name)
       .filter((name): name is string => name !== undefined);

@@ -74,16 +74,16 @@ Each feature module uses the same layout: `controllers/`, `services/`, `dtos/`, 
 ### Prerequisites
 
 - Node.js 18+
-- Docker and Docker Compose (for PostgreSQL, Redis, Keycloak and SFTPGo)
+- Docker and Docker Compose (for PostgreSQL, Redis, Authentik and SFTPGo)
 
 ### 1. Start the infrastructure
 
 ```bash
 cd docker
-docker compose up -d   # redis, postgres, keycloak (imports realm.json), sftpgo, pgadmin
+docker compose up -d   # redis, postgres, authentik, sftpgo, pgadmin
 ```
 
-The compose files read their own variables from a local `.env`, for example `POSTGRES_USER`, `POSTGRES_PASSWORD`, `KEYCLOAK_ADMIN`, `KEYCLOAK_ADMIN_PASSWORD`, `KC_DB*` and `SFTPGO_*`.
+The compose files read their own variables from a local `.env`, for example `POSTGRES_USER`, `POSTGRES_PASSWORD`, `AUTHENTIK_SECRET_KEY`, `AUTHENTIK_BOOTSTRAP_PASSWORD` and `SFTPGO_*`.
 
 ### 2. Configure environment variables
 
@@ -93,7 +93,8 @@ Create a `.env` file in the project root. The application reads these variables:
 | --- | --- |
 | Database | `DATABASE_URL` |
 | Redis | `REDIS_URL`, `REDIS_HOSTNAME`, `REDIS_PORT` |
-| Keycloak | `KEYCLOAK_AUTH_URL`, `KEYCLOAK_OPENID_URL`, `KEYCLOAK_REALM`, `KEYCLOAK_CLIENT_ID`, `KEYCLOAK_SECRET_KEY`, `KEYCLOAK_REALM_ADMIN_USERNAME`, `KEYCLOAK_REALM_ADMIN_PASSWORD` |
+| Authentik (OIDC) | `OIDC_ISSUER`, `OIDC_JWKS_URL` (optional, defaults to `${OIDC_ISSUER}jwks/`), `OIDC_CLIENT_ID` |
+| Authentik (admin API) | `AUTHENTIK_API_URL`, `AUTHENTIK_API_TOKEN`, `AUTHENTIK_IDENTIFICATION_STAGE` (optional, defaults to `purepixel-identification`) |
 | Bunny CDN | `BUNNY_STORAGE_BUCKET`, `BUNNY_STORAGE_ACCESS_KEY`, `BUNNY_STORAGE_CDN`, `BUNNY_PUBLIC_STORAGE_BUCKET`, `BUNNY_PUBLIC_STORAGE_ACCESS_KEY`, `BUNNY_PUBLIC_CDN`, `BUNNY_EDGE_STORAGE_CDN`, `BUNNY_EDGE_STORAGE_ACCESS_KEY`, `BUNNY_CDN_ACCESS_KEY`, `BUNNY_USER_ACCESS_KEY` |
 | AWS S3 / CloudFront | `S3_URL`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_ENABLE_ACCELERATE`, `AWS_CLOUDFRONT_S3_ORIGIN`, `AWS_CLOUDFRONT_ACCESS_KEY`, `AWS_CLOUDFRONT_PRIVATE_KEY` |
 | SFTPGo | `SFTPGO_ENDPOINT`, `SFTPGO_API_KEY` |

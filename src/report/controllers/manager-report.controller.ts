@@ -18,15 +18,15 @@ import { ReportDto } from '../dtos/report.dto';
 import { ReportFindAllRequestDto } from '../dtos/rest/report-find-all.request.dto';
 import { ReportPathUpdateDto } from '../dtos/rest/report-patch-update.request.dto';
 import { ReportCreateRequestDto } from '../dtos/rest/report-create.request.dto';
-import { AuthenticatedUser, AuthGuard, Roles } from 'nest-keycloak-connect';
-import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
+import { AuthenticatedUser, AuthGuard, Roles } from 'src/authen/oidc';
+import { RoleGuard } from 'src/authen/guards/role.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
 import { ReportPutUpdateRequestDto } from '../dtos/rest/report-put-update.request.dto';
 
 @Controller('manager/report')
 @ApiTags('manager-manage-report')
-@UseGuards(AuthGuard, KeycloakRoleGuard)
+@UseGuards(AuthGuard, RoleGuard)
 @Roles({ roles: [Constants.ADMIN_ROLE, Constants.MANAGER_ROLE] })
 export class ManagerReportController {
   constructor(@Inject() private readonly reportService: ReportService) {}

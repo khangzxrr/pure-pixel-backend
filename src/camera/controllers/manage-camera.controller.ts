@@ -13,8 +13,8 @@ import { ApiConsumes, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { CameraService } from '../services/camera.service';
 import { CameraDto } from '../dtos/camera.dto';
 import { UpdateCameraDto } from '../dtos/rest/update-camera.dto';
-import { AuthGuard, Roles } from 'nest-keycloak-connect';
-import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
+import { AuthGuard, Roles } from 'src/authen/oidc';
+import { RoleGuard } from 'src/authen/guards/role.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { FormDataRequest } from 'nestjs-form-data';
 import { ApiOkResponsePaginated } from 'src/infrastructure/decorators/paginated.response.dto';
@@ -22,7 +22,7 @@ import { FindAllCameraDto } from '../dtos/rest/find-all-camera.dto';
 
 @Controller('manager/camera')
 @ApiTags('manager-manage-camera')
-@UseGuards(AuthGuard, KeycloakRoleGuard)
+@UseGuards(AuthGuard, RoleGuard)
 @Roles({ roles: [Constants.ADMIN_ROLE, Constants.MANAGER_ROLE] })
 export class ManageCameraController {
   constructor(@Inject() private readonly cameraService: CameraService) {}

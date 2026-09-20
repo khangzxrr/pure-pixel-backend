@@ -10,10 +10,10 @@ import {
   StreamableFile,
   UseGuards,
 } from '@nestjs/common';
-import { AuthenticatedUser, AuthGuard, Roles } from 'nest-keycloak-connect';
+import { AuthenticatedUser, AuthGuard, Roles } from 'src/authen/oidc';
 import { ParsedUserDto } from 'src/user/dtos/parsed-user.dto';
 import { CreatePhotoSellingDto } from '../dtos/rest/create-photo-selling.request.dto';
-import { KeycloakRoleGuard } from 'src/authen/guards/KeycloakRoleGuard.guard';
+import { RoleGuard } from 'src/authen/guards/role.guard';
 import { Constants } from 'src/infrastructure/utils/constants';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PhotoBuyResponseDto } from '../dtos/rest/photo-buy.response.dto';
@@ -35,7 +35,7 @@ export class PhotoSellBuyController {
   @ApiOperation({
     summary: 'sell photo using photoId',
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   @ApiOkResponse({
     type: PhotoSellDto,
@@ -56,7 +56,7 @@ export class PhotoSellBuyController {
   @ApiOperation({
     summary: 'update sell photo using photoId',
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   @ApiOkResponse({
     type: PhotoSellDto,
@@ -77,7 +77,7 @@ export class PhotoSellBuyController {
   @ApiOperation({
     summary: 'stop sell photo using photoId',
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE] })
   @ApiOkResponse({
     description: 'stop selling photo successfully',
@@ -94,7 +94,7 @@ export class PhotoSellBuyController {
     summary:
       'buy photo using photoId, photoSellId, and pricetagId  (I KNOW, ALOTS)',
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
   @ApiOkResponse({
     type: PhotoBuyResponseDto,
@@ -119,7 +119,7 @@ export class PhotoSellBuyController {
   @ApiOperation({
     summary: 'download photo using photoBuyId',
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
   async getPhotoBought(
     @AuthenticatedUser() user: ParsedUserDto,
@@ -145,7 +145,7 @@ export class PhotoSellBuyController {
   @ApiOperation({
     summary: 'get all previous photo-buy using photoId',
   })
-  @UseGuards(AuthGuard, KeycloakRoleGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @Roles({ roles: [Constants.PHOTOGRAPHER_ROLE, Constants.CUSTOMER_ROLE] })
   @ApiOkResponse({
     type: PhotoWithSignedPhotoBuys,
